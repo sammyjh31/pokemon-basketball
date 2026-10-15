@@ -6,7 +6,7 @@
   --navy: #101b2d;
   --paper: #fffdf9;
   --orange: #ef7b35;
-  --muted: #70736f;
+  --muted: #5e6956;
   --line: #dddcd4;
   --green: #397553;
   font-size: 14px;
@@ -167,7 +167,7 @@ h3 {
 }
 .masthead nav a {
   text-decoration: none;
-  color: #72756f;
+  color: #5e6956;
   height: 100%;
   display: flex;
   align-items: center;
@@ -216,7 +216,7 @@ h3 {
   gap: 20px;
 }
 .intro .eyebrow {
-  color: #6f736c;
+  color: #5e6956;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -297,13 +297,13 @@ h1 em {
   padding: 4px 7px;
   border: 1px solid #e0e0d7;
   border-radius: 4px;
-  color: #74786e;
+  color: #5e6956;
 }
 .text-button {
   background: none;
   white-space: nowrap;
   font-size: 11px;
-  color: #75786f;
+  color: #5e6956;
   padding: 8px 0;
 }
 .text-button > span {
@@ -507,7 +507,7 @@ h1 em {
 .court-instruction {
   font-size: 10px;
   line-height: 1.6;
-  color: #75796d;
+  color: #5e6956;
   text-align: center;
   display: flex;
   justify-content: center;
@@ -550,7 +550,7 @@ h1 em {
 .team-ratings strong small {
   font-size: 11px;
   font-weight: 400;
-  color: #92968b;
+  color: #5e6956;
   letter-spacing: 0;
   margin-left: 4px;
 }
@@ -576,7 +576,7 @@ h1 em {
   padding: 0 16px 19px;
   text-align: center;
   font-size: 10px;
-  color: #828578;
+  color: #5e6956;
 }
 .draft-panel {
   background: var(--paper);
@@ -599,7 +599,7 @@ h1 em {
   border-radius: 3px;
   font-size: 12px;
   font-weight: 700;
-  color: #73756e;
+  color: #5e6956;
 }
 .mode-tabs button[aria-pressed="true"] {
   background: var(--navy);
@@ -649,7 +649,7 @@ h1 em {
   align-items: center;
   gap: 6px;
   font-size: 10px;
-  color: #767a6e;
+  color: #5e6956;
   margin: 15px 0 18px;
   cursor: pointer;
 }
@@ -724,13 +724,13 @@ h1 em {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #7e8776;
+  color: #5e6956;
   font:
     9px "Courier New",
     monospace;
 }
 .best-position {
-  color: #737d68;
+  color: #5e6956;
 }
 .best-position b {
   color: #283324;
@@ -826,7 +826,7 @@ h1 em {
   font:
     8px "Courier New",
     monospace;
-  color: #8b9082;
+  color: #5e6956;
 }
 .card-stats b {
   font-size: 10px;
@@ -856,7 +856,7 @@ h1 em {
   border-color: #e7cbb1;
 }
 .draft-footnote {
-  color: #8a8d80;
+  color: #5e6956;
   text-align: center;
   font-size: 10px;
   margin-top: 16px;
@@ -883,7 +883,7 @@ h1 em {
   font:
     8px "Courier New",
     monospace;
-  color: #90795f;
+  color: #786044;
   white-space: nowrap;
 }
 .placement-positions {
@@ -920,7 +920,7 @@ h1 em {
   gap: 6px 13px;
   margin-top: 12px;
   font-size: 9px;
-  color: #8b795f;
+  color: #786044;
 }
 .attribute-list span {
   display: flex;
@@ -1021,7 +1021,7 @@ h1 em {
 }
 .season-heading p {
   font-size: 11px;
-  color: #85897b;
+  color: #5e6956;
   margin-top: 8px;
 }
 .season-empty {
@@ -1053,7 +1053,7 @@ h1 em {
 }
 .season-empty p {
   font-size: 11px;
-  color: #929787;
+  color: #5e6956;
   margin-top: 6px;
 }
 .empty-progress {
@@ -1157,7 +1157,7 @@ h1 em {
     700 9px "Courier New",
     monospace;
   letter-spacing: 1px;
-  color: #818a79;
+  color: #5e6956;
   padding: 14px 20px;
   background: #f0f2e9;
   position: sticky;
@@ -1182,7 +1182,7 @@ h1 em {
   font:
     10px "Courier New",
     monospace;
-  color: #929b86;
+  color: #5e6956;
 }
 .opponent-mark {
   font:
@@ -1196,7 +1196,7 @@ h1 em {
   border-radius: 50%;
   margin-right: 13px;
   vertical-align: middle;
-  color: #717b61;
+  color: #5e6956;
 }
 .opponent-name {
   display: inline-block;
@@ -1211,17 +1211,17 @@ h1 em {
     8px "Courier New",
     monospace;
   margin-top: 3px;
-  color: #9aa38e;
+  color: #5e6956;
 }
 .odds {
   font:
     11px "Courier New",
     monospace;
-  color: #6e7f5f;
+  color: #5e6956;
 }
 .pending-game {
   font-size: 10px;
-  color: #9aa28f;
+  color: #5e6956;
 }
 .game-score {
   font:
@@ -1241,11 +1241,11 @@ h1 em {
 }
 .game-loss .game-score > b {
   background: #f6e6e0;
-  color: #ab5c43;
+  color: #98482e;
 }
 .game-score small {
   font-size: 8px;
-  color: #b37b3d;
+  color: #85561f;
 }
 .copy-message {
   font-size: 12px;
@@ -1300,7 +1300,7 @@ h1 em {
   padding-bottom: 30px;
   font-size: 12px;
   line-height: 1.8;
-  color: #6a7560;
+  color: #5e6956;
 }
 .rules-content h3 {
   font-size: 14px;
@@ -1357,14 +1357,14 @@ footer {
     700 8px "Courier New",
     monospace;
   letter-spacing: 1px;
-  color: #878e7d;
+  color: #5e6956;
   display: inline-block;
   margin-left: 17px;
 }
 footer p {
   font-size: 9px;
   line-height: 1.8;
-  color: #8b9381;
+  color: #5e6956;
   text-align: right;
 }
 footer a {

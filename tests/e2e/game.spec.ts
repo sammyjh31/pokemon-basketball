@@ -157,3 +157,122 @@ test("portraits render without external image requests", async ({ page }) => {
     )
     .toBe(true);
 });
+
+test("informative text and type labels meet normal-text contrast", async ({
+  page,
+}) => {
+  const checkContrast = async () => {
+    const failures = await page.evaluate(() => {
+      const selectors = [
+        ".eyebrow",
+        ".rating-caption",
+        ".team-ratings strong small",
+        ".count-chip",
+        ".season-empty p",
+        ".schedule-table th",
+        ".game-score small",
+        ".mode-tabs button:not([aria-pressed=true])",
+        ".court-instruction",
+        ".text-button",
+        ".legend-toggle",
+        ".card-top",
+        ".best-position",
+        ".card-stats",
+        ".card-select",
+        ".draft-footnote",
+        ".types span",
+        ".preview-heading > span",
+        ".attribute-list",
+        ".season-heading p",
+        ".opponent-name small",
+        ".odds",
+        ".pending-game",
+        ".game-number",
+        ".season-record > span:last-child",
+        ".season-meta > span:last-child",
+        ".mvp span",
+        ".personal-best > span:last-child",
+        ".footer-brand span",
+        "footer p",
+      ];
+      const rgba = (s: string): number[] => {
+        const nums = s.match(/[\d.]+/g)!.map(Number);
+        return [nums[0], nums[1], nums[2], nums[3] ?? 1];
+      };
+      const over = (front: number[], back: number[]) =>
+        [0, 1, 2]
+          .map((i) => front[i] * front[3] + back[i] * (1 - front[3]))
+          .concat(1);
+      const luminance = (rgb: number[]) =>
+        rgb
+          .slice(0, 3)
+          .map((v) => {
+            v /= 255;
+            return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+          })
+          .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+      return [...document.querySelectorAll<HTMLElement>(selectors.join(","))]
+        .filter((el) => el.getClientRects().length > 0)
+        .flatMap((el) => {
+          const chain: HTMLElement[] = [];
+          let parent: HTMLElement | null = el;
+          while (parent) {
+            chain.unshift(parent);
+            parent = parent.parentElement;
+          }
+          let bg = [255, 255, 255, 1];
+          for (const node of chain)
+            bg = over(rgba(getComputedStyle(node).backgroundColor), bg);
+          const text = over(rgba(getComputedStyle(el).color), bg),
+            a = luminance(text),
+            b = luminance(bg),
+            ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+          return ratio < 4.5
+            ? [
+                {
+                  text: el.textContent?.trim().slice(0, 45),
+                  className: el.className,
+                  color: getComputedStyle(el).color,
+                  ratio: Number(ratio.toFixed(2)),
+                },
+              ]
+            : [];
+        });
+    });
+    expect(failures).toEqual([]);
+  };
+  await page.goto("/");
+  await page.getByRole("button", { name: "Free Draft", exact: true }).click();
+  await page.getByRole("searchbox", { name: "Search Pokémon" }).fill("Pikachu");
+  await page
+    .getByRole("button", { name: "Draft Pikachu", exact: true })
+    .click();
+  await checkContrast();
+  await page.getByRole("searchbox", { name: "Search Pokémon" }).fill("");
+  await checkContrast();
+  await page
+    .getByRole("button", { name: "PG slot: Empty", exact: true })
+    .click();
+  for (const [i, name] of [
+    "Mewtwo",
+    "Dragonite",
+    "Machamp",
+    "Snorlax",
+  ].entries()) {
+    await page.getByRole("searchbox", { name: "Search Pokémon" }).fill(name);
+    await page
+      .getByRole("button", { name: `Draft ${name}`, exact: true })
+      .click();
+    await page
+      .getByRole("button", {
+        name: `${positions[i + 1]} slot: Empty`,
+        exact: true,
+      })
+      .click();
+  }
+  await page
+    .getByRole("button", { name: "Simulate season", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Skip reveal" }).click();
+  await checkContrast();
+});
