@@ -6,7 +6,7 @@ Build a browser game inspired by https://poke17-0.com/: draft Pokémon into spor
 
 The reference was accessible on October 15, 2026. Its HTML and client logic confirm a football drafting and season simulation game, including Spin & Pick, Free Draft, position ratings, season probabilities, and local records. Our implementation will use original basketball rules and presentation rather than copy its application code.
 
-The following are proposed defaults for the first playable version: an 82-game regular season; the original 151 Pokémon; two drafting modes; browser-local saving; desktop and mobile support. No accounts or backend are required. These defaults have not yet received written-spec approval.
+The approved first playable version includes an 82-game regular season, the original 151 Pokémon, two drafting modes, browser-local saving, and desktop and mobile support. No accounts or backend are required. The user approved this written spec on October 15, 2026.
 
 ## Approach
 
