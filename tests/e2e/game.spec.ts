@@ -28,7 +28,7 @@ test("full spin season, saved results, and reset cancellation", async ({
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "BUILD YOUR STARTING FIVE." }),
+    page.getByRole("heading", { name: "82–0 Challenge" }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Simulate season", exact: true }),
@@ -66,7 +66,9 @@ test("free draft search, swapping, filtering, and full season", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Free Draft", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Lineup builder", exact: true })
+    .click();
   for (const [i, name] of [
     "Alakazam",
     "Mewtwo",
@@ -242,7 +244,9 @@ test("informative text and type labels meet normal-text contrast", async ({
     expect(failures).toEqual([]);
   };
   await page.goto("/");
-  await page.getByRole("button", { name: "Free Draft", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Lineup builder", exact: true })
+    .click();
   await page.getByRole("searchbox", { name: "Search Pokémon" }).fill("Pikachu");
   await page
     .getByRole("button", { name: "Draft Pikachu", exact: true })

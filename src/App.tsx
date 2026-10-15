@@ -10,6 +10,9 @@ import { DraftPanel } from "./components/DraftPanel";
 import { SeasonPanel } from "./components/SeasonPanel";
 import { RulesPanel } from "./components/RulesPanel";
 import { ConfirmDialog } from "./components/ConfirmDialog";
+import { LineupTools } from "./components/LineupTools";
+import { SpriteContext, type SpriteStyle } from "./components/SpriteControls";
+import { randomLineup } from "./game/lineup";
 export default function App({
   initial,
   storage,
@@ -17,7 +20,8 @@ export default function App({
   initial?: GameState;
   storage?: StorageLike;
 }) {
-  const { state, dispatch, storageNotice } = useGame(initial, storage),
+  const { state, dispatch, storageNotice, importPending, resolveImport } =
+      useGame(initial, storage),
     { run, records } = state;
   const [pending, setPending] = useState<number | null>(null),
     [swap, setSwap] = useState<Position | null>(null);
@@ -28,6 +32,7 @@ export default function App({
   const [animatedRun, setAnimatedRun] = useState<string | null>(null),
     [announcement, setAnnouncement] = useState("");
   const ratings = teamRatings(run.roster);
+  const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("pixel");
   const start = (mode: Mode, includeLegends: boolean) => {
     dispatch({ type: "NEW_RUN", mode, includeLegends, seed: newSeed() });
     setPending(null);
@@ -61,27 +66,38 @@ export default function App({
     }
   };
   return (
-    <>
+    <SpriteContext.Provider value={spriteStyle}>
       <a className="skip-link" href="#draft">
         Skip to draft
       </a>
       <div className="app-shell">
-        <Scoreboard ratings={ratings} records={records} mode={run.mode} />
+        <Scoreboard
+          mode={run.mode}
+          onMode={(mode) => {
+            if (mode !== run.mode) requestReset(mode, run.includeLegends);
+          }}
+        />
         <main>
           {storageNotice && (
             <p className="notice" role="status">
               {storageNotice}
             </p>
           )}
+          <div className="mobile-title">
+            <h1>{run.mode === "free" ? "Lineup builder" : "82–0 Challenge"}</h1>
+            <p>Five Pokémon. One perfect season.</p>
+          </div>
           <div className="draft-layout" id="draft">
-            <Court
-              run={run}
-              ratings={ratings}
-              pending={pending}
-              swap={swap}
-              onSlot={onSlot}
-              onReset={() => requestReset(run.mode, run.includeLegends)}
-            />
+            <div className="court-column">
+              <Court
+                run={run}
+                ratings={ratings}
+                pending={pending}
+                swap={swap}
+                onSlot={onSlot}
+                onReset={() => requestReset(run.mode, run.includeLegends)}
+              />
+            </div>
             <DraftPanel
               key={run.id}
               run={run}
@@ -99,10 +115,40 @@ export default function App({
                 setPending(null);
                 setAnnouncement("Four new draft choices are ready.");
               }}
-              onMode={(mode) => {
-                if (mode !== run.mode) requestReset(mode, run.includeLegends);
-              }}
               onLegends={(include) => requestReset(run.mode, include)}
+              records={records}
+              spriteStyle={spriteStyle}
+              onSpriteStyle={setSpriteStyle}
+              tools={
+                <LineupTools
+                  key={run.id}
+                  run={run}
+                  onRandomize={() => {
+                    dispatch({
+                      type: "SET_LINEUP",
+                      roster: randomLineup(run.includeLegends, newSeed()),
+                    });
+                    setPending(null);
+                    setSwap(null);
+                    setAnnouncement("A new starting five is ready.");
+                  }}
+                  onClear={() => {
+                    dispatch({
+                      type: "SET_LINEUP",
+                      roster: {
+                        PG: null,
+                        SG: null,
+                        SF: null,
+                        PF: null,
+                        C: null,
+                      },
+                    });
+                    setPending(null);
+                    setSwap(null);
+                    setAnnouncement("All five positions are cleared.");
+                  }}
+                />
+              }
             />
           </div>
           <p className="sr-only" role="status">
@@ -135,8 +181,12 @@ export default function App({
               PokéAPI
             </a>{" "}
             · Inspired by{" "}
-            <a href="https://poke17-0.com/" target="_blank" rel="noreferrer">
-              17–0 Pokémon Football
+            <a
+              href="https://all22pokemon.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Pokémon All-22
             </a>
             .
           </p>
@@ -148,6 +198,14 @@ export default function App({
           onConfirm={() => start(reset.mode, reset.includeLegends)}
         />
       )}
-    </>
+      {importPending && (
+        <ConfirmDialog
+          title="Load shared lineup?"
+          confirmLabel="Load lineup"
+          onCancel={() => resolveImport(false)}
+          onConfirm={() => resolveImport(true)}
+        />
+      )}
+    </SpriteContext.Provider>
   );
 }

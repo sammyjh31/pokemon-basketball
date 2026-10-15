@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { SpriteContext } from "./SpriteControls";
 import type { Pokemon } from "../game/types";
 export function Portrait({
   mon,
@@ -7,8 +8,11 @@ export function Portrait({
   mon: Pokemon;
   className?: string;
 }) {
-  const [failed, setFailed] = useState(false);
-  return failed ? (
+  const style = useContext(SpriteContext);
+  const src =
+    style === "pixel" ? `/pokemon-pixel/${mon.id}.png` : mon.spriteUrl;
+  const [failed, setFailed] = useState<string | null>(null);
+  return failed === src ? (
     <span
       className={`portrait-fallback ${className}`}
       data-testid="portrait-fallback"
@@ -18,34 +22,34 @@ export function Portrait({
     </span>
   ) : (
     <img
-      className={`portrait ${className}`}
-      src={mon.spriteUrl}
+      className={`portrait ${style} ${className}`}
+      src={src}
       alt={mon.name}
       loading="lazy"
-      onError={() => setFailed(true)}
+      onError={() => setFailed(src)}
       draggable={false}
     />
   );
 }
 export const TYPE_COLORS: Record<string, string> = {
-  normal: "#6b6b5c",
-  fire: "#a14c2e",
-  water: "#376387",
-  electric: "#876813",
-  grass: "#476c3c",
-  ice: "#397576",
-  fighting: "#864f3c",
-  poison: "#734d80",
-  ground: "#7e6541",
-  flying: "#645e84",
-  psychic: "#944b69",
-  bug: "#5f6a37",
-  rock: "#796a3f",
-  ghost: "#5c4b74",
-  dragon: "#5b4d8b",
-  dark: "#584a46",
-  steel: "#57686f",
-  fairy: "#905b75",
+  normal: "#c4c4a5",
+  fire: "#ffad7b",
+  water: "#91c5f7",
+  electric: "#f2d45c",
+  grass: "#acd58d",
+  ice: "#91d9d8",
+  fighting: "#efa591",
+  poison: "#d5a6eb",
+  ground: "#d9bd91",
+  flying: "#bdb4f3",
+  psychic: "#f1a0cb",
+  bug: "#c3d48c",
+  rock: "#d3c28f",
+  ghost: "#b9a1dd",
+  dragon: "#bea6ff",
+  dark: "#c2b4af",
+  steel: "#adc6d0",
+  fairy: "#e9afd2",
 };
 export function TypeBadges({ types }: { types: string[] }) {
   return (

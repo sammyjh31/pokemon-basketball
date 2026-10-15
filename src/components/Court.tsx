@@ -27,7 +27,7 @@ export function Court({
     <section className="lineup-panel" aria-label="Your starting lineup">
       <div className="panel-heading">
         <div>
-          <span className="eyebrow">YOUR TEAM</span>
+          <span className="eyebrow">KANTO LEAGUE · ORIGINAL 151</span>
           <h2>
             The starting five
             <span className="count-chip">{ratings.filled} / 5</span>
@@ -77,13 +77,11 @@ export function Court({
                   </span>
                 )}
               </span>
-              <span className="slot-name">
-                {mon?.name ?? POSITION_NAMES[position]}
-              </span>
+              <span className="slot-name">{mon?.name ?? "Empty"}</span>
               <span className="slot-rating">
                 {mon
                   ? `${Math.round(positionRating(mon, position))} POS RATING`
-                  : "OPEN POSITION"}
+                  : POSITION_NAMES[position]}
               </span>
             </button>
           );

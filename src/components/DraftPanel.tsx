@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { POKEMON, POKEMON_BY_ID, TYPES } from "../data/pokemon";
 import {
   attributes,
@@ -6,7 +6,13 @@ import {
   ATTRIBUTE_LABELS,
   positionRating,
 } from "../game/ratings";
-import { POSITIONS, type Mode, type Position, type Run } from "../game/types";
+import {
+  POSITIONS,
+  type Position,
+  type Run,
+  type Records,
+} from "../game/types";
+import { SpriteControls, type SpriteStyle } from "./SpriteControls";
 import { PokemonCard } from "./PokemonCard";
 export function DraftPanel({
   run,
@@ -14,16 +20,22 @@ export function DraftPanel({
   onPick,
   onPlace,
   onReroll,
-  onMode,
   onLegends,
+  records,
+  spriteStyle,
+  onSpriteStyle,
+  tools,
 }: {
   run: Run;
   pending: number | null;
   onPick: (id: number) => void;
   onPlace: (p: Position) => void;
   onReroll: () => void;
-  onMode: (mode: Mode) => void;
   onLegends: (include: boolean) => void;
+  records: Records;
+  spriteStyle: SpriteStyle;
+  onSpriteStyle: (style: SpriteStyle) => void;
+  tools: ReactNode;
 }) {
   const [search, setSearch] = useState(""),
     [type, setType] = useState("");
@@ -36,25 +48,30 @@ export function DraftPanel({
           (mon) =>
             !Object.values(run.roster).includes(mon.id) &&
             (run.includeLegends || !mon.legendary) &&
-            mon.name.toLowerCase().includes(search.trim().toLowerCase()) &&
+            (mon.name.toLowerCase().includes(search.trim().toLowerCase()) ||
+              (/^#?\d{1,3}$/.test(search.trim()) &&
+                mon.id === Number(search.trim().replace(/^#/, "")))) &&
             (!type || mon.types.includes(type)),
         );
   return (
     <section className="draft-panel" aria-label="Draft Pokémon">
-      <div className="mode-tabs">
-        <button
-          onClick={() => onMode("spin")}
-          aria-pressed={run.mode === "spin"}
-        >
-          Spin & Pick
-        </button>
-        <button
-          onClick={() => onMode("free")}
-          aria-pressed={run.mode === "free"}
-        >
-          Free Draft
-        </button>
+      <div className="draft-title">
+        <h1>
+          {run.mode === "free" ? (
+            "Lineup builder"
+          ) : (
+            <>
+              <span>82–0</span> Challenge
+            </>
+          )}
+        </h1>
+        <p>
+          {run.mode === "free"
+            ? "Build your dream five. Pick a Pokémon, then choose its position on the court."
+            : "Five picks. Two re-rolls. Draft your team and chase the perfect 82-game season."}
+        </p>
       </div>
+      {tools}
       <div className="draft-heading">
         <div>
           <span className="eyebrow">
@@ -68,8 +85,10 @@ export function DraftPanel({
             {run.result
               ? "What a season."
               : count === 5
-                ? "Ready for tip-off."
-                : "Who’s your next starter?"}
+                ? "Ready for tip-off"
+                : run.mode === "free"
+                  ? "Pick a Pokémon"
+                  : "Choose your next starter"}
           </h2>
         </div>
         {run.mode === "spin" && !run.result && count < 5 && (
@@ -101,7 +120,7 @@ export function DraftPanel({
           <input
             type="search"
             aria-label="Search Pokémon"
-            placeholder="Search Pokémon…"
+            placeholder="Search name or #…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -204,6 +223,36 @@ export function DraftPanel({
           </div>
         </div>
       )}
+      <SpriteControls value={spriteStyle} onChange={onSpriteStyle} />
+      <dl className="personal-records">
+        <div>
+          <dt>Best record</dt>
+          <dd>
+            {records[run.mode].runs
+              ? `${records[run.mode].bestWins}–${82 - records[run.mode].bestWins}`
+              : "—"}
+          </dd>
+        </div>
+        <div>
+          <dt>Runs</dt>
+          <dd>{records[run.mode].runs}</dd>
+        </div>
+        <div>
+          <dt>Perfect</dt>
+          <dd>{records[run.mode].perfectSeasons}</dd>
+        </div>
+      </dl>
+      <div className="how-it-works">
+        <h3>
+          How it works <a href="#rules">Scouting guide →</a>
+        </h3>
+        <p>
+          {run.mode === "spin"
+            ? "Choose one of four Pokémon each round. Place it in an open position. Each pick locks in, so make it count."
+            : "Choose from the original 151. Swap positions by selecting two players on the court. Randomize for a fresh team."}{" "}
+          Fill all five positions, then play your season.
+        </p>
+      </div>
     </section>
   );
 }

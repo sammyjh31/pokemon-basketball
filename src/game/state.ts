@@ -1,8 +1,10 @@
 import { createRun, placePokemon, reroll, swapPositions } from "./draft";
 import { teamRatings } from "./ratings";
 import { simulateSeason } from "./season";
-import type { GameState, Mode, Position } from "./types";
+import type { GameState, Mode, Position, Roster } from "./types";
+import { validRoster } from "./lineup";
 export type GameAction =
+  | { type: "SET_LINEUP"; roster: Roster }
   | { type: "REROLL" }
   | { type: "PLACE"; pokemonId: number; position: Position }
   | { type: "SWAP"; first: Position; second: Position }
@@ -26,6 +28,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       run: createRun(action.mode, action.includeLegends, action.seed),
     };
   if (run.result) return state;
+  if (action.type === "SET_LINEUP") {
+    if (run.mode !== "free" || !validRoster(action.roster, run.includeLegends))
+      return state;
+    return { ...state, run: { ...run, roster: { ...action.roster } } };
+  }
   if (action.type === "SIMULATE") {
     if (!teamRatings(run.roster).complete) return state;
     const result = simulateSeason(run),

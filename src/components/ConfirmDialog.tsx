@@ -2,9 +2,13 @@ import { useEffect, useRef } from "react";
 export function ConfirmDialog({
   onConfirm,
   onCancel,
+  title = "Back to the draft?",
+  confirmLabel = "Start new run",
 }: {
   onConfirm: () => void;
   onCancel: () => void;
+  title?: string;
+  confirmLabel?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -51,7 +55,7 @@ export function ConfirmDialog({
         }}
       >
         <span className="eyebrow">A FRESH START</span>
-        <h2 id="dialog-title">Back to the draft?</h2>
+        <h2 id="dialog-title">{title}</h2>
         <p id="dialog-description">
           This replaces your current lineup. Your completed season records will
           stay saved.
@@ -61,7 +65,7 @@ export function ConfirmDialog({
             Keep playing
           </button>
           <button className="button primary" onClick={onConfirm}>
-            Start new run
+            {confirmLabel}
           </button>
         </div>
       </div>
