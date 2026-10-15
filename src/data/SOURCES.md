@@ -13,3 +13,5 @@ Names, base stats, types, height, weight and species classification are factual 
 Portraits: [PokeAPI sprites](https://github.com/PokeAPI/sprites), official-artwork collection. Pokémon and character artwork belong to their respective owners. This is an unofficial fan project, not affiliated with Nintendo, Game Freak, or The Pokémon Company.
 
 Regenerate with `npm run data:import`; gameplay uses the committed JSON and requires no live API.
+
+Artwork is bundled in `public/pokemon` to avoid third-party requests during play. Source URLs and SHA-256 digests are in `public/pokemon/manifest.json`. Refresh it with `python scripts/download-artwork.py`.

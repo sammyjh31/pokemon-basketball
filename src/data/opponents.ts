@@ -1,14 +1,46 @@
-import type { Matchup, Opponent } from '../game/types';
+import type { Matchup, Opponent } from "../game/types";
 const names = [
- 'Pallet Pioneers','Viridian Vipers','Pewter Titans','Cerulean Waves','Vermilion Bolts',
- 'Lavender Phantoms','Celadon Bloom','Fuchsia Venom','Saffron Mystics','Cinnabar Flames',
- 'Indigo Royals','New Bark Sparks','Cherrygrove Comets','Violet Wings','Azalea Swarm',
- 'Goldenrod Gold','Ecruteak Spirits','Olivine Steel','Cianwood Breakers','Mahogany Frost',
- 'Blackthorn Dragons','Littleroot Leaves','Petalburg Oaks','Rustboro Rock','Dewford Tide',
- 'Slateport Sailors','Mauville Charge','Fortree Flyers','Lilycove Pearls',
+  "Pallet Pioneers",
+  "Viridian Vipers",
+  "Pewter Titans",
+  "Cerulean Waves",
+  "Vermilion Bolts",
+  "Lavender Phantoms",
+  "Celadon Bloom",
+  "Fuchsia Venom",
+  "Saffron Mystics",
+  "Cinnabar Flames",
+  "Indigo Royals",
+  "New Bark Sparks",
+  "Cherrygrove Comets",
+  "Violet Wings",
+  "Azalea Swarm",
+  "Goldenrod Gold",
+  "Ecruteak Spirits",
+  "Olivine Steel",
+  "Cianwood Breakers",
+  "Mahogany Frost",
+  "Blackthorn Dragons",
+  "Littleroot Leaves",
+  "Petalburg Oaks",
+  "Rustboro Rock",
+  "Dewford Tide",
+  "Slateport Sailors",
+  "Mauville Charge",
+  "Fortree Flyers",
+  "Lilycove Pearls",
 ];
-const styles = ['Balanced','Run & gun','Lockdown','Inside out'];
-export const OPPONENTS: Opponent[] = names.map((name,i)=>({
- id:i+1,name,offense:35+(i*13)%31,defense:35+(i*19+8)%31,pace:(i*7)%13-6,style:styles[i%4],
+const styles = ["Balanced", "Run & gun", "Lockdown", "Inside out"];
+export const OPPONENTS: Opponent[] = names.map((name, i) => ({
+  id: i + 1,
+  name,
+  offense: 35 + ((i * 13) % 31),
+  defense: 35 + ((i * 19 + 8) % 31),
+  pace: ((i * 7) % 13) - 6,
+  style: styles[i % 4],
 }));
-export const SCHEDULE: Matchup[] = Array.from({length:82},(_,index)=>({index,opponentId:OPPONENTS[index%29].id,home:index%2===0}));
+export const SCHEDULE: Matchup[] = Array.from({ length: 82 }, (_, index) => ({
+  index,
+  opponentId: OPPONENTS[index % 29].id,
+  home: index % 2 === 0,
+}));
