@@ -8,15 +8,19 @@ import {
 } from "../game/ratings";
 import {
   POSITIONS,
+  ROSTER_SLOTS,
+  type RosterSlot,
   type Position,
   type Run,
   type Records,
 } from "../game/types";
 import { SpriteControls, type SpriteStyle } from "./SpriteControls";
+import { ScoutReport } from "./ScoutReport";
 import { PokemonCard } from "./PokemonCard";
 export function DraftPanel({
   run,
   pending,
+  inspectId,
   onPick,
   onPlace,
   onReroll,
@@ -28,8 +32,9 @@ export function DraftPanel({
 }: {
   run: Run;
   pending: number | null;
+  inspectId?: number | null;
   onPick: (id: number) => void;
-  onPlace: (p: Position) => void;
+  onPlace: (p: RosterSlot) => void;
   onReroll: () => void;
   onLegends: (include: boolean) => void;
   records: Records;
@@ -39,6 +44,7 @@ export function DraftPanel({
 }) {
   const [search, setSearch] = useState(""),
     [type, setType] = useState("");
+  const [sort, setSort] = useState("dex");
   const count = Object.values(run.roster).filter(Boolean).length;
   const chosen = POKEMON_BY_ID.get(pending ?? -1);
   const candidates =
@@ -53,6 +59,14 @@ export function DraftPanel({
                 mon.id === Number(search.trim().replace(/^#/, "")))) &&
             (!type || mon.types.includes(type)),
         );
+  if (run.mode === "free" && sort !== "dex")
+    candidates.sort((a, b) => {
+      const score = (mon: typeof a) =>
+        POSITIONS.includes(sort as Position)
+          ? positionRating(mon, sort as Position)
+          : attributes(mon)[sort as "threePoint" | "stamina" | "rebounding"];
+      return score(b) - score(a) || a.id - b.id;
+    });
   return (
     <section className="draft-panel" aria-label="Draft Pokémon">
       <div className="draft-title">
@@ -67,8 +81,8 @@ export function DraftPanel({
         </h1>
         <p>
           {run.mode === "free"
-            ? "Build your dream five. Pick a Pokémon, then choose its position on the court."
-            : "Five picks. Two re-rolls. Draft your team and chase the perfect 82-game season."}
+            ? "Build your eight-player rotation. Pick a Pokémon, then choose its position on the court."
+            : "Eight picks. Two re-rolls. Draft your team and chase the perfect 82-game season."}
         </p>
       </div>
       {tools}
@@ -77,21 +91,21 @@ export function DraftPanel({
           <span className="eyebrow">
             {run.result
               ? "IN THE BOOKS"
-              : count === 5
+              : count === 8
                 ? "LINEUP COMPLETE"
-                : `PICK ${count + 1} OF 5`}
+                : `PICK ${count + 1} OF 8`}
           </span>
           <h2>
             {run.result
               ? "What a season."
-              : count === 5
+              : count === 8
                 ? "Ready for tip-off"
                 : run.mode === "free"
                   ? "Pick a Pokémon"
-                  : "Choose your next starter"}
+                  : "Choose your next player"}
           </h2>
         </div>
-        {run.mode === "spin" && !run.result && count < 5 && (
+        {run.mode === "spin" && !run.result && count < 8 && (
           <button
             className="reroll-button"
             onClick={onReroll}
@@ -138,12 +152,36 @@ export function DraftPanel({
           </select>
         </div>
       )}
+      {!run.result && run.mode === "free" && (
+        <label className="scout-sort">
+          Scout by
+          <select
+            aria-label="Sort Pokémon by"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
+            <option value="dex">Pokédex number</option>
+            {POSITIONS.map((p) => (
+              <option key={p} value={p}>
+                {p} position fit
+              </option>
+            ))}
+            <option value="threePoint">Three-point shooting</option>
+            <option value="rebounding">Rebounding</option>
+            <option value="stamina">Stamina</option>
+          </select>
+        </label>
+      )}
       {run.result ? (
         <div className="draft-finished">
           <span className="finish-ball" aria-hidden="true">
             ✦
           </span>
-          <h3>Your five. Your story.</h3>
+          <h3>
+            {run.result?.modelVersion === 2
+              ? "Your eight. Your story."
+              : "Your five. Your story."}
+          </h3>
           <p>
             Every legend starts with a lineup.
             <br />
@@ -153,14 +191,14 @@ export function DraftPanel({
             View season recap <span aria-hidden="true">↓</span>
           </a>
         </div>
-      ) : count === 5 && run.mode === "spin" ? (
+      ) : count === 8 && run.mode === "spin" ? (
         <div className="draft-finished">
           <span className="finish-ball" aria-hidden="true">
             ✓
           </span>
           <h3>The squad is assembled.</h3>
           <p>
-            Five Pokémon. Eighty-two games.
+            Eight Pokémon. Eighty-two games.
             <br />
             Your perfect season starts below.
           </p>
@@ -201,7 +239,7 @@ export function DraftPanel({
             <span>POSITION FIT</span>
           </div>
           <div className="placement-positions">
-            {POSITIONS.map((p) => (
+            {ROSTER_SLOTS.map((p) => (
               <button
                 key={p}
                 disabled={run.mode === "spin" && run.roster[p] !== null}
@@ -209,10 +247,21 @@ export function DraftPanel({
                 aria-label={`Place ${chosen.name} at ${p}`}
               >
                 <span>{p}</span>
-                <strong>{Math.round(positionRating(chosen, p))}</strong>
+                <strong>
+                  {Math.round(
+                    p.startsWith("B")
+                      ? Math.max(
+                          ...POSITIONS.map((pos) =>
+                            positionRating(chosen, pos),
+                          ),
+                        )
+                      : positionRating(chosen, p as Position),
+                  )}
+                </strong>
               </button>
             ))}
           </div>
+          <ScoutReport mon={chosen} />
           <div className="attribute-list">
             {ATTRIBUTE_KEYS.map((key) => (
               <span key={key}>
@@ -222,6 +271,9 @@ export function DraftPanel({
             ))}
           </div>
         </div>
+      )}
+      {!pending && inspectId && POKEMON_BY_ID.has(inspectId) && (
+        <ScoutReport mon={POKEMON_BY_ID.get(inspectId)!} />
       )}
       <SpriteControls value={spriteStyle} onChange={onSpriteStyle} />
       <dl className="personal-records">
@@ -250,7 +302,8 @@ export function DraftPanel({
           {run.mode === "spin"
             ? "Choose one of four Pokémon each round. Place it in an open position. Each pick locks in, so make it count."
             : "Choose from the original 151. Swap positions by selecting two players on the court. Randomize for a fresh team."}{" "}
-          Fill all five positions, then play your season.
+          Fill five starting positions and three bench slots, then play your
+          season.
         </p>
       </div>
     </section>

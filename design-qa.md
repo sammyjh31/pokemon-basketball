@@ -1,5 +1,17 @@
 # All-22 basketball adaptation — design QA
 
+## Eight-player refinement — 2026-10-15
+
+The new feature pass revisited [All-22 scouting](https://all22pokemon.com/scouting) and [patch notes](https://all22pokemon.com/patch-notes). Adapted player scouting, game box scores, season statistics, depth, and coaching; kept the basketball court and existing visual direction. Team-only awards are labeled explicitly.
+
+Evidence: `docs/design/eight-player-results.png` (1440×1000), `eight-player-awards.png` (1440×1000), `eight-player-mobile.png` (390×844), `eight-player-320-awards.png` (320×844), and `eight-player-scouting.png` (1280×720).
+
+Verified eight-slot challenge and free drafting, auto-fill, coaching, expanded scouting, sortable totals/averages, eight-row game details, six awards, overtime minutes, Escape/focus return, and refresh preservation. No document overflow at 1440,390,320px. The mobile table keeps names pinned, puts points/rebounds/assists first, and explains horizontal scrolling. Completed bench cards retain full contrast. New tests cover save migration and old recaps without fabricated statistics.
+
+83 unit/component tests pass; independent code review findings were repaired. Standalone Playwright and downloaded PNG verification limits below still apply. The screenshots and comparison notes below record the earlier visual baseline.
+
+---
+
 **Final result: passed**
 
 Reviewed 2026-10-15. This is a basketball adaptation of [Pokémon All-22](https://all22pokemon.com/), not football feature parity. Five positions, the wood court, existing ratings, two modes, and the 82-game season intentionally replace football formations and 22-player content. Accounts, nine generations, franchises, and public leaderboards are outside this update.

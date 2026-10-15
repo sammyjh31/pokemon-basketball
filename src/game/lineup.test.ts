@@ -4,14 +4,23 @@ import { gameReducer, initialState } from "./state";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import type { Roster } from "./types";
 
-const roster: Roster = { PG: 65, SG: 135, SF: 6, PF: 68, C: 143 };
+const roster: Roster = {
+  PG: 65,
+  SG: 135,
+  SF: 6,
+  PF: 68,
+  C: 143,
+  B1: 9,
+  B2: 94,
+  B3: 59,
+};
 describe("shareable basketball lineups", () => {
-  it("round-trips the five positions and empty slots without unrelated URL parameters", () => {
+  it("round-trips the eight positions and empty slots without unrelated URL parameters", () => {
     const link = lineupLink("https://example.com/?tracking=123#season", {
       ...roster,
       C: null,
     });
-    expect(link).toBe("https://example.com/?lineup=65,135,6,68,0");
+    expect(link).toBe("https://example.com/?lineup=65,135,6,68,0,9,94,59");
     expect(parseLineup(new URL(link).search)).toEqual({ ...roster, C: null });
   });
   it("rejects malformed, duplicate, unknown and incomplete links", () => {
@@ -31,12 +40,15 @@ describe("shareable basketball lineups", () => {
       SF: null,
       PF: null,
       C: null,
+      B1: null,
+      B2: null,
+      B3: null,
     });
   });
-  it("randomizes into five unique eligible Pokémon and is reproducible", () => {
+  it("randomizes into eight unique eligible Pokémon and is reproducible", () => {
     for (let seed = 0; seed < 100; seed++) {
       const ids = Object.values(randomLineup(false, seed));
-      expect(new Set(ids).size).toBe(5);
+      expect(new Set(ids).size).toBe(8);
       expect(ids.every((id) => id && !POKEMON_BY_ID.get(id)!.legendary)).toBe(
         true,
       );

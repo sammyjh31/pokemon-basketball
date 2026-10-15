@@ -4,6 +4,7 @@ import {
   POSITIONS,
   POSITION_NAMES,
   type Position,
+  type RosterSlot,
   type Run,
   type TeamRatings,
 } from "../game/types";
@@ -19,7 +20,7 @@ export function Court({
   run: Run;
   ratings: TeamRatings;
   pending: number | null;
-  swap: Position | null;
+  swap: RosterSlot | null;
   onSlot: (position: Position) => void;
   onReset: () => void;
 }) {
@@ -96,7 +97,9 @@ export function Court({
           : swap
             ? "Choose another position to swap your players."
             : run.result
-              ? "Season complete. Your starting five is in the books."
+              ? run.result.modelVersion === 2
+                ? "Season complete. Your eight-player roster is in the books."
+                : "Your original five-player season is preserved."
               : run.mode === "spin"
                 ? "Pick a Pokémon, then tap an open position. Placements lock in."
                 : "Pick any Pokémon. Tap two occupied positions to swap them."}
@@ -118,9 +121,13 @@ export function Court({
         ))}
       </div>
       <div className="rating-caption">
-        {ratings.complete
-          ? "Your lineup is set. Let’s see what they’re made of."
-          : "Ratings are provisional until all five positions are filled."}
+        {run.result
+          ? run.result.modelVersion === 2
+            ? "Season complete. View player statistics and awards below."
+            : "Start a new eight-player season to generate player statistics."
+          : ratings.complete
+            ? "Your eight-player rotation is set. Ready for the season."
+            : "Fill five starters and three reserves to complete the team."}
       </div>
     </section>
   );

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { initialState, gameReducer } from "./state";
-import { POSITIONS } from "./types";
+import { ROSTER_SLOTS } from "./types";
 export function completedState() {
   let state = initialState(14);
-  for (const position of POSITIONS)
+  for (const position of ROSTER_SLOTS)
     state = gameReducer(state, {
       type: "PLACE",
       pokemonId: state.run.offerIds[0],
@@ -12,7 +12,7 @@ export function completedState() {
   return gameReducer(state, { type: "SIMULATE" });
 }
 describe("run state", () => {
-  it("blocks simulation until all five starters are drafted", () => {
+  it("blocks simulation until all eight players are drafted", () => {
     const s = initialState(1);
     expect(gameReducer(s, { type: "SIMULATE" })).toBe(s);
   });
@@ -39,6 +39,9 @@ describe("run state", () => {
     expect(next.records).toEqual(s.records);
     expect(next.run.result).toBeNull();
     expect(Object.values(next.run.roster)).toEqual([
+      null,
+      null,
+      null,
       null,
       null,
       null,

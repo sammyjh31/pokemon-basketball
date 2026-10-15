@@ -2,9 +2,10 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
 import { initialState, gameReducer } from "../game/state";
-import { POSITIONS } from "../game/types";
+import { ROSTER_SLOTS } from "../game/types";
 import { STORAGE_KEY, type StorageLike } from "../game/persistence";
 import { StrictMode } from "react";
+import { simulateSeason as legacySeason } from "../game/legacySeason";
 const memory = (): StorageLike => {
   let s: string | null = null;
   return {
@@ -16,7 +17,7 @@ const memory = (): StorageLike => {
 };
 const fill = () => {
   let state = initialState(31);
-  for (const position of POSITIONS)
+  for (const position of ROSTER_SLOTS)
     state = gameReducer(state, {
       type: "PLACE",
       position,
@@ -44,6 +45,47 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 describe("playable draft room", () => {
+  it("shows archived five-player recaps without unusable bench controls and protects them from reset", () => {
+    const state = initialState(12);
+    state.run.roster = {
+      PG: 65,
+      SG: 135,
+      SF: 6,
+      PF: 68,
+      C: 143,
+      B1: null,
+      B2: null,
+      B3: null,
+    };
+    state.run.result = { ...legacySeason(state.run), modelVersion: 1 };
+    render(<App initial={state} storage={memory()} />);
+    expect(screen.getByText("Archived recap")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Bench and coaching" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("season-record")).toHaveTextContent(
+      `${state.run.result.wins}–${state.run.result.losses}`,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "New run" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("confirms resets when only the bench has been drafted", () => {
+    const state = gameReducer(initialState(17), {
+      type: "NEW_RUN",
+      mode: "free",
+      includeLegends: true,
+      seed: 17,
+    });
+    render(<App initial={state} storage={memory()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Auto-fill bench" }));
+    const before = slot("B1").getAttribute("aria-label");
+    fireEvent.click(screen.getByRole("button", { name: "New run" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Keep playing" }));
+    expect(slot("B1")).toHaveAccessibleName(before!);
+  });
+
   it("randomizes and clears a free lineup without resetting records", () => {
     const state = gameReducer(initialState(17), {
       type: "NEW_RUN",
@@ -58,14 +100,14 @@ describe("playable draft room", () => {
       screen.getByRole("button", { name: "Simulate season" }),
     ).toBeEnabled();
     const saved = JSON.parse(storage.getItem(STORAGE_KEY)!);
-    expect(new Set(Object.values(saved.run.roster)).size).toBe(5);
+    expect(new Set(Object.values(saved.run.roster)).size).toBe(8);
     expect(
       Object.values(saved.run.roster).some((id) =>
         [144, 145, 146, 150, 151].includes(id as number),
       ),
     ).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
-    for (const position of POSITIONS)
+    for (const position of ROSTER_SLOTS)
       expect(slot(position)).toHaveAccessibleName(`${position} slot: Empty`);
     expect(JSON.parse(storage.getItem(STORAGE_KEY)!).records).toEqual(
       state.records,
@@ -184,12 +226,12 @@ describe("playable draft room", () => {
       screen.queryByRole("textbox", { name: "Lineup link" }),
     ).not.toBeInTheDocument();
   });
-  it("drafts five starters and simulates exactly one season", () => {
+  it("drafts eight players and simulates exactly one season", () => {
     render(<App initial={initialState(17)} storage={memory()} />);
     expect(
       screen.getByRole("button", { name: "Simulate season" }),
     ).toBeDisabled();
-    for (const p of POSITIONS) {
+    for (const p of ROSTER_SLOTS) {
       pick();
       fireEvent.click(slot(p));
     }

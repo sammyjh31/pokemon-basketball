@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createRun, placePokemon, reroll, swapPositions } from "./draft";
-import { POSITIONS, type Run } from "./types";
+import { ROSTER_SLOTS, type Run } from "./types";
 import { POKEMON_BY_ID } from "../data/pokemon";
 
 describe("draft rules", () => {
@@ -9,7 +9,7 @@ describe("draft rules", () => {
       let run = createRun("spin", false, seed);
       expect(run).toEqual(createRun("spin", false, seed));
       expect(run.rerollsLeft).toBe(2);
-      for (const position of POSITIONS) {
+      for (const position of ROSTER_SLOTS) {
         expect(new Set(run.offerIds).size).toBe(4);
         expect(
           run.offerIds.every(
@@ -20,7 +20,7 @@ describe("draft rules", () => {
         ).toBe(true);
         run = placePokemon(run, run.offerIds[0], position);
       }
-      expect(new Set(Object.values(run.roster)).size).toBe(5);
+      expect(new Set(Object.values(run.roster)).size).toBe(8);
       expect(run.offerIds).toEqual([]);
     }
   });

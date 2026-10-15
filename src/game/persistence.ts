@@ -2,7 +2,10 @@ import { POKEMON_BY_ID } from "../data/pokemon";
 import { initialState } from "./state";
 import { simulateSeason } from "./season";
 import {
+  ROSTER_SLOTS,
   POSITIONS,
+  TACTICS,
+  ROTATIONS,
   type GameState,
   type ModeRecords,
   type Roster,
@@ -12,7 +15,9 @@ export interface StorageLike {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
 }
-export const STORAGE_KEY = "pokemon-basketball:v1";
+export const STORAGE_KEY = "pokemon-basketball:v2";
+import { validateLegacy } from "./legacyPersistence";
+import { refreshOffers } from "./draft";
 const fail = (): never => {
   throw new Error("Invalid saved game");
 };
@@ -50,7 +55,31 @@ function records(value: unknown): ModeRecords {
 }
 function validate(value: unknown): GameState {
   const root = object(value);
-  if (root.version !== 1) return fail();
+  if (root.version === 1) {
+    const legacy = validateLegacy(root);
+    if (
+      !legacy.run.result &&
+      legacy.run.mode === "spin" &&
+      legacy.run.offerIds.length === 0
+    )
+      legacy.run = refreshOffers(legacy.run);
+    return legacy;
+  }
+  if (root.version !== 2) return fail();
+  const candidate = object(root.run);
+  if (candidate.result && object(candidate.result).modelVersion === 1) {
+    const source = object(candidate.roster);
+    if ([source.B1, source.B2, source.B3].some((id) => id !== null))
+      return fail();
+    return validateLegacy({
+      ...root,
+      version: 1,
+      run: {
+        ...candidate,
+        roster: Object.fromEntries(POSITIONS.map((p) => [p, source[p]])),
+      },
+    });
+  }
   const raw = object(root.run),
     source = object(raw.roster),
     history = object(root.records);
@@ -62,8 +91,8 @@ function validate(value: unknown): GameState {
   )
     return fail();
   const roster = {} as Roster;
-  if (Object.keys(source).length !== 5) return fail();
-  for (const position of POSITIONS) {
+  if (Object.keys(source).length !== 8) return fail();
+  for (const position of ROSTER_SLOTS) {
     const id = source[position];
     if (id === null) {
       roster[position] = null;
@@ -77,7 +106,7 @@ function validate(value: unknown): GameState {
   if (new Set(chosen).size !== chosen.length || !Array.isArray(raw.offerIds))
     return fail();
   const offerIds = raw.offerIds.map((id) => integer(id, 1, 151));
-  const expectedOffers = raw.mode === "spin" && chosen.length < 5 ? 4 : 0;
+  const expectedOffers = raw.mode === "spin" && chosen.length < 8 ? 4 : 0;
   if (
     offerIds.length !== expectedOffers ||
     new Set(offerIds).size !== offerIds.length ||
@@ -97,6 +126,12 @@ function validate(value: unknown): GameState {
     rerollsLeft: integer(raw.rerollsLeft, 0, 2),
     draftSeed: integer(raw.draftSeed, 0, 0xffffffff),
     seasonSeed: integer(raw.seasonSeed, 0, 0xffffffff),
+    tactic: TACTICS.includes(raw.tactic as never)
+      ? (raw.tactic as Run["tactic"])
+      : fail(),
+    rotation: ROTATIONS.includes(raw.rotation as never)
+      ? (raw.rotation as Run["rotation"])
+      : fail(),
     result: null,
   };
   const parsedRecords = {
@@ -106,7 +141,7 @@ function validate(value: unknown): GameState {
   if (raw.result !== null) {
     const result = object(raw.result);
     if (
-      chosen.length !== 5 ||
+      chosen.length !== 8 ||
       !Array.isArray(result.games) ||
       result.games.length !== 82
     )
@@ -119,11 +154,7 @@ function validate(value: unknown): GameState {
       result.mvpId !== expected.mvpId
     )
       return fail();
-    for (let i = 0; i < 82; i++) {
-      const actual = object(result.games[i]);
-      for (const [key, val] of Object.entries(expected.games[i]))
-        if (actual[key] !== val) return fail();
-    }
+    if (JSON.stringify(result) !== JSON.stringify(expected)) return fail();
     const record = parsedRecords[run.mode];
     if (
       record.runs < 1 ||
@@ -133,7 +164,7 @@ function validate(value: unknown): GameState {
       return fail();
     run.result = expected;
   }
-  return { version: 1, run, records: parsedRecords };
+  return { version: 2, run, records: parsedRecords };
 }
 export function loadGame(
   storage: StorageLike,
@@ -141,7 +172,8 @@ export function loadGame(
 ): { state: GameState; notice: string | null } {
   let source: string | null;
   try {
-    source = storage.getItem(STORAGE_KEY);
+    source =
+      storage.getItem(STORAGE_KEY) ?? storage.getItem("pokemon-basketball:v1");
   } catch {
     return {
       state: initialState(fallbackSeed),

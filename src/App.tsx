@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { POKEMON_BY_ID } from "./data/pokemon";
 import { teamRatings } from "./game/ratings";
-import type { GameState, Mode, Position } from "./game/types";
+import { teamRatings as legacyTeamRatings } from "./game/legacyRatings";
+import type { GameState, Mode, RosterSlot } from "./game/types";
 import type { StorageLike } from "./game/persistence";
 import { useGame, newSeed } from "./hooks/useGame";
 import { Scoreboard } from "./components/Scoreboard";
@@ -12,6 +13,8 @@ import { RulesPanel } from "./components/RulesPanel";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { LineupTools } from "./components/LineupTools";
 import { SpriteContext, type SpriteStyle } from "./components/SpriteControls";
+import { BenchPanel } from "./components/BenchPanel";
+import { emptyRoster } from "./game/types";
 import { randomLineup } from "./game/lineup";
 export default function App({
   initial,
@@ -24,14 +27,17 @@ export default function App({
       useGame(initial, storage),
     { run, records } = state;
   const [pending, setPending] = useState<number | null>(null),
-    [swap, setSwap] = useState<Position | null>(null);
+    [swap, setSwap] = useState<RosterSlot | null>(null);
   const [reset, setReset] = useState<{
     mode: Mode;
     includeLegends: boolean;
   } | null>(null);
   const [animatedRun, setAnimatedRun] = useState<string | null>(null),
     [announcement, setAnnouncement] = useState("");
-  const ratings = teamRatings(run.roster);
+  const archived = !!run.result && run.result.modelVersion !== 2;
+  const ratings = archived
+    ? legacyTeamRatings(run.roster)
+    : teamRatings(run.roster, run.tactic, run.rotation);
   const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("pixel");
   const start = (mode: Mode, includeLegends: boolean) => {
     dispatch({ type: "NEW_RUN", mode, includeLegends, seed: newSeed() });
@@ -42,10 +48,14 @@ export default function App({
     setAnnouncement("New draft started. Pick your first Pokémon.");
   };
   const requestReset = (mode: Mode, includeLegends: boolean) => {
-    if (ratings.filled > 0) setReset({ mode, includeLegends });
+    if (
+      Object.values(run.roster).some((id) => id != null) ||
+      run.rerollsLeft < 2
+    )
+      setReset({ mode, includeLegends });
     else start(mode, includeLegends);
   };
-  const onSlot = (position: Position) => {
+  const onSlot = (position: RosterSlot) => {
     if (run.result) return;
     if (pending !== null) {
       if (run.mode === "spin" && run.roster[position] !== null) return;
@@ -85,7 +95,7 @@ export default function App({
           )}
           <div className="mobile-title">
             <h1>{run.mode === "free" ? "Lineup builder" : "82–0 Challenge"}</h1>
-            <p>Five Pokémon. One perfect season.</p>
+            <p>Eight Pokémon. One complete team.</p>
           </div>
           <div className="draft-layout" id="draft">
             <div className="court-column">
@@ -97,11 +107,30 @@ export default function App({
                 onSlot={onSlot}
                 onReset={() => requestReset(run.mode, run.includeLegends)}
               />
+              {!archived && (
+                <BenchPanel
+                  run={run}
+                  ratings={ratings}
+                  pending={pending}
+                  swap={swap}
+                  onSlot={onSlot}
+                  onAutoFill={() => {
+                    dispatch({ type: "AUTO_BENCH" });
+                    setPending(null);
+                    setSwap(null);
+                  }}
+                  onTactic={(tactic) => dispatch({ type: "TACTIC", tactic })}
+                  onRotation={(rotation) =>
+                    dispatch({ type: "ROTATION", rotation })
+                  }
+                />
+              )}
             </div>
             <DraftPanel
               key={run.id}
               run={run}
               pending={pending}
+              inspectId={swap ? run.roster[swap] : null}
               onPick={(id) => {
                 setPending(pending === id ? null : id);
                 setSwap(null);
@@ -130,22 +159,16 @@ export default function App({
                     });
                     setPending(null);
                     setSwap(null);
-                    setAnnouncement("A new starting five is ready.");
+                    setAnnouncement("A new eight-player roster is ready.");
                   }}
                   onClear={() => {
                     dispatch({
                       type: "SET_LINEUP",
-                      roster: {
-                        PG: null,
-                        SG: null,
-                        SF: null,
-                        PF: null,
-                        C: null,
-                      },
+                      roster: emptyRoster(),
                     });
                     setPending(null);
                     setSwap(null);
-                    setAnnouncement("All five positions are cleared.");
+                    setAnnouncement("All eight roster slots are cleared.");
                   }}
                 />
               }

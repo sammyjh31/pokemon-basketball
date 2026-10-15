@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { OPPONENTS, SCHEDULE } from "../data/opponents";
 import { POKEMON_BY_ID } from "../data/pokemon";
-import { winProbability } from "../game/season";
-import type { Run, TeamRatings } from "../game/types";
+import {
+  ROSTER_SLOTS,
+  type GameResult,
+  type Run,
+  type TeamRatings,
+} from "../game/types";
 import { Portrait } from "./Portrait";
+import { SeasonStats } from "./SeasonStats";
+import { BoxScore } from "./BoxScore";
 export function SeasonPanel({
   run,
   ratings,
@@ -21,6 +27,12 @@ export function SeasonPanel({
   const [visible, setVisible] = useState(result && !animate ? 82 : 0);
   const [copyMessage, setCopyMessage] = useState(""),
     [copyFallback, setCopyFallback] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<GameResult | null>(null);
+  useEffect(() => {
+    setCopyMessage("");
+    setCopyFallback(false);
+    setSelectedGame(null);
+  }, [run.id, result]);
   useEffect(() => {
     if (!result) {
       setVisible(0);
@@ -48,14 +60,24 @@ export function SeasonPanel({
     wins = showing.filter((g) => g.won).length,
     losses = showing.length - wins;
   const done = !!result && visible === 82;
+  const archived =
+    !!result && (result.modelVersion !== 2 || !result.playerStats?.length);
+  const rosterFilled = ROSTER_SLOTS.filter(
+    (slot) => run.roster[slot] != null,
+  ).length;
+  const ready = ratings.complete && rosterFilled === ROSTER_SLOTS.length;
   const mvp = result ? POKEMON_BY_ID.get(result.mvpId) : null;
-  const recap = result
-    ? `82–0 Pokémon Basketball\n${result.wins}–${result.losses} · ${run.mode === "spin" ? "Spin & Pick" : "Free Draft"}\n${Object.entries(
-        run.roster,
-      )
-        .map(([p, id]) => `${p}: ${POKEMON_BY_ID.get(id!)!.name}`)
-        .join(" · ")}\nMVP: ${mvp?.name}`
-    : "";
+  const recap =
+    done && result
+      ? `82–0 Pokémon Basketball\n${result.wins}–${result.losses} · ${run.mode === "spin" ? "Spin & Pick" : "Free Draft"}\n${Object.entries(
+          run.roster,
+        )
+          .filter(([, id]) => id != null)
+          .map(([p, id]) => `${p}: ${POKEMON_BY_ID.get(id!)!.name}`)
+          .join(
+            " · ",
+          )}\n${archived ? "MVP" : "Team MVP"}: ${mvp?.name}${!archived && result.awards?.length ? `\nTeam awards: ${result.awards.map((award) => `${award.title} — ${POKEMON_BY_ID.get(award.pokemonId)?.name}`).join(" · ")}` : ""}`
+      : "";
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(recap);
@@ -66,13 +88,6 @@ export function SeasonPanel({
       setCopyMessage("Select and copy your recap below.");
     }
   };
-  const expected = ratings.complete
-    ? SCHEDULE.reduce(
-        (sum, g) =>
-          sum + winProbability(ratings, OPPONENTS[g.opponentId - 1], g.home),
-        0,
-      )
-    : null;
   return (
     <section
       className="season-panel"
@@ -86,16 +101,18 @@ export function SeasonPanel({
           <p>
             {result
               ? done
-                ? "Every game counts. Here’s how your five stacked up."
+                ? archived
+                  ? "Your original season, preserved."
+                  : "Eight players. Five on court. A season of contributions."
                 : `Game ${visible} of 82. The story is unfolding…`
-              : "Your lineup is the beginning. Eighty-two games tell the story."}
+              : "Build an eight-player roster. Eighty-two games tell the story."}
           </p>
         </div>
         {!result ? (
           <button
             className="button primary simulate"
             onClick={onSimulate}
-            disabled={!ratings.complete}
+            disabled={!ready}
             aria-label="Simulate season"
           >
             Simulate season{" "}
@@ -134,21 +151,24 @@ export function SeasonPanel({
           </button>
         )}
       </div>
-      {!result && !ratings.complete ? (
+      {!result && !ready ? (
         <div className="season-empty">
           <div className="empty-season-icon" aria-hidden="true">
             82
           </div>
           <div>
             <strong>Your season is waiting.</strong>
-            <p>Fill all five positions to tip things off.</p>
+            <p>
+              Fill five starting positions and three bench spots to tip things
+              off.
+            </p>
           </div>
           <div
             className="empty-progress"
-            aria-label={`${ratings.filled} of 5 positions filled`}
+            aria-label={`${rosterFilled} of 8 roster spots filled`}
           >
-            {[0, 1, 2, 3, 4].map((i) => (
-              <span className={i < ratings.filled ? "on" : ""} key={i} />
+            {ROSTER_SLOTS.map((slot, i) => (
+              <span className={i < rosterFilled ? "on" : ""} key={slot} />
             ))}
           </div>
         </div>
@@ -157,10 +177,12 @@ export function SeasonPanel({
           <div className="season-overview">
             <div className="season-record">
               <span className="eyebrow">
-                {result ? "SEASON RECORD" : "PROJECTED WINS"}
+                {result ? "SEASON RECORD" : "TEAM RATING"}
               </span>
               <strong data-testid="season-record">
-                {result ? `${wins}–${losses}` : expected?.toFixed(1)}
+                {result
+                  ? `${wins}–${losses}`
+                  : `${ratings.overall.toFixed(1)}/100`}
               </strong>
               <span>
                 {done
@@ -169,12 +191,16 @@ export function SeasonPanel({
                     : `${Math.round((wins / 82) * 100)}% win rate · ${run.mode === "spin" ? "Spin & Pick" : "Free Draft"}`
                   : result
                     ? "One game at a time."
-                    : "Based on your current lineup"}
+                    : "Rotation, role fit and coaching"}
               </span>
             </div>
             <div className="season-meta">
               <span className="eyebrow">
-                {done ? "SEASON MVP" : "THE CHALLENGE"}
+                {done
+                  ? archived
+                    ? "SEASON MVP"
+                    : "TEAM MVP"
+                  : "THE CHALLENGE"}
               </span>
               {done && mvp ? (
                 <div className="mvp">
@@ -198,6 +224,31 @@ export function SeasonPanel({
               )}
             </div>
           </div>
+          {done && archived && (
+            <div className="archived-season-note">
+              <strong>Archived recap</strong>
+              <p>
+                These scores and your MVP are preserved from the original
+                simulation. Start a new eight-player season to unlock player
+                statistics, box scores, and team awards.
+              </p>
+            </div>
+          )}
+          {done && !archived && result?.playerStats && (
+            <SeasonStats players={result.playerStats} awards={result.awards} />
+          )}
+          {done && !archived && (
+            <p className="schedule-hint">
+              Select a game score to open the full box score.
+            </p>
+          )}
+          {!archived && (
+            <p className="schedule-hint">
+              Rating edge compares your team’s overall rating with the
+              opponent’s. It is not a win probability; possessions decide the
+              result.
+            </p>
+          )}
           <div className="schedule-wrap">
             <table className="schedule-table">
               <caption className="sr-only">
@@ -207,7 +258,7 @@ export function SeasonPanel({
                 <tr>
                   <th scope="col">GAME</th>
                   <th scope="col">OPPONENT</th>
-                  <th scope="col">WIN ODDS</th>
+                  <th scope="col">{archived ? "WIN ODDS" : "RATING EDGE"}</th>
                   <th scope="col">{result ? "RESULT" : "VENUE"}</th>
                 </tr>
               </thead>
@@ -241,18 +292,45 @@ export function SeasonPanel({
                         </span>
                       </td>
                       <td className="odds">
-                        {(
-                          winProbability(ratings, opponent, match.home) * 100
-                        ).toFixed(0)}
-                        %
+                        {archived && game
+                          ? `${Math.round(game.winProbability * 100)}%`
+                          : `${ratings.overall >= (opponent.offense + opponent.defense) / 2 ? "+" : ""}${(ratings.overall - (opponent.offense + opponent.defense) / 2).toFixed(1)}`}
                       </td>
                       <td>
                         {game ? (
-                          <span className="game-score">
-                            <b>{game.won ? "W" : "L"}</b> {game.teamScore}–
-                            {game.opponentScore}
-                            {game.overtime && <small> OT</small>}
-                          </span>
+                          done && !archived && game.boxScore ? (
+                            <button
+                              type="button"
+                              className="game-score game-score-button"
+                              aria-label={`View box score for game ${index + 1} against ${opponent.name}, ${game.won ? "win" : "loss"} ${game.teamScore} to ${game.opponentScore}`}
+                              onClick={() => setSelectedGame(game)}
+                            >
+                              <b>{game.won ? "W" : "L"}</b> {game.teamScore}–
+                              {game.opponentScore}
+                              {game.overtime && (
+                                <small>
+                                  {" "}
+                                  {game.overtimePeriods &&
+                                  game.overtimePeriods > 1
+                                    ? game.overtimePeriods
+                                    : ""}
+                                  OT
+                                </small>
+                              )}
+                              <span
+                                className="box-score-link-icon"
+                                aria-hidden="true"
+                              >
+                                ↗
+                              </span>
+                            </button>
+                          ) : (
+                            <span className="game-score">
+                              <b>{game.won ? "W" : "L"}</b> {game.teamScore}–
+                              {game.opponentScore}
+                              {game.overtime && <small> OT</small>}
+                            </span>
+                          )
                         ) : (
                           <span className="pending-game">
                             {result
@@ -277,18 +355,25 @@ export function SeasonPanel({
           {mvp?.name}.
         </p>
       )}
-      {copyMessage && (
+      {done && copyMessage && (
         <p role="status" className="copy-message">
           {copyMessage}
         </p>
       )}
-      {copyFallback && (
+      {done && copyFallback && (
         <textarea
           className="recap-text"
           aria-label="Season recap"
           value={recap}
           readOnly
           onFocus={(e) => e.target.select()}
+        />
+      )}
+      {done && selectedGame && (
+        <BoxScore
+          game={selectedGame}
+          opponent={OPPONENTS[selectedGame.opponentId - 1]}
+          onClose={() => setSelectedGame(null)}
         />
       )}
     </section>

@@ -34,8 +34,8 @@ const styles = ["Balanced", "Run & gun", "Lockdown", "Inside out"];
 export const OPPONENTS: Opponent[] = names.map((name, i) => ({
   id: i + 1,
   name,
-  offense: 35 + ((i * 13) % 31),
-  defense: 35 + ((i * 19 + 8) % 31),
+  offense: 50 + ((i * 13) % 31),
+  defense: 50 + ((i * 19 + 8) % 31),
   pace: ((i * 7) % 13) - 6,
   style: styles[i % 4],
 }));

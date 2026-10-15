@@ -1,0 +1,166 @@
+import { POKEMON_BY_ID } from "../data/pokemon";
+import {
+  attributes,
+  bestPosition,
+  positionRating,
+  rotationMinutes,
+} from "../game/ratings";
+import {
+  BENCH_SLOTS,
+  SLOT_NAMES,
+  TACTICS,
+  TACTIC_LABELS,
+  type RosterSlot,
+  type Run,
+  type TeamRatings,
+  type Tactic,
+  type RotationStyle,
+} from "../game/types";
+import { Portrait } from "./Portrait";
+const tacticNotes: Record<Tactic, string> = {
+  balanced: "A mix of rim pressure and perimeter shots.",
+  pace: "More possessions. Speed and stamina become especially valuable.",
+  perimeter: "More threes. Surround your creators with shooters.",
+  interior:
+    "Attack the paint. Strength, finishing and passing drive the offense.",
+  defense: "Slow the pace and lean on stops, rebounding and rim protection.",
+};
+export function BenchPanel({
+  run,
+  ratings,
+  pending,
+  swap,
+  onSlot,
+  onAutoFill,
+  onTactic,
+  onRotation,
+}: {
+  run: Run;
+  ratings: TeamRatings;
+  pending: number | null;
+  swap: RosterSlot | null;
+  onSlot: (slot: RosterSlot) => void;
+  onAutoFill: () => void;
+  onTactic: (tactic: Tactic) => void;
+  onRotation: (rotation: RotationStyle) => void;
+}) {
+  const minutes = rotationMinutes(run.roster, run.rotation),
+    locked = !!run.result;
+  return (
+    <section className="bench-panel" aria-label="Bench and coaching">
+      <div className="bench-heading">
+        <div>
+          <span className="eyebrow">THE SECOND UNIT</span>
+          <h2>
+            Three more difference-makers{" "}
+            <span>{BENCH_SLOTS.filter((s) => run.roster[s]).length}/3</span>
+          </h2>
+        </div>
+        {run.mode === "free" && !locked && (
+          <button
+            className="text-button"
+            onClick={onAutoFill}
+            disabled={BENCH_SLOTS.every((s) => run.roster[s])}
+          >
+            Auto-fill bench
+          </button>
+        )}
+      </div>
+      <div className="bench-grid">
+        {BENCH_SLOTS.map((slot) => {
+          const mon = POKEMON_BY_ID.get(run.roster[slot] ?? -1);
+          return (
+            <button
+              key={slot}
+              className={`bench-slot ${swap === slot ? "swapping" : ""} ${pending && (!mon || run.mode === "free") ? "available" : ""}`}
+              aria-label={`${slot} slot: ${mon?.name ?? "Empty"}`}
+              aria-pressed={swap === slot}
+              disabled={locked || (!!pending && run.mode === "spin" && !!mon)}
+              onClick={() => onSlot(slot)}
+            >
+              <span className="eyebrow">{SLOT_NAMES[slot]}</span>
+              <div className="bench-portrait">
+                {mon ? (
+                  <Portrait mon={mon} />
+                ) : (
+                  <span aria-hidden="true">+</span>
+                )}
+              </div>
+              <strong>{mon?.name ?? "Empty slot"}</strong>
+              <small>
+                {mon
+                  ? `${bestPosition(mon)} · ${Math.round(positionRating(mon, bestPosition(mon)))} FIT`
+                  : "Pick any position"}
+              </small>
+              <span className="bench-minutes">
+                {mon
+                  ? `${minutes[slot]} MIN · ${Math.round(attributes(mon).stamina)} STA`
+                  : "Ready to contribute"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="coaching-controls">
+        <label>
+          Offensive identity
+          <select
+            aria-label="Coaching style"
+            value={run.tactic}
+            disabled={locked}
+            onChange={(e) => onTactic(e.target.value as Tactic)}
+          >
+            {TACTICS.map((t) => (
+              <option key={t} value={t}>
+                {TACTIC_LABELS[t]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Rotation emphasis
+          <select
+            aria-label="Rotation emphasis"
+            value={run.rotation}
+            disabled={locked}
+            onChange={(e) => onRotation(e.target.value as RotationStyle)}
+          >
+            <option value="balanced">Balanced minutes</option>
+            <option value="starters">Lean on starters</option>
+            <option value="bench">Trust the bench</option>
+          </select>
+        </label>
+      </div>
+      <p className="coaching-note">
+        {tacticNotes[run.tactic]}{" "}
+        {ratings.complete
+          ? "240 regulation player-minutes, adjusted for role and stamina."
+          : "Fill all eight slots to complete your rotation."}
+      </p>
+      <div className="rotation-strip" aria-label="Projected minutes">
+        {Object.entries(minutes).map(([slot, min]) => (
+          <span key={slot}>
+            <b>{slot}</b>
+            {min}
+            <small>MIN</small>
+          </span>
+        ))}
+      </div>
+      <div className="team-profile">
+        {(
+          [
+            ["Spacing", ratings.spacing],
+            ["Creation", ratings.creation],
+            ["Rim protection", ratings.rimProtection],
+            ["Bench", ratings.bench],
+          ] as const
+        ).map(([label, val]) => (
+          <span key={label}>
+            {label}
+            <b>{Math.round(val ?? 0)}</b>
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}

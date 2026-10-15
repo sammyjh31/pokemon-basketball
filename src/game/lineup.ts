@@ -1,10 +1,10 @@
 import { POKEMON, POKEMON_BY_ID } from "../data/pokemon";
 import { nextRandom } from "./random";
-import { POSITIONS, type Roster } from "./types";
+import { ROSTER_SLOTS, type Roster } from "./types";
 
 export function validRoster(value: Roster, includeLegends = true): boolean {
-  if (!value || Object.keys(value).length !== 5) return false;
-  const ids = POSITIONS.map((position) => value[position]);
+  if (!value || Object.keys(value).length !== 8) return false;
+  const ids = ROSTER_SLOTS.map((position) => value[position]);
   const filled = ids.filter((id) => id !== null);
   return (
     new Set(filled).size === filled.length &&
@@ -18,10 +18,12 @@ export function validRoster(value: Roster, includeLegends = true): boolean {
 
 export function parseLineup(search: string): Roster | null {
   const source = new URLSearchParams(search).get("lineup");
-  if (!source || !/^\d{1,3}(,\d{1,3}){4}$/.test(source)) return null;
+  if (!source || !/^\d{1,3}(,\d{1,3}){4}(,\d{1,3}){0,3}$/.test(source))
+    return null;
   const ids = source.split(",").map(Number);
+  if (ids.length !== 5 && ids.length !== 8) return null;
   const roster = Object.fromEntries(
-    POSITIONS.map((p, i) => [p, ids[i] || null]),
+    ROSTER_SLOTS.map((p, i) => [p, ids[i] || null]),
   ) as Roster;
   return validRoster(roster) ? roster : null;
 }
@@ -30,7 +32,7 @@ export function lineupLink(base: string, roster: Roster): string {
   const url = new URL(base);
   url.search = "";
   url.hash = "";
-  url.search = `lineup=${POSITIONS.map((p) => roster[p] ?? 0).join(",")}`;
+  url.search = `lineup=${ROSTER_SLOTS.map((p) => roster[p] ?? 0).join(",")}`;
   return url.toString();
 }
 
@@ -44,5 +46,5 @@ export function randomLineup(includeLegends: boolean, seed: number): Roster {
     const j = Math.floor(random.value * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  return Object.fromEntries(POSITIONS.map((p, i) => [p, pool[i]])) as Roster;
+  return Object.fromEntries(ROSTER_SLOTS.map((p, i) => [p, pool[i]])) as Roster;
 }

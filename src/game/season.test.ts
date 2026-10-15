@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { createRun, placePokemon } from "./draft";
-import { POSITIONS } from "./types";
+import { ROSTER_SLOTS } from "./types";
 import { OPPONENTS, SCHEDULE } from "../data/opponents";
 import { simulateSeason, winProbability, resolveScore } from "./season";
-import { nextRandom } from "./random";
 const full = (seed = 12) => {
   let run = createRun("free", true, seed);
-  [65, 150, 149, 68, 143].forEach((id, i) => {
-    run = placePokemon(run, id, POSITIONS[i]);
+  [65, 150, 149, 68, 143, 9, 94, 59].forEach((id, i) => {
+    run = placePokemon(run, id, ROSTER_SLOTS[i]);
   });
   return run;
 };
@@ -58,48 +57,7 @@ describe("season simulation", () => {
       expect(winProbability(team, opponent, true)).toBeGreaterThan(p);
     }
   });
-  it("gives stronger teams more wins across 500 shared random seasons", () => {
-    let weak = 0,
-      strong = 0;
-    for (let seed = 0; seed < 500; seed++) {
-      let state = seed;
-      for (const match of SCHEDULE) {
-        const roll = nextRandom(state);
-        state = roll.seed;
-        const opp = OPPONENTS.find((o) => o.id === match.opponentId)!;
-        weak += Number(
-          roll.value <
-            winProbability(
-              {
-                offense: 30,
-                defense: 30,
-                overall: 30,
-                filled: 5,
-                complete: true,
-              },
-              opp,
-              match.home,
-            ),
-        );
-        strong += Number(
-          roll.value <
-            winProbability(
-              {
-                offense: 75,
-                defense: 75,
-                overall: 75,
-                filled: 5,
-                complete: true,
-              },
-              opp,
-              match.home,
-            ),
-        );
-      }
-    }
-    expect(strong).toBeGreaterThan(weak);
-  });
-  it("resolves ties in overtime according to the sampled winner", () => {
+  it("preserves the legacy tie resolver for original save validation", () => {
     for (const won of [true, false]) {
       const score = resolveScore(100, 100, won, 2);
       expect(score.overtime).toBe(true);

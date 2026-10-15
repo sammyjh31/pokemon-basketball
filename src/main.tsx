@@ -12,3 +12,7 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </StrictMode>,
 );
+
+import "./roster.css";
+import "./scouting.css";
+import "./results.css";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { initialState, gameReducer } from "./state";
-import { POSITIONS, type GameState } from "./types";
+import { ROSTER_SLOTS, type GameState } from "./types";
 import { loadGame, saveGame, type StorageLike } from "./persistence";
 const memory = (value: string | null = null): StorageLike => ({
   getItem: () => value,
@@ -10,7 +10,7 @@ const memory = (value: string | null = null): StorageLike => ({
 });
 const finished = () => {
   let s = initialState(123);
-  for (const position of POSITIONS)
+  for (const position of ROSTER_SLOTS)
     s = gameReducer(s, {
       type: "PLACE",
       position,

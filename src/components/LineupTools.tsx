@@ -32,7 +32,7 @@ export function LineupTools({
     }
   };
   const download = async () => {
-    const court = document.querySelector<HTMLElement>(".court");
+    const court = document.querySelector<HTMLElement>(".court-column");
     if (!court || exporting) return;
     setExporting(true);
     try {
@@ -44,7 +44,7 @@ export function LineupTools({
       );
       const data = await toPng(court, {
         pixelRatio: 2,
-        backgroundColor: "#b98049",
+        backgroundColor: "#0f1318",
       });
       const link = document.createElement("a");
       link.download = "pokemon-basketball-lineup.png";

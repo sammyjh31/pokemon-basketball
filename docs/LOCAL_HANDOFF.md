@@ -1,37 +1,39 @@
 # Local and cloud handoff — 2026-10-15
 
-The previously completed cloud game was pushed to GitHub and pulled locally at `9bcf9ab`. Development now continues in `/Users/sam/Documents/PokeBBall`, with validated work committed and pushed to `main` at `https://github.com/sammyjh31/pokemon-basketball.git`.
+Development continues in `/Users/sam/Documents/PokeBBall`, synchronized to `main` at `https://github.com/sammyjh31/pokemon-basketball.git`. The earlier All-22 visual adaptation is baseline `a99197b`; this update builds on it.
 
 ## This update
 
-- Adapted All-22's compact dark interface, condensed headings, gold accents, sidebar controls, and pixel-sprite nameplates to a five-player basketball court.
-- Kept the original basketball ratings, deterministic season engine, 151-player pool, two draft modes, and browser-local save format.
-- Added randomize/clear, name or Pokédex-number search, pixel/artwork selection, shareable lineup URLs, and PNG court export.
-- Shared lineup imports ask before replacing a saved draft or season. Cancel keeps the current run; accepting preserves aggregate personal records. The query is consumed after the choice so later refreshes restore edits.
-- Bundled 151 pixel sprites and local font subsets; gameplay needs no network API or secrets.
-- Updated mode names in the existing Playwright suite to match the visible UI.
+- Exactly eight unique Pokémon: five starters and three reserves, required in both modes. Two challenge rerolls remain. Free builder includes auto-fill bench, swaps, randomize/clear, and eight-ID share links; old five-ID links still load.
+- 20 basketball skills with nonlinear base stats, capped size, mass/mobility tradeoffs, small type effects, weak role requirements, team composition, coaching, stamina, and rotation weighting. Full scouting reports and skill/position sorting help choose players.
+- Five coaching styles and three rotation emphases; 240 regulation minutes, up to 40 each, plus 25 per overtime.
+- Seeded possession simulation derives scores from recorded production. Shooting, turnovers, assists, offensive/defensive rebounds, final-free-throw rebounds, steals, and blocks feed actual player statistics.
+- Sortable per-game/totals tables, all-eight game box scores, and six explicitly team-only awards.
+- New opponents tuned against actual simulated rosters. Removed the old uncalibrated forecast UI; Rating Edge compares overall ratings without claiming probability.
+- v2 saves validate by deterministic replay. v1 drafts retain existing choices; completed seasons are archived with original scores and records. Frozen legacy ratings, opponents, and engine validate old results. **Future simulation changes must preserve model-version compatibility.**
+- PNG export region includes the court, bench, and coaching. Successful download remains unverified (see below).
 
 ## Validation
 
-- `npm test -- --run`: **59 tests passed** across seven files.
-- `npm run build`: passed TypeScript checking and production bundling on Node 24.19.0.
-- `git diff --check`: passed.
-- All 151 new PNG signatures and SHA-256 manifest entries verified.
-- In-app browser: imported lineup; canceled and accepted replacement of a saved season; searched by name and number; filtered types; replaced players; swapped with keyboard; changed sprite style; cleared/randomized; exhausted two rerolls; drafted all five challenge slots; simulated 82 results; restored the same 24–58 season after refresh.
-- Browser layout checks: 1440×1000, 768×1024, 390×844, and 320×844. No horizontal overflow at checked widths. Informative text contrast check returned no failures below 4.5:1. No browser warning/error logs.
-- Independent read-only review completed. Fixed saved-run replacement, stale clipboard fallback, and button hover contrast findings.
+- `npm test -- --run`: 83 unit/component tests passed across 12 files, including conservation, coaching effects, actual-engine strong/weak roster behavior and overtime, migration/tampering, reveal gating, awards, sorting, and focus.
+- TypeScript and production build checked with bundled Node 24.19.0; `.nvmrc` pins the same version.
+- In-app browser: eight-pick challenge season; free builder, auto-fill, coaching changes, scouting report; sortable season totals/per-game view; six awards; regulation and overtime box scores; Escape/focus restoration; completed 75–7 season unchanged after refresh. The user’s existing 67–15 v1 season also restored as an archived recap with no save warning; archived drafts hide unusable bench controls.
+- Desktop1440×1000, mobile390×844, narrow320×844: no document overflow; table scrolling stays inside its panel; mobile box-score dialog fits; all eight rows and six award cards present. Browser warning/error log empty.
+- Independent review completed. Fixed bench-only reset warning, partial-v1 choice preservation, export-region omission, forecast mismatch, final-free-throw rebounding, and actual-engine test coverage.
 
-## Remaining verification limits
+## Verification limits and scope
 
-- Browser security denied the PNG download test. The export implementation builds, but a successful downloaded image was **not verified**. No retry or workaround was attempted. Test Save image manually in a browser that permits the download when ready.
-- The standalone Playwright CLI suite was updated but **not rerun locally** in this desktop session; browser interactions used the supported in-app browser. The cloud baseline had passed that suite. A future environment with authorized browser automation can run `npm run test:e2e`.
-- Public deployment, accounts, additional generations, benches, and playoffs are outside this update.
+- A previous browser security decision denied the PNG download test. No retry or workaround was made. Downloaded PNG output remains unverified.
+- Standalone Playwright tests were updated for eight slots and bench auto-fill but were not executed in this desktop session; interactive checks used the supported in-app browser. An environment with authorized automation can run `npm run test:e2e`.
+- Opponents are aggregate teams, not drafted Pokémon rosters. No league/career awards, substitution timeline, injuries, foul-outs, playoffs, multiplayer, or public deployment.
 
 ## Continue
 
-1. Pull `main` with `git pull --ff-only origin main` before making changes. Do not overwrite uncommitted work in either environment.
-2. Use Node ≥24.15 (`.nvmrc`: 24.19.0), then `npm ci`.
-3. Start the local preview with `npm run dev -- --host 127.0.0.1 --port 5173 --strictPort`. Cloud previews may require `--host 0.0.0.0`.
-4. Run the relevant checks, commit, and push `main` before switching environments. If both environments changed it, fetch and reconcile without force-pushing.
+1. Pull `main` with `git pull --ff-only origin main` before editing; preserve uncommitted work in either environment.
+2. Node ≥24.15, tested24.19.0; `npm ci` after dependency changes. No new dependencies in this update.
+3. Local preview: `npm run dev -- --host 127.0.0.1 --port 5173 --strictPort`. Cloud may need `--host 0.0.0.0` and its forwarded URL.
+4. Run appropriate checks, commit, and push before switching environments. Reconcile concurrent changes without force-pushing.
 
-See [design QA](../design-qa.md), [screenshots](design/), and [README](../README.md). Browser saves do not travel with Git; lineup URLs carry only the five player IDs.
+Browser saves stay in their browser. Share links carry eight player IDs only. QA used `localhost:5173`, a separate origin from the user's `127.0.0.1:5173` save.
+
+See [design QA](../design-qa.md), [screenshots](design/), [README](../README.md), and the [implementation plan](superpowers/plans/2026-10-15-eight-player-simulation.md).

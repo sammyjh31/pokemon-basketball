@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-const positions = ["PG", "SG", "SF", "PF", "C"];
+const positions = ["PG", "SG", "SF", "PF", "C", "B1", "B2", "B3"];
 async function draftSpin(page: Page) {
   for (const p of positions) {
     await page
@@ -99,6 +99,7 @@ test("free draft search, swapping, filtering, and full season", async ({
   await expect(
     page.getByRole("button", { name: "Draft Squirtle", exact: true }),
   ).toHaveCount(0);
+  await page.getByRole("button", { name: "Auto-fill bench" }).click();
   await page
     .getByRole("button", { name: "Simulate season", exact: true })
     .click();
@@ -274,6 +275,7 @@ test("informative text and type labels meet normal-text contrast", async ({
       })
       .click();
   }
+  await page.getByRole("button", { name: "Auto-fill bench" }).click();
   await page
     .getByRole("button", { name: "Simulate season", exact: true })
     .click();
