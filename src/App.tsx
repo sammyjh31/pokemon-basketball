@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { POKEMON_BY_ID } from "./data/pokemon";
 import { teamRatings } from "./game/ratings";
 import { teamRatings as legacyTeamRatings } from "./game/legacyRatings";
@@ -16,6 +16,10 @@ import { SpriteContext, type SpriteStyle } from "./components/SpriteControls";
 import { BenchPanel } from "./components/BenchPanel";
 import { emptyRoster } from "./game/types";
 import { randomLineup } from "./game/lineup";
+const ArcadeMode = lazy(() =>
+  import("./components/ArcadeMode").then((m) => ({ default: m.ArcadeMode })),
+);
+
 export default function App({
   initial,
   storage,
@@ -37,6 +41,7 @@ export default function App({
       restorationProgress,
     } = useGame(initial, storage),
     { run, records } = state;
+  const [arcadeOpen, setArcadeOpen] = useState(false);
   const [pending, setPending] = useState<number | null>(null),
     [swap, setSwap] = useState<RosterSlot | null>(null);
   const [reset, setReset] = useState<{
@@ -87,6 +92,18 @@ export default function App({
       } else if (run.roster[position]) setSwap(position);
     }
   };
+  if (arcadeOpen)
+    return (
+      <Suspense
+        fallback={
+          <main className="app-shell">
+            <p role="status">Opening the arcade…</p>
+          </main>
+        }
+      >
+        <ArcadeMode run={run} onExit={() => setArcadeOpen(false)} />
+      </Suspense>
+    );
   return (
     <SpriteContext.Provider value={spriteStyle}>
       <a className="skip-link" href="#draft">
@@ -228,6 +245,39 @@ export default function App({
               <p className="sr-only" role="status">
                 {announcement}
               </p>
+              <section
+                id="arcade"
+                className="arcade-entry"
+                aria-label="Arcade basketball"
+              >
+                <div>
+                  <span className="eyebrow">TAKE THE COURT</span>
+                  <h2>Five on five. You're in control.</h2>
+                  <p>
+                    Bring your roster to a full-court arcade game. Turbo,
+                    alley-oops, and elemental heat.
+                  </p>
+                </div>
+                <div>
+                  <button
+                    className="button primary"
+                    disabled={
+                      simulating ||
+                      restoring ||
+                      importPending ||
+                      Object.values(run.roster).some((id) => id === null)
+                    }
+                    onClick={() => setArcadeOpen(true)}
+                  >
+                    Play arcade
+                  </button>
+                  {Object.values(run.roster).some((id) => id === null) && (
+                    <p className="arcade-entry-note">
+                      Fill all eight roster slots to tip off.
+                    </p>
+                  )}
+                </div>
+              </section>
               <SeasonPanel
                 key={run.id}
                 run={run}

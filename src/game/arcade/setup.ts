@@ -1,0 +1,113 @@
+import { POKEMON_BY_ID } from "../../data/pokemon";
+import { playerProfile } from "../playerProfile";
+import { POSITIONS, ROSTER_SLOTS } from "../types";
+import type {
+  ArcadePlayer,
+  ArcadeSetup,
+  ArcadeState,
+  ArcadeStats,
+  Side,
+} from "./types";
+export const emptyStats = (): ArcadeStats => ({
+  seconds: 0,
+  points: 0,
+  fgm: 0,
+  fga: 0,
+  threePM: 0,
+  threePA: 0,
+  assists: 0,
+  steals: 0,
+  blocks: 0,
+  offensiveRebounds: 0,
+  defensiveRebounds: 0,
+  turnovers: 0,
+});
+export function createGame(setup: ArcadeSetup): ArcadeState {
+  const used = new Set<number>(),
+    players: ArcadePlayer[] = [];
+  if (!setup || setup.teams?.length !== 2 || !Number.isFinite(setup.seed))
+    throw new Error("Choose two complete teams to play.");
+  setup.teams.forEach((team, side) => {
+    ROSTER_SLOTS.forEach((slot, i) => {
+      const id = team.roster[slot],
+        mon = id == null ? undefined : POKEMON_BY_ID.get(id);
+      if (!mon || used.has(mon.id))
+        throw new Error("Both teams need eight distinct Pokémon.");
+      used.add(mon.id);
+      const profile = playerProfile(mon);
+      players.push({
+        id: players.length,
+        pokemonId: mon.id,
+        name: mon.name,
+        type: mon.types[0],
+        team: side as Side,
+        slot: i < 5 ? POSITIONS[i] : profile.bestPosition,
+        active: i < 5,
+        x: side === 0 ? 8 : 20,
+        y: 2 + i * 2.5,
+        vx: 0,
+        vy: 0,
+        z: 0,
+        facing: side === 0 ? 1 : -1,
+        energy: 100,
+        attributes: { ...profile.attributes },
+        action: "idle",
+        actionTime: 0,
+        cooldown: 0,
+        jumpTime: 0,
+        charge: null,
+        stats: emptyStats(),
+      });
+    });
+  });
+  const s: ArcadeState = {
+    modelVersion: 1,
+    names: [setup.teams[0].name, setup.teams[1].name],
+    players,
+    phase: "tipoff",
+    paused: false,
+    period: 1,
+    clock: 60,
+    shotClock: 14,
+    elapsed: 0,
+    tick: 0,
+    ball: {
+      mode: "held",
+      x: 14,
+      y: 7.5,
+      z: 1,
+      owner: 0,
+      from: null,
+      target: null,
+      start: { x: 14, y: 7.5, z: 1 },
+      end: { x: 14, y: 7.5, z: 1 },
+      travel: 0,
+      duration: 1,
+      shotValue: 2,
+      made: false,
+      dunk: false,
+      lob: false,
+      reboundOf: null,
+      lastTouch: 0,
+    },
+    possession: 0,
+    controlled: 0,
+    passTarget: null,
+    score: [0, 0],
+    streak: [0, 0],
+    fire: [0, 0],
+    pendingSubs: [],
+    events: [],
+    message: "TIP OFF · Press Shoot as the ball reaches its peak",
+    messageTime: 3,
+    seed: setup.seed >>> 0,
+    phaseTime: 0,
+    openingTeam: 0,
+    lastPass: null,
+    pendingHorn: false,
+    prevShoot: false,
+    aiTimer: 0,
+    tipTiming: null,
+  };
+  return s;
+}

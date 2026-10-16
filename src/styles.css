@@ -1800,3 +1800,11 @@ footer a {
 .coaching-controls {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
+
+.arcade-entry { display:flex; justify-content:space-between; align-items:center; gap:24px; margin:24px 0; padding:28px; border:2px solid #bd592c; border-radius:10px; background:#172a39; color:#fff4df; }
+.arcade-entry h2 { color:#fff4df; margin:6px 0; font-size:clamp(1.3rem,3vw,2rem); }
+.arcade-entry p { color:#ded2bd; margin:6px 0; }
+.arcade-entry .eyebrow { color:#ffb375; }
+.arcade-entry .button { white-space:nowrap; }
+.arcade-entry-note { max-width:220px; font-size:.85rem; }
+@media(max-width:600px){ .arcade-entry{flex-direction:column; align-items:stretch; padding:20px;} .arcade-entry .button{width:100%;} }

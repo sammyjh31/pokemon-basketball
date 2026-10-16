@@ -35,8 +35,8 @@ export function Scoreboard({
         <a href="#season">SEASON</a>
         <a href="#rules">SCOUTING GUIDE</a>
       </nav>
-      <a className="header-play" href="#season">
-        PLAY WITH YOUR TEAM <span aria-hidden="true">→</span>
+      <a className="header-play" href="#arcade">
+        PLAY ARCADE <span aria-hidden="true">→</span>
       </a>
     </header>
   );
