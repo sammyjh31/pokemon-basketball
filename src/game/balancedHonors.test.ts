@@ -3,7 +3,7 @@ import type { CourtVersion } from "./courtTypes";
 import { createRun } from "./draft";
 import { createLeague } from "./league";
 import { leagueHonors, leaguePlayers } from "./leagueStats";
-import { createPlayoffs } from "./playoffs";
+import { createPlayoffs, selectFinalsMvp } from "./playoffs";
 import type {
   LeagueGameSummary,
   LeaguePlayer,
@@ -135,4 +135,85 @@ it("breaks version-3 award ties with a seeded coin flip", () => {
   const balanced = winners(true);
   expect(balanced.filter((id) => id === 0).length).toBeGreaterThan(5);
   expect(balanced.filter((id) => id === 4).length).toBeGreaterThan(5);
+});
+
+it("prefers efficient creators over volume bigs with Game Score MVP voting", () => {
+  const players = awardsPool(),
+    big = players[3 * 8 + 4],
+    wing = players[5 * 8 + 2];
+  // 30 PPG on 30 FGA (40%) with 18 RPG vs 27 PPG on 18 FGA (61%) with 7 APG.
+  Object.assign(big, {
+    points: 82 * 30,
+    fga: 82 * 30,
+    fgm: 82 * 12,
+    fta: 82 * 8,
+    ftm: 82 * 6,
+    offensiveRebounds: 82 * 5,
+    defensiveRebounds: 82 * 13,
+    assists: 82 * 4,
+  });
+  Object.assign(wing, {
+    points: 82 * 27,
+    fga: 82 * 18,
+    fgm: 82 * 11,
+    fta: 82 * 3,
+    ftm: 82 * 3,
+    defensiveRebounds: 82 * 4,
+    assists: 82 * 7,
+    steals: 82 * 2,
+  });
+  const mvp = (balanced: boolean) =>
+    leagueHonors(
+      players,
+      flatStandings(),
+      82,
+      balanced ? { balanced: true, seed: 3 } : undefined,
+    ).awards.find((a) => a.id === "mvp")!.playerId;
+  expect(mvp(false)).toBe(big.playerId);
+  expect(mvp(true)).toBe(wing.playerId);
+});
+
+it("weighs version-3 defense by the club's recorded points allowed", () => {
+  const players = awardsPool(),
+    stingy = players[2 * 8 + 4],
+    leaky = players[9 * 8 + 4];
+  for (const p of [stingy, leaky])
+    Object.assign(p, {
+      steals: 82 * 1.5,
+      blocks: 82 * 2,
+      defensiveRebounds: 82 * 8,
+    });
+  leaky.blocks += 10;
+  const standings = flatStandings();
+  standings[2].pointsAgainst = 8200;
+  standings[9].pointsAgainst = 9600;
+  const dpoy = leagueHonors(players, standings, 82, {
+    balanced: true,
+    seed: 3,
+  }).awards.find((a) => a.id === "defense")!;
+  expect(dpoy.playerId).toBe(stingy.playerId);
+  expect(dpoy.description).toMatch(/points allowed/);
+});
+
+it("picks version-3 Finals MVPs by Game Score", () => {
+  const players = leaguePlayers(teams(3)).filter((p) => p.teamId === 6),
+    [volume, efficient] = players;
+  for (const p of players) p.gamesPlayed = 6;
+  // 28 PPG on 29 FGA with 16 RPG vs 25 PPG on 16 FGA with 8 APG over six games.
+  Object.assign(volume, {
+    points: 6 * 28,
+    fga: 6 * 29,
+    fgm: 6 * 12,
+    offensiveRebounds: 6 * 5,
+    defensiveRebounds: 6 * 11,
+  });
+  Object.assign(efficient, {
+    points: 6 * 25,
+    fga: 6 * 16,
+    fgm: 6 * 10,
+    defensiveRebounds: 6 * 3,
+    assists: 6 * 8,
+  });
+  expect(selectFinalsMvp(players, 6)!.playerId).toBe(volume.playerId);
+  expect(selectFinalsMvp(players, 6, true)!.playerId).toBe(efficient.playerId);
 });

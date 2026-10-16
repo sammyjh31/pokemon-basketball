@@ -13,7 +13,13 @@ import {
 import { recordScouting, scoutingForMatch } from "./opponentScouting";
 import type { ScoutingMemory, MatchScouting } from "./typeTacticsTypes";
 import { validateLocalFormat } from "./localFormat";
-import { addBox, leaguePlayers, playerImpact, seededCoin } from "./leagueStats";
+import {
+  addBox,
+  gameScore,
+  leaguePlayers,
+  playerImpact,
+  seededCoin,
+} from "./leagueStats";
 import { simulateMatch } from "./match";
 import { nextRandom } from "./random";
 import type {
@@ -222,11 +228,20 @@ function advanceWinners(playoffs: Playoffs, teams: LeagueTeam[]) {
   const finals = playoffs.series.find((s) => s.round === 3)!;
   if (finals.winnerId === null) return;
   playoffs.championId = finals.winnerId;
-  playoffs.finalsMvp = selectFinalsMvp(playoffs.finalsPlayers, finals.winnerId);
+  playoffs.finalsMvp = selectFinalsMvp(
+    playoffs.finalsPlayers,
+    finals.winnerId,
+    teams[0]?.courtVersion === 3,
+  );
 }
 
-export function selectFinalsMvp(players: LeaguePlayer[], championId: number) {
-  const score = (p: LeaguePlayer) => playerImpact(p) * p.gamesPlayed;
+export function selectFinalsMvp(
+  players: LeaguePlayer[],
+  championId: number,
+  balanced = false,
+) {
+  const score = (p: LeaguePlayer) =>
+    (balanced ? gameScore(p) : playerImpact(p)) * p.gamesPlayed;
   // Rank integer tenths so an exact statistical tie reaches the ID tiebreaker.
   const units = (p: LeaguePlayer) =>
     10 * p.points +
@@ -237,9 +252,23 @@ export function selectFinalsMvp(players: LeaguePlayer[], championId: number) {
     15 * p.turnovers -
     4 * (p.fga - p.fgm) -
     4 * (p.fta - p.ftm);
+  // Version 3 Game Score in integer tenths: 10 PTS + 4 FGM - 7 FGA - 4 FT misses ...
+  const gameScoreUnits = (p: LeaguePlayer) =>
+    10 * p.points +
+    4 * p.fgm -
+    7 * p.fga -
+    4 * (p.fta - p.ftm) +
+    7 * p.offensiveRebounds +
+    3 * p.defensiveRebounds +
+    10 * p.steals +
+    7 * p.assists +
+    7 * p.blocks -
+    4 * p.fouls -
+    10 * p.turnovers;
+  const rank = balanced ? gameScoreUnits : units;
   const mvp = [...players]
     .filter((p) => p.teamId === championId && p.gamesPlayed > 0)
-    .sort((a, b) => units(b) - units(a) || a.pokemonId - b.pokemonId)[0];
+    .sort((a, b) => rank(b) - rank(a) || a.pokemonId - b.pokemonId)[0];
   if (!mvp) return null;
   const pg = (n: number) => (n / mvp.gamesPlayed).toFixed(1);
   return {
