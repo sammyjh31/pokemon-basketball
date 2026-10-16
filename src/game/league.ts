@@ -1,3 +1,4 @@
+import { assignLeagueCoaches } from "./trainerCoaches";
 import { POKEMON } from "../data/pokemon";
 import { OPPONENTS } from "../data/opponents";
 import { nextRandom } from "./random";
@@ -129,7 +130,9 @@ export function createLeague(run: Run): LeagueTeam[] {
     if (run.matchupVersion === 1) team.matchupVersion = 1;
     if (run.possessionVersion === 1) team.possessionVersion = 1;
   }
-  return teams;
+  return run.coach
+    ? assignLeagueCoaches(teams, run.seasonSeed, new Map([[0, run.coach]]))
+    : teams;
 }
 
 /** Double round robin (58 games), then 12 additional home-and-away pairings. */

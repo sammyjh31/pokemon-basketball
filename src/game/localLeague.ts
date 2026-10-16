@@ -1,3 +1,4 @@
+import { validateCoach } from "./trainerCoaches";
 import {
   ALL_POKEMON,
   FRANCHISE_POKEMON,
@@ -34,13 +35,17 @@ export interface LocalManager {
   name: string;
   teamId: number;
 }
-export type LocalCoaching = Pick<LeagueTeam, "tactic" | "rotation" | "defense">;
+export type LocalCoaching = Pick<
+  LeagueTeam,
+  "tactic" | "rotation" | "defense" | "coach"
+>;
 export interface LocalPick {
   teamId: number;
   pokemonId: number;
   slot: RosterSlot;
 }
 export interface LocalLeague {
+  coachDraftRequired?: true;
   version: 1 | 2;
   options?: LocalLeagueOptions;
   career?: LocalCareer;
@@ -192,6 +197,8 @@ function appendPick(
   pokemonId: number,
   slot: RosterSlot,
 ): LocalLeague {
+  if (draft.coachDraftRequired)
+    return error("Choose each manager’s trainer first.");
   const turn = currentLocalTurn(draft),
     mon = POKEMON_BY_ID.get(pokemonId);
   if (!turn || draft.completed) return error("The draft is already complete.");
@@ -287,6 +294,7 @@ export function updateLocalDraftLocks(
 }
 
 export function advanceLocalCpu(source: LocalLeague): LocalLeague {
+  if (source.coachDraftRequired) return source;
   let draft = source;
   for (
     let turn = currentLocalTurn(draft);
@@ -382,6 +390,7 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
 export function localLeagueRun(draft: LocalLeague): Run {
   if (draft.picks.length !== localDraftSize(draft))
     error("Finish drafting every club first.");
+  if (draft.coachDraftRequired) error("Choose each manager’s trainer first.");
   const teams = localLeagueTeams(draft);
   const run = createRun("free", draft.includeLegends, draft.seed);
   delete run.typeMatchupsVersion;
@@ -493,7 +502,9 @@ export function updateLocalCoaching(
     ...draft,
     ...(career ? { career } : {}),
     coaching: draft.coaching.map((c, i) =>
-      i === teamId ? { ...coaching } : c,
+      i === teamId
+        ? { ...coaching, ...(c.coach ? { coach: c.coach } : {}) }
+        : c,
     ),
   };
 }
@@ -555,8 +566,39 @@ export function parseLocalLeague(raw: string): LocalLeague {
       !DEFENSE_SCHEMES.includes(c.defense)
     )
       error();
-    return { tactic: c.tactic, rotation: c.rotation, defense: c.defense };
+    const coach = c.coach === undefined ? undefined : validateCoach(c.coach);
+    if (c.coach !== undefined && !coach) error();
+    return {
+      tactic: c.tactic,
+      rotation: c.rotation,
+      defense: c.defense,
+      ...(coach ? { coach } : {}),
+    };
   });
+  const selected = draft.coaching.flatMap((c) => (c.coach ? [c.coach.id] : []));
+  if (new Set(selected).size !== selected.length) error();
+  if (value.coachDraftRequired !== undefined) {
+    if (
+      value.coachDraftRequired !== true ||
+      value.completed ||
+      value.career ||
+      !Array.isArray(value.picks) ||
+      value.picks.length
+    )
+      error();
+    const humans = draft.order.filter((id) =>
+      draft.managers.some((m) => m.teamId === id),
+    );
+    const firstMissing = humans.findIndex((id) => !draft.coaching[id].coach);
+    if (
+      firstMissing < 0 ||
+      draft.coaching.some(
+        (c, i) => c.coach && !humans.slice(0, firstMissing).includes(i),
+      )
+    )
+      error();
+    draft.coachDraftRequired = true;
+  } else if (selected.length !== 0 && selected.length !== count) error();
   if (!Array.isArray(value.picks) || value.picks.length > count * 8) error();
   for (const pick of value.picks) {
     if (!pick || currentLocalTurn(draft)?.teamId !== pick.teamId) error();

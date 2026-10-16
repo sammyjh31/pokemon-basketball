@@ -1,3 +1,4 @@
+import { selectTrainerCoach } from "./coachSelection";
 import { processCpuFreeAgency, signFreeAgent } from "./freeAgency";
 import {
   beginRookieDraft,
@@ -45,6 +46,7 @@ import type { RotationPlan, TrainingPlans } from "./franchiseFeatures";
 import { validateRotationPlan } from "./rotationPlan";
 import { validateTrainingPlans } from "./training";
 export type GameAction =
+  | { type: "SELECT_COACH"; id: string }
   | { type: "SIGN_FREE_AGENT"; pokemonId: number; releasedId: number }
   | { type: "PROCESS_CPU_FREE_AGENCY" }
   | { type: "TRADE_PACKAGE"; offer: TradePackage }
@@ -70,7 +72,13 @@ export type GameAction =
   | { type: "PLACE"; pokemonId: number; position: RosterSlot }
   | { type: "SWAP"; first: RosterSlot; second: RosterSlot }
   | { type: "SIMULATE" }
-  | { type: "NEW_RUN"; mode: Mode; includeLegends: boolean; seed: number };
+  | {
+      type: "NEW_RUN";
+      mode: Mode;
+      includeLegends: boolean;
+      seed: number;
+      coachDraftRequired?: true;
+    };
 export function initialState(seed: number): GameState {
   return {
     version: 3,
@@ -83,6 +91,13 @@ export function initialState(seed: number): GameState {
 }
 export function gameReducer(state: GameState, action: GameAction): GameState {
   const run = state.run;
+  if (action.type === "SELECT_COACH")
+    return selectTrainerCoach(state, action.id);
+  if (
+    run.coachDraftRequired &&
+    ["SIMULATE", "APPLY_SEASON", "APPLY_FRANCHISE_RUN"].includes(action.type)
+  )
+    return state;
   if (action.type === "SIGN_FREE_AGENT")
     return signFreeAgent(state, action.pokemonId, action.releasedId);
   if (action.type === "PROCESS_CPU_FREE_AGENCY")
@@ -99,11 +114,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   if (action.type === "ENTER_OFFSEASON")
     return processOffseason(archiveFranchiseSeason(state));
   if (action.type === "PROCESS_OFFSEASON") return processOffseason(state);
-  if (action.type === "START_FRANCHISE_SEASON")
-    return startInteractiveFranchiseSeason(
+  if (action.type === "START_FRANCHISE_SEASON") {
+    const next = startInteractiveFranchiseSeason(
       processOffseason(state),
       action.seed,
     );
+    return next === state || next.run.coach
+      ? next
+      : { ...next, run: { ...next.run, coachDraftRequired: true } };
+  }
   if (action.type === "TRADE")
     return applyTrade(state, action.teamId, action.giveId, action.receiveId);
   if (action.type === "TRAINING_PLANS") {
@@ -147,7 +166,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     return {
       version: 3,
       records: state.records,
-      run: createRun(action.mode, action.includeLegends, action.seed),
+      run: {
+        ...createRun(action.mode, action.includeLegends, action.seed),
+        ...(action.coachDraftRequired
+          ? { coachDraftRequired: true as const }
+          : {}),
+      },
     };
   if (action.type === "APPLY_PLAYOFFS") {
     if (

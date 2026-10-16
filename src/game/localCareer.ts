@@ -1,3 +1,4 @@
+import { validateCoach } from "./trainerCoaches";
 import { FRANCHISE_POKEMON, POKEMON_BY_ID } from "../data/pokemon";
 import { developPlayer } from "./development";
 import {
@@ -713,6 +714,8 @@ function parseTeams(
       rawRoster = object(row.roster),
       roster = {} as Roster;
     if (
+      (row.coach !== undefined && !validateCoach(row.coach)) ||
+      row.coach?.id !== draft.coaching[id].coach?.id ||
       row.id !== id ||
       row.name !== LOCAL_TEAMS[id].name ||
       row.simulationVersion !== 2 ||
@@ -769,6 +772,7 @@ function parseTeams(
     )
       fail();
     const team: LocalTeamSnapshot = {
+      ...(row.coach ? { coach: validateCoach(row.coach)! } : {}),
       id,
       name: row.name,
       simulationVersion: 2,

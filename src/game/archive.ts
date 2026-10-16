@@ -40,6 +40,7 @@ export function archivedSeasonRun(season: FranchiseSeason): Run {
     id: `run-${season.seasonSeed}`,
     mode: "free",
     includeLegends: true,
+    ...(user.coach ? { coach: user.coach } : {}),
     roster: { ...user.roster },
     offerIds: [],
     rerollsLeft: 0,

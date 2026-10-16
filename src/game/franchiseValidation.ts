@@ -1,3 +1,4 @@
+import { validateCoach } from "./trainerCoaches";
 import { captureRivalScouting, parseRivalScouting } from "./rivalScouting";
 import { validateRosterTransactions } from "./franchiseTransactions";
 import { validateFreeAgency } from "./freeAgencyValidation";
@@ -287,6 +288,9 @@ export function validateLeagueTeams(
       Object.hasOwn(object(value), "development"),
     ).length;
   if (developed !== 0 && developed !== 30) return fail();
+  const coached = rows.filter((v) => object(v).coach !== undefined).length;
+  if (coached !== 0 && coached !== rows.length) return fail();
+  const coachIds = new Set<string>();
   const typeVersion = object(rows[0]).typeMatchupsVersion;
   if (typeVersion !== undefined && typeVersion !== 1) return fail();
   const courtVersion = object(rows[0]).courtVersion;
@@ -334,6 +338,9 @@ export function validateLeagueTeams(
       taken.add(id);
       roster[slot] = id;
     }
+    const coach = coached ? validateCoach(row.coach) : undefined;
+    if (coached && (!coach || coachIds.has(coach.id))) return fail();
+    if (coach) coachIds.add(coach.id);
     const tactic = row.tactic as LeagueTeam["tactic"],
       rotation = row.rotation as LeagueTeam["rotation"];
     const offsets = developed
@@ -343,6 +350,7 @@ export function validateLeagueTeams(
       ? validateRotationPlan(row.rotationPlan)
       : undefined;
     return {
+      ...(coach ? { coach } : {}),
       id: index,
       name,
       roster,
@@ -1007,6 +1015,21 @@ export function validateFranchise(
     )
   )
     return fail();
+  if (
+    teams[0].coach?.id !== run.coach?.id ||
+    (run.leagueTeams &&
+      teams.some((t, i) => t.coach?.id !== run.leagueTeams![i].coach?.id))
+  )
+    return fail();
+  const pendingCoach =
+    row.pendingCoach === undefined
+      ? undefined
+      : validateCoach(row.pendingCoach);
+  if (
+    row.pendingCoach !== undefined &&
+    (!pendingCoach || row.phase !== "offseason" || teams.some((t) => t.coach))
+  )
+    return fail();
   const historyCount = row.phase === "offseason" ? year : year - 1;
   const history = array(row.history, historyCount).map((entry, index) =>
     archivedSeason(
@@ -1219,6 +1242,7 @@ export function validateFranchise(
       return fail();
   }
   const franchise: Franchise = {
+    ...(pendingCoach ? { pendingCoach } : {}),
     modelVersion: row.modelVersion as Franchise["modelVersion"],
     year,
     phase: row.phase,

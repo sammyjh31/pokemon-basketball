@@ -77,6 +77,7 @@ export interface FranchiseTrade {
   reason?: string;
 }
 export interface Franchise {
+  pendingCoach?: import("./trainerCoaches").CoachAssignment;
   modelVersion: 1 | 2 | 3;
   year: number;
   phase: "season" | "offseason";

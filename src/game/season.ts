@@ -18,6 +18,8 @@ import type {
 } from "./types";
 export { resolveScore, winProbability, SEASON_RULES } from "./v2Season";
 export function seasonTeams(run: Run): LeagueTeam[] {
+  if (run.coachDraftRequired)
+    throw new Error("Choose your trainer coach first.");
   if (!run.leagueTeams && !run.rotationPlan) return createLeague(run);
   const teams = run.leagueTeams
     ? validateLeagueTeams(
@@ -40,6 +42,7 @@ export function seasonTeams(run: Run): LeagueTeam[] {
     );
   teams[0] = {
     ...teams[0],
+    ...(run.coach ? { coach: run.coach } : {}),
     roster: { ...run.roster },
     tactic: run.tactic,
     rotation: run.rotation,

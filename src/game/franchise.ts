@@ -1,3 +1,4 @@
+import { assignLeagueCoaches } from "./trainerCoaches";
 import { captureRivalScouting } from "./rivalScouting";
 import { processCpuFreeAgency } from "./freeAgency";
 import type { TradePackage } from "./tradeTypes";
@@ -312,9 +313,16 @@ export function startFranchiseSeason(
     matchupVersion: 1 as const,
     possessionVersion: 1 as const,
   }));
+  if (franchise.pendingCoach)
+    teams = assignLeagueCoaches(
+      teams,
+      seed,
+      new Map([[0, franchise.pendingCoach]]),
+    );
   const user = teams[0];
   const run: Run = {
     ...createRun(state.run.mode, state.run.includeLegends, seed),
+    ...(user.coach ? { coach: user.coach } : {}),
     roster: { ...user.roster },
     tactic: user.tactic,
     rotation: user.rotation,
@@ -339,6 +347,7 @@ export function startFranchiseSeason(
     run,
     franchise: {
       ...franchise,
+      pendingCoach: undefined,
       teams: structuredClone(teams),
       year: franchise.year + 1,
       phase: "season",

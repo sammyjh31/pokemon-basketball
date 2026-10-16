@@ -1,3 +1,4 @@
+import { validateCoach, coachOffers } from "./trainerCoaches";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { initialState } from "./state";
 import {
@@ -137,7 +138,28 @@ function validate(
     (raw.possessionVersion !== 1 || raw.typeTacticsVersion !== 1)
   )
     return fail();
+  const coach = raw.coach === undefined ? undefined : validateCoach(raw.coach);
+  if (raw.coach !== undefined && !coach) return fail();
+  if (
+    coach &&
+    !Object.hasOwn(root, "franchise") &&
+    raw.mode === "spin" &&
+    !coachOffers(integer(raw.seasonSeed, 0, 0xffffffff)).some(
+      (c) => c.id === coach.id,
+    )
+  )
+    return fail();
+  if (
+    raw.coachDraftRequired !== undefined &&
+    (raw.coachDraftRequired !== true ||
+      coach ||
+      raw.result !== null ||
+      (raw.seasonProgress && object(raw.seasonProgress).completedRounds !== 0))
+  )
+    return fail();
   const run: Run = {
+    ...(coach ? { coach } : {}),
+    ...(raw.coachDraftRequired ? { coachDraftRequired: true as const } : {}),
     ...(raw.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
     ...(raw.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
     ...(raw.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
@@ -174,6 +196,7 @@ function validate(
   if (Object.hasOwn(raw, "leagueTeams")) {
     if (!Object.hasOwn(root, "franchise") || chosen.length !== 8) return fail();
     run.leagueTeams = validateLeagueTeams(raw.leagueTeams, run.includeLegends);
+    if (run.leagueTeams[0].coach?.id !== run.coach?.id) return fail();
     if (
       run.leagueTeams.some(
         (team) =>
