@@ -2,6 +2,24 @@
 
 Development continues in `/Users/sam/Documents/PokeBBall`, synchronized to `main` at `https://github.com/sammyjh31/pokemon-basketball.git`. The league update was `36f760a`, and playoffs were `8a1257a`; franchise mode builds on both. A concurrent arcade-design documentation commit was preserved.
 
+## Connected franchise games, coaching and history
+
+Feature commit: `7d6209b`. Five connected additions are available:
+
+- Play the next regular-season or qualifying playoff fixture in the arcade, or simulate one round/all remaining games. Official results update standings, player stats, postseason series, awards and careers once. Four 60-second quarters convert counting stats by ×12 into official 48-minute boxes; official overtime lasts 25 seconds and adds five official minutes. Substitutions, DNPs, home/away mapping and duplicate/stale completion protection are covered by tests. Exhibition games remain available.
+- Set all eight players' target minutes (240 total, 0–48 each) and five positive-minute closers. Targets affect simulated rotations; fouls, overtime and late-game conditions can change actual minutes. Coaching and lineup inputs freeze after the first completed regular-season game. Manual arcade substitutions remain available.
+- Save individual training focus, intensity and optional position practice. Plans affect the next unprocessed offseason and retain the requested high-volatility development bounds. Existing completed reports remain immutable; outgoing players' plans are removed after trades.
+- Open detailed career pages from Career stats, with each retained season's regular/playoff stats, 20 current skills, development trajectory, honors and championships.
+- Open History → View Year N games for retained regular-season and playoff schedules and both-team boxes. Frozen rosters, coaching, developed skills and official results keep old games stable after new seasons and trades. Old saves cannot recover detail they already discarded; totals/honors stay intact. The still-present latest legacy year can be enriched when advancing into the next season.
+
+Franchise model 3, regular-season model 6 and playoff model 2 preserve the previous deterministic paths. Rich archive and partial-season restore validation yields to the browser, reports progress and supports cancellation. Corrupt saves preserve their original bytes; storage failures remain visible with retry controls, including after official games.
+
+Verification of the exact staged feature commit in an isolated snapshot: **397 tests passed across 64 files**, TypeScript and production build passed, and diff whitespace checks passed. Independent code review has no remaining findings. Browser-discovered partial last-ten standings and legacy archive key-order comparison issues have red/green regression tests. Vite retains a non-blocking 587.08 KB main-chunk advisory. Standalone Playwright CLI was not run for this change.
+
+Browser QA used `localhost:5173`, separate from the user's `127.0.0.1:5173` save. Year 4 used custom 240-minute targets and closers, Sneasel shooting/aggressive training, and one full official game with a Parasect → Furret substitution. Its exact box (including two DNPs and 240 team minutes) survived refresh, season completion and archival. The deliberately idle user side lost the four-minute court game 0–48, yielding the specified official 0–576 conversion. The remaining simulated schedule finished 30–52. Celadon won the 73-game postseason, beating Vermilion 4–1; Jumpluff was Finals MVP. Archived Finals Game 5 reopened at 108–96 with both 240-minute boxes. Furret's career retained 328 games, Year 4 detail and his Year 2 Sixth Player award. Reload and advancement into Year 5 retained training, rotation and Year 4 history. No document overflow at 1440, 390 or 320px; checked warning/error logs were empty. Screenshots: `design/franchise-career-desktop.png` and `design/franchise-archive-mobile.png`.
+
+Concurrent local snake-league work was present in the same checkout during validation. It was left uncommitted by this task, including its additions to App, Scoreboard and README. The exact franchise commit was tested separately so the other chat's work was neither overwritten nor bundled into this feature commit.
+
 ## Development and CPU trade update
 
 - Entering an offseason now trains all 240 players, then runs CPU club negotiations exactly once. The user requested **large swings and frequent surprises**: 17 primitive skills can change −10…+12 annually, with cumulative offsets bounded at ±30 and final skills at 0…100. Minutes, per-36 impact, skill-specific efficiency and production, workload, regression and seeded form all contribute. Pokémon facts remain unchanged.
@@ -75,6 +93,6 @@ The final test league finished 21–61 and restored the identical result and awa
 2. Node ≥24.15, tested 24.19.0. Run `npm ci` after dependency changes. Local bundled Node is `/Users/sam/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin`.
 3. Preview: `npm run dev -- --host 127.0.0.1 --port 5173 --strictPort`. Cloud may need `--host 0.0.0.0` and its forwarded URL.
 4. Run appropriate checks, commit and push before switching environments. Reconcile concurrent work without force-pushing.
-5. **Preserve regular-season models 3/4/5, postseason model 1 and franchise models 1/2 before changing deterministic inputs or outputs.** Roster draft, schedule, event probabilities, profiles, aggregation and award formulas all affect replay validation. Future behavioral changes need new model versions and migration.
+5. **Preserve regular-season models 3/4/5/6, postseason models 1/2 and franchise models 1/2/3 before changing deterministic inputs or outputs.** Roster draft, schedule, event probabilities, profiles, aggregation and award formulas all affect replay validation. Future behavioral changes need new model versions and migration.
 
 Browser saves stay in their browser. Shared links carry eight player IDs, not coaching or results. See [league formulas](LEAGUE_MODEL.md), [design QA](../design-qa.md), [screenshots](design/), [README](../README.md), and the [implementation plan](superpowers/plans/2026-10-15-league-simulation.md).
