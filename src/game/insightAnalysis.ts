@@ -155,7 +155,7 @@ export async function buildSeasonInsights(
     if (home && away) {
       match = resolveMatch
         ? resolveMatch(game)
-        : simulateMatch(home, away, game.seed);
+        : simulateMatch(home, away, game.seed, { scouting: game.scouting });
       if (
         match &&
         (match.homeScore !== game.homeScore ||

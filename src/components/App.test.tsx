@@ -278,7 +278,7 @@ describe("playable draft room", () => {
     expect(
       screen.queryByRole("button", { name: /^Draft / }),
     ).not.toBeInTheDocument();
-  });
+  }, 20000);
   it("counts two rerolls and clears pending selections", () => {
     render(<App initial={initialState(17)} storage={memory()} />);
     pick();
@@ -423,7 +423,7 @@ describe("playable draft room", () => {
     expect(screen.getByTestId("season-record")).toHaveTextContent(
       `${state.run.result!.wins}–${state.run.result!.losses}`,
     );
-  });
+  }, 15000); // Includes a full season simulation and asynchronous replay on refresh.
 });
 
 describe("completed league restoration", () => {

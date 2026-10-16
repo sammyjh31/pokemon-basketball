@@ -79,7 +79,9 @@ describe("local league pass-and-play", () => {
     fireEvent.change(screen.getByLabelText("Filter by generation"), {
       target: { value: "7" },
     });
-    fireEvent.click(screen.getAllByRole("button", { name: /^Draft / })[0]);
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /^View scouting for / })[0],
+    );
     const confirmPick = screen.getByRole("button", { name: /^Confirm pick/ });
     confirmPick.focus();
     fireEvent.click(confirmPick);
@@ -123,7 +125,9 @@ describe("local league pass-and-play", () => {
     };
     render(<LocalLeagueMode onExit={() => {}} storage={blocked} />);
     fireEvent.click(screen.getByRole("button", { name: "Start snake draft" }));
-    expect(screen.getByRole("status")).toHaveTextContent(/could not save/i);
+    expect(
+      screen.getByText(/could not save this local league/i),
+    ).toHaveAttribute("role", "status");
     expect(
       screen.getByRole("heading", { name: /On the clock/ }),
     ).toBeInTheDocument();

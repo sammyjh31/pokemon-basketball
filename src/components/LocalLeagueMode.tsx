@@ -34,6 +34,7 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import { Portrait } from "./Portrait";
 import { SpriteContext } from "./SpriteControls";
 import "../localLeague.css";
+import "../localDraft.css";
 
 function ReviewTeams({
   draft,

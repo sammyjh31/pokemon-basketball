@@ -121,8 +121,11 @@ export function createLeague(run: Run): LeagueTeam[] {
       );
     }
   });
-  for (const team of teams)
+  for (const team of teams) {
     team.ratings = teamRatings(team.roster, team.tactic, team.rotation);
+    if (run.typeMatchupsVersion === 1) team.typeMatchupsVersion = 1;
+    if (run.typeTacticsVersion === 1) team.typeTacticsVersion = 1;
+  }
   return teams;
 }
 

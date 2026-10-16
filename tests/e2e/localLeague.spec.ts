@@ -66,7 +66,7 @@ test("friends draft a complete local league, compare results, and restore withou
         .getByRole("combobox", { name: "Filter by generation", exact: true })
         .selectOption("7");
     await page
-      .getByRole("button", { name: /^Draft / })
+      .getByRole("button", { name: /^View scouting for / })
       .first()
       .click();
     await page.getByRole("button", { name: /^Confirm pick:/ }).click();

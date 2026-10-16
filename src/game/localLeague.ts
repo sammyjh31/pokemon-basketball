@@ -43,6 +43,8 @@ export interface LocalLeague {
   version: 1 | 2;
   options?: LocalLeagueOptions;
   career?: LocalCareer;
+  typeMatchupsVersion?: 1;
+  typeTacticsVersion?: 1;
   seed: number;
   includeLegends: boolean;
   managers: LocalManager[];
@@ -122,6 +124,9 @@ export function createLocalLeague(
     [order[i], order[j]] = [order[j], order[i]];
   }
   return {
+    ...(version === 2
+      ? { typeMatchupsVersion: 1 as const, typeTacticsVersion: 1 as const }
+      : {}),
     version,
     ...(configured ? { options: configured } : {}),
     seed,
@@ -271,6 +276,12 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
     const coaching = draft.coaching[team.id];
     return {
       ...team,
+      ...(draft.typeMatchupsVersion === 1
+        ? { typeMatchupsVersion: 1 as const }
+        : {}),
+      ...(draft.typeTacticsVersion === 1
+        ? { typeTacticsVersion: 1 as const }
+        : {}),
       roster,
       ...coaching,
       ...(draft.version === 2 ? { simulationVersion: 2 as const } : {}),
@@ -293,8 +304,17 @@ export function localLeagueRun(draft: LocalLeague): Run {
   if (draft.picks.length !== localDraftSize(draft))
     error("Finish drafting every club first.");
   const teams = localLeagueTeams(draft);
+  const run = createRun("free", draft.includeLegends, draft.seed);
+  delete run.typeMatchupsVersion;
+  delete run.typeTacticsVersion;
   return {
-    ...createRun("free", draft.includeLegends, draft.seed),
+    ...run,
+    ...(draft.typeMatchupsVersion === 1
+      ? { typeMatchupsVersion: 1 as const }
+      : {}),
+    ...(draft.typeTacticsVersion === 1
+      ? { typeTacticsVersion: 1 as const }
+      : {}),
     roster: { ...teams[0].roster },
     ...draft.coaching[0],
     leagueTeams: teams,
@@ -392,7 +412,12 @@ export function parseLocalLeague(raw: string): LocalLeague {
   if (
     !value ||
     ![1, 2].includes(value.version) ||
-    typeof value.completed !== "boolean"
+    typeof value.completed !== "boolean" ||
+    (value.typeMatchupsVersion !== undefined &&
+      value.typeMatchupsVersion !== 1) ||
+    (value.typeTacticsVersion !== undefined &&
+      value.typeTacticsVersion !== 1) ||
+    (value.typeTacticsVersion === 1 && value.typeMatchupsVersion !== 1)
   )
     error();
   let draft = createLocalLeague(
@@ -403,6 +428,11 @@ export function parseLocalLeague(raw: string): LocalLeague {
     value.options,
   );
   const count = localTeamCount(draft);
+  // Creation opts in; loading must retain the saved season rules.
+  delete draft.typeMatchupsVersion;
+  delete draft.typeTacticsVersion;
+  if (value.typeMatchupsVersion === 1) draft.typeMatchupsVersion = 1;
+  if (value.typeTacticsVersion === 1) draft.typeTacticsVersion = 1;
   if (
     !Array.isArray(value.order) ||
     value.order.length !== count ||

@@ -28,6 +28,7 @@ export interface FinalsMvp {
   value: string;
 }
 export interface Playoffs {
+  scouting?: import("./typeTacticsTypes").ScoutingMemory;
   modelVersion: 1 | 2;
   format?: import("./localFormat").LocalFormat;
   playedGames?: Record<string, OfficialGame>;

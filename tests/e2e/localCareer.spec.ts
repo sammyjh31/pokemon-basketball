@@ -26,7 +26,7 @@ for (const mode of ["generational", "full-pool"] as const) {
       if (i === 0 && mode === "full-pool")
         await page.getByLabel("Filter by generation").selectOption("9");
       await page
-        .getByRole("button", { name: /^Draft / })
+        .getByRole("button", { name: /^View scouting for / })
         .first()
         .click();
       await page.getByRole("button", { name: /^Confirm pick:/ }).click();

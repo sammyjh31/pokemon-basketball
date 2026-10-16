@@ -13,6 +13,8 @@ import {
   type Attributes,
   type Pokemon,
 } from "../game/types";
+import { TypeScouting } from "./TypeScouting";
+import "../typeMatchups.css";
 import { TypeBadges } from "./Portrait";
 import { playerProfile, PROFILE_LABELS } from "../game/playerProfile";
 
@@ -138,6 +140,7 @@ export function ScoutReport({
           <span>20 skills + 9 advanced tools + source stats</span>
         </summary>
         <div className="scout-details-content">
+          <TypeScouting types={mon.types} />
           <h4>Overall skills</h4>
           <SkillRows keys={ATTRIBUTE_KEYS} a={a} />
           {SKILL_GROUPS.map((group) => (

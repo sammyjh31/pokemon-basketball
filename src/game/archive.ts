@@ -49,6 +49,12 @@ export function archivedSeasonRun(season: FranchiseSeason): Run {
     rotation: user.rotation,
     defense: user.defense,
     leagueTeams: replay.teams,
+    ...(user.typeTacticsVersion === 1
+      ? { typeTacticsVersion: 1 as const }
+      : {}),
+    ...(user.typeMatchupsVersion === 1
+      ? { typeMatchupsVersion: 1 as const }
+      : {}),
     ...(user.rotationPlan ? { rotationPlan: user.rotationPlan } : {}),
     ...(replay.seasonModel === 6
       ? {
@@ -102,6 +108,7 @@ export function resolveArchivedMatch(
       replay.teams[game.homeTeamId],
       replay.teams[game.awayTeamId],
       game.seed,
+      { scouting: game.scouting },
     )
   );
 }

@@ -35,6 +35,8 @@ export interface PackageEvaluation extends TradeEvaluation {
   score: number;
   threshold: number;
   userDelta: number;
+  rivalGain?: number;
+  userRivalGain?: number;
 }
 export interface TradeSuggestion {
   offer: TradePackage;

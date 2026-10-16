@@ -1,3 +1,8 @@
+import type {
+  MatchScouting,
+  ScoutingMemory,
+  TypeTacticsReport,
+} from "./typeTacticsTypes";
 import type { EngineRules, MatchInsights } from "./engineInsightsTypes";
 import type { RotationPlan, SeasonProgress } from "./franchiseFeatures";
 import type { Playoffs } from "./playoffTypes";
@@ -177,6 +182,9 @@ export interface SeasonResult {
 }
 export interface Run {
   simulationVersion?: 2;
+  /** Omitted on historical seasons to preserve their deterministic replay. */
+  typeMatchupsVersion?: 1;
+  typeTacticsVersion?: 1;
   id: string;
   mode: Mode;
   includeLegends: boolean;
@@ -224,6 +232,9 @@ export type PlayType =
 export interface LeagueTeam {
   engineRules?: EngineRules;
   simulationVersion?: 2;
+  /** Omitted on historical seasons to preserve their deterministic replay. */
+  typeMatchupsVersion?: 1;
+  typeTacticsVersion?: 1;
   id: number;
   name: string;
   roster: Roster;
@@ -254,12 +265,18 @@ export interface LeagueBox extends PlayerBox {
   midFga: number;
 }
 export interface LeagueGameSummary extends LeagueFixture {
+  scouting?: MatchScouting;
   homeScore: number;
   awayScore: number;
   overtimePeriods: number;
 }
 export interface LeagueMatch {
+  typeTactics?: TypeTacticsReport;
   insights?: MatchInsights;
+  typeMatchups?: Record<
+    "home" | "away",
+    import("./typeMatchups").TypeMatchupSummary
+  >;
   shotQuality?: Record<
     "home" | "away",
     { attempts: number; expectedPoints: number; points: number }
@@ -311,6 +328,7 @@ export interface LeagueAward extends SeasonAward {
   }[];
 }
 export interface LeagueResult {
+  scouting?: ScoutingMemory;
   format?: import("./localFormat").LocalFormat;
   teams: LeagueTeam[];
   games: LeagueGameSummary[];

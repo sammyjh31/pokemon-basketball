@@ -10,8 +10,10 @@ import {
   type Position,
   type PlayType,
 } from "../game/types";
+import { typeMatchup, typeMatchupLabel } from "../game/typeMatchups";
 import { Portrait } from "./Portrait";
 import "../teamAnalytics.css";
+import "../typeMatchups.css";
 
 export function MatchupLab() {
   const [open, setOpen] = useState(false),
@@ -29,6 +31,8 @@ export function MatchupLab() {
     bp = playerProfile(b);
   const shot = evaluateShot({
     shooter: ap,
+    shooterTypes: a.types,
+    defenderTypes: b.types,
     defender: bp,
     shooterHeight: a.heightM,
     defenderHeight: b.heightM,
@@ -40,6 +44,7 @@ export function MatchupLab() {
     roleFitPenalty:
       Math.max(...Object.values(ap.positions)) - ap.positions[position],
   });
+  const type = typeMatchup(a.types, b.types);
   return (
     <section className="matchup-lab local-panel" aria-label="Matchup explorer">
       <div className="results-section-heading">
@@ -197,6 +202,19 @@ export function MatchupLab() {
               );
             })}
           </div>
+          <section className="type-matchup-insight" aria-label="Type matchup">
+            <span className="eyebrow">
+              {type.attackType ?? "Neutral"} attack · {b.types.join(" / ")}{" "}
+              defense
+            </span>
+            <strong>{typeMatchupLabel(type)}</strong>
+            <p>
+              Dual-type players use their stronger attacking type. Both
+              defending types count. A type advantage modestly raises shot odds;
+              resistance lowers them. Even an immunity leaves a playable
+              basketball matchup.
+            </p>
+          </section>
           <output aria-label="Shot make probability">
             {(shot.probability * 100).toFixed(1)}%
           </output>
@@ -224,10 +242,12 @@ export function MatchupLab() {
           </div>
           <p className="stat-legend">
             Changes apply in this order and add to the displayed probability.
-            Pokémon types affect their underlying skills; height helps selected
-            matchups with diminishing returns, capped at 3.5 m. More extreme
-            size never guarantees a basket. This is the first revised game
-            model, not a model fitted to real-world results.
+            Pokémon types affect skills and the matchup shown above. Type
+            effects are strongest at the rim; help defenders can soften them in
+            games. Height helps selected matchups with diminishing returns,
+            capped at 3.5 m. More extreme size never guarantees a basket. This
+            is the first revised game model, not a model fitted to real-world
+            results.
           </p>
         </>
       )}

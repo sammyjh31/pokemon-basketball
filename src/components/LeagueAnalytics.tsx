@@ -1,3 +1,5 @@
+import { TypeGameSummary } from "./TypeGameSummary";
+import "../typeMatchups.css";
 import { useMemo, useState } from "react";
 import { teamAnalysis, boxComparison } from "../game/teamAnalytics";
 import type { LeagueResult, LeagueMatch, LeagueTeam } from "../game/types";
@@ -248,6 +250,7 @@ export function GameAnalytics({
           </tbody>
         </table>
       </div>
+      <TypeGameSummary match={match} home={home} away={away} />
       {match.shotQuality && (
         <div className="analysis-cards">
           {(["away", "home"] as const).map((side) => {

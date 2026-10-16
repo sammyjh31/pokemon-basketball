@@ -20,6 +20,7 @@ import {
   releaseShot,
 } from "./actions";
 import { aiDecisions, movePlayers } from "./ai";
+import { chooseCpuSubstitution } from "./coaching";
 export { activePlayers, attackDirection, basket, passTarget } from "./helpers";
 export function setPaused(s: ArcadeState, paused: boolean) {
   s.paused = paused;
@@ -51,6 +52,14 @@ export function cancelSubstitution(s: ArcadeState, outId: number) {
   s.pendingSubs = s.pendingSubs.filter((q) => q.outId !== outId);
 }
 function applySubs(s: ArcadeState) {
+  if (s.typeMatchupsVersion === 1) {
+    // Honor the human's queued lineup first, then let the CPU react to that five.
+    commitSubs(s);
+    const counter = chooseCpuSubstitution(s);
+    if (counter) s.pendingSubs.push(counter);
+    commitSubs(s);
+    return;
+  }
   const active = activePlayers(s, 1).sort((a, b) => a.energy - b.energy),
     bench = s.players
       .filter((p) => p.team === 1 && !p.active)
@@ -62,6 +71,9 @@ function applySubs(s: ArcadeState) {
     bench[0].energy > active[0].energy + 15
   )
     s.pendingSubs.push({ outId: active[0].id, inId: bench[0].id });
+  commitSubs(s);
+}
+function commitSubs(s: ArcadeState) {
   for (const q of s.pendingSubs) {
     const a = s.players[q.outId],
       b = s.players[q.inId];

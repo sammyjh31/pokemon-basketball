@@ -31,6 +31,8 @@ export function createRun(
 ): Run {
   return refreshOffers({
     id: `run-${seed >>> 0}`,
+    typeMatchupsVersion: 1,
+    typeTacticsVersion: 1,
     mode,
     includeLegends,
     roster: emptyRoster(),

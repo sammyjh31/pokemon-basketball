@@ -1,3 +1,4 @@
+import { captureRivalScouting, parseRivalScouting } from "./rivalScouting";
 import { validateRosterTransactions } from "./franchiseTransactions";
 import { validateFreeAgency } from "./freeAgencyValidation";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -286,6 +287,14 @@ export function validateLeagueTeams(
       Object.hasOwn(object(value), "development"),
     ).length;
   if (developed !== 0 && developed !== 30) return fail();
+  const typeVersion = object(rows[0]).typeMatchupsVersion;
+  if (typeVersion !== undefined && typeVersion !== 1) return fail();
+  const tacticsVersion = object(rows[0]).typeTacticsVersion;
+  if (
+    (tacticsVersion !== undefined && tacticsVersion !== 1) ||
+    (tacticsVersion === 1 && typeVersion !== 1)
+  )
+    return fail();
   return rows.map((value, index) => {
     const row = object(value),
       source = object(row.roster),
@@ -299,7 +308,9 @@ export function validateLeagueTeams(
       !TACTICS.includes(row.tactic as never) ||
       !ROTATIONS.includes(row.rotation as never) ||
       !DEFENSE_SCHEMES.includes(row.defense as never) ||
-      row.simulationVersion !== simulationVersion
+      row.simulationVersion !== simulationVersion ||
+      row.typeMatchupsVersion !== typeVersion ||
+      row.typeTacticsVersion !== tacticsVersion
     )
       return fail();
     for (const slot of ROSTER_SLOTS) {
@@ -331,6 +342,8 @@ export function validateLeagueTeams(
       ...(offsets ? { development: offsets } : {}),
       ...(rotationPlan ? { rotationPlan } : {}),
       ...(simulationVersion === 2 ? { simulationVersion } : {}),
+      ...(typeVersion === 1 ? { typeMatchupsVersion: 1 as const } : {}),
+      ...(tacticsVersion === 1 ? { typeTacticsVersion: 1 as const } : {}),
     };
   });
 }
@@ -479,6 +492,8 @@ function archivedSeason(
       value: text(mvp.value),
     },
   };
+  if (Object.hasOwn(row, "rivalScouting"))
+    season.rivalScouting = parseRivalScouting(row.rivalScouting, rosters);
   if (Object.hasOwn(row, "replay"))
     season.replay = archivedReplay(
       row.replay,
@@ -631,6 +646,12 @@ function archivedReplay(
     JSON.stringify(row.playoffPlayers) !== JSON.stringify(playoffs.players)
   )
     return fail();
+  if (
+    season.rivalScouting &&
+    JSON.stringify(season.rivalScouting) !==
+      JSON.stringify(captureRivalScouting(league, playoffs))
+  )
+    return fail();
   const finals = playoffs.series[14];
   if (
     playoffs.championId !== season.championId ||
@@ -718,6 +739,7 @@ function careers(
       return playedTeams[index];
     });
     let starts = 0,
+      unrecordedStarts = 0,
       regularGames = 0,
       qualifiedYears = 0,
       minimumPlayoffGames = 0;
@@ -737,7 +759,10 @@ function careers(
         detailedRegular.push(detail);
       } else {
         regularGames += 82;
-        if (year.rosters[teamId].indexOf(pokemonId) < 5) starts += 82;
+        // A summary without game records cannot reconstruct who started.
+        // Coaches may promote reserves; keep known totals exact and bound the
+        // unknown years instead of inventing 82 starts from a roster slot.
+        unrecordedStarts += 82;
       }
       const postseason = year.replay?.playoffPlayers.find(
         (player) => player.pokemonId === pokemonId,
@@ -756,7 +781,8 @@ function careers(
       playoffs = totals(row.playoffs, qualifiedYears * 28);
     if (
       regular.gamesPlayed !== regularGames ||
-      regular.gamesStarted !== starts ||
+      regular.gamesStarted < starts ||
+      regular.gamesStarted > starts + unrecordedStarts ||
       playoffs.gamesPlayed < minimumPlayoffGames
     )
       return fail();
@@ -951,6 +977,8 @@ export function validateFranchise(
     return fail();
   const teams = validateLeagueTeams(row.teams, run.includeLegends),
     leagueIds = teams.flatMap((team) => Object.values(team.roster) as number[]);
+  if (teams.some((team) => team.typeTacticsVersion !== run.typeTacticsVersion))
+    return fail();
   const historyCount = row.phase === "offseason" ? year : year - 1;
   const history = array(row.history, historyCount).map((entry, index) =>
     archivedSeason(

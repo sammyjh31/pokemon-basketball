@@ -22,6 +22,7 @@ import {
 } from "./persistence";
 import { initialState } from "./state";
 import { processOffseason } from "./offseason";
+import { validateFranchise } from "./franchiseValidation";
 import { ROSTER_SLOTS, type GameState } from "./types";
 
 let finished: GameState;
@@ -88,7 +89,7 @@ describe("connected franchise archives", () => {
     expect(rejected.preserveSource).toBe(true);
     expect(rejected.state.franchise).toBeUndefined();
     expect(damaged.getItem()).toBe(original);
-  });
+  }, 15000); // Valid and tampered saves each replay several full seasons.
   it("starts interactive years with empty progress without changing older helper fixtures", () => {
     expect(franchise.startInteractiveFranchiseSeason).toBeTypeOf("function");
     const archived = franchise.archiveFranchiseSeason(finished);
@@ -237,6 +238,37 @@ describe("mixed official season persistence", () => {
       notice: null,
       state: archived,
     });
+    // Even without year one's details, known starts remain a hard lower bound
+    // and the unknown year can contribute at most 82. Preserve aggregate starts
+    // so these checks cannot pass merely because league-wide totals changed.
+    for (const offset of [-1, 83]) {
+      const corrupted = structuredClone(archived);
+      const capsule = corrupted.franchise!;
+      const known = new Map(
+        last.replay!.regularPlayers.map((p) => [p.pokemonId, p.gamesStarted]),
+      );
+      const rows = capsule.careers;
+      let changed = false;
+      for (const player of rows) {
+        const target = known.get(player.pokemonId)! + offset;
+        if (target < 0 || target > player.regular.gamesPlayed) continue;
+        const delta = target - player.regular.gamesStarted;
+        const partner = rows.find(
+          (p) =>
+            p !== player &&
+            p.regular.gamesStarted - delta >= known.get(p.pokemonId)! &&
+            p.regular.gamesStarted - delta <= known.get(p.pokemonId)! + 82 &&
+            p.regular.gamesStarted - delta <= p.regular.gamesPlayed,
+        );
+        if (!partner) continue;
+        player.regular.gamesStarted = target;
+        partner.regular.gamesStarted -= delta;
+        changed = true;
+        break;
+      }
+      expect(changed).toBe(true);
+      expect(() => validateFranchise(capsule, corrupted.run, true)).toThrow();
+    }
   }, 30000);
 });
 

@@ -232,6 +232,7 @@ describe("best-of-seven postseason", () => {
           teams.find((t) => t.id === game.homeTeamId)!,
           teams.find((t) => t.id === game.awayTeamId)!,
           game.seed,
+          { scouting: game.scouting },
         );
         expect([match.homeScore, match.awayScore]).toEqual([
           game.homeScore,

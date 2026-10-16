@@ -1,3 +1,5 @@
+import { recordScouting, scoutingForMatch } from "./opponentScouting";
+import type { ScoutingMemory, MatchScouting } from "./typeTacticsTypes";
 import { createLeague, leagueSchedule } from "./league";
 import { simulateMatch } from "./match";
 import { validateOfficialGame } from "./officialGame";
@@ -99,11 +101,20 @@ export function seasonBuilder(
   const history = teams.map(() => [] as boolean[]),
     games: GameResult[] = [],
     summaries: LeagueGameSummary[] = [];
+  const scouting: ScoutingMemory | undefined =
+    teams[0].typeTacticsVersion === 1 ? {} : undefined;
   const play = (fixture: LeagueFixture) => {
-    const { homeTeamId: h, awayTeamId: a } = fixture,
-      match = resolveSeasonMatch(fixture, teams, playedGames);
+    const { homeTeamId: h, awayTeamId: a } = fixture;
+    const context = scouting ? scoutingForMatch(scouting, h, a) : undefined;
+    const match = resolveSeasonMatch(
+      { ...fixture, ...(context ? { scouting: context } : {}) },
+      teams,
+      playedGames,
+    );
+    if (scouting) recordScouting(scouting, teams[h], teams[a], match);
     summaries.push({
       ...fixture,
+      ...(context ? { scouting: context } : {}),
       homeScore: match.homeScore,
       awayScore: match.awayScore,
       overtimePeriods: match.overtimePeriods,
@@ -180,7 +191,14 @@ export function seasonBuilder(
       mvpTeamId: mvp?.teamId ?? 0,
       playerStats: players.filter((p) => p.teamId === 0),
       awards: honors.awards,
-      league: { teams, games: summaries, players, standings, ...honors },
+      league: {
+        teams,
+        games: summaries,
+        players,
+        standings,
+        ...honors,
+        ...(scouting ? { scouting } : {}),
+      },
     };
   };
   return { fixtures: fixtures.slice(0, completedRounds * 15), play, finish };
@@ -213,7 +231,7 @@ export async function simulateSeasonAsync(
 
 /** Resolve an archived or current fixture without replacing an authoritative played result. */
 export function resolveSeasonMatch(
-  fixture: LeagueFixture,
+  fixture: LeagueFixture & { scouting?: MatchScouting },
   teams: LeagueTeam[],
   playedGames: Record<string, OfficialGame> = {},
 ) {
@@ -222,5 +240,7 @@ export function resolveSeasonMatch(
   const home = teams.find((team) => team.id === fixture.homeTeamId),
     away = teams.find((team) => team.id === fixture.awayTeamId);
   if (!home || !away) throw new Error("Missing fixture team.");
-  return simulateMatch(home, away, fixture.seed);
+  return simulateMatch(home, away, fixture.seed, {
+    scouting: fixture.scouting,
+  });
 }

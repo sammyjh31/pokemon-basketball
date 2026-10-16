@@ -5,6 +5,7 @@ export type Phase = "tipoff" | "live" | "inbound" | "break" | "final";
 export type PlayerAction =
   "idle" | "run" | "shoot" | "pass" | "dunk" | "block" | "steal" | "screen";
 export interface ArcadeSetup {
+  typeMatchupsVersion?: 1;
   official?: boolean;
   teams: [
     { name: string; roster: Roster; development?: PlayerDevelopment },
@@ -106,6 +107,7 @@ export interface ArcadeEvent {
   time: number;
 }
 export interface ArcadeState {
+  typeMatchupsVersion?: 1;
   official?: boolean;
   officialSeed?: number;
   modelVersion: 1;

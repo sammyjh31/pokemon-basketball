@@ -1,3 +1,4 @@
+import type { RivalScouting } from "./rivalScoutingTypes";
 import type { RookieDraft } from "./rookieDraftTypes";
 import type { FreeAgency } from "./freeAgencyTypes";
 import type { TrainingPlans, SeasonReplayArchive } from "./franchiseFeatures";
@@ -61,6 +62,7 @@ export interface FranchiseSeason {
   runnerUpWins: number;
   finalsMvp: FinalsMvp;
   replay?: SeasonReplayArchive;
+  rivalScouting?: RivalScouting;
 }
 export interface FranchiseTrade {
   packageVersion?: 1;

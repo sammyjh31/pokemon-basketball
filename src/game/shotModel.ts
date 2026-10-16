@@ -1,3 +1,4 @@
+import { applyTypeShotEffect, typeShotEffect } from "./typeMatchups";
 import { clamp } from "./ratings";
 import type { PlayerProfile } from "./playerProfile";
 import type { DefenseScheme, PlayType } from "./types";
@@ -5,6 +6,9 @@ import type { DefenseScheme, PlayType } from "./types";
 export type ShotZone = "rim" | "mid" | "three";
 export interface ShotContext {
   shooter: PlayerProfile;
+  shooterTypes?: readonly string[];
+  defenderTypes?: readonly string[];
+  helpTypes?: readonly (readonly string[])[];
   defender: PlayerProfile;
   shooterHeight: number;
   defenderHeight: number;
@@ -109,5 +113,20 @@ export function evaluateShot(c: ShotContext) {
     previous = probability;
     return { label, change };
   });
+  if (c.shooterTypes && c.defenderTypes) {
+    const effect = typeShotEffect(
+      c.shooterTypes,
+      c.defenderTypes,
+      c.zone,
+      c.helpTypes,
+    );
+    const probability = clamp(
+      applyTypeShotEffect(previous, effect.logOdds),
+      0.1,
+      0.88,
+    );
+    factors.push({ label: "Type matchup", change: probability - previous });
+    previous = probability;
+  }
   return { baseProbability, probability: previous, factors };
 }

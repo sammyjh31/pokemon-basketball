@@ -20,6 +20,9 @@ import { localSeasonBuilder } from "./localSeason";
 import { teamRatings, positionRating } from "./ratings";
 import { nextRandom } from "./random";
 import { exchangePlayers } from "./rosterTrades";
+import { captureRivalScouting, parseRivalScouting } from "./rivalScouting";
+import { createRivalStrategy } from "./rivalRosterStrategy";
+import type { RivalScouting } from "./rivalScoutingTypes";
 import {
   playoffGameCount,
   replayPlayoffs,
@@ -70,6 +73,7 @@ export interface LocalSeasonArchive {
   development: LocalDevelopment[];
   rookiePicks: LocalRookiePick[];
   trades: LocalTrade[];
+  rivalScouting?: RivalScouting;
 }
 export interface LocalCareer {
   version: 1;
@@ -241,6 +245,7 @@ export function beginLocalOffseason(
     ).changes,
   }));
   if (development.length !== draft.options.format.teamCount * 8) fail();
+  const rivalScouting = captureRivalScouting(league, verified);
   const archived: LocalSeasonArchive = {
     year,
     seasonSeed: localSeasonSeed(draft),
@@ -253,6 +258,7 @@ export function beginLocalOffseason(
     development,
     rookiePicks: [],
     trades: [],
+    ...(rivalScouting ? { rivalScouting } : {}),
   };
   const next: LocalLeague = {
     ...draft,
@@ -312,9 +318,20 @@ export function recommendedLocalRookie(draft: LocalLeague) {
   const turn = currentLocalRookieTurn(draft);
   if (!turn) return null;
   const team = draft.career!.teams[turn.teamId],
-    pool = localRookiePool(draft);
-  let best: { pokemonId: number; releasedId: number; score: number } | null =
-    null;
+    pool = localRookiePool(draft),
+    strategy = createRivalStrategy(
+      team,
+      draft.career!.teams,
+      draft.career!.history,
+      draft.career!.year,
+    );
+  let best: {
+    pokemonId: number;
+    releasedId: number;
+    score: number;
+    rivalGain?: number;
+    reason?: string;
+  } | null = null;
   for (const mon of pool)
     for (const slot of ROSTER_SLOTS) {
       const release = team.roster[slot]!,
@@ -330,9 +347,20 @@ export function recommendedLocalRookie(draft: LocalLeague) {
           positionRating(outgoing, p, team.development?.[release]),
         ),
       );
-      const score = incoming - previous;
+      const rivalGain = strategy.change([release], [mon.id]),
+        score = incoming - previous + rivalGain;
       if (!best || score > best.score)
-        best = { pokemonId: mon.id, releasedId: release, score };
+        best = {
+          pokemonId: mon.id,
+          releasedId: release,
+          score,
+          ...(strategy.active
+            ? {
+                rivalGain,
+                reason: `${strategy.explanation} Rival coverage changes ${rivalGain >= 0 ? "+" : ""}${rivalGain.toFixed(1)}.`,
+              }
+            : {}),
+        };
     }
   return best;
 }
@@ -364,7 +392,15 @@ export function evaluateLocalTrade(
   teamId: number,
   giveId: number,
   receiveId: number,
-) {
+): {
+  accepted: boolean;
+  reason: string;
+  fromGain: number;
+  toGain: number;
+  requiresAcceptance: number[];
+  fromRivalGain?: number;
+  toRivalGain?: number;
+} {
   const empty = {
     accepted: false,
     reason:
@@ -399,19 +435,49 @@ export function evaluateLocalTrade(
       ),
     );
   const difference = ability(to, receiveId) - ability(from, giveId);
+  const career = draft.career!,
+    fromStrategy = createRivalStrategy(
+      from,
+      teams,
+      career.history,
+      career.year,
+    ),
+    toStrategy = createRivalStrategy(to, teams, career.history, career.year),
+    fromRivalGain = fromStrategy.tradeChange([giveId], [receiveId], teamId),
+    toRivalGain = toStrategy.tradeChange([receiveId], [giveId], fromTeamId);
   const isHuman = (id: number) => draft.managers.some((m) => m.teamId === id);
   const accepted =
     (isHuman(fromTeamId) ||
-      (fromGain >= -0.15 && difference + 2 * fromGain >= -2.5)) &&
-    (isHuman(teamId) || (toGain >= -0.15 && -difference + 2 * toGain >= -2.5));
+      (fromGain >= -0.15 &&
+        (!fromStrategy.active || difference >= -5) &&
+        difference + 2 * fromGain + fromRivalGain >= -2.5)) &&
+    (isHuman(teamId) ||
+      (toGain >= -0.15 &&
+        (!toStrategy.active || -difference >= -5) &&
+        -difference + 2 * toGain + toRivalGain >= -2.5));
+  const rivalReason = [
+    ...(fromStrategy.active
+      ? [
+          `${from.name}: ${fromStrategy.explanation} Rival coverage ${fromRivalGain >= 0 ? "+" : ""}${fromRivalGain.toFixed(1)}.`,
+        ]
+      : []),
+    ...(toStrategy.active
+      ? [
+          `${to.name}: ${toStrategy.explanation} Rival coverage ${toRivalGain >= 0 ? "+" : ""}${toRivalGain.toFixed(1)}.`,
+        ]
+      : []),
+  ].join(" ");
+  const reason = accepted
+    ? `Roster fit changes: ${from.name} ${fromGain >= 0 ? "+" : ""}${fromGain.toFixed(1)}, ${to.name} ${toGain >= 0 ? "+" : ""}${toGain.toFixed(1)}. Each friend must agree; CPU clubs protect roster fit and player value.`
+    : "A CPU club declined: this exchange loses too much roster fit or player value.";
   return {
     accepted,
-    reason: accepted
-      ? `Roster fit changes: ${from.name} ${fromGain >= 0 ? "+" : ""}${fromGain.toFixed(1)}, ${to.name} ${toGain >= 0 ? "+" : ""}${toGain.toFixed(1)}. Each friend must agree; CPU clubs protect roster fit and player value.`
-      : "A CPU club declined: this exchange loses too much roster fit or player value.",
+    reason: rivalReason ? `${reason} ${rivalReason}` : reason,
     fromGain,
     toGain,
     requiresAcceptance: [fromTeamId, teamId].filter(isHuman),
+    ...(fromStrategy.active ? { fromRivalGain } : {}),
+    ...(toStrategy.active ? { toRivalGain } : {}),
   };
 }
 export function applyLocalTrade(
@@ -593,6 +659,12 @@ function verifyArchivedResult(
     )
   )
     fail("This archived season does not match its frozen inputs.");
+  if (
+    archived.rivalScouting !== undefined &&
+    JSON.stringify(archived.rivalScouting) !==
+      JSON.stringify(captureRivalScouting(result.league!, playoffs))
+  )
+    fail("This archived rival scouting does not match its frozen inputs.");
 }
 
 // Saved history is compact input plus bounded summaries. Restore roster/development
@@ -644,6 +716,8 @@ function parseTeams(
       row.id !== id ||
       row.name !== LOCAL_TEAMS[id].name ||
       row.simulationVersion !== 2 ||
+      row.typeMatchupsVersion !== draft.typeMatchupsVersion ||
+      row.typeTacticsVersion !== draft.typeTacticsVersion ||
       !TACTICS.includes(row.tactic) ||
       !ROTATIONS.includes(row.rotation) ||
       !DEFENSE_SCHEMES.includes(row.defense) ||
@@ -695,6 +769,12 @@ function parseTeams(
       id,
       name: row.name,
       simulationVersion: 2,
+      ...(draft.typeMatchupsVersion === 1
+        ? { typeMatchupsVersion: 1 as const }
+        : {}),
+      ...(draft.typeTacticsVersion === 1
+        ? { typeTacticsVersion: 1 as const }
+        : {}),
       roster,
       tactic: row.tactic,
       rotation: row.rotation,
@@ -900,6 +980,12 @@ export function parseLocalCareer(
       row.trades.length > 100
     )
       fail();
+    const rivalScouting = !Object.hasOwn(row, "rivalScouting")
+      ? undefined
+      : parseRivalScouting(
+          row.rivalScouting,
+          teams.map((team) => ROSTER_SLOTS.map((slot) => team.roster[slot]!)),
+        );
     const archived: LocalSeasonArchive = {
       year: archiveYear,
       seasonSeed: row.seasonSeed,
@@ -912,6 +998,7 @@ export function parseLocalCareer(
       development,
       rookiePicks: [],
       trades: [],
+      ...(rivalScouting ? { rivalScouting } : {}),
     };
     let replay: LocalLeague = {
       ...draft,

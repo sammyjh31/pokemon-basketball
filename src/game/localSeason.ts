@@ -1,3 +1,5 @@
+import { recordScouting, scoutingForMatch } from "./opponentScouting";
+import type { ScoutingMemory, MatchScouting } from "./typeTacticsTypes";
 import { nextRandom } from "./random";
 import { addBox, leagueHonors, leaguePlayers } from "./leagueStats";
 import { simulateMatch } from "./match";
@@ -87,12 +89,19 @@ export function localSeasonBuilder(
   const history = inputs.map(() => [] as boolean[]),
     games: GameResult[] = [],
     summaries: LeagueGameSummary[] = [];
+  const scouting: ScoutingMemory | undefined =
+    inputs[0].typeTacticsVersion === 1 ? {} : undefined;
   function play(fixture: LeagueFixture) {
     const h = fixture.homeTeamId,
-      a = fixture.awayTeamId,
-      match = simulateMatch(inputs[h], inputs[a], fixture.seed);
+      a = fixture.awayTeamId;
+    const context = scouting ? scoutingForMatch(scouting, h, a) : undefined;
+    const match = simulateMatch(inputs[h], inputs[a], fixture.seed, {
+      scouting: context,
+    });
+    if (scouting) recordScouting(scouting, inputs[h], inputs[a], match);
     summaries.push({
       ...fixture,
+      ...(context ? { scouting: context } : {}),
       homeScore: match.homeScore,
       awayScore: match.awayScore,
       overtimePeriods: match.overtimePeriods,
@@ -154,6 +163,7 @@ export function localSeasonBuilder(
       playerStats: players.filter((p) => p.teamId === 0),
       awards: honors.awards,
       league: {
+        ...(scouting ? { scouting } : {}),
         format: { ...format },
         teams: inputs,
         games: summaries,

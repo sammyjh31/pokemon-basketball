@@ -365,6 +365,9 @@ export function ArcadeMode({
           },
         ],
         seed: random[0],
+        ...(!official || user?.typeMatchupsVersion === 1
+          ? { typeMatchupsVersion: 1 as const }
+          : {}),
         ...(official ? { official: true } : {}),
       });
       if (!audio.current) audio.current = new ArcadeAudio();

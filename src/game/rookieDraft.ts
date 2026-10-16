@@ -1,3 +1,4 @@
+import { createRivalStrategy } from "./rivalRosterStrategy";
 import {
   POKEMON_BY_ID,
   ROOKIE_GENERATIONS,
@@ -138,10 +139,21 @@ export function recommendedRookiePick(
   franchise: Franchise,
   teamId: number,
   includeLegends: boolean,
-): { pokemonId: number; releasedId: number } | null {
+): {
+  pokemonId: number;
+  releasedId: number;
+  rivalGain?: number;
+  reason?: string;
+} | null {
   if (!ready(franchise) || currentDraft(franchise)?.complete) return null;
   const team = franchise.teams.find((club) => club.id === teamId);
   if (!team) return null;
+  const strategy = createRivalStrategy(
+    team,
+    franchise.teams,
+    franchise.history,
+    franchise.year,
+  );
   const prospects = rookieProspects(franchise, includeLegends);
   if (!prospects.length) return null;
   const roster = ROSTER_SLOTS.flatMap((slot) => {
@@ -200,7 +212,8 @@ export function recommendedRookiePick(
         (fit(incoming) - fit(outgoing)) * (0.5 + minutes[row.slot] / 60) +
         (incoming.ability - outgoing.ability) * 0.45 +
         (scheme(incoming.a) - scheme(outgoing.a)) * 0.2 +
-        (need(incoming.a) - need(outgoing.a)) * 0.1;
+        (need(incoming.a) - need(outgoing.a)) * 0.1 +
+        strategy.change([row.mon.id], [mon.id]);
       options.push({
         pokemonId: mon.id,
         releasedId: row.mon.id,
@@ -227,7 +240,16 @@ export function recommendedRookiePick(
     .sort(compare);
   const best = finalists[0];
   return best
-    ? { pokemonId: best.pokemonId, releasedId: best.releasedId }
+    ? {
+        pokemonId: best.pokemonId,
+        releasedId: best.releasedId,
+        ...(strategy.active
+          ? {
+              rivalGain: strategy.change([best.releasedId], [best.pokemonId]),
+              reason: `${strategy.explanation} Rival coverage change: ${strategy.change([best.releasedId], [best.pokemonId]).toFixed(2)}. Ability and rotation fit remain part of the recommendation.`,
+            }
+          : {}),
+      }
     : null;
 }
 

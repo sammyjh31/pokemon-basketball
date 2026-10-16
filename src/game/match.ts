@@ -1,20 +1,36 @@
+import {
+  assignTypeDefenders,
+  chooseTypeHelp,
+  scoutedThreat,
+  scoutedCoverage,
+  screenCoverage,
+  shouldSwitchScreen,
+} from "./typeTactics";
+import { scoutingForMatch, validateMatchScouting } from "./opponentScouting";
+import type { MatchScouting, TypeTacticsSummary } from "./typeTacticsTypes";
+import {
+  chooseLineup,
+  replaceFoulOut,
+  type Player,
+  type Team,
+} from "./matchLineups";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { clamp, rotationMinutes } from "./ratings";
 import { nextRandom } from "./random";
 import { DEVELOPMENT_SKILLS } from "./developmentTypes";
-import { playerProfile, type PlayerProfile } from "./playerProfile";
+import { playerProfile } from "./playerProfile";
 import { evaluateShot } from "./shotModel";
-import {
-  engineProfile,
-  lineupChemistry,
-  signatureImpact,
-  type EngineProfile,
-} from "./engineDepth";
+import { engineProfile, lineupChemistry, signatureImpact } from "./engineDepth";
 import type {
   DefenseSummary,
   LineupSummary,
   ShotEvent,
 } from "./engineInsightsTypes";
+import {
+  applyTypeShotEffect,
+  typeMatchup,
+  typeShotLogOdds,
+} from "./typeMatchups";
 import {
   POSITIONS,
   ROSTER_SLOTS,
@@ -28,22 +44,7 @@ import {
 
 type Side = "home" | "away";
 type Zone = "rim" | "mid" | "three";
-interface Player {
-  depth?: EngineProfile;
-  profile: PlayerProfile;
-  box: LeagueBox;
-  target: number;
-  energy: number;
-  consecutive: number;
-}
-interface Team {
-  config: LeagueTeam;
-  players: Player[];
-  floor: Player[]; // Ordered PG, SG, SF, PF, C, including substitute roles.
-  side: Side;
-  fouls: number;
-  transition: number;
-}
+
 const PLAY_TYPES: PlayType[] = [
   "transition",
   "pickRoll",
@@ -97,6 +98,8 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   const players = ROSTER_SLOTS.map((slot, index): Player => {
     const pokemonId = ids[index]!;
     return {
+      types: POKEMON_BY_ID.get(pokemonId)!.types,
+      typeEdges: new Map(),
       profile: playerProfile(
         POKEMON_BY_ID.get(pokemonId)!,
         config.development?.[pokemonId],
@@ -183,103 +186,13 @@ const skill = (p: Player, key: keyof Attributes) => {
 const average = (players: Player[], get: (p: Player) => number) =>
   players.reduce((sum, p) => sum + get(p), 0) / players.length;
 
-function eligiblePlayers(team: Team): Player[] {
-  const eligible = team.players.filter((p) => p.box.fouls < 6);
-  if (team.config.rotationPlan) {
-    const active = eligible.filter((p) => p.target > 0);
-    // A zero-minute player is emergency cover only after foul-outs deplete the rotation.
-    if (active.length < 5)
-      active.push(
-        ...eligible.filter((p) => p.target === 0).slice(0, 5 - active.length),
-      );
-    eligible.splice(0, eligible.length, ...active);
-  }
-  // Depleted-roster exception: basketball always remains five-on-five. Return
-  // only the minimum disqualified players, preferring the fewest fouls. Every
-  // subsequent personal foul by a returned player also incurs a technical FT.
-  if (eligible.length < 5)
-    eligible.push(
-      ...team.players
-        .filter((p) => p.box.fouls >= 6)
-        .sort((a, b) => a.box.fouls - b.box.fouls || b.energy - a.energy)
-        .slice(0, 5 - eligible.length),
-    );
-  return eligible;
-}
-
-function chooseLineup(team: Team, minute: number, close: boolean): void {
-  const pool = eligiblePlayers(team),
-    chosen: Player[] = [];
-  const closers =
-    close && team.config.rotationPlan
-      ? pool.filter((p) =>
-          team.config.rotationPlan!.closing.includes(p.box.slot),
-        )
-      : [];
-  const phase = Math.min(minute / 48, 1);
-  for (const role of ROLE_ORDER) {
-    let best: Player | undefined,
-      bestScore = -Infinity;
-    for (const p of pool) {
-      if (chosen.includes(p)) continue;
-      // Assign every available requested closer a role before choosing foul-out cover.
-      if (
-        closers.some((closer) => !chosen.includes(closer)) &&
-        !closers.includes(p)
-      )
-        continue;
-      const foulThreshold =
-        minute < 12 ? 2 : minute < 24 ? 3 : minute < 36 ? 4 : 5;
-      const foulPenalty =
-        minute < 43 && p.box.fouls >= foulThreshold
-          ? 14 + (p.box.fouls - foulThreshold) * 9
-          : 0;
-      const debt = p.target * phase - Math.min(p.box.minutes, 48);
-      const score = close
-        ? p.profile.positions[POSITIONS[role]] * 0.85 +
-          p.energy * 0.42 +
-          p.profile.attributes.composure * 0.12 -
-          foulPenalty * 0.2
-        : p.profile.positions[POSITIONS[role]] * 0.5 +
-          p.energy * 0.22 +
-          p.target * 0.8 +
-          debt * 5 -
-          foulPenalty -
-          Math.max(0, p.consecutive - 7) * 1.2;
-      if (score > bestScore) {
-        bestScore = score;
-        best = p;
-      }
-    }
-    chosen[role] = best!;
-  }
-  team.floor = chosen;
-}
-
-function replaceFoulOut(team: Team): void {
-  const eligible = eligiblePlayers(team);
-  team.floor.forEach((p, role) => {
-    if (eligible.includes(p)) return;
-    const available = eligible.filter(
-      (candidate) => !team.floor.includes(candidate),
-    );
-    available.sort(
-      (a, b) =>
-        b.profile.positions[POSITIONS[role]] +
-        b.energy * 0.25 -
-        (a.profile.positions[POSITIONS[role]] + a.energy * 0.25),
-    );
-    team.floor[role] = available[0];
-  });
-}
-
 /** One seeded, symmetric game. All points are produced by shots and free throws;
  * there is no synthetic opponent score or post-hoc score correction. */
 export function simulateMatch(
   home: LeagueTeam,
   away: LeagueTeam,
   seed: number,
-  options: { collectInsights?: boolean } = {},
+  options: { collectInsights?: boolean; scouting?: MatchScouting } = {},
 ): LeagueMatch {
   for (const team of [home, away]) {
     const rules = team.engineRules;
@@ -296,11 +209,75 @@ export function simulateMatch(
   }
   if (home.simulationVersion !== away.simulationVersion)
     throw new Error("Both teams must use the same simulation model.");
+  if (home.typeMatchupsVersion !== away.typeMatchupsVersion)
+    throw new Error("Both teams must use the same type matchup rules.");
+  if (
+    home.typeTacticsVersion !== away.typeTacticsVersion ||
+    (home.typeTacticsVersion !== undefined && home.typeTacticsVersion !== 1) ||
+    (home.typeTacticsVersion === 1 && home.typeMatchupsVersion !== 1)
+  )
+    throw new Error("Both teams must use valid, matching type tactics rules.");
+  const advanced = home.typeTacticsVersion === 1;
+  if (!advanced && options.scouting !== undefined)
+    throw new Error("Opponent scouting requires type tactics rules.");
+  const scouting = advanced
+    ? validateMatchScouting(
+        options.scouting ?? scoutingForMatch({}, home.id, away.id),
+        home,
+        away,
+      )
+    : undefined;
+  const typed = home.typeMatchupsVersion === 1;
   const modern = home.simulationVersion === 2;
   const depthEnabled = Boolean(home.engineRules || away.engineRules);
   const h = buildTeam(home, "home"),
     a = buildTeam(away, "away");
+  // A fixed roster has only 128 directed matchups. Resolve these once rather
+  // than allocating chart lookup keys during thousands of possession checks.
+  if (typed) {
+    for (const [attack, defense] of [
+      [h, a],
+      [a, h],
+    ])
+      for (const player of attack.players)
+        for (const opponent of defense.players)
+          player.typeEdges.set(
+            opponent,
+            typeMatchup(player.types, opponent.types).edge,
+          );
+    // Both coaches scout the same pre-decision lineups; neither sees the other
+    // coach's simultaneous choice before making its own.
+    const homeFloor = h.floor,
+      awayFloor = a.floor;
+    chooseLineup(h, 0, false, awayFloor);
+    chooseLineup(a, 0, false, homeFloor);
+    for (const team of [h, a]) {
+      team.counterSubstitutions = 0;
+      for (const player of team.players)
+        player.box.started = team.floor.includes(player);
+    }
+  }
   const result: LeagueMatch = {
+    ...(typed
+      ? {
+          typeMatchups: {
+            home: {
+              advantaged: 0,
+              resisted: 0,
+              neutral: 0,
+              shotAttempts: 0,
+              shotChanceDelta: 0,
+            },
+            away: {
+              advantaged: 0,
+              resisted: 0,
+              neutral: 0,
+              shotAttempts: 0,
+              shotChanceDelta: 0,
+            },
+          },
+        }
+      : {}),
     homeScore: 0,
     awayScore: 0,
     homeBox: h.players.map((p) => p.box),
@@ -326,6 +303,71 @@ export function simulateMatch(
           },
         }
       : {}),
+  };
+  if (scouting) {
+    const summary = (team: Team, opponent: Team): TypeTacticsSummary => {
+      const history = scouting[team.side];
+      const threat = [...opponent.players].sort(
+        (x, y) => scoutedThreat(y, history) - scoutedThreat(x, history),
+      )[0];
+      return {
+        priorMeetings: history.games,
+        ...(scoutedThreat(threat, history) > 1
+          ? { priorityThreatId: threat.box.pokemonId }
+          : {}),
+        crossMatches: 0,
+        screens: 0,
+        switches: 0,
+        stays: 0,
+        rolls: 0,
+        helpRotations: 0,
+        kickouts: 0,
+        notes: history.games
+          ? [
+              `Scouted ${history.games} previous meeting${history.games === 1 ? "" : "s"}; prioritize proven scorers and observed coverage.`,
+            ]
+          : [
+              "First meeting: use roster scouting until game evidence is available.",
+            ],
+      };
+    };
+    result.typeTactics = { home: summary(h, a), away: summary(a, h) };
+  }
+  const assignmentCache = new Map<
+    Team,
+    {
+      attack: Player[];
+      defense: Player[];
+      minute: number;
+      guards: Map<Player, Player>;
+    }
+  >();
+  const assignments = (offense: Team, defense: Team) => {
+    const prior = assignmentCache.get(defense);
+    // Reassess fatigue each minute as well as substitutions/foul-out replacements.
+    if (
+      prior &&
+      prior.minute === Math.floor(elapsedSeconds() / 60) &&
+      prior.attack.every((p, i) => offense.floor[i] === p) &&
+      prior.defense.every((p, i) => defense.floor[i] === p)
+    )
+      return prior.guards;
+    const guards = assignTypeDefenders(
+      offense.floor,
+      defense.floor,
+      scouting![defense.side],
+    );
+    const cross = offense.floor.filter(
+      (p, i) => guards.get(p) !== defense.floor[i],
+    ).length;
+    result.typeTactics![defense.side].crossMatches += cross;
+    assignmentCache.set(defense, {
+      attack: [...offense.floor],
+      defense: [...defense.floor],
+      minute: Math.floor(elapsedSeconds() / 60),
+      guards,
+    });
+    return guards;
   };
   if (depthEnabled)
     result.insights = {
@@ -570,7 +612,7 @@ export function simulateMatch(
     defender.box.fouls++;
     defense.fouls++;
     const technical = defender.box.fouls > 6;
-    replaceFoulOut(defense);
+    replaceFoulOut(defense, offense.floor);
     if (technical) {
       const shooter = offense.floor.reduce((best, p) =>
         p.profile.attributes.freeThrow > best.profile.attributes.freeThrow
@@ -645,6 +687,10 @@ export function simulateMatch(
     if (result.insights) lineup(offense).possessions++;
     let secondChance = false;
     for (;;) {
+      let guards = advanced ? assignments(offense, defense) : undefined;
+      let switched = false;
+      let kickoutPasser: Player | undefined;
+      let help: ReturnType<typeof chooseTypeHelp>;
       const handler = pick(
         offense.floor,
         (p, role) =>
@@ -663,7 +709,13 @@ export function simulateMatch(
           Math.pow(
             p.profile.traits.screening + (p.depth?.physical.screening ?? 0),
             3,
-          ),
+          ) *
+          (guards
+            ? 1 +
+              0.15 *
+                (handler.typeEdges.get(guards.get(p)!)! -
+                  handler.typeEdges.get(guards.get(handler)!)!)
+            : 1),
       );
       const tactic = offense.config.tactic;
       const isClutch =
@@ -693,12 +745,48 @@ export function simulateMatch(
         weights[0] = 0;
         weights[3] += 30;
       }
+      if (scouting && scouting[offense.side].games) {
+        const observed = scoutedCoverage(scouting[offense.side]);
+        // Observed help invites spacing; frequent switches invite slips/rolls.
+        weights[4] += 16 * observed.help;
+        weights[1] += 12 * observed.switches;
+      }
       if (chaseThree) weights[4] += 45;
       const play = pick(PLAY_TYPES, (_p, i) => weights[i]);
       result.plays[play][offense.side]++;
       offense.transition = 0;
       let shooter: Player;
-      if (play === "pickRoll")
+      if (play === "pickRoll" && guards) {
+        switched = shouldSwitchScreen(
+          handler,
+          screener,
+          guards.get(handler)!,
+          guards.get(screener)!,
+          defense.config.defense,
+          scouting![defense.side],
+        );
+        if (switched) {
+          // Keep the cached base assignments intact for the next possession.
+          guards = new Map(guards);
+          const original = guards.get(handler)!;
+          guards.set(handler, guards.get(screener)!);
+          guards.set(screener, original);
+        }
+        result.typeTactics![offense.side].screens++;
+        result.typeTactics![defense.side][switched ? "switches" : "stays"]++;
+        shooter = pick(
+          offense.floor,
+          (p) =>
+            (p === handler ? 45 : p === screener ? 40 : 5) *
+            (1 + 0.15 * p.typeEdges.get(guards!.get(p)!)!) *
+            (p === screener
+              ? skill(p, "finishing")
+              : p === handler
+                ? skill(p, "ballHandling")
+                : skill(p, "threePoint")),
+        );
+        if (shooter === screener) result.typeTactics![offense.side].rolls++;
+      } else if (play === "pickRoll")
         shooter =
           random() < 0.38
             ? screener
@@ -706,7 +794,7 @@ export function simulateMatch(
               ? handler
               : pick(offense.floor, (p) => skill(p, "threePoint") ** 3);
       else
-        shooter = pick(offense.floor, (p) => {
+        shooter = pick(offense.floor, (p, role) => {
           const rating =
             play === "transition"
               ? skill(p, "speed") * 0.5 + skill(p, "finishing") * 0.5
@@ -717,11 +805,23 @@ export function simulateMatch(
                     p.profile.traits.offBall * 0.4
                   : p.profile.traits.usage * 0.6 +
                     skill(p, "ballHandling") * 0.4;
-          return rating ** 3 * (p.depth?.tendencies.usage ?? 1);
+          // Tendencies govern initiative; type coverage adds a bounded matchup preference.
+          return (
+            rating ** 3 *
+            (p.depth?.tendencies.usage ?? 1) *
+            (typed
+              ? 1 +
+                0.1 * p.typeEdges.get(guards?.get(p) ?? defense.floor[role])!
+              : 1)
+          );
         });
-      const shooterRole = offense.floor.indexOf(shooter);
-      let defender = defense.floor[shooterRole];
-      if (defense.config.defense === "switch" && play === "pickRoll") {
+      let shooterRole = offense.floor.indexOf(shooter);
+      let defender = guards?.get(shooter) ?? defense.floor[shooterRole];
+      if (
+        !advanced &&
+        defense.config.defense === "switch" &&
+        play === "pickRoll"
+      ) {
         defender =
           defense.floor[
             offense.floor.indexOf(shooter === screener ? handler : screener)
@@ -759,19 +859,74 @@ export function simulateMatch(
         shotWeights[2] *= 1.2;
       }
       if (chaseThree) shotWeights[2] *= 3;
-      const zone = pick<Zone>(
+      let zone = pick<Zone>(
         ["rim", "mid", "three"],
         (_zone, i) => shotWeights[i],
       );
-      if (defense.config.defense === "zone" && zone === "rim")
+      if (!advanced && defense.config.defense === "zone" && zone === "rim")
         defender = pick(defense.floor, (p) => skill(p, "interiorDefense") ** 3);
+      if (guards && zone === "rim") {
+        help = chooseTypeHelp(
+          shooter,
+          defender,
+          offense.floor,
+          defense.floor,
+          guards,
+          scouting![defense.side],
+        );
+        if (help) {
+          result.typeTactics![defense.side].helpRotations++;
+          const read = clamp(
+            0.2 +
+              skill(shooter, "passing") * 0.003 +
+              (skill(help.abandoned, "threePoint") - 55) * 0.004,
+            0.15,
+            0.7,
+          );
+          if (random() < read) {
+            kickoutPasser = shooter;
+            shooter = help.abandoned;
+            shooterRole = offense.floor.indexOf(shooter);
+            defender = help.helper;
+            zone = "three";
+            result.typeTactics![offense.side].kickouts++;
+          }
+        }
+      }
+      const typeEdge = typed ? shooter.typeEdges.get(defender)! : 0;
+      const helpEdge = advanced
+        ? zone === "rim" && help
+          ? shooter.typeEdges.get(help.helper)!
+          : typeEdge
+        : typed && zone === "rim"
+          ? defense.floor.reduce(
+              (sum, p) =>
+                sum + (p === defender ? 0 : shooter.typeEdges.get(p)!),
+              0,
+            ) / 4
+          : typeEdge;
+      const typeEffect = typed
+        ? { edge: typeEdge, logOdds: typeShotLogOdds(typeEdge, zone, helpEdge) }
+        : undefined;
+      if (typeEffect && result.typeMatchups) {
+        const summary = result.typeMatchups[offense.side];
+        if (typeEffect.edge > 0) summary.advantaged++;
+        else if (typeEffect.edge < 0) summary.resisted++;
+        else summary.neutral++;
+      }
       const pressure = average(
         defense.floor,
         (p) => skill(p, "steal") * 0.5 + skill(p, "perimeterDefense") * 0.5,
       );
       const carrier = play === "post" ? shooter : handler;
+      const carrierDefender =
+        guards?.get(carrier) ?? defense.floor[offense.floor.indexOf(carrier)];
+      const typePressure = typed
+        ? carrierDefender.typeEdges.get(carrier)! * 0.012
+        : 0;
       const turnoverRate = clamp(
         0.105 +
+          typePressure +
           (pressure - skill(carrier, "ballHandling")) * 0.0016 +
           (65 - carrier.profile.traits.decisionMaking) * 0.0005 +
           (defense.config.defense === "press" ? 0.035 : 0) +
@@ -785,7 +940,12 @@ export function simulateMatch(
       if (pressureRoll < turnoverRate) {
         carrier.box.turnovers++;
         if (random() < 0.64) {
-          const thief = pick(defense.floor, (p) => skill(p, "steal") ** 2);
+          const thief = pick(
+            defense.floor,
+            (p) =>
+              skill(p, "steal") ** 2 *
+              (typed ? 1 + 0.1 * p.typeEdges.get(carrier)! : 1),
+          );
           thief.box.steals++;
           const record = defenseMap.get(thief.box.playerId);
           if (record) {
@@ -817,7 +977,7 @@ export function simulateMatch(
         offender.box.turnovers++;
         offender.box.fouls++;
         const technical = offender.box.fouls > 6;
-        replaceFoulOut(offense);
+        replaceFoulOut(offense, defense.floor);
         if (technical)
           freeThrow(
             defense,
@@ -860,14 +1020,15 @@ export function simulateMatch(
           ? (skill(shooter, "strength") - skill(defender, "strength")) * 0.0006
           : (skill(shooter, "speed") - skill(defender, "speed")) * 0.00045;
       const passer =
-        shooter !== handler
+        kickoutPasser ??
+        (shooter !== handler
           ? handler
           : play === "spotUp" || play === "pickRoll"
             ? pick(
                 offense.floor.filter((p) => p !== shooter),
                 (p) => skill(p, "passing") ** 2,
               )
-            : undefined;
+            : undefined);
       const passingBonus = passer
         ? (skill(passer, "passing") - 40) *
           (play === "spotUp" ? 0.0009 : 0.00055)
@@ -876,18 +1037,24 @@ export function simulateMatch(
         play === "pickRoll"
           ? (screener.profile.traits.screening - 35) *
             0.0008 *
-            (defense.config.defense === "switch" ? 0.4 : 1)
+            ((advanced ? switched : defense.config.defense === "switch")
+              ? 0.4
+              : 1)
           : 0;
+      const coverageScheme =
+        advanced && play === "pickRoll"
+          ? screenCoverage(defense.config.defense, switched)
+          : defense.config.defense;
       const coverage =
-        defense.config.defense === "zone"
+        coverageScheme === "zone"
           ? zone === "rim"
             ? -0.035
             : zone === "three"
               ? 0.023
               : 0
-          : defense.config.defense === "press"
+          : coverageScheme === "press"
             ? 0.012
-            : defense.config.defense === "switch"
+            : coverageScheme === "switch"
               ? (60 - defender.profile.traits.switchability) * 0.0004
               : 0;
       let accuracy =
@@ -929,7 +1096,7 @@ export function simulateMatch(
           defenderHeight: POKEMON_BY_ID.get(defender.box.pokemonId)!.heightM,
           zone,
           play,
-          coverage: defense.config.defense,
+          coverage: coverageScheme,
           shooterEnergy: shooter.energy,
           defenderEnergy: defender.energy,
           spacing,
@@ -1006,6 +1173,21 @@ export function simulateMatch(
           0.88,
         );
       }
+      if (advanced)
+        accuracy = clamp(
+          accuracy +
+            (kickoutPasser ? 0.025 : help && zone === "rim" ? -0.02 : 0),
+          0.1,
+          0.88,
+        );
+      // Measure type impact against the completed basketball/depth probability.
+      const untypedAccuracy = accuracy;
+      if (typeEffect)
+        accuracy = clamp(
+          applyTypeShotEffect(accuracy, typeEffect.logOdds),
+          0.1,
+          0.88,
+        );
       const assistChance = clamp(
         (play === "spotUp"
           ? 0.88
@@ -1071,10 +1253,22 @@ export function simulateMatch(
       }
       const blocker =
         zone === "rim"
-          ? pick(defense.floor, (p) => skill(p, "block") ** 3)
+          ? pick(
+              defense.floor,
+              (p) =>
+                skill(p, "block") ** 3 *
+                (advanced
+                  ? p === defender || p === help?.helper
+                    ? 2
+                    : 0.4
+                  : 1),
+            )
           : defender;
       const blockRate = clamp(
         (zone === "rim" ? 0.052 : zone === "mid" ? 0.021 : 0.009) +
+          (typed
+            ? blocker.typeEdges.get(shooter)! * (zone === "rim" ? 0.008 : 0.003)
+            : 0) +
           (skill(blocker, "block") - skill(shooter, "vertical")) *
             (zone === "rim" ? 0.0008 : 0.00025),
         0.003,
@@ -1082,6 +1276,11 @@ export function simulateMatch(
       );
       const blocked = random() < blockRate;
       const made = !blocked && random() < accuracy;
+      if (result.typeMatchups) {
+        const summary = result.typeMatchups[offense.side];
+        summary.shotAttempts++;
+        summary.shotChanceDelta += accuracy - untypedAccuracy;
+      }
       if (result.shotQuality) {
         const quality = result.shotQuality[offense.side],
           value = zone === "three" ? 3 : 2;
@@ -1149,8 +1348,10 @@ export function simulateMatch(
           gameMinute >= 44 &&
           Math.abs(result.homeScore - result.awayScore) <= 12;
         if (gameMinute > 0) {
-          chooseLineup(h, gameMinute, close);
-          chooseLineup(a, gameMinute, close);
+          const homeFloor = h.floor,
+            awayFloor = a.floor;
+          chooseLineup(h, gameMinute, close, awayFloor);
+          chooseLineup(a, gameMinute, close, homeFloor);
         }
         for (const team of [h, a])
           for (const player of team.players) {
@@ -1205,6 +1406,10 @@ export function simulateMatch(
     period++;
   }
   result.possessions = Math.round(completedPossessions / 2);
+  if (result.typeMatchups) {
+    result.typeMatchups.home.counterSubstitutions = h.counterSubstitutions;
+    result.typeMatchups.away.counterSubstitutions = a.counterSubstitutions;
+  }
   const best = [...result.homeBox, ...result.awayBox].reduce((best, p) => {
     const value = (b: LeagueBox) =>
       b.points +
@@ -1220,5 +1425,29 @@ export function simulateMatch(
   result.playerOfGameId = best.playerId;
   // Quarter evidence is retained internally for coaching even when callers only need a compact result.
   if (options.collectInsights === false) delete result.insights;
+  if (result.typeTactics)
+    for (const side of ["home", "away"] as const) {
+      const report = result.typeTactics[side];
+      if (report.crossMatches)
+        report.notes.push(
+          "Cross-match defenders to balance type resistance, role fit and fatigue.",
+        );
+      if (report.switches)
+        report.notes.push(
+          "Switch screens when the new pair of matchups is safer.",
+        );
+      if (report.stays)
+        report.notes.push(
+          "Keep assignments when a switch would expose a mismatch.",
+        );
+      if (report.helpRotations)
+        report.notes.push(
+          "Send resistant help while accounting for the shooter left open.",
+        );
+      if (report.kickouts)
+        report.notes.push(
+          "Read the help rotation and pass to the uncovered shooter.",
+        );
+    }
   return result;
 }

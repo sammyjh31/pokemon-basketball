@@ -186,6 +186,9 @@ function DraftRoom({
                       Based on ability, positional fit and your rotation's
                       needs.
                     </small>
+                    {recommendation.reason && (
+                      <p className="muted">{recommendation.reason}</p>
+                    )}
                   </div>
                   <button
                     className="button"

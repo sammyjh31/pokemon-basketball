@@ -1,3 +1,4 @@
+import { captureRivalScouting } from "./rivalScouting";
 import { processCpuFreeAgency } from "./freeAgency";
 import type { TradePackage } from "./tradeTypes";
 import { evaluateTradePackage } from "./tradeMarket";
@@ -202,7 +203,9 @@ function seasonArchive(run: Run, year: number): FranchiseSeason | null {
     )
   )
     return null;
+  const rivalScouting = captureRivalScouting(league, playoffs);
   return {
+    ...(rivalScouting ? { rivalScouting } : {}),
     year,
     seasonSeed: run.seasonSeed,
     standings: structuredClone(league.standings),
@@ -300,6 +303,12 @@ export function startFranchiseSeason(
   } catch {
     return state;
   }
+  // Type rules roll forward only at the season boundary. Historical teams stay frozen.
+  teams = teams.map((team) => ({
+    ...team,
+    typeMatchupsVersion: 1 as const,
+    typeTacticsVersion: 1 as const,
+  }));
   const user = teams[0];
   const run: Run = {
     ...createRun(state.run.mode, state.run.includeLegends, seed),
@@ -325,7 +334,12 @@ export function startFranchiseSeason(
   return {
     ...state,
     run,
-    franchise: { ...franchise, year: franchise.year + 1, phase: "season" },
+    franchise: {
+      ...franchise,
+      teams: structuredClone(teams),
+      year: franchise.year + 1,
+      phase: "season",
+    },
   };
 }
 
@@ -364,6 +378,9 @@ export function archiveFranchiseSeason(state: GameState): GameState {
   const source = seasonArchive(next.run, next.franchise.year);
   const previousSummary = { ...next.franchise.history.at(-1)! };
   delete previousSummary.replay;
+  // Enrich old archives without inventing recruiting knowledge they never stored.
+  if (source && !Object.hasOwn(previousSummary, "rivalScouting"))
+    delete source.rivalScouting;
   if (!source || !sameSnapshot(source, previousSummary)) return state;
   const history = [...next.franchise.history];
   history[history.length - 1] = {

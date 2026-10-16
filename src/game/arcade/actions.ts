@@ -1,3 +1,9 @@
+import { POKEMON_BY_ID } from "../../data/pokemon";
+import {
+  applyTypeShotEffect,
+  typeMatchup,
+  typeShotEffect,
+} from "../typeMatchups";
 import type { ArcadePlayer, ArcadeState } from "./types";
 import {
   activePlayers,
@@ -10,6 +16,9 @@ import {
 } from "./helpers";
 import { TUNE } from "./tuning";
 import { emit } from "./events";
+const typesOf = (p: ArcadePlayer) =>
+  POKEMON_BY_ID.get(p.pokemonId)?.types ?? [p.type];
+
 export function giveBall(s: ArcadeState, p: ArcadePlayer) {
   const changed = s.possession !== p.team;
   for (const q of s.players) q.charge = null;
@@ -116,7 +125,27 @@ export function releaseShot(
     0.04,
     0.95,
   );
-  const made = random(s) < chance;
+  const nearest = defenders.reduce<ArcadePlayer | undefined>(
+    (best, defender) =>
+      !best || distance(defender, p) < distance(best, p) ? defender : best,
+    undefined,
+  );
+  const matchup =
+    s.typeMatchupsVersion === 1 && nearest && closest < 3
+      ? typeShotEffect(
+          typesOf(p),
+          typesOf(nearest),
+          d < 3 ? "rim" : value === 3 ? "three" : "mid",
+        )
+      : undefined;
+  const typedChance = matchup
+    ? clamp(
+        applyTypeShotEffect(chance, matchup.logOdds * (1 - closest / 3)),
+        0.04,
+        0.95,
+      )
+    : chance;
+  const made = random(s) < typedChance;
   const end = { x: rim.x, y: rim.y, z: 2.6 };
   Object.assign(s.ball, {
     mode: "shot",
@@ -151,13 +180,15 @@ export function releaseShot(
   });
   notify(
     s,
-    dunk
-      ? "TO THE RIM!"
-      : timing > 0.9
-        ? "GREAT RELEASE"
-        : timing > 0.55
-          ? "GOOD RELEASE"
-          : "EARLY / LATE",
+    matchup && matchup.edge !== 0
+      ? `${matchup.edge > 0 ? "TYPE ADVANTAGE" : "TYPE RESISTED"} · ${matchup.attackType?.toUpperCase()}`
+      : dunk
+        ? "TO THE RIM!"
+        : timing > 0.9
+          ? "GREAT RELEASE"
+          : timing > 0.55
+            ? "GOOD RELEASE"
+            : "EARLY / LATE",
   );
 }
 export function attemptSteal(s: ArcadeState, p: ArcadePlayer) {
@@ -168,7 +199,11 @@ export function attemptSteal(s: ArcadeState, p: ArcadePlayer) {
   const holder = s.ball.owner === null ? undefined : s.players[s.ball.owner];
   if (!holder || holder.team === p.team || distance(p, holder) > 1.15) return;
   const chance = clamp(
-    0.32 + (p.attributes.steal - holder.attributes.ballHandling) * 0.004,
+    0.32 +
+      (p.attributes.steal - holder.attributes.ballHandling) * 0.004 +
+      (s.typeMatchupsVersion === 1
+        ? typeMatchup(typesOf(p), typesOf(holder)).edge * 0.025
+        : 0),
     0.1,
     0.7,
   );
@@ -227,7 +262,10 @@ export function advanceBall(
             clamp(
               0.18 +
                 candidate.attributes.steal * 0.004 -
-                from.attributes.passing * 0.002,
+                from.attributes.passing * 0.002 +
+                (s.typeMatchupsVersion === 1
+                  ? typeMatchup(typesOf(candidate), typesOf(from)).edge * 0.02
+                  : 0),
               0.1,
               0.65,
             )

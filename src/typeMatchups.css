@@ -1,0 +1,42 @@
+.type-matchup-insight {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--gold);
+  border-radius: 10px;
+  background: var(--panel);
+}
+.type-matchup-insight > strong {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 1.15rem;
+}
+.type-matchup-insight p,
+.type-scouting p {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+.type-scouting {
+  margin-bottom: 1.2rem;
+}
+.type-scouting > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.7rem 0;
+}
+.type-scouting > div > strong {
+  font-size: 0.8rem;
+  min-width: 8.5rem;
+}
+.type-scouting .types {
+  flex-wrap: wrap;
+}
+.type-game-summary {
+  margin-top: 1.4rem;
+}
+.type-game-summary h4 {
+  margin-bottom: 0.7rem;
+}

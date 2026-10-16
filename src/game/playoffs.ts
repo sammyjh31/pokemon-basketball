@@ -1,3 +1,5 @@
+import { recordScouting, scoutingForMatch } from "./opponentScouting";
+import type { ScoutingMemory, MatchScouting } from "./typeTacticsTypes";
 import { validateLocalFormat } from "./localFormat";
 import { addBox, leaguePlayers, playerImpact } from "./leagueStats";
 import { simulateMatch } from "./match";
@@ -107,6 +109,21 @@ export function createPlayoffs(
     }
   return {
     modelVersion: 1,
+    ...(league.teams[0].typeTacticsVersion === 1
+      ? {
+          scouting: structuredClone(
+            Object.fromEntries(
+              Object.entries(league.scouting ?? {}).filter(([key]) =>
+                key
+                  .split(":")
+                  .every((id) =>
+                    seeds.some((seed) => seed.teamId === Number(id)),
+                  ),
+              ),
+            ),
+          ),
+        }
+      : {}),
     ...(format ? { format } : {}),
     seeds,
     series,
@@ -217,7 +234,7 @@ function nextPlayoffFixture(playoffs: Playoffs, seasonSeed: number) {
 }
 
 export function resolvePlayoffMatch(
-  fixture: LeagueFixture,
+  fixture: LeagueFixture & { scouting?: MatchScouting },
   teams: LeagueTeam[],
   playedGames: Record<string, OfficialGame> = {},
 ) {
@@ -226,7 +243,9 @@ export function resolvePlayoffMatch(
   const home = teams.find((t) => t.id === fixture.homeTeamId),
     away = teams.find((t) => t.id === fixture.awayTeamId);
   if (!home || !away) throw new Error("Missing playoff team.");
-  return simulateMatch(home, away, fixture.seed);
+  return simulateMatch(home, away, fixture.seed, {
+    scouting: fixture.scouting,
+  });
 }
 
 function playOne(playoffs: Playoffs, league: LeagueResult, seasonSeed: number) {
@@ -234,13 +253,24 @@ function playOne(playoffs: Playoffs, league: LeagueResult, seasonSeed: number) {
   if (!next) return false;
   const { series, fixture } = next,
     { homeTeamId: homeId, awayTeamId: awayId, round } = fixture;
+  const context = playoffs.scouting
+    ? scoutingForMatch(playoffs.scouting, homeId, awayId)
+    : undefined;
   const match = resolvePlayoffMatch(
-    fixture,
+    { ...fixture, ...(context ? { scouting: context } : {}) },
     league.teams,
     playoffs.playedGames,
   );
+  if (playoffs.scouting)
+    recordScouting(
+      playoffs.scouting,
+      league.teams.find((t) => t.id === homeId)!,
+      league.teams.find((t) => t.id === awayId)!,
+      match,
+    );
   series.games.push({
     ...fixture,
+    ...(context ? { scouting: context } : {}),
     homeScore: match.homeScore,
     awayScore: match.awayScore,
     overtimePeriods: match.overtimePeriods,
@@ -267,6 +297,23 @@ function playOne(playoffs: Playoffs, league: LeagueResult, seasonSeed: number) {
       );
   }
   advanceWinners(playoffs, league.teams);
+  if (playoffs.scouting) {
+    // A finished bracket needs only its frozen game contexts for exact replay.
+    // During play, retain knowledge only for clubs that can still meet again.
+    if (playoffs.championId !== null) delete playoffs.scouting;
+    else {
+      const eliminated = new Set(
+        playoffs.series
+          .filter((s) => s.winnerId !== null)
+          .map((s) =>
+            s.winnerId === s.higherSeedId ? s.lowerSeedId : s.higherSeedId,
+          ),
+      );
+      for (const key of Object.keys(playoffs.scouting))
+        if (key.split(":").some((id) => eliminated.has(Number(id))))
+          delete playoffs.scouting[key];
+    }
+  }
   return true;
 }
 

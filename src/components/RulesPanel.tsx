@@ -105,12 +105,16 @@ export function RulesPanel() {
             </span>
           </div>
           <div>
-            <strong>Types are small tendencies</strong>
+            <strong>Types shape skills and matchups</strong>
             <span>
               Types nudge individual skills by at most four points, averaged for
               dual types. Electric players gain speed; Psychic players gain
-              passing; Rock players gain strength and lose some speed. There is
-              no battle type matchup chart.
+              passing; Rock players gain strength and lose some speed. New
+              seasons also use the 18-type matchup chart: each player uses their
+              best attacking type against both of the defender’s types.
+              Advantages and resistances modestly change shot odds, pressure and
+              blocks. Even immunities become resistance, so every player can
+              score.
             </span>
           </div>
           <div>
@@ -171,8 +175,8 @@ export function RulesPanel() {
               <b>Balanced</b> spreads the workload. <b>Lean on starters</b>{" "}
               prioritizes the starting five; <b>Use the bench</b> gives reserves
               more opportunities. Coaches choose actual five-player lineups
-              throughout the game, accounting for role fit, stamina and foul
-              trouble.
+              throughout the game, accounting for role fit, stamina, foul
+              trouble and the opposing five’s types.
             </p>
             <p>
               Regulation lasts 48 minutes and each team’s box score totals 240
@@ -221,6 +225,41 @@ export function RulesPanel() {
             </span>
           </div>
         </div>
+        <h3>Play the type matchup</h3>
+        <p>
+          Offenses look for favorable type matchups while still valuing
+          basketball skills. A switch changes the defending Pokémon, and help
+          defenders can soften a type mismatch at the rim. Electric pressure
+          threatens Water players; Ground resists Electric. Dual types can
+          create stronger weaknesses, cancel a weakness, or offer another
+          attacking option.
+        </p>
+        <p>
+          Coaches scout the opposing five before tipoff and reassess each
+          minute. They can bring in a bench counter or move a player into a
+          better court matchup, weighing both attacking coverage and defensive
+          resistance. Basketball ability, fatigue and foul trouble still matter;
+          custom minute targets and chosen closing players remain in effect.
+          Arcade opponents reassess at dead balls after your queued
+          substitutions, with a short cooldown to avoid constant swapping.
+        </p>
+        <p>
+          New simulated seasons assign defenders using type resistance, role fit
+          and fatigue. Screens can create switches or rolls; help defense can
+          leave a shooter open for a pass. Coaches remember each opponent’s
+          scoring threats, switches and help rotations from completed games,
+          giving recent meetings more weight. That scouting carries into the
+          playoffs and updates after each series game. It resets for a new
+          season. Game reports show the decisions and prior meetings used.
+        </p>
+        <p>
+          Type effects on shot chance stay within about seven percentage points.
+          Free throws are unaffected. Scouting shows coverage and weaknesses;
+          the matchup explorer explains shot odds, and game reports count actual
+          advantaged and resisted attacks. Older saved seasons retain their
+          original rules; typing activates with a new run or the next franchise
+          season.
+        </p>
         <h3>Fouls, closing lineups and overtime</h3>
         <p>
           Lineups can change each minute, with immediate replacements after a

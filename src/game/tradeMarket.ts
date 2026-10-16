@@ -1,3 +1,4 @@
+import { createRivalStrategy, type RivalStrategy } from "./rivalRosterStrategy";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { attributes, positionRating, teamRatings } from "./ratings";
 import { exchangePackage } from "./rosterTrades";
@@ -46,6 +47,7 @@ interface PlayerProfile {
 }
 interface Context {
   players: Map<number, PlayerProfile>;
+  strategies: Map<number, RivalStrategy>;
   valid: boolean;
   profiles: Map<number, ClubTradeProfile>;
   ratings: Map<number, ReturnType<typeof teamRatings>>;
@@ -105,6 +107,7 @@ function context(franchise: Franchise): Context {
     }
   const result: Context = {
     players,
+    strategies: new Map(),
     valid,
     ratings,
     profiles: new Map(),
@@ -112,6 +115,24 @@ function context(franchise: Franchise): Context {
   };
   contexts.set(franchise, result);
   return result;
+}
+
+function strategy(
+  franchise: Franchise,
+  team: LeagueTeam,
+  ctx = context(franchise),
+) {
+  let plan = ctx.strategies.get(team.id);
+  if (!plan) {
+    plan = createRivalStrategy(
+      team,
+      franchise.teams,
+      franchise.history,
+      franchise.year,
+    );
+    ctx.strategies.set(team.id, plan);
+  }
+  return plan;
 }
 
 export function clubTradeProfile(
@@ -148,16 +169,21 @@ export function clubTradeProfile(
       `${TACTIC_LABELS[team.tactic]} offense`,
       `${DEFENSE_LABELS[team.defense]} defense`,
     );
+  const scouting = team ? strategy(franchise, team) : undefined;
+  if (scouting?.active)
+    priorities.push(...scouting.rivals.map((r) => `Counter ${r.name}`));
   return {
     teamId,
     direction,
     title,
     priorities,
-    reason: champion
-      ? "The reigning champion values its proven core and immediate improvement."
-      : record
-        ? `${record.wins}–${record.losses} last season: ${direction === "contend" ? "prioritize a stronger rotation for another playoff run" : direction === "develop" ? "seek improving players and deeper positional coverage" : "rebalance skills and scheme fit"}.`
-        : "No completed record yet; seek balanced value and better roster fit.",
+    reason:
+      (champion
+        ? "The reigning champion values its proven core and immediate improvement."
+        : record
+          ? `${record.wins}–${record.losses} last season: ${direction === "contend" ? "prioritize a stronger rotation for another playoff run" : direction === "develop" ? "seek improving players and deeper positional coverage" : "rebalance skills and scheme fit"}.`
+          : "No completed record yet; seek balanced value and better roster fit.") +
+      (scouting?.active ? ` ${scouting.explanation}` : ""),
   };
 }
 function profile(franchise: Franchise, team: LeagueTeam, ctx: Context) {
@@ -442,6 +468,25 @@ export function evaluateTradePackage(
           : "This club can reshape its rotation without a continuity penalty.",
     ),
   ];
+  const partnerStrategy = strategy(franchise, partner, ctx),
+    sourceStrategy = strategy(franchise, source, ctx);
+  if (sourceStrategy.active)
+    result.userRivalGain = sourceStrategy.tradeChange(
+      give,
+      receive,
+      partner.id,
+    );
+  if (partnerStrategy.active) {
+    result.rivalGain = partnerStrategy.tradeChange(receive, give, source.id);
+    result.factors.push(
+      factor(
+        "Rival coverage",
+        result.rivalGain,
+        1,
+        `${signed(result.rivalGain)} coverage change after this trade. ${partnerStrategy.explanation}`,
+      ),
+    );
+  }
   result.score = result.factors.reduce((sum, f) => sum + f.contribution, 0);
   const prices = { available: 0, listening: 0.65, core: 1.8 };
   result.threshold =
@@ -528,6 +573,25 @@ function candidates(
     (ids) => target === undefined || ids.includes(target),
   );
   const best: Candidate[] = [];
+  const sourceStrategy = strategy(franchise, source, ctx),
+    partnerStrategy = strategy(franchise, partner, ctx);
+  // Cheap individual differences guide the shortlist; final negotiations check
+  // whole-roster coverage, diminishing returns, and departing rival threats.
+  const strategicPotential = (
+    plan: RivalStrategy,
+    out: number[],
+    incoming: number[],
+  ) =>
+    plan.active
+      ? Math.max(
+          -3,
+          Math.min(
+            3,
+            average(incoming.map((id) => plan.playerValue(id))) -
+              average(out.map((id) => plan.playerValue(id))),
+          ),
+        )
+      : 0;
   for (const giveIds of outgoing)
     for (const receiveIds of incoming) {
       if (
@@ -540,9 +604,12 @@ function candidates(
         average(giveIds.map((id) => ctx.players.get(id)!.best));
       const aFit = fitPotential(source, giveIds, receiveIds, ctx),
         bFit = fitPotential(partner, receiveIds, giveIds, ctx);
-      const potential = mutual
-        ? aFit + bFit - Math.abs(ability) * 0.8
-        : aFit * 1.2 + bFit * 0.7 + ability * 0.3;
+      const potential =
+        (mutual
+          ? aFit + bFit - Math.abs(ability) * 0.8
+          : aFit * 1.2 + bFit * 0.7 + ability * 0.3) +
+        strategicPotential(sourceStrategy, giveIds, receiveIds) +
+        strategicPotential(partnerStrategy, receiveIds, giveIds);
       const candidate = {
         from: source.id,
         offer: { teamId: partner.id, giveIds, receiveIds },
@@ -607,6 +674,7 @@ export function suggestTrades(
         evaluation,
         rank:
           evaluation.userDelta +
+          0.25 * (evaluation.userRivalGain ?? 0) +
           (0.1 * (evaluation.incomingValue - evaluation.outgoingValue)) / size,
       });
   }
@@ -667,18 +735,24 @@ export function cpuMarketTrades(
     if (trades.length >= maximum) break;
     const { from, offer } = candidate;
     if (used.has(from) || used.has(offer.teamId)) continue;
-    const partner = evaluateTradePackage(franchise, offer, from);
+    const live =
+      teams === franchise.teams ? franchise : { ...franchise, teams };
+    const partner = evaluateTradePackage(live, offer, from);
     if (!partner.accepted) continue;
     const source = evaluateTradePackage(
-      franchise,
+      live,
       { teamId: from, giveIds: offer.receiveIds, receiveIds: offer.giveIds },
       offer.teamId,
     );
+    const sourceBenefit =
+      partner.userDelta + 0.25 * (partner.userRivalGain ?? 0);
+    const partnerBenefit =
+      source.userDelta + 0.25 * (source.userRivalGain ?? 0);
     if (
       !source.accepted ||
-      partner.userDelta < 0.03 ||
-      source.userDelta < 0.03 ||
-      partner.userDelta + source.userDelta < 0.15
+      sourceBenefit < 0.03 ||
+      partnerBenefit < 0.03 ||
+      sourceBenefit + partnerBenefit < 0.15
     )
       continue;
     teams = exchangePackage(
@@ -700,7 +774,7 @@ export function cpuMarketTrades(
       giveIds: [...offer.giveIds],
       receiveIds: [...offer.receiveIds],
       source: "cpu",
-      reason: `Both coaches accept a ${offer.giveIds.length}-player package: ${franchise.teams[from].name} ${signed(partner.userDelta)} rotation rating, ${franchise.teams[offer.teamId].name} ${signed(source.userDelta)}. ${partner.profile.title} and ${source.profile.title.toLowerCase()} priorities both met.`,
+      reason: `Both coaches accept a ${offer.giveIds.length}-player package: ${franchise.teams[from].name} ${signed(partner.userDelta)} rotation rating, ${franchise.teams[offer.teamId].name} ${signed(source.userDelta)}. ${partner.profile.title} and ${source.profile.title.toLowerCase()} priorities both met.${source.userRivalGain !== undefined || partner.userRivalGain !== undefined ? ` Rival coverage: ${signed(partner.userRivalGain ?? 0)} / ${signed(source.userRivalGain ?? 0)}. ${strategy(live, live.teams[from]).explanation} ${strategy(live, live.teams[offer.teamId]).explanation}` : ""}`,
     });
   }
   return { teams, trades };

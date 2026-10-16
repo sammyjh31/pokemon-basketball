@@ -255,7 +255,13 @@ export function positionRating(
   position: Position,
   offsets?: DevelopmentRatings,
 ): number {
-  const a = attributes(mon, offsets);
+  return positionRatingFromAttributes(attributes(mon, offsets), position);
+}
+
+export function positionRatingFromAttributes(
+  a: Attributes,
+  position: Position,
+): number {
   // A weak essential skill cannot be hidden by an unrelated exceptional stat.
   return clamp(
     0.8 * weighted(a, POSITION_WEIGHTS[position]) +

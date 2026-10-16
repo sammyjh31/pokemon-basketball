@@ -120,7 +120,18 @@ function validate(
     )
   )
     return fail();
+  if (raw.typeMatchupsVersion !== undefined && raw.typeMatchupsVersion !== 1)
+    return fail();
+  if (
+    (raw.typeTacticsVersion !== undefined && raw.typeTacticsVersion !== 1) ||
+    (raw.typeTacticsVersion === 1 && raw.typeMatchupsVersion !== 1)
+  )
+    return fail();
   const run: Run = {
+    ...(raw.typeMatchupsVersion === 1
+      ? { typeMatchupsVersion: 1 as const }
+      : {}),
+    ...(raw.typeTacticsVersion === 1 ? { typeTacticsVersion: 1 as const } : {}),
     id: raw.id,
     mode: raw.mode,
     includeLegends: raw.includeLegends,
@@ -150,6 +161,12 @@ function validate(
   if (Object.hasOwn(raw, "leagueTeams")) {
     if (!Object.hasOwn(root, "franchise") || chosen.length !== 8) return fail();
     run.leagueTeams = validateLeagueTeams(raw.leagueTeams, run.includeLegends);
+    if (
+      run.leagueTeams.some(
+        (team) => team.typeTacticsVersion !== run.typeTacticsVersion,
+      )
+    )
+      return fail();
   }
   if (Object.hasOwn(raw, "rotationPlan")) {
     if (!Object.hasOwn(root, "franchise") || !run.leagueTeams) return fail();

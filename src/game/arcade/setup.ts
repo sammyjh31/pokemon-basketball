@@ -67,6 +67,9 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
   });
   const s: ArcadeState = {
     modelVersion: 1,
+    ...(setup.typeMatchupsVersion === 1
+      ? { typeMatchupsVersion: 1 as const }
+      : {}),
     ...(setup.official
       ? { official: true, officialSeed: setup.seed >>> 0 }
       : {}),

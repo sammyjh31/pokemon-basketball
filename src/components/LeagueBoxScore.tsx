@@ -159,8 +159,10 @@ export function LeagueBoxScore({
   const home = teams.find((team) => team.id === game.homeTeamId)!;
   const away = teams.find((team) => team.id === game.awayTeamId)!;
   const match = useMemo(
-    () => providedMatch ?? simulateMatch(home, away, game.seed),
-    [home, away, game.seed, providedMatch],
+    () =>
+      providedMatch ??
+      simulateMatch(home, away, game.seed, { scouting: game.scouting }),
+    [home, away, game.seed, game.scouting, providedMatch],
   );
   const dialog = useRef<HTMLDivElement>(null),
     titleId = useId(),

@@ -82,6 +82,7 @@ function RookiePick({ draft, change }: Props) {
         Roster-fit suggestion: {name(suggestion.pokemonId)} for{" "}
         {name(suggestion.releasedId)}. You can choose a different pairing.
       </p>
+      {suggestion.reason && <p>{suggestion.reason}</p>}
       <details>
         <summary>Scout rookie: {mon.name}</summary>
         <ScoutReport mon={mon} />
@@ -120,7 +121,7 @@ function Trades({ draft, change }: Props) {
       <summary>Offseason player trades</summary>
       <p>
         Swap one player for one player. Each friend involved must agree. CPU
-        clubs evaluate roster fit and player value.
+        clubs evaluate roster fit, player value, and learned rival matchups.
       </p>
       <div className="local-settings">
         <label>
