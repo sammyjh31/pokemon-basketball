@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
 import { POKEMON, POKEMON_BY_ID, TYPES } from "../data/pokemon";
 import {
   attributes,
@@ -17,6 +17,25 @@ import {
 import { SpriteControls, type SpriteStyle } from "./SpriteControls";
 import { ScoutReport } from "./ScoutReport";
 import { PokemonCard } from "./PokemonCard";
+
+type SortKey = "dex" | Position | "threePoint" | "stamina" | "rebounding";
+// Ratings never change for a species, so each sort's scores are computed once.
+const sortScores = new Map<SortKey, Map<number, number>>();
+const scoresFor = (sort: Exclude<SortKey, "dex">) => {
+  let scores = sortScores.get(sort);
+  if (!scores) {
+    scores = new Map(
+      POKEMON.map((mon) => [
+        mon.id,
+        POSITIONS.includes(sort as Position)
+          ? positionRating(mon, sort as Position)
+          : attributes(mon)[sort as "threePoint" | "stamina" | "rebounding"],
+      ]),
+    );
+    sortScores.set(sort, scores);
+  }
+  return scores;
+};
 export function DraftPanel({
   run,
   pending,
@@ -29,6 +48,7 @@ export function DraftPanel({
   spriteStyle,
   onSpriteStyle,
   tools,
+  onGuide,
 }: {
   run: Run;
   pending: number | null;
@@ -41,32 +61,44 @@ export function DraftPanel({
   spriteStyle: SpriteStyle;
   onSpriteStyle: (style: SpriteStyle) => void;
   tools: ReactNode;
+  onGuide?: () => void;
 }) {
   const [search, setSearch] = useState(""),
     [type, setType] = useState("");
-  const [sort, setSort] = useState("dex");
+  const [sort, setSort] = useState<SortKey>("dex");
+  // Typing stays responsive; the 251-card grid catches up a frame later.
+  const deferredSearch = useDeferredValue(search);
   const count = Object.values(run.roster).filter(Boolean).length;
   const chosen = POKEMON_BY_ID.get(pending ?? -1);
-  const candidates =
-    run.mode === "spin"
-      ? run.offerIds.map((id) => POKEMON_BY_ID.get(id)!)
-      : POKEMON.filter(
-          (mon) =>
-            !Object.values(run.roster).includes(mon.id) &&
-            (run.includeLegends || !mon.legendary) &&
-            (mon.name.toLowerCase().includes(search.trim().toLowerCase()) ||
-              (/^#?\d{1,3}$/.test(search.trim()) &&
-                mon.id === Number(search.trim().replace(/^#/, "")))) &&
-            (!type || mon.types.includes(type)),
-        );
-  if (run.mode === "free" && sort !== "dex")
-    candidates.sort((a, b) => {
-      const score = (mon: typeof a) =>
-        POSITIONS.includes(sort as Position)
-          ? positionRating(mon, sort as Position)
-          : attributes(mon)[sort as "threePoint" | "stamina" | "rebounding"];
-      return score(b) - score(a) || a.id - b.id;
-    });
+  const candidates = useMemo(() => {
+    if (run.mode === "spin")
+      return run.offerIds.map((id) => POKEMON_BY_ID.get(id)!);
+    const query = deferredSearch.trim().toLowerCase();
+    const number = /^#?\d{1,3}$/.test(query)
+      ? Number(query.replace(/^#/, ""))
+      : null;
+    const taken = new Set(Object.values(run.roster));
+    const list = POKEMON.filter(
+      (mon) =>
+        !taken.has(mon.id) &&
+        (run.includeLegends || !mon.legendary) &&
+        (mon.name.toLowerCase().includes(query) || mon.id === number) &&
+        (!type || mon.types.includes(type)),
+    );
+    if (sort === "dex") return list;
+    const scores = scoresFor(sort);
+    return list.sort(
+      (a, b) => scores.get(b.id)! - scores.get(a.id)! || a.id - b.id,
+    );
+  }, [
+    run.mode,
+    run.offerIds,
+    run.roster,
+    run.includeLegends,
+    deferredSearch,
+    type,
+    sort,
+  ]);
   return (
     <section className="draft-panel" aria-label="Draft Pokémon">
       <div className="draft-title">
@@ -121,12 +153,19 @@ export function DraftPanel({
           <input
             type="checkbox"
             checked={run.includeLegends}
+            aria-label="Include legendary Pokémon"
+            aria-describedby="legend-note"
             onChange={(e) => onLegends(e.target.checked)}
           />
           <span>Include legendary Pokémon</span>
           <span className="legend-star" aria-hidden="true">
             ✦
           </span>
+          <small className="legend-note" id="legend-note">
+            {run.mode === "free"
+              ? "Changes the pool. Your other picks stay."
+              : "Changing the pool restarts this draft."}
+          </small>
         </label>
       )}
       {!run.result && run.mode === "free" && (
@@ -158,7 +197,7 @@ export function DraftPanel({
           <select
             aria-label="Sort Pokémon by"
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e) => setSort(e.target.value as SortKey)}
           >
             <option value="dex">Pokédex number</option>
             {POSITIONS.map((p) => (
@@ -177,11 +216,7 @@ export function DraftPanel({
           <span className="finish-ball" aria-hidden="true">
             ✦
           </span>
-          <h3>
-            {(run.result?.modelVersion ?? 1) >= 2
-              ? "Your eight. Your story."
-              : "Your five. Your story."}
-          </h3>
+          <h3>Your team. Your story.</h3>
           <p>
             Every legend starts with a lineup.
             <br />
@@ -302,7 +337,12 @@ export function DraftPanel({
       </dl>
       <div className="how-it-works">
         <h3>
-          How it works <a href="#rules">Scouting guide →</a>
+          How it works{" "}
+          {onGuide && (
+            <button type="button" className="text-button" onClick={onGuide}>
+              Scouting guide →
+            </button>
+          )}
         </h3>
         <p>
           {run.mode === "spin"

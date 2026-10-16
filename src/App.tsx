@@ -13,10 +13,11 @@ import { currentMoraleBanks } from "./game/currentMorale";
 import { teamsWithMorale } from "./game/playerMorale";
 import { MoralePanel } from "./components/MoralePanel";
 import type { OfficialArcadeProps } from "./components/ArcadeMode";
-import { lazy, Suspense, useState, useMemo } from "react";
+import { lazy, Suspense, useEffect, useState, useMemo } from "react";
 import { POKEMON_BY_ID } from "./data/pokemon";
 import { teamRatings } from "./game/ratings";
 import { teamRatings as legacyTeamRatings } from "./game/legacyRatings";
+import { MODE_LABELS } from "./components/modeLabels";
 import type { GameState, Mode, RosterSlot } from "./game/types";
 import type { StorageLike } from "./game/persistence";
 import { useGame, newSeed } from "./hooks/useGame";
@@ -31,8 +32,20 @@ import { SpriteContext, type SpriteStyle } from "./components/SpriteControls";
 import { BenchPanel } from "./components/BenchPanel";
 import { emptyRoster } from "./game/types";
 import { randomLineup } from "./game/lineup";
-import { FranchisePanel } from "./components/FranchisePanel";
-import { LocalLeagueMode } from "./components/LocalLeagueMode";
+import {
+  FranchisePanel,
+  LocalLeagueMode,
+  preloadPanels,
+} from "./components/lazyPanels";
+import { PlayChooser } from "./components/PlayChooser";
+import { GettingStarted } from "./components/GettingStarted";
+import {
+  browserOnboardingStorage,
+  readOnboarding,
+  writeOnboarding,
+  type Onboarding,
+  type PlayStyle,
+} from "./components/onboarding";
 const ArcadeMode = lazy(() =>
   import("./components/ArcadeMode").then((m) => ({ default: m.ArcadeMode })),
 );
@@ -121,23 +134,57 @@ export default function App({
   );
   const [pending, setPending] = useState<number | null>(null),
     [swap, setSwap] = useState<RosterSlot | null>(null);
-  const [reset, setReset] = useState<{
-    mode: Mode;
-    includeLegends: boolean;
+  const [confirm, setConfirm] = useState<{
+    title?: string;
+    description?: string;
+    confirmLabel?: string;
+    onConfirm: () => void;
   } | null>(null);
+  // Interface preferences live beside, never inside, the validated save.
+  const prefsStorage = browserOnboardingStorage;
+  const [onboarding, setOnboardingState] = useState<Onboarding>(() =>
+    readOnboarding(prefsStorage),
+  );
+  const saveOnboarding = (next: Onboarding) => {
+    setOnboardingState(next);
+    writeOnboarding(prefsStorage, next);
+  };
+  const [chooserOpen, setChooserOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [animatedRun, setAnimatedRun] = useState<string | null>(null),
     [announcement, setAnnouncement] = useState("");
   const archived = !!run.result && (run.result.modelVersion ?? 1) < 2;
   const development = run.leagueTeams?.[0].development;
-  const ratings = archived
-    ? legacyTeamRatings(run.roster)
-    : teamRatings(
-        run.roster,
-        run.tactic,
-        run.rotation,
-        development,
-        run.rotationPlan,
-      );
+  const ratings = useMemo(
+    () =>
+      archived
+        ? legacyTeamRatings(run.roster)
+        : teamRatings(
+            run.roster,
+            run.tactic,
+            run.rotation,
+            development,
+            run.rotationPlan,
+          ),
+    [
+      archived,
+      run.roster,
+      run.tactic,
+      run.rotation,
+      development,
+      run.rotationPlan,
+    ],
+  );
+  // Warm the split panels once the first screen is interactive.
+  useEffect(() => {
+    const warm = () => void preloadPanels().catch(() => undefined);
+    const idle = window.requestIdleCallback?.(warm);
+    const timer = idle === undefined ? window.setTimeout(warm, 1500) : 0;
+    return () => {
+      if (idle !== undefined) window.cancelIdleCallback?.(idle);
+      window.clearTimeout(timer);
+    };
+  }, []);
   const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("pixel");
   const start = (mode: Mode, includeLegends: boolean) => {
     if (simulating || playoffSimulating || restoring) return;
@@ -150,19 +197,155 @@ export default function App({
     });
     setPending(null);
     setSwap(null);
-    setReset(null);
+    setConfirm(null);
     setAnimatedRun(null);
-    setAnnouncement("New draft started. Choose your trainer coach.");
+    setAnnouncement(
+      `${MODE_LABELS[mode]} draft started. Choose your trainer coach.`,
+    );
   };
-  const requestReset = (mode: Mode, includeLegends: boolean) => {
-    if (simulating || playoffSimulating || restoring) return;
-    if (
-      Object.values(run.roster).some((id) => id != null) ||
-      run.rerollsLeft < 2
-    )
-      setReset({ mode, includeLegends });
-    else start(mode, includeLegends);
+  const busy = simulating || playoffSimulating || restoring;
+  const hasProgress =
+    Object.values(run.roster).some((id) => id != null) ||
+    run.rerollsLeft < 2 ||
+    !!run.coach ||
+    !!run.result;
+  /** Starts a new run, confirming with copy that names what will be lost. */
+  const requestReset = (
+    mode: Mode,
+    includeLegends: boolean,
+    reason: "new" | "mode" | "legends" = "new",
+  ) => {
+    if (busy) return;
+    if (!hasProgress && !state.franchise) return start(mode, includeLegends);
+    const onConfirm = () => start(mode, includeLegends);
+    if (state.franchise)
+      return setConfirm({
+        title: "End this franchise?",
+        description:
+          "Starting a new draft replaces this franchise, including its career stats, trades and championship history. Your challenge records stay saved.",
+        confirmLabel: "End franchise",
+        onConfirm,
+      });
+    if (reason === "mode")
+      return setConfirm({
+        title: `Switch to ${MODE_LABELS[mode]}?`,
+        description: `Your current ${run.result ? "season and lineup" : "lineup"}${run.coach ? " and trainer" : ""} will be cleared. Completed season records stay saved.`,
+        confirmLabel: `Switch to ${MODE_LABELS[mode]}`,
+        onConfirm,
+      });
+    if (reason === "legends")
+      return setConfirm({
+        title: includeLegends
+          ? "Add legendary Pokémon to the pool?"
+          : "Remove legendary Pokémon from the pool?",
+        description:
+          "The 82–0 Challenge deals every pick from one fixed pool, so changing it restarts your draft. Your current picks and re-rolls will be cleared.",
+        confirmLabel: "Restart draft",
+        onConfirm,
+      });
+    setConfirm({ onConfirm });
   };
+  /** Lineup builder keeps the roster and only changes the available pool. */
+  const changeLegends = (includeLegends: boolean) => {
+    if (busy) return;
+    if (run.mode !== "free")
+      return requestReset(run.mode, includeLegends, "legends");
+    const removed = includeLegends
+      ? []
+      : Object.values(run.roster).filter(
+          (id) => id != null && POKEMON_BY_ID.get(id)?.legendary,
+        );
+    const apply = () => {
+      dispatch({ type: "LEGENDS", includeLegends });
+      setPending(null);
+      setSwap(null);
+      setConfirm(null);
+      setAnnouncement(
+        includeLegends
+          ? "Legendary Pokémon added to the pool."
+          : `Legendary Pokémon removed from the pool${removed.length ? ` and ${removed.length} from your lineup` : ""}.`,
+      );
+    };
+    if (!removed.length) return apply();
+    const names = removed.map((id) => POKEMON_BY_ID.get(id!)!.name);
+    setConfirm({
+      title: "Remove legendary Pokémon?",
+      description: `${names.join(", ")} ${names.length === 1 ? "leaves" : "leave"} your lineup. Your other picks stay where they are.`,
+      confirmLabel: "Remove legendaries",
+      onConfirm: apply,
+    });
+  };
+  const openLocalLeague = () => {
+    setLocalLeagueOpen(true);
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${window.location.search}#local-league`,
+    );
+  };
+  const fresh =
+    !hasProgress &&
+    !state.franchise &&
+    records.spin.runs + records.free.runs === 0;
+  const showChooser =
+    chooserOpen ||
+    (!onboarding.style &&
+      fresh &&
+      !initial &&
+      !restoring &&
+      !importPending &&
+      !localLeagueOpen);
+  const choosePlayStyle = (style: PlayStyle) => {
+    saveOnboarding({ ...onboarding, style });
+    setChooserOpen(false);
+    if (style === "local") return openLocalLeague();
+    if (state.franchise || style === "franchise") {
+      setAnnouncement(
+        state.franchise
+          ? "Your franchise continues."
+          : "Draft eight Pokémon and finish a season to start your franchise.",
+      );
+      return;
+    }
+    const mode: Mode = style === "challenge" ? "spin" : "free";
+    if (mode !== run.mode) requestReset(mode, run.includeLegends, "mode");
+  };
+  const lineupCount = Object.values(run.roster).filter(Boolean).length;
+  const anySeason = records.spin.runs + records.free.runs > 0;
+  const checklist = [
+    {
+      label: "Draft 8 Pokémon",
+      detail: choosingCoach
+        ? "Choose your trainer coach, then fill five starters and three bench slots."
+        : "Fill five starters and three bench slots.",
+      done: lineupCount === 8 || !!run.result || !!state.franchise,
+      href: choosingCoach ? undefined : "#draft",
+    },
+    {
+      label: "Simulate the season",
+      detail: "Play all 82 games and see your record.",
+      done: !!run.result || anySeason || !!state.franchise,
+      href: "#season",
+    },
+    {
+      label:
+        onboarding.style === "franchise"
+          ? "Start your franchise"
+          : "Continue: franchise or run it back",
+      detail:
+        onboarding.style === "franchise"
+          ? "Keep this team for another year from the season recap."
+          : "Keep your team as a franchise, or start a new run.",
+      done: !!state.franchise || (anySeason && !run.result),
+      href: "#season",
+    },
+  ];
+  const checklistComplete = checklist.every((step) => step.done);
+  useEffect(() => {
+    if (checklistComplete && !onboarding.checklistDone && !restoring)
+      saveOnboarding({ ...onboarding, checklistDone: true });
+    // saveOnboarding is recreated each render; the flag is the only input.
+  }, [checklistComplete, onboarding.checklistDone, restoring]);
   const onSlot = (position: RosterSlot) => {
     if (
       run.result ||
@@ -336,11 +519,8 @@ export default function App({
   );
   return (
     <SpriteContext.Provider value={spriteStyle}>
-      <a
-        className="skip-link"
-        href={state.franchise && !restoring ? "#franchise" : "#draft"}
-      >
-        {state.franchise && !restoring ? "Skip to franchise" : "Skip to draft"}
+      <a className="skip-link" href="#main-content">
+        Skip to main content
       </a>
       <div className="app-shell">
         <Scoreboard
@@ -348,22 +528,17 @@ export default function App({
           localLeagueDisabled={
             simulating || playoffSimulating || restoring || importPending
           }
-          onLocalLeague={() => {
-            setLocalLeagueOpen(true);
-            window.history.replaceState(
-              null,
-              "",
-              `${window.location.pathname}${window.location.search}#local-league`,
-            );
-          }}
-          disabled={
-            simulating || playoffSimulating || restoring || !!state.franchise
-          }
+          onLocalLeague={openLocalLeague}
+          disabled={busy}
+          franchiseActive={!!state.franchise}
           onMode={(mode) => {
-            if (mode !== run.mode) requestReset(mode, run.includeLegends);
+            if (mode !== run.mode)
+              requestReset(mode, run.includeLegends, "mode");
           }}
+          onGuide={() => setGuideOpen(true)}
+          onHowToPlay={() => setChooserOpen(true)}
         />
-        <main aria-busy={restoring}>
+        <main aria-busy={restoring} id="main-content" tabIndex={-1}>
           {storageNotice && (
             <p className="notice" role="status">
               {storageNotice}{" "}
@@ -409,8 +584,20 @@ export default function App({
                       ? "Lineup builder"
                       : "82–0 Challenge"}
                 </h1>
-                <p>Eight Pokémon. One complete team.</p>
+                <p>
+                  {state.franchise
+                    ? "Your eight-player roster carries forward each year."
+                    : "Eight Pokémon. One complete team."}
+                </p>
               </div>
+              {!onboarding.checklistDone && !checklistComplete && (
+                <GettingStarted
+                  steps={checklist}
+                  onHide={() =>
+                    saveOnboarding({ ...onboarding, checklistDone: true })
+                  }
+                />
+              )}
               {state.franchise && franchisePanel}
               {state.franchise && (
                 <p className="franchise-draft-reset">
@@ -516,7 +703,8 @@ export default function App({
                         setPending(null);
                         setAnnouncement("Four new draft choices are ready.");
                       }}
-                      onLegends={(include) => requestReset(run.mode, include)}
+                      onLegends={changeLegends}
+                      onGuide={() => setGuideOpen(true)}
                       records={records}
                       spriteStyle={spriteStyle}
                       onSpriteStyle={setSpriteStyle}
@@ -634,7 +822,6 @@ export default function App({
                   {simulationError}
                 </p>
               )}
-              <RulesPanel />
             </>
           )}
         </main>
@@ -666,16 +853,27 @@ export default function App({
           </p>
         </footer>
       </div>
-      {reset && (
+      {confirm && (
         <ConfirmDialog
-          title={state.franchise ? "End this franchise?" : undefined}
-          description={
-            state.franchise
-              ? "Starting a new draft replaces this franchise, including its career stats, trades and championship history. Your challenge records stay saved."
-              : undefined
+          title={confirm.title}
+          description={confirm.description}
+          confirmLabel={confirm.confirmLabel}
+          onCancel={() => setConfirm(null)}
+          onConfirm={confirm.onConfirm}
+        />
+      )}
+      {guideOpen && <RulesPanel onClose={() => setGuideOpen(false)} />}
+      {showChooser && !confirm && (
+        <PlayChooser
+          current={
+            onboarding.style === "skipped" ? undefined : onboarding.style
           }
-          onCancel={() => setReset(null)}
-          onConfirm={() => start(reset.mode, reset.includeLegends)}
+          onChoose={choosePlayStyle}
+          onClose={() => {
+            setChooserOpen(false);
+            if (!onboarding.style)
+              saveOnboarding({ ...onboarding, style: "skipped" });
+          }}
         />
       )}
       {importPending && !restoring && (

@@ -3,6 +3,7 @@ import {
   reviewFranchiseCoaches,
 } from "./coachFranchise";
 import { selectTrainerCoach } from "./coachSelection";
+import { POKEMON_BY_ID } from "../data/pokemon";
 import { processCpuFreeAgency, signFreeAgent } from "./freeAgency";
 import {
   beginRookieDraft,
@@ -27,6 +28,7 @@ import {
   TACTICS,
   ROTATIONS,
   DEFENSE_SCHEMES,
+  ROSTER_SLOTS,
   type DefenseScheme,
   type Run,
   type SeasonResult,
@@ -84,7 +86,8 @@ export type GameAction =
       includeLegends: boolean;
       seed: number;
       coachDraftRequired?: true;
-    };
+    }
+  | { type: "LEGENDS"; includeLegends: boolean };
 export function initialState(seed: number): GameState {
   return {
     version: 3,
@@ -172,6 +175,20 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       ...state,
       run: action.run,
       franchise: { ...state.franchise, modelVersion: 3 },
+    };
+  }
+  // Lineup builder only changes the pool; spin offers are dealt from a fixed pool.
+  if (action.type === "LEGENDS") {
+    if (state.franchise || run.result || run.mode !== "free") return state;
+    if (run.includeLegends === action.includeLegends) return state;
+    const roster = { ...run.roster };
+    if (!action.includeLegends)
+      for (const slot of ROSTER_SLOTS)
+        if (POKEMON_BY_ID.get(roster[slot] ?? -1)?.legendary)
+          roster[slot] = null;
+    return {
+      ...state,
+      run: { ...run, includeLegends: action.includeLegends, roster },
     };
   }
   if (action.type === "NEW_RUN")
