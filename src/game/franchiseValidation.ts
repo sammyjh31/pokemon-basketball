@@ -182,7 +182,7 @@ function reports(
       archived = history[year - 1];
     if (
       !archived ||
-      row.modelVersion !== 1 ||
+      (row.modelVersion !== 1 && row.modelVersion !== 2) ||
       (priorYear !== undefined && year !== priorYear + 1)
     )
       return fail();
@@ -286,7 +286,13 @@ function reports(
     )
       return fail();
     previousTradeEnd = tradeStart + tradeCount;
-    return { modelVersion: 1, year, players, tradeStart, tradeCount };
+    return {
+      modelVersion: row.modelVersion as OffseasonReport["modelVersion"],
+      year,
+      players,
+      tradeStart,
+      tradeCount,
+    };
   });
   if (
     (parsed.at(-1)!.year !== lastYear &&

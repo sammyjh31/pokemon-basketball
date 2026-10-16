@@ -280,6 +280,7 @@ export function beginLocalOffseason(
       year,
       localSeasonSeed(draft),
       assignments[player.pokemonId]?.plan,
+      draft.courtVersion === 3,
     ).changes,
     ...(assignments[player.pokemonId]
       ? { training: assignments[player.pokemonId] }

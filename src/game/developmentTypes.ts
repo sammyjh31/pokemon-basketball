@@ -19,7 +19,8 @@ export interface PlayerDevelopmentChange {
   reasons: string[];
 }
 export interface OffseasonReport {
-  modelVersion: 1;
+  /** 2: balanced development after a court-version-3 season. */
+  modelVersion: 1 | 2;
   year: number;
   players: PlayerDevelopmentChange[];
   tradeStart: number;

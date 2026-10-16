@@ -162,7 +162,7 @@ try {
         year,
         seasonSeed,
         undefined,
-        court,
+        court === 3,
       );
       const next = { ...(team.development[p.pokemonId] ?? {}) };
       for (const s of DEVELOPMENT_SKILLS) {
@@ -189,6 +189,20 @@ try {
     });
   }
   out.ratingSd = { initial: r(initialSd, 2), final: r(ratingSd(), 2) };
+  out.largestOffsets = teams
+    .flatMap((t) =>
+      ROSTER_SLOTS.map((s) => {
+        const id = t.roster[s],
+          dev = t.development[id] ?? {};
+        return {
+          name: POKEMON_BY_ID.get(id).name,
+          gain: r(best(id, dev) - best(id, {})),
+          dev,
+        };
+      }),
+    )
+    .sort((a, b) => b.gain - a.gain)
+    .slice(0, 3);
   out.meanAnnualDelta = {
     starters28: r(mean(drift.starters), 2),
     mid15to28: r(mean(drift.mid), 2),
