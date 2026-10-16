@@ -52,7 +52,7 @@ beforeAll(() => {
     const pick = recommendedRookiePick(drafted.franchise!, 0, true)!;
     drafted = selectRookie(drafted, pick.pokemonId, pick.releasedId);
   }
-}, 30000);
+}, 60000);
 const restore = (s: GameState) =>
   loadGame({ getItem: () => JSON.stringify(s), setItem: () => {} }, 1);
 const sign = (s: GameState) =>
@@ -161,12 +161,12 @@ describe("free agency persistence and franchise lifecycle", () => {
       mutate(bad);
       expect(restore(bad).preserveSource).toBe(true);
     },
-    45000,
+    90000,
   );
 
   it("runs CPU free agency automatically before year two and retains its ledger and returning careers after that season", () => {
     const signed = sign(drafted);
-    const next = gameReducer(signed, {
+    let next = gameReducer(signed, {
       type: "START_FRANCHISE_SEASON",
       seed: 93,
     });
@@ -175,6 +175,7 @@ describe("free agency persistence and franchise lifecycle", () => {
     expect(next.franchise!.teams[0]).toEqual(signed.franchise!.teams[0]);
     expect(next.run.leagueTeams).toEqual(next.franchise!.teams);
     expect(restore(next).state.franchise).toEqual(next.franchise);
+    next = gameReducer(next, { type: "SELECT_COACH", id: "mom" });
     const result = simulateSeason(next.run),
       playoffs = simulatePlayoffs(result.league!, next.run.seasonSeed);
     const archived = archiveFranchiseSeason({

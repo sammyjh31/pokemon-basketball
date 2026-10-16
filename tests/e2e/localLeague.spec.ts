@@ -8,6 +8,11 @@ test("friends draft a complete local league, compare results, and restore withou
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await page
+    .getByRole("region", { name: "Your team. Their game plan." })
+    .getByRole("button", { name: /^Draft / })
+    .first()
+    .click();
+  await page
     .getByRole("button", { name: /^Draft / })
     .first()
     .click();
@@ -53,6 +58,10 @@ test("friends draft a complete local league, compare results, and restore withou
     fullPage: true,
   });
   await page.getByRole("button", { name: "Start snake draft" }).click();
+  await page
+    .getByRole("button", { name: "Draft Ash Ketchum", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Draft Misty", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: /On the clock: (Sam|Alex)/ }),
   ).toBeVisible();

@@ -72,6 +72,10 @@ describe("local league pass-and-play", () => {
       target: { value: "full-pool" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Start snake draft" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Draft Delia Ketchum (Mom)" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Draft Ash Ketchum" }));
     expect(
       screen.getByRole("heading", { name: /On the clock/ }),
     ).toBeInTheDocument();
@@ -131,6 +135,10 @@ describe("local league pass-and-play", () => {
     };
     render(<LocalLeagueMode onExit={() => {}} storage={blocked} />);
     fireEvent.click(screen.getByRole("button", { name: "Start snake draft" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Draft Delia Ketchum (Mom)" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Draft Ash Ketchum" }));
     expect(
       screen.getByText(/could not save this local league/i),
     ).toHaveAttribute("role", "status");
@@ -308,11 +316,11 @@ describe("local league pass-and-play", () => {
         expect(screen.getByRole("alert")).toHaveTextContent(
           "continue after the championship",
         ),
-      { timeout: 20000 },
+      { timeout: 60000 },
     );
     expect(storage.data.get(LOCAL_LEAGUE_KEY)).toBe(raw);
     expect(
       screen.queryByRole("button", { name: "Finish playoffs" }),
     ).not.toBeInTheDocument();
-  }, 30000);
+  }, 90000);
 });

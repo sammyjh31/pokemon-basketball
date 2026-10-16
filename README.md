@@ -15,6 +15,7 @@ Open [the local game](http://127.0.0.1:5173/). In a cloud workspace, bind the se
 
 ## Play
 
+- **Trainer coaches:** choose one of three seeded trainer offers in the 82–0 Challenge; freely choose an available trainer in the lineup builder, local friend drafts and initial franchise hiring. All 32 trainers have their own styles and tradeoffs. Human friends choose before CPUs fill the remaining jobs. Your coach stays across seasons and automatically handles starters, minutes, closers, offense, defense, screen coverage and live adjustments. You still manage roster moves and optional training. Game insights show the actual opening plan and adjustments. Existing played seasons retain their original inputs; hire your first trainer in the offseason or before an unplayed franchise season.
 - **82–0 Challenge (Spin & Pick):** each pick offers four Pokémon. Choose one, then place it on the court. Each placement is locked. You have two re-rolls for the entire draft.
 - **Lineup builder (Free Draft):** search by name or Pokédex number, filter by type, replace players, and select two occupied court positions to swap them. Randomize creates eight unique players; Clear all empties the roster. Auto-fill bench fills only empty reserve slots. Sort the pool by position fit, three-point shooting, rebounding, or stamina.
 - Switch between pixel sprites and official artwork. Both styles and the fonts are served locally.

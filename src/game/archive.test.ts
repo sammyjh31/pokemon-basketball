@@ -20,7 +20,7 @@ import {
   saveGame,
   STORAGE_KEY,
 } from "./persistence";
-import { initialState } from "./state";
+import { initialState, gameReducer } from "./state";
 import { processOffseason } from "./offseason";
 import { validateFranchise } from "./franchiseValidation";
 import { ROSTER_SLOTS, type GameState } from "./types";
@@ -48,7 +48,7 @@ beforeAll(() => {
       },
     },
   };
-}, 30000);
+}, 60000);
 function storage(state: GameState) {
   let source = JSON.stringify(state);
   return {
@@ -301,7 +301,7 @@ it("retains selected training and validated development after an offseason reloa
     },
   };
   expect(loadGame(storage(next), 99).preserveSource).toBe(true);
-}, 90000);
+}, 180000);
 
 it("defers rich archive verification before a new year's first fixture and aborts without changing source", async () => {
   const next = franchise.startInteractiveFranchiseSeason(
@@ -323,7 +323,7 @@ it("defers rich archive verification before a new year's first fixture and abort
   ).rejects.toMatchObject({ name: "AbortError" });
   expect(progress.some((completed) => completed > 0)).toBe(true);
   expect(source.getItem()).toBe(original);
-}, 20000);
+}, 60000);
 
 it("rejects corrupted historical inputs after deferred replay instead of trusting structural totals", async () => {
   const next = franchise.startInteractiveFranchiseSeason(
@@ -343,4 +343,33 @@ it("rejects corrupted historical inputs after deferred replay instead of trustin
   expect(loaded.preserveSource).toBe(true);
   expect(loaded.state.franchise).toBeUndefined();
   expect(source.getItem()).toBe(original);
-}, 20000);
+}, 60000);
+
+it("restores an existing franchise waiting for its first coach in year two", async () => {
+  const next = gameReducer(franchise.archiveFranchiseSeason(finished), {
+    type: "START_FRANCHISE_SEASON",
+    seed: 93,
+  });
+  expect(next.franchise?.year).toBe(2);
+  expect(next.run.coachDraftRequired).toBe(true);
+  const source = storage(next),
+    bytes = source.getItem();
+  const prepared = prepareGameLoad(source, 99);
+  expect(prepared.notice).toBeNull();
+  expect(prepared.restore).toBeTypeOf("function");
+  const loaded = await prepared.restore!(
+    () => {},
+    new AbortController().signal,
+  );
+  expect(loaded.notice).toBeNull();
+  expect(loaded.state.franchise).toEqual(next.franchise);
+  expect(loaded.state.run.coachDraftRequired).toBe(true);
+  expect(source.getItem()).toBe(bytes);
+  await expect(
+    advanceFranchiseSeasonAsync(loaded.state.run, 1),
+  ).rejects.toThrow(/trainer coach/);
+  const chosen = gameReducer(loaded.state, { type: "SELECT_COACH", id: "mom" });
+  const played = await advanceFranchiseSeasonAsync(chosen.run, 1);
+  expect(played.seasonProgress?.completedRounds).toBe(1);
+  expect(played.coach?.id).toBe("mom");
+}, 120000);

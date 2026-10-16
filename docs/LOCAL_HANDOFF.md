@@ -2,6 +2,16 @@
 
 Basketball development uses the attached checkout `/Users/sam/.codex/worktrees/pokemon-matchup-engine/PokeBBall`, synchronized with `main` at `https://github.com/sammyjh31/pokemon-basketball.git`. The primary directory currently contains concurrent basketball draft work and a separate Grand Table project; do not reset, switch or clean it as part of basketball work.
 
+## Trainer coaches
+
+Draftable, versioned trainer coaches now drive the shared simulated-match engine. The challenge offers three seeded trainers; builder and local friend drafts use the available 32-person catalog. New friend leagues collect every human choice before filling CPU jobs, with unique identities per league. Coaches persist through seasons, trades, development and replayable archives. Existing played inputs remain uncoached until an explicit eligible hire, so historical results do not change.
+
+`trainerCoaches.ts` owns identities/preferences; `coachPolicy.ts` derives roster-sensitive plans, workload and live responses. Selection-only role preferences and workload targets enter the real lineup picker; bounded screen preferences enter the real coverage resolver. Decisions use score, time, fatigue and observed shots independently of optional insights. The UI replaces manual coaching controls with trainer summaries, projected rotation and recorded game decisions. Manually controlled arcade games retain their existing physics and controls.
+
+The independent review's pending-franchise reload finding was accepted: team validation can reconstruct zero-round inputs, while advancing a pending coached season is blocked. Loading an old save no longer silently adds the pending-selection flag. New UI drafts explicitly request coach selection, preserving legacy low-level fixture constructors.
+
+Verification evidence and final suite results are recorded in [the execution plan](superpowers/plans/2026-10-16-trainer-coaches.md). Reproduce the 64-game / 32-style accounting and compact-report parity audit with `node scripts/coach-audit.mjs`; output is `docs/coach-balance-audit.json`. Browser QA used isolated port 5176, preserving the user's 5173 save: challenge offers, free trainer search, automatic rotation, local coach selection/reload/availability, and a 390px iframe viewport (no horizontal overflow). Screenshot: `docs/design/trainer-coaches.png`. Updated standalone Playwright workflows include the new coach step; CLI browser automation was not run in this desktop session.
+
 ## Court positioning, action chains and screen coverages
 
 New runs and configurable local leagues opt into `courtVersion: 1`. Existing standard franchises adopt it when starting their next season; active and archived seasons retain their saved rules. Existing local careers remain frozen. The flag follows all league teams, archived inputs and save validation. Every simulated fixture uses the shared match engine, including CPU-versus-CPU games, regular-season rounds, playoffs and reconstructed boxes. Manually controlled arcade games keep their separate physics engine.

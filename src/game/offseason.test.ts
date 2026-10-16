@@ -203,7 +203,8 @@ describe("the league offseason", () => {
       seed: 88,
     });
     expect(loadGame(memory(ready), 999).state).toEqual(ready);
-    const played = gameReducer(ready, { type: "SIMULATE" });
+    const coached = gameReducer(ready, { type: "SELECT_COACH", id: "mom" });
+    const played = gameReducer(coached, { type: "SIMULATE" });
     expect(played.run.result!.modelVersion).toBe(6);
     const completed = {
       ...played,

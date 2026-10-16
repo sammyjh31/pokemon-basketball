@@ -1,4 +1,3 @@
-import { canSelectTrainer } from "../game/coachSelection";
 import { useEffect, useReducer, useState, useRef } from "react";
 import { gameReducer, type GameAction } from "../game/state";
 import {
@@ -54,16 +53,6 @@ export function useGame(
       loaded.restore = undefined;
       loaded.notice = null;
     }
-    if (
-      !loaded.restore &&
-      !loaded.preserveSource &&
-      canSelectTrainer(loaded.state) &&
-      loaded.state.franchise?.phase !== "offseason"
-    )
-      loaded.state = {
-        ...loaded.state,
-        run: { ...loaded.state.run, coachDraftRequired: true },
-      };
     return { ...loaded, roster, confirmImport: !!roster && hasProgress };
   });
   const [state, rawDispatch] = useReducer(reducer, loaded.state);

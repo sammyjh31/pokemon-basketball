@@ -1,4 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
+async function chooseCoach(page: Page) {
+  await page
+    .getByRole("region", { name: "Your team. Their game plan." })
+    .getByRole("button", { name: /^Draft / })
+    .first()
+    .click();
+}
 const positions = ["PG", "SG", "SF", "PF", "C", "B1", "B2", "B3"];
 async function draftSpin(page: Page) {
   for (const p of positions) {
@@ -27,6 +34,7 @@ test("full spin season, saved results, and reset cancellation", async ({
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
+  await chooseCoach(page);
   await expect(
     page.getByRole("heading", { name: "82–0 Challenge" }),
   ).toBeVisible();
@@ -66,9 +74,11 @@ test("free draft search, swapping, filtering, and full season", async ({
   page,
 }) => {
   await page.goto("/");
+  await chooseCoach(page);
   await page
     .getByRole("button", { name: "Lineup builder", exact: true })
     .click();
+  await chooseCoach(page);
   for (const [i, name] of [
     "Alakazam",
     "Mewtwo",
@@ -109,6 +119,7 @@ test("free draft search, swapping, filtering, and full season", async ({
 test("keyboard-only picks and reduced-motion results", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
+  await chooseCoach(page);
   for (const p of positions) {
     const choice = page.getByRole("button", { name: /^Draft / }).first();
     await choice.focus();
@@ -146,6 +157,7 @@ test("portraits render without external image requests", async ({ page }) => {
     route.abort(),
   );
   await page.goto("/");
+  await chooseCoach(page);
   const images = page.locator(".candidate-grid img");
   await expect(images).toHaveCount(4);
   await expect
@@ -245,9 +257,11 @@ test("informative text and type labels meet normal-text contrast", async ({
     expect(failures).toEqual([]);
   };
   await page.goto("/");
+  await chooseCoach(page);
   await page
     .getByRole("button", { name: "Lineup builder", exact: true })
     .click();
+  await chooseCoach(page);
   await page.getByRole("searchbox", { name: "Search Pokémon" }).fill("Pikachu");
   await page
     .getByRole("button", { name: "Draft Pikachu", exact: true })

@@ -20,6 +20,12 @@ for (const mode of ["generational", "full-pool"] as const) {
       page.getByLabel("Signature abilities", { exact: true }),
     ).toBeChecked();
     await page.getByRole("button", { name: "Start snake draft" }).click();
+    await page
+      .getByRole("button", { name: "Draft Ash Ketchum", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Draft Misty", exact: true })
+      .click();
     await page.getByText(/Draft recommendations for/).click();
     await expect(page.getByText(/Based on open roles/)).toBeVisible();
     for (let i = 0; i < 16; i++) {

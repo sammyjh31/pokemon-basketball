@@ -42,6 +42,12 @@ const fill = () => {
 };
 const pick = () =>
   fireEvent.click(screen.getAllByRole("button", { name: /^Draft / })[0]);
+const chooseTrainer = () => {
+  const draft = screen.getByRole("region", {
+    name: "Your team. Their game plan.",
+  });
+  fireEvent.click(within(draft).getAllByRole("button", { name: /^Draft / })[0]);
+};
 const slot = (position: string) =>
   screen.getByRole("button", { name: new RegExp(`^${position} slot:`) });
 beforeEach(() => {
@@ -138,6 +144,7 @@ describe("playable draft room", () => {
         <App storage={storage} />
       </StrictMode>,
     );
+    chooseTrainer();
     expect(slot("PG")).toHaveAccessibleName("PG slot: Alakazam");
     expect(slot("C")).toHaveAccessibleName("C slot: Snorlax");
     expect(window.location.search).toBe("");
@@ -181,6 +188,7 @@ describe("playable draft room", () => {
           { timeout: 45000 },
         ),
       );
+      chooseTrainer();
       expect(slot("PG")).toHaveAccessibleName("PG slot: Alakazam");
       expect(JSON.parse(storage.getItem(STORAGE_KEY)!).records).toEqual(
         state.records,
@@ -348,6 +356,7 @@ describe("playable draft room", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "New run" }));
     fireEvent.click(screen.getByRole("button", { name: "Start new run" }));
+    chooseTrainer();
     act(() => vi.advanceTimersByTime(20000));
     expect(screen.queryAllByTestId("game-result")).toHaveLength(0);
     expect(slot("PG")).toHaveAccessibleName("PG slot: Empty");
@@ -487,6 +496,7 @@ describe("completed league restoration", () => {
     });
     expect(storage.getItem(STORAGE_KEY) === source).toBe(true);
     render(<App storage={storage} />);
+    chooseTrainer();
     expect(slot("PG")).toHaveAccessibleName("PG slot: Empty");
     expect(JSON.parse(storage.getItem(STORAGE_KEY)!).run.id).toBe(next.run.id);
   });
@@ -509,6 +519,7 @@ describe("completed league restoration", () => {
       screen.getByText(/Your saved game could not be restored/),
     ).toBeInTheDocument();
     expect(storage.getItem(STORAGE_KEY) === source).toBe(true);
+    chooseTrainer();
     expect(slot("PG")).toHaveAccessibleName("PG slot: Empty");
     pick();
     fireEvent.click(slot("PG"));
@@ -541,6 +552,7 @@ it("persists a shared lineup replacing malformed storage through simulation and 
       <App storage={storage} />
     </StrictMode>,
   );
+  chooseTrainer();
   expect(slot("PG")).toHaveAccessibleName("PG slot: Alakazam");
   expect(window.location.search).toBe("");
   expect(storage.getItem(STORAGE_KEY)).not.toBe("{malformed");

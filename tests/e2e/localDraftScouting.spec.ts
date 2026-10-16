@@ -9,6 +9,10 @@ test("scout, compare across filters, and confirm a local pick", async ({
   await page.getByLabel("Franchise progression").selectOption("full-pool");
   await page.getByLabel("League size").selectOption("4");
   await page.getByRole("button", { name: "Start snake draft" }).click();
+  await page
+    .getByRole("button", { name: "Draft Ash Ketchum", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Draft Misty", exact: true }).click();
   const save = () =>
     page.evaluate(() =>
       JSON.parse(localStorage.getItem("pokemon-basketball:local-league:v1")!),

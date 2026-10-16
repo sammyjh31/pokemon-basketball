@@ -26,8 +26,7 @@ export function LocalLeagueSetup({
   const [gamesPerTeam, setGames] = useState<14 | 28 | 82>(28);
   const [playoffTeams, setPlayoffTeams] = useState<4 | 8 | 16>(8);
   const [bestOf, setBestOf] = useState<1 | 3 | 5 | 7>(3);
-  const [abilities, setAbilities] = useState(true),
-    [adaptiveCoaching, setAdaptive] = useState(true);
+  const [abilities, setAbilities] = useState(true);
   const update = (index: number, values: Partial<LocalManager>) =>
     setManagers((current) =>
       current.map((m, i) => (i === index ? { ...m, ...values } : m)),
@@ -75,7 +74,7 @@ export function LocalLeagueSetup({
                 engineRules: {
                   version: 1,
                   abilities,
-                  adaptiveCoaching,
+                  adaptiveCoaching: true,
                   familiarity: 0,
                 },
               }),
@@ -269,15 +268,8 @@ export function LocalLeagueSetup({
           />{" "}
           Signature abilities
         </label>
-        <label className="local-checkbox">
-          <input
-            type="checkbox"
-            checked={adaptiveCoaching}
-            onChange={(e) => setAdaptive(e.target.checked)}
-          />{" "}
-          Adaptive CPU coaching
-        </label>
         <p className="stat-legend">
+          Every trainer automatically manages their team throughout the season.
           Signature abilities add small situational bonuses. Physical matchups,
           player tendencies and complementary lineups also affect new leagues.
         </p>

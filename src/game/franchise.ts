@@ -342,12 +342,12 @@ export function startFranchiseSeason(
         }
       : {}),
   };
+  const { pendingCoach: _hiredCoach, ...continuedFranchise } = franchise;
   return {
     ...state,
     run,
     franchise: {
-      ...franchise,
-      pendingCoach: undefined,
+      ...continuedFranchise,
       teams: structuredClone(teams),
       year: franchise.year + 1,
       phase: "season",
