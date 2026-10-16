@@ -27,7 +27,7 @@
 - [x] Parent: offseason roster editor and state actions; atomic package application; variable career membership, draft/trade chronology and corrupted-save tests; wire lifecycle/UI.
 - [x] Defensive leaderboards, career views, per-36 rates and offensive/defensive rebound splits in box scores.
 - [x] Full tests/build, independent review, browser QA and documentation.
-- [ ] Scoped commit, coordinated primary integration/push and remote verification.
+- [x] Scoped feature commit and coordinated primary integration. GitHub synchronization is verified during delivery.
 
 ## Verification
 
@@ -35,3 +35,5 @@
 - Combined snapshot with the concurrent local-league work: production build and 34 targeted tests passed, including legacy replay, local league, rookie catalog, saved offseason chronology and shared statistics views.
 - Browser: completed a two-player package trade, edited offseason positions/coaching, restored a partial draft after reload, completed both rookie rounds and simulated Year 2. Verified league/playoff/career defense statistics, released careers and mobile table scrolling without page overflow.
 - Independent review repaired an optional-rotation save-validation bug and mismatched trade-suggestion package sizes; regression coverage passed.
+- Final primary checkout, including the concurrent local-league and controller changes: 493 tests across 82 files passed, production build passed, and `git diff --check` passed.
+- Combined browser check: drafted all 240 local-league players, simulated the season and playoffs, reloaded the champion and Finals MVP, opened team analysis and defensive leaders, then returned to the intact franchise. The user's separate Year 2 save remains 0–0, with Career stats → Defense open.
