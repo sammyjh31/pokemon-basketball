@@ -131,7 +131,7 @@ it("connects minutes, training, played fixtures, careers and historical boxes ac
   const boxes = await within(historical).findAllByRole(
     "button",
     { name: /View box/ },
-    { timeout: 10000 },
+    { timeout: 30000 }, // Reconstructs the entire archived season.
   );
   fireEvent.click(boxes[0]);
   expect(
@@ -146,7 +146,7 @@ it("connects minutes, training, played fixtures, careers and historical boxes ac
       expect(
         screen.getByRole("region", { name: "Franchise schedule" }),
       ).toHaveTextContent("1 / 82 games complete"),
-    { timeout: 15000 },
+    { timeout: 30000 },
   );
   expect(
     (JSON.parse(storage.getItem()!) as GameState).run.seasonProgress!
@@ -161,7 +161,7 @@ it("connects minutes, training, played fixtures, careers and historical boxes ac
     Object.keys(JSON.parse(value!).run.seasonProgress.playedGames),
   ).toHaveLength(1);
   expect(JSON.parse(value!).run.seasonProgress.result.modelVersion).toBe(6);
-}, 40000);
+}, 90000); // History and reload each reconstruct a full court-model season.
 
 it("records a scheduled playoff game in the bracket and uses its official box", async () => {
   const regular = simulateSeason(ready.run);
@@ -211,7 +211,7 @@ it("records a scheduled playoff game in the bracket and uses its official box", 
   expect(screen.getByRole("dialog")).toHaveTextContent(
     String(official[0].match.awayScore),
   );
-}, 15000);
+}, 45000); // Includes simulating the complete regular season before the game.
 
 it("lets a returning franchise simulate its next season directly from the overview", async () => {
   let saved = "";

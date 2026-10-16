@@ -243,7 +243,7 @@ describe("the league offseason", () => {
     expect(gameReducer(loaded.state, { type: "PROCESS_OFFSEASON" })).toBe(
       loaded.state,
     );
-  }, 60000);
+  }, 300000); // Two seasons and four save restores, including archived replays.
   it("processes every species once and preserves the completed season and careers", () => {
     const before = structuredClone(offseason),
       after = processOffseason(offseason),

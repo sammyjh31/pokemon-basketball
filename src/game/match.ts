@@ -1299,7 +1299,7 @@ export function simulateMatch(
                     },
                   }
                 : {}),
-              play: court?.putback ? "post" : play,
+              play: court?.finishPlay ?? play,
               zone,
               coverage: coverageScheme,
               screener,

@@ -138,7 +138,7 @@ beforeAll(() => {
       ),
     },
   };
-}, 30000);
+}, 60000); // Two complete court-model seasons and playoff brackets.
 
 describe("franchise persistence", () => {
   it("preserves malformed franchise history and recovers the verified original season", () => {

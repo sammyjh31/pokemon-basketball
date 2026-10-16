@@ -259,6 +259,7 @@ export function resolveCourtPossession(
   let coverage: ScreenCoverage | undefined, coverageReason: string | undefined;
   let outcome: CourtSequence["outcome"] = "shot",
     kickout = false,
+    droveAfterCatch = false,
     clockLimited = false;
   const spend = (
     kind: CourtAction["kind"],
@@ -311,6 +312,7 @@ export function resolveCourtPossession(
     }
     passer = ball;
     ball = target;
+    droveAfterCatch = false;
     kickout = kind === "kickout";
     return true;
   };
@@ -413,7 +415,13 @@ export function resolveCourtPossession(
       (best.value > current + 1 || (coverage === "trap" && step === 0)) &&
       random() < read
     ) {
-      if (!pass(best.p, geometry.zone === "rim" ? "kickout" : "pass")) break;
+      if (
+        !pass(
+          best.p,
+          geometry.zone === "rim" && best.g.zone !== "rim" ? "kickout" : "pass",
+        )
+      )
+        break;
       continue;
     }
     if (
@@ -442,6 +450,7 @@ export function resolveCourtPossession(
         : { x: from.x * 0.55, y: 18 };
       if (!spend("drive", 2.7 + (ball.body?.inertia ?? 0.5), undefined, false))
         break;
+      droveAfterCatch = true;
       court.set(ball, moveToward(from, target, ball, 2.7));
       // The beaten defender trails; nearby help can leave its assignment and open a kickout.
       court.set(
@@ -528,6 +537,13 @@ export function resolveCourtPossession(
   };
   return {
     sequence,
+    finishPlay: (c.putback
+      ? "post"
+      : droveAfterCatch
+        ? "isolation"
+        : kickout
+          ? "spotUp"
+          : c.play) as PlayType,
     putback: !!c.putback && ball === c.putback && !passer,
     shooter: ball,
     defender: geometry.defender,

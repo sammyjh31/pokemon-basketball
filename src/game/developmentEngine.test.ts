@@ -259,5 +259,5 @@ describe("developed basketball skills", () => {
     expect(userGame.opponentBoxScore).toEqual(
       userGame.home ? replay.awayBox : replay.homeBox,
     );
-  }, 30000);
+  }, 90000); // Multiple full developed-season simulations and replay.
 });

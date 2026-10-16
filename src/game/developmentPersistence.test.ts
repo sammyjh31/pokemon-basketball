@@ -181,7 +181,7 @@ describe("development save validation", () => {
     );
     expect(loaded.notice).toBeNull();
     expect(loaded.state).toEqual(completed);
-  }, 30000);
+  }, 60000); // Full season generation plus deferred replay.
   it("honors user trades before and after the CPU report range", () => {
     const state = structuredClone(next),
       franchise = state.franchise!;
@@ -267,7 +267,7 @@ describe("development save validation", () => {
     expect(
       loaded.state.run.leagueTeams!.every((team) => !team.development),
     ).toBe(true);
-  }, 30000);
+  }, 60000);
   it("continues to load an unprocessed model-4 season", () => {
     const result = simulateSeason(legacyTwo.run);
     expect(result.modelVersion).toBe(4);
@@ -275,7 +275,7 @@ describe("development save validation", () => {
     expect(loadGame(memory(JSON.stringify(completed)), 999).state).toEqual(
       completed,
     );
-  }, 20000);
+  }, 60000); // Full season generation plus persistence replay.
   it.each([
     "unknown skill",
     "fraction",

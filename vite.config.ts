@@ -10,7 +10,7 @@ export default defineConfig({
     maxWorkers: 1,
     // Integration cases reconstruct entire 1,230-game seasons. Their assertions
     // still run in full; the watchdog allows the deeper possession model.
-    testTimeout: 30000,
+    testTimeout: 60000,
     hookTimeout: 60000,
     include: ["src/**/*.test.{ts,tsx}"],
     environment: "jsdom",

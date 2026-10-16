@@ -8,6 +8,7 @@ import { createLeague } from "./league";
 it("the help probe uses the screen coverage actually chosen on the floor", () => {
   const clubs = createLeague({
     ...createRun("free", true, 882),
+    courtVersion: undefined, // Exercise the frozen abstract screen/help model.
     roster: {
       PG: 65,
       SG: 135,

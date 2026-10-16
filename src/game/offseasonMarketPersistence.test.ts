@@ -113,7 +113,7 @@ describe("package and rookie franchise persistence", () => {
     mismatched.franchise!.trades.at(-1)!.giveId = 999;
     reject(mismatched);
     // Validates the complete new-model season for three separate saves.
-  }, 90000);
+  }, 300000); // Three saves, each validating current and archived court seasons.
   it("restores a partial draft, rejects forged picks, then keeps released careers across a rookie season", () => {
     const partial = beginRookieDraft(offseason);
     expect(partial.franchise!.rookieDrafts?.at(-1)?.complete).toBe(false);

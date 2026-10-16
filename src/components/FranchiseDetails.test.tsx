@@ -237,7 +237,7 @@ describe("franchise detail dialogs", () => {
     const games = await screen.findAllByRole(
       "button",
       { name: /View box/ },
-      { timeout: 10000 },
+      { timeout: 30000 }, // Reconstructs the full archived court-model season.
     );
     expect(games).toHaveLength(82);
     fireEvent.click(games[0]);

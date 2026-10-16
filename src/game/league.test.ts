@@ -63,8 +63,10 @@ describe("one shared league", () => {
       expect(players.reduce((s, p) => s + p.points, 0)).toBe(
         standing.pointsFor,
       );
-      expect(players.reduce((s, p) => s + p.minutes, 0)).toBe(
+      // Continuous court minutes can accumulate binary floating-point noise.
+      expect(players.reduce((s, p) => s + p.minutes, 0)).toBeCloseTo(
         82 * 240 + 25 * games.reduce((s, g) => s + g.overtimePeriods, 0),
+        7,
       );
       expect(standing.pointsFor).toBe(
         games.reduce(
