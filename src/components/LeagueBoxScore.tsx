@@ -140,10 +140,12 @@ export function LeagueBoxScore({
   game,
   teams,
   onClose,
+  contextLabel,
 }: {
   game: LeagueGameSummary;
   teams: LeagueTeam[];
   onClose: () => void;
+  contextLabel?: string;
 }) {
   const home = teams.find((team) => team.id === game.homeTeamId)!;
   const away = teams.find((team) => team.id === game.awayTeamId)!;
@@ -206,7 +208,7 @@ export function LeagueBoxScore({
         <div className="box-score-heading">
           <div>
             <span className="eyebrow">
-              FINAL · ROUND {game.round + 1}
+              FINAL · {contextLabel ?? `ROUND ${game.round + 1}`}
               {match.overtimePeriods > 0
                 ? ` · ${match.overtimePeriods > 1 ? match.overtimePeriods : ""}OT`
                 : ""}

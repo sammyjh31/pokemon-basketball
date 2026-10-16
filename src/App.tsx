@@ -32,6 +32,9 @@ export default function App({
       simulate,
       simulating,
       progress,
+      advancePlayoffs,
+      playoffSimulating,
+      playoffProgress,
       simulationError,
       restoring,
       restorationProgress,
@@ -51,6 +54,7 @@ export default function App({
     : teamRatings(run.roster, run.tactic, run.rotation);
   const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("pixel");
   const start = (mode: Mode, includeLegends: boolean) => {
+    if (simulating || playoffSimulating || restoring) return;
     dispatch({ type: "NEW_RUN", mode, includeLegends, seed: newSeed() });
     setPending(null);
     setSwap(null);
@@ -59,7 +63,7 @@ export default function App({
     setAnnouncement("New draft started. Pick your first Pokémon.");
   };
   const requestReset = (mode: Mode, includeLegends: boolean) => {
-    if (simulating || restoring) return;
+    if (simulating || playoffSimulating || restoring) return;
     if (
       Object.values(run.roster).some((id) => id != null) ||
       run.rerollsLeft < 2
@@ -68,7 +72,7 @@ export default function App({
     else start(mode, includeLegends);
   };
   const onSlot = (position: RosterSlot) => {
-    if (run.result || simulating || restoring) return;
+    if (run.result || simulating || playoffSimulating || restoring) return;
     if (pending !== null) {
       if (run.mode === "spin" && run.roster[position] !== null) return;
       dispatch({ type: "PLACE", pokemonId: pending, position });
@@ -95,7 +99,7 @@ export default function App({
       <div className="app-shell">
         <Scoreboard
           mode={run.mode}
-          disabled={simulating || restoring}
+          disabled={simulating || playoffSimulating || restoring}
           onMode={(mode) => {
             if (mode !== run.mode) requestReset(mode, run.includeLegends);
           }}
@@ -142,7 +146,7 @@ export default function App({
               <fieldset
                 className="draft-layout draft-fieldset"
                 id="draft"
-                disabled={simulating || restoring}
+                disabled={simulating || playoffSimulating || restoring}
               >
                 <div className="court-column">
                   <Court
@@ -235,6 +239,9 @@ export default function App({
                 animate={animatedRun === run.id}
                 simulating={simulating}
                 progress={progress}
+                onPlayoffs={(mode) => void advancePlayoffs(mode)}
+                playoffSimulating={playoffSimulating}
+                playoffProgress={playoffProgress}
                 onSimulate={() => {
                   setAnimatedRun(run.id);
                   setPending(null);

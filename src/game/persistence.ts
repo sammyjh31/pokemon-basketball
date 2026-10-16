@@ -1,6 +1,7 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { initialState } from "./state";
 import { simulateSeason, simulateSeasonAsync } from "./season";
+import { replayPlayoffs } from "./playoffs";
 import {
   ROSTER_SLOTS,
   TACTICS,
@@ -159,13 +160,53 @@ function validate(value: unknown, replay?: SeasonResult): GameState {
 export interface LoadedGame {
   state: GameState;
   notice: string | null;
+  preserveSource?: boolean;
 }
 export interface PreparedGameLoad extends LoadedGame {
-  preserveSource?: boolean;
   restore?: (
     onProgress: (completed: number, total: number) => void,
     signal: AbortSignal,
   ) => Promise<LoadedGame>;
+}
+function validateSavedGame(value: unknown, replay?: SeasonResult): LoadedGame {
+  // Only a verified regular season can supply teams or seeds for the playoffs.
+  const state = validate(value, replay);
+  const raw = object(object(value).run);
+  if (!Object.hasOwn(raw, "playoffs")) return { state, notice: null };
+  try {
+    const candidate = object(raw.playoffs);
+    if (
+      state.run.result?.modelVersion !== 3 ||
+      !state.run.result.league ||
+      candidate.modelVersion !== 1 ||
+      !Array.isArray(candidate.series) ||
+      candidate.series.length !== 15
+    )
+      return fail();
+    // Bound replay work before examining user-controlled nested game data.
+    const gameCount = candidate.series.reduce((count, value) => {
+      const series = object(value);
+      if (!Array.isArray(series.games) || series.games.length > 7)
+        return fail();
+      return count + series.games.length;
+    }, 0);
+    integer(gameCount, 0, 105);
+    const expected = replayPlayoffs(
+      state.run.result.league,
+      state.run.seasonSeed,
+      gameCount,
+    );
+    if (JSON.stringify(candidate) !== JSON.stringify(expected)) return fail();
+    state.run.playoffs = expected;
+    return { state, notice: null };
+  } catch {
+    return {
+      state,
+      notice:
+        "Your saved playoffs could not be restored. Your regular season is safe. The original save is kept until you advance the playoffs or start a new run.",
+      preserveSource: true,
+    };
+  }
 }
 function readGame(
   storage: StorageLike,
@@ -211,19 +252,20 @@ function readGame(
               signal,
             );
             signal.throwIfAborted();
-            return { state: validate(parsed, replay), notice: null };
+            return validateSavedGame(parsed, replay);
           } catch (error) {
             if (signal.aborted) throw error;
             return {
               state: initialState(fallbackSeed),
               notice:
                 "Your saved game could not be restored. A fresh draft is ready. The original save is kept until you make a change.",
+              preserveSource: true,
             };
           }
         },
       };
     }
-    return { state: validate(parsed), notice: null };
+    return validateSavedGame(parsed);
   } catch {
     return {
       state: initialState(fallbackSeed),

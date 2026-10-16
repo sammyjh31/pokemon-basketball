@@ -22,10 +22,12 @@ import {
   type Roster,
 } from "./types";
 import { validRoster } from "./lineup";
+import type { Playoffs } from "./playoffTypes";
 export type GameAction =
   | { type: "AUTO_BENCH" }
   | { type: "DEFENSE"; defense: DefenseScheme }
   | { type: "APPLY_SEASON"; source: Run; result: SeasonResult }
+  | { type: "APPLY_PLAYOFFS"; source: Run; playoffs: Playoffs }
   | { type: "TACTIC"; tactic: Tactic }
   | { type: "ROTATION"; rotation: RotationStyle }
   | { type: "SET_LINEUP"; roster: Roster }
@@ -51,6 +53,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       ...state,
       run: createRun(action.mode, action.includeLegends, action.seed),
     };
+  if (action.type === "APPLY_PLAYOFFS") {
+    if (
+      action.source !== run ||
+      run.result?.modelVersion !== 3 ||
+      !run.result.league
+    )
+      return state;
+    return { ...state, run: { ...run, playoffs: action.playoffs } };
+  }
   if (run.result) return state;
   if (action.type === "AUTO_BENCH") {
     const next = autoFillBench(run);

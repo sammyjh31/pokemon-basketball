@@ -63,12 +63,15 @@ Local checkout: `/Users/sam/Documents/PokeBBall`. Existing cloud checkout: `/wor
 - **Match engine:** both teams generate possession events through transition, pick-and-roll, isolation, post and spot-up plays. Matchups, passing, screens, spacing, shot zones, shooting fouls, and-ones, offensive boards and fatigue affect outcomes. Tied games play overtime. Scores, player statistics and standings all come from the same events.
 - **League center:** sortable standings, every team's roster and coaching identity, searchable player leaders, per-game/totals views, percentage qualifications, per-36 production, TS%, AST/TOV and two-player comparisons. Every game has a replayable box score for both teams, period scores, shot zones, fouls, plus/minus and play-type counts.
 - **Awards:** League MVP, Defensive Player of the Year, Sixth Player of the Year, and scoring/assist/rebound champions. Each includes three finalists across the entire league. All-League and All-Defense select five players each. Your team's eight-player season table remains available separately.
+- **Playoffs:** the top 16 teams enter a fixed bracket of best-of-seven series, with 2–2–1–1–1 home court for the higher seed. Advance a slate, a round, or the whole postseason. Follow all series, playoff-only player leaders and every game box score through the championship and Finals MVP.
 
 See [the league model](docs/LEAGUE_MODEL.md) for schedule construction, exact award formulas, leader qualifications and versioning rules. All player species are unique across the league, including when legendaries are disabled.
 
 Saves use `pokemon-basketball:v3`. Valid v1/v2 saves migrate without deleting their original keys. Completed earlier seasons retain their results and records; start a new run for a full league season. Frozen `legacy*` and `v2*` modules preserve old outcomes. Future simulation changes require explicit model migration.
 
-Playoffs, careers, injuries, generations beyond II, multiplayer accounts and public hosting are not included.
+Existing model-3 league seasons can begin playoffs without repeating the regular season. Playoff progress saves independently, and regular-season awards and 82–0 challenge records stay unchanged. Finals MVP uses Finals-only production from the champion's roster.
+
+Careers, injuries, generations beyond II, multiplayer accounts and public hosting are not included.
 
 ## Data and artwork
 

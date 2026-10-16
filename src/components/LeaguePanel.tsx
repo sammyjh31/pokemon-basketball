@@ -182,7 +182,14 @@ function PlayerName({ player }: { player: LeaguePlayer }) {
     </span>
   );
 }
-function Leaders({ league }: { league: LeagueResult }) {
+export function Leaders({
+  league,
+  postseason = false,
+}: {
+  league: Pick<LeagueResult, "players" | "teams">;
+  postseason?: boolean;
+}) {
+  const scope = postseason ? "Playoff" : "League";
   const [team, setTeam] = useState("all"),
     [query, setQuery] = useState(""),
     [totals, setTotals] = useState(false),
@@ -198,7 +205,8 @@ function Leaders({ league }: { league: LeagueResult }) {
       (p) =>
         (team === "all" || p.teamId === Number(team)) &&
         playerLabel(p).toLowerCase().includes(query.toLowerCase()) &&
-        (!qualified ||
+        (postseason ||
+          !qualified ||
           (p.gamesPlayed >= 58 && (!column.qualified || column.qualified(p)))),
     )
     .sort((a, b) => {
@@ -214,10 +222,14 @@ function Leaders({ league }: { league: LeagueResult }) {
             a.playerId.localeCompare(b.playerId);
     });
   return (
-    <section aria-label="League player leaders">
+    <section aria-label={`${scope} player leaders`}>
       <div className="results-section-heading">
         <div>
-          <h4>Every player. Every possession.</h4>
+          <h4>
+            {postseason
+              ? "Every playoff possession."
+              : "Every player. Every possession."}
+          </h4>
           <p>
             {players.length} of {league.players.length} players · Select a
             column to sort.
@@ -226,7 +238,7 @@ function Leaders({ league }: { league: LeagueResult }) {
         <div
           className="stat-mode"
           role="group"
-          aria-label="League statistics display"
+          aria-label={`${scope} statistics display`}
         >
           <button
             type="button"
@@ -246,7 +258,7 @@ function Leaders({ league }: { league: LeagueResult }) {
       </div>
       <div className="league-controls">
         <label className="league-field">
-          Search league players
+          Search {postseason ? "playoff" : "league"} players
           <input
             type="search"
             value={query}
@@ -258,27 +270,37 @@ function Leaders({ league }: { league: LeagueResult }) {
           teams={league.teams}
           value={team}
           onChange={setTeam}
-          label="Filter players by team"
+          label={
+            postseason
+              ? "Filter playoff players by team"
+              : "Filter players by team"
+          }
         />
-        <label className="league-checkbox">
-          <input
-            type="checkbox"
-            checked={qualified}
-            onChange={(e) => setQualified(e.target.checked)}
-          />
-          Qualified leaders only
-        </label>
+        {!postseason && (
+          <label className="league-checkbox">
+            <input
+              type="checkbox"
+              checked={qualified}
+              onChange={(e) => setQualified(e.target.checked)}
+            />
+            Qualified leaders only
+          </label>
+        )}
       </div>
       <div
         className="results-table-wrap"
         tabIndex={0}
         role="region"
-        aria-label="Scrollable league player statistics"
+        aria-label={`Scrollable ${scope.toLowerCase()} player statistics`}
       >
         <table className="results-table league-leaders-table">
           <caption className="sr-only">
-            League player statistics —{" "}
-            {totals ? "season totals" : "per game averages"}
+            {scope} player statistics —{" "}
+            {totals
+              ? postseason
+                ? "playoff totals"
+                : "season totals"
+              : "per game averages"}
           </caption>
           <thead>
             <tr>
@@ -297,7 +319,7 @@ function Leaders({ league }: { league: LeagueResult }) {
                 >
                   <button
                     type="button"
-                    aria-label={`Sort league by ${c.title}`}
+                    aria-label={`Sort ${postseason ? "playoffs" : "league"} by ${c.title}`}
                     onClick={() =>
                       setSort({
                         key: c.key,
@@ -338,11 +360,12 @@ function Leaders({ league }: { league: LeagueResult }) {
         <p className="league-empty">No players match these filters.</p>
       )}
       <p className="stat-legend">
-        Per-game points, rebounds and assists are PPG, RPG and APG. Qualified
-        leaders require 58 games. When sorting percentages, also require 300 FGA
-        for FG% / TS%, 82 three-point attempts for 3P%, or 125 FTA for FT%. TS%
-        = PTS ÷ [2 × (FGA + 0.44 × FTA)]. Per-36 and AST/TOV are ratios in both
-        modes. — means no denominator.
+        Per-game points, rebounds and assists are PPG, RPG and APG.{" "}
+        {postseason
+          ? "Playoff games only; every qualified team's players are included, with no minimum sample. "
+          : "Qualified leaders require 58 games. When sorting percentages, also require 300 FGA for FG% / TS%, 82 three-point attempts for 3P%, or 125 FTA for FT%. "}
+        TS% = PTS ÷ [2 × (FGA + 0.44 × FTA)]. Per-36 and AST/TOV are ratios in
+        both modes. — means no denominator.
       </p>
     </section>
   );

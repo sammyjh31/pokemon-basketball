@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { OPPONENTS, SCHEDULE } from "../data/opponents";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
@@ -14,6 +14,8 @@ import { BoxScore } from "./BoxScore";
 import { LeaguePanel } from "./LeaguePanel";
 import { LeagueBoxScore } from "./LeagueBoxScore";
 import { createLeague, leagueSchedule } from "../game/league";
+import type { PlayoffMode } from "../game/playoffTypes";
+import { PlayoffPanel } from "./PlayoffPanel";
 export function SeasonPanel({
   run,
   ratings,
@@ -21,6 +23,9 @@ export function SeasonPanel({
   onSimulate,
   simulating = false,
   progress,
+  onPlayoffs,
+  playoffSimulating = false,
+  playoffProgress,
 }: {
   run: Run;
   ratings: TeamRatings;
@@ -28,8 +33,12 @@ export function SeasonPanel({
   onSimulate: () => void;
   simulating?: boolean;
   progress?: { completed: number; total: number };
+  onPlayoffs?: (mode: PlayoffMode) => void;
+  playoffSimulating?: boolean;
+  playoffProgress?: { completed: number; total: number };
 }) {
   const result = run.result;
+  const skippedResult = useRef<typeof result>(null);
   const reduced =
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
   const [visible, setVisible] = useState(result && !animate ? 82 : 0);
@@ -46,7 +55,8 @@ export function SeasonPanel({
       setVisible(0);
       return;
     }
-    if (!animate || reduced) {
+    // A fast skip can arrive before this passive effect initializes the reveal.
+    if (!animate || reduced || skippedResult.current === result) {
       setVisible(82);
       return;
     }
@@ -170,7 +180,13 @@ export function SeasonPanel({
             </svg>
           </button>
         ) : !done ? (
-          <button className="button secondary" onClick={() => setVisible(82)}>
+          <button
+            className="button secondary"
+            onClick={() => {
+              skippedResult.current = result;
+              setVisible(82);
+            }}
+          >
             Skip reveal
           </button>
         ) : (
@@ -304,6 +320,17 @@ export function SeasonPanel({
             />
           )}
           {done && league && <LeaguePanel league={league} />}
+          {done && league && onPlayoffs && (
+            <PlayoffPanel
+              key={run.id}
+              league={league}
+              seasonSeed={run.seasonSeed}
+              playoffs={run.playoffs}
+              onAdvance={onPlayoffs}
+              simulating={playoffSimulating}
+              progress={playoffProgress}
+            />
+          )}
           {done && !archived && (
             <p className="schedule-hint">
               Select a game score to open the full box score.

@@ -1,3 +1,5 @@
+import type { Playoffs } from "./playoffTypes";
+
 export const POSITIONS = ["PG", "SG", "SF", "PF", "C"] as const;
 export type Position = (typeof POSITIONS)[number];
 export const BENCH_SLOTS = ["B1", "B2", "B3"] as const;
@@ -182,6 +184,7 @@ export interface Run {
   rotation: RotationStyle;
   defense?: DefenseScheme;
   result: SeasonResult | null;
+  playoffs?: Playoffs;
 }
 export interface ModeRecords {
   runs: number;

@@ -262,8 +262,25 @@ export function RulesPanel() {
           assists or rebounds per game. Exact ties use team ID, then Pokédex
           number.
         </p>
+        <h3>Sixteen teams. One champion.</h3>
         <p>
-          Older saves keep their original results and records. Five-player
+          The top 16 teams qualify for a fixed playoff bracket. Seeds use
+          regular-season wins, then point differential, then team ID. Every
+          series is best of seven; the higher seed hosts games 1, 2, 5 and 7.
+          Winners advance without reseeding through the quarterfinals,
+          semifinals and Finals. A series ends at four wins.
+        </p>
+        <p>
+          Advance one slate of games, finish the current round, or simulate the
+          rest of the playoffs. You can follow the bracket even if your team
+          misses qualification or is eliminated. Playoff player statistics and
+          every game box score are separate from regular-season totals. Finals
+          MVP rewards total production and efficiency during the Finals among
+          players on the championship team.
+        </p>
+        <p>
+          Older saves keep their original results and records. Completed league
+          seasons can start playoffs immediately. Five-player
           seasons remain archived recaps. Earlier eight-player seasons retain
           their personal statistics, box scores and team awards; those honors
           remain awards within your roster. Start a new season to play the full
