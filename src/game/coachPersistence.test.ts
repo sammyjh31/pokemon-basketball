@@ -110,6 +110,16 @@ it("preserves local trainers through actual season, playoff, offseason and caree
   const yearTwo = local.parseLocalLeague(
     JSON.stringify(career.startNextLocalSeason(moved)),
   );
+  const invalidVacancy = structuredClone(yearTwo);
+  invalidVacancy.career!.coachOffice = fired.career!.coachOffice;
+  invalidVacancy.career!.teams = projectedCoaches(
+    yearTwo.career!.teams,
+    fired.career!.coachOffice,
+    1,
+  );
+  expect(() =>
+    local.parseLocalLeague(JSON.stringify(invalidVacancy)),
+  ).toThrow();
   expect(yearTwo.career!.teams[1].coach?.id).toBe(available.id);
   expect(yearTwo.career!.teams[3].coach?.id).toBe("ash");
   expect(JSON.stringify(yearTwo.career!.history)).toBe(historyBefore);

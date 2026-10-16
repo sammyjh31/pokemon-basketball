@@ -548,28 +548,33 @@ export function applyLocalTrade(
 }
 function nextYearTeams(career: LocalCareer): LeagueTeam[] {
   const archived = career.history.at(-1)!;
-  return projectedCoaches(career.teams, career.coachOffice, career.year).map(
-    (team) => {
-      const retained =
-        Object.values(team.roster).filter((id) =>
-          Object.values(archived.teams[team.id].roster).includes(id),
-        ).length / 8;
-      return {
-        ...team,
-        ...(team.engineRules
-          ? {
-              engineRules: {
-                ...team.engineRules,
-                familiarity: Math.min(
-                  1,
-                  (team.engineRules.familiarity + 0.15) * retained,
-                ),
-              },
-            }
-          : {}),
-      };
-    },
+  const appointed = projectedCoaches(
+    career.teams,
+    career.coachOffice,
+    career.year,
   );
+  if (career.teams.some((t) => t.coach) && appointed.some((t) => !t.coach))
+    fail("Hire a head coach for every club before starting the next season.");
+  return appointed.map((team) => {
+    const retained =
+      Object.values(team.roster).filter((id) =>
+        Object.values(archived.teams[team.id].roster).includes(id),
+      ).length / 8;
+    return {
+      ...team,
+      ...(team.engineRules
+        ? {
+            engineRules: {
+              ...team.engineRules,
+              familiarity: Math.min(
+                1,
+                (team.engineRules.familiarity + 0.15) * retained,
+              ),
+            },
+          }
+        : {}),
+    };
+  });
 }
 export function startNextLocalSeason(draft: LocalLeague): LocalLeague {
   if (
@@ -582,11 +587,6 @@ export function startNextLocalSeason(draft: LocalLeague): LocalLeague {
     fail("This local career has reached its season limit.");
   draft = reviewLocalCoaches(draft);
   const nextTeams = nextYearTeams(draft.career!);
-  if (
-    draft.career!.teams.some((t) => t.coach) &&
-    nextTeams.some((t) => !t.coach)
-  )
-    fail("Hire a head coach for every club before starting the next season.");
   const { playoffGames: _, ...base } = draft;
   return {
     ...base,

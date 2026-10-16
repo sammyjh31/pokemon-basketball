@@ -13,9 +13,12 @@ export function reviewLocalCoaches(draft: LocalLeague): LocalLeague {
     seed: h.seasonSeed,
     humanTeamIds: draft.managers.map((m) => m.teamId),
     championId: h.championId,
-    finalistIds: h.coachRecords
-      ?.filter((r) => r.rounds.some((s) => s.finals))
-      .map((r) => r.teamId) ?? [h.championId],
+    // Older archives identify only the champion. Retain all CPUs rather than
+    // risk dismissing an unknown runner-up; new seasons record both finalists.
+    finalistIds:
+      h.coachRecords
+        ?.filter((r) => r.rounds.some((s) => s.finals))
+        .map((r) => r.teamId) ?? f.teams.map((team) => team.id),
     priorRecords: localCoachRecords(f, f.teams),
   });
   return coachOffice === f.coachOffice
