@@ -80,7 +80,7 @@
 .draft-recommendations small {
   display: block;
   color: #b9c6ae;
-  font-size: 10px;
+  font-size: 12px;
   margin-bottom: 4px;
 }
 .draft-recommendations strong {
@@ -182,7 +182,7 @@
   padding: 11px 13px 0;
   gap: 4px;
   color: #bac7d4;
-  font-size: 10px;
+  font-size: 12px;
 }
 .draft-prospect-top b {
   color: var(--type-color);
@@ -233,7 +233,7 @@
 }
 .draft-card-cta {
   color: var(--gold);
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 10px;
 }
 .draft-prospect > .types {
@@ -262,7 +262,7 @@
 .local-panel .draft-card-tradeoff {
   margin: 12px 15px 16px;
   color: #b6c0cb;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
   flex: 1;
 }
@@ -294,7 +294,7 @@
   overflow: auto;
 }
 .draft-inspector-heading .text-button {
-  font-size: 11px;
+  font-size: 12px;
   min-height: 34px;
 }
 .draft-inspector-player {
@@ -334,7 +334,7 @@
   font: 700 28px var(--display);
 }
 .draft-role-verdict small {
-  font-size: 11px;
+  font-size: 12px;
   margin-left: 4px;
   color: #c9c0a7;
   font-weight: 400;
@@ -389,7 +389,7 @@
   border-radius: 4px;
 }
 .local-panel .draft-rating-note {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.7;
 }
 .draft-inspector .local-scout {
@@ -408,7 +408,7 @@
   max-width: 270px;
 }
 .local-panel .draft-comparison > p {
-  font-size: 11px;
+  font-size: 12px;
   margin-bottom: 14px;
 }
 .draft-compare-hint {
@@ -448,7 +448,7 @@
 .draft-comparison small {
   display: block;
   color: #a9b7c5;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 400;
   margin-top: 5px;
   line-height: 1.5;
@@ -468,7 +468,7 @@
   font: 700 19px var(--display);
 }
 .draft-comparison .text-button {
-  font-size: 11px;
+  font-size: 12px;
   min-height: 38px;
 }
 .draft-compare-number {
@@ -598,14 +598,14 @@
   font: 700 19px var(--display);
 }
 .local-panel .draft-impact-context {
-  font-size: 11px;
+  font-size: 12px;
   color: #c6d9e6;
 }
 .draft-impact-summary {
   margin: 10px 0;
 }
 .local-panel .draft-impact-summary p {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
   margin: 2px 0;
 }
@@ -616,7 +616,7 @@
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  font-size: 11px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 .draft-team-impact th,
@@ -631,7 +631,7 @@
 }
 .draft-team-impact thead th {
   color: #b0becc;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 400;
 }
 .draft-team-impact tbody th {
@@ -668,11 +668,11 @@
   bottom: 0;
 }
 .local-panel .draft-impact-legend {
-  font-size: 9px;
+  font-size: 12px;
   margin: 8px 0 12px;
 }
 .draft-impact-outlook {
-  font-size: 11px;
+  font-size: 12px;
   margin: 0;
 }
 .draft-impact-outlook > div + div {
@@ -680,7 +680,7 @@
 }
 .draft-impact-outlook dt {
   color: #b4c4d3;
-  font-size: 10px;
+  font-size: 12px;
 }
 .draft-impact-outlook dd {
   margin: 4px 0 0;
@@ -689,7 +689,7 @@
 }
 .draft-impact-method {
   margin-top: 12px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .draft-impact-method summary {
   color: var(--blue);
@@ -697,7 +697,7 @@
   padding: 5px 0;
 }
 .local-panel .draft-impact-method p {
-  font-size: 11px;
+  font-size: 12px;
   margin-top: 6px;
 }
 
@@ -761,7 +761,7 @@
   display: block;
   margin-top: 5px;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: 12px;
   color: #b8c7d4;
 }
 .draft-impact-delta.gain {
@@ -779,7 +779,7 @@
 }
 .local-panel .draft-impact-leaders-label {
   color: #c6d8e5;
-  font-size: 11px;
+  font-size: 12px;
   margin: 12px 0 8px;
 }
 .draft-impact-ranking-heading {
@@ -795,16 +795,16 @@
   margin: 5px 0 0;
 }
 .draft-impact-ranking-heading > span {
-  font-size: 11px;
+  font-size: 12px;
   color: #bed2e1;
 }
 .local-panel .draft-impact-ranking p {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
   color: #d0dee9;
 }
 .local-panel .draft-impact-ranking .draft-ranking-method {
-  font-size: 10px;
+  font-size: 12px;
   color: #aebfcd;
   margin-top: 7px;
 }
@@ -819,11 +819,11 @@
 }
 .draft-impact-rank {
   color: #e4cf86;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 .local-panel .draft-card-impact p {
-  font-size: 11px;
+  font-size: 12px;
   color: #c8d8e4;
   margin: 1px 0;
 }
@@ -850,7 +850,7 @@
   color: #f4d56e;
 }
 .draft-impact-tradeoffs {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
 }
 .draft-individual-comparison {
@@ -880,7 +880,7 @@
   margin: 0 0 8px;
 }
 .draft-lineup-plan p {
-  font-size: 0.82rem;
+  font-size: 12px;
   line-height: 1.5;
 }
 .draft-lineup-preview ul {
@@ -894,7 +894,7 @@
   padding: 5px 0;
   text-align: left;
   align-items: baseline;
-  font-size: 0.82rem;
+  font-size: 12px;
 }
 .draft-lineup-preview li > b {
   min-width: 24px;
@@ -903,7 +903,7 @@
   display: block;
   font-weight: 400;
   opacity: 0.8;
-  font-size: 0.72rem;
+  font-size: 12px;
 }
 
 .draft-position-locks {
@@ -955,9 +955,95 @@
 .draft-position-lock-buttons button small,
 .draft-roster-lock {
   color: #f4d56e;
-  font-size: 11px;
+  font-size: 12px;
 }
 .draft-roster-lock {
   display: block;
   margin-top: 3px;
+}
+
+/* Advanced scouting disclosure and plain-language term tips */
+.advanced-scouting {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  margin: 14px 0;
+  background: #0b0f14;
+}
+.advanced-scouting > summary {
+  cursor: pointer;
+  padding: 12px 14px;
+  list-style-position: inside;
+}
+.advanced-scouting > summary > span {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  vertical-align: top;
+}
+.advanced-scouting > summary strong {
+  font: 700 15px var(--display);
+  text-transform: uppercase;
+}
+.advanced-scouting > summary small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.advanced-scouting[open] {
+  padding: 0 14px 14px;
+}
+.advanced-scouting[open] > summary {
+  margin: 0 -14px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.draft-term-glossary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 8px 0 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+/* Tips anchor to the glossary row so they never run off a narrow screen. */
+.draft-term-glossary {
+  position: relative;
+}
+.draft-term {
+  display: inline-flex;
+}
+.draft-term-trigger {
+  background: none;
+  border: 0;
+  padding: 4px 0;
+  color: #d5dbe3;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  display: inline-flex;
+  gap: 4px;
+}
+.draft-term-tip {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  width: min(360px, 100%);
+  padding: 10px 12px;
+  border: 1px solid #45515f;
+  border-radius: 5px;
+  background: #10161d;
+  color: #e3e7ec;
+  font-size: 12px;
+  line-height: 1.45;
+  box-shadow: 0 10px 30px #0008;
+  display: none;
+}
+.draft-term:hover .draft-term-tip,
+.draft-term:focus-within .draft-term-tip {
+  display: block;
+}
+.local-pool-pending {
+  color: var(--muted);
+  font-size: 13px;
 }
