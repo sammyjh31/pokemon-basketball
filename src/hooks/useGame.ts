@@ -136,7 +136,7 @@ export function useGame(
     const league = source.result?.league;
     if (
       busy.current ||
-      ![3, 4].includes(source.result?.modelVersion ?? 0) ||
+      ![3, 4, 5].includes(source.result?.modelVersion ?? 0) ||
       !league ||
       source.playoffs?.championId != null
     )

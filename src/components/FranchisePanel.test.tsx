@@ -413,3 +413,181 @@ describe("franchise hub", () => {
     expect(props.onEnterOffseason).toHaveBeenCalledOnce();
   });
 });
+
+describe("offseason development review", () => {
+  function withReport() {
+    const state = fixture();
+    state.franchise!.modelVersion = 2;
+    state.franchise!.offseasons = [
+      {
+        modelVersion: 1,
+        year: 1,
+        tradeStart: 0,
+        tradeCount: 1,
+        players: [
+          {
+            pokemonId: 1,
+            teamId: 0,
+            before: 60,
+            after: 69,
+            minutesPerGame: 31.5,
+            impactPer36: 25.2,
+            changes: { passing: 12, speed: 6 },
+            outcome: "breakout",
+            reasons: ["A surprise leap in seasonal form."],
+          },
+          {
+            pokemonId: 9,
+            teamId: 1,
+            before: 75,
+            after: 68,
+            minutesPerGame: 24.5,
+            impactPer36: 12.1,
+            changes: { finishing: -10 },
+            outcome: "slump",
+            reasons: ["A difficult season reduced finishing."],
+          },
+        ],
+      },
+    ];
+    state.franchise!.trades = [
+      {
+        year: 1,
+        source: "cpu",
+        fromTeamId: 1,
+        teamId: 2,
+        giveId: 9,
+        receiveId: 17,
+        reason: "Pallet Pioneers gain spacing; Club 3 gains rim protection.",
+      },
+    ];
+    return state;
+  }
+
+  it("requires missing development once before starting the next season", () => {
+    const state = fixture();
+    const onProcessOffseason = vi.fn();
+    const { props, rerender } = setup(state, { onProcessOffseason });
+    expect(
+      screen.getByRole("button", { name: "Start season 2" }),
+    ).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Run offseason development" }),
+    );
+    expect(onProcessOffseason).toHaveBeenCalledOnce();
+    rerender(<FranchisePanel {...props} state={withReport()} />);
+    expect(
+      screen.queryByRole("button", { name: "Run offseason development" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Start season 2" }),
+    ).toBeEnabled();
+  });
+
+  it("filters development by last-season team and player and exposes skill changes and CPU reasoning", () => {
+    setup(withReport());
+    fireEvent.click(screen.getByRole("button", { name: "Development report" }));
+    const report = screen.getByRole("region", {
+      name: "Offseason development report",
+    });
+    expect(report).toHaveTextContent("60.0 → 69.0");
+    expect(report).toHaveTextContent("75.0 → 68.0");
+    fireEvent.click(screen.getByText("Bulbasaur development details"));
+    expect(report).toHaveTextContent("Passing +12");
+    expect(report).toHaveTextContent("A surprise leap in seasonal form.");
+    const feed = within(report).getByRole("region", {
+      name: "CPU offseason transactions",
+    });
+    expect(feed).toHaveTextContent("Pallet Pioneers sends Blastoise to Club 3");
+    expect(feed).toHaveTextContent("Club 3 sends Pidgeotto to Pallet Pioneers");
+    expect(feed).toHaveTextContent(
+      "Pallet Pioneers gain spacing; Club 3 gains rim protection.",
+    );
+    expect(feed).not.toHaveTextContent("your team");
+    fireEvent.change(
+      screen.getByLabelText("Filter development by last-season team"),
+      { target: { value: "1" } },
+    );
+    expect(report).not.toHaveTextContent("Bulbasaur development details");
+    expect(report).toHaveTextContent("Blastoise development details");
+    fireEvent.change(screen.getByLabelText("Search development players"), {
+      target: { value: "missing" },
+    });
+    expect(report).toHaveTextContent("No players match these filters.");
+  });
+
+  it("retains archival reports during the next season and selects earlier years", () => {
+    const state = withReport();
+    const first = state.franchise!.offseasons![0];
+    state.franchise!.offseasons!.push({
+      ...first,
+      year: 2,
+      players: [{ ...first.players[0], before: 69, after: 72 }],
+      tradeStart: 1,
+      tradeCount: 0,
+    });
+    state.franchise!.year = 3;
+    state.franchise!.phase = "season";
+    setup(state);
+    fireEvent.click(screen.getByRole("button", { name: "Development report" }));
+    expect(screen.getByLabelText("Development year")).toHaveValue("2");
+    expect(
+      screen.getByRole("region", { name: "Offseason development report" }),
+    ).toHaveTextContent("69.0 → 72.0");
+    fireEvent.change(screen.getByLabelText("Development year"), {
+      target: { value: "1" },
+    });
+    expect(
+      screen.getByRole("region", { name: "Offseason development report" }),
+    ).toHaveTextContent("60.0 → 69.0");
+  });
+});
+
+describe("developed offseason scouting and trade attribution", () => {
+  it("opens current scouting from the offseason roster and applies a player's development", () => {
+    const state = fixture();
+    state.franchise!.teams[0].development = { 1: { passing: 30 } };
+    setup(state);
+    fireEvent.click(screen.getByRole("button", { name: "Scout Bulbasaur" }));
+    const report = screen.getByRole("region", {
+      name: "Bulbasaur scouting report",
+    });
+    const passing = within(report)
+      .getByText("Passing", { exact: true })
+      .closest("div")!;
+    expect(within(passing).getByRole("definition")).toHaveTextContent("84");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Close scouting report" }),
+    );
+    expect(
+      screen.queryByRole("region", { name: "Bulbasaur scouting report" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not attribute CPU swaps to the user in the roster status or trade history", () => {
+    const state = fixture();
+    state.franchise!.trades = [
+      {
+        year: 1,
+        source: "cpu",
+        fromTeamId: 1,
+        teamId: 2,
+        giveId: 9,
+        receiveId: 17,
+        reason: "Both clubs improve their rotation.",
+      },
+    ];
+    setup(state);
+    expect(screen.getByRole("status")).not.toHaveTextContent(
+      "joined your team",
+    );
+    fireEvent.click(screen.getByText("Trade history (1)"));
+    const history = screen.getByText("Trade history (1)").closest("details")!;
+    expect(history).toHaveTextContent(
+      "Pallet Pioneers sends Blastoise to Club 3",
+    );
+    expect(history).toHaveTextContent(
+      "Club 3 sends Pidgeotto to Pallet Pioneers",
+    );
+  });
+});

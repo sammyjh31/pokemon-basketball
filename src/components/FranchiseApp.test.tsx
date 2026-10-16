@@ -94,7 +94,7 @@ it("continues a completed league into the next season and restores its careers w
   const skip = screen.queryByRole("button", { name: "Skip reveal" });
   if (skip) fireEvent.click(skip);
   const played = JSON.parse(storage.getItem(STORAGE_KEY)!) as GameState;
-  expect(played.run.result?.modelVersion).toBe(4);
+  expect(played.run.result?.modelVersion).toBe(5);
   expect(played.records).toEqual(finished.records);
   expect(played.franchise?.history).toHaveLength(1);
   expect(screen.getByRole("region", { name: "Playoffs" })).toBeInTheDocument();

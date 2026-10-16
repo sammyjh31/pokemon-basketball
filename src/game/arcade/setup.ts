@@ -34,7 +34,7 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
       if (!mon || used.has(mon.id))
         throw new Error("Both teams need eight distinct Pokémon.");
       used.add(mon.id);
-      const profile = playerProfile(mon);
+      const profile = playerProfile(mon, team.development?.[mon.id]);
       players.push({
         id: players.length,
         pokemonId: mon.id,

@@ -24,8 +24,10 @@ import {
 import { validRoster } from "./lineup";
 import type { Playoffs } from "./playoffTypes";
 import { enterOffseason, startFranchiseSeason, applyTrade } from "./franchise";
+import { processOffseason } from "./offseason";
 export type GameAction =
   | { type: "ENTER_OFFSEASON" }
+  | { type: "PROCESS_OFFSEASON" }
   | { type: "START_FRANCHISE_SEASON"; seed: number }
   | { type: "TRADE"; teamId: number; giveId: number; receiveId: number }
   | { type: "AUTO_BENCH" }
@@ -52,9 +54,11 @@ export function initialState(seed: number): GameState {
 }
 export function gameReducer(state: GameState, action: GameAction): GameState {
   const run = state.run;
-  if (action.type === "ENTER_OFFSEASON") return enterOffseason(state);
+  if (action.type === "ENTER_OFFSEASON")
+    return processOffseason(enterOffseason(state));
+  if (action.type === "PROCESS_OFFSEASON") return processOffseason(state);
   if (action.type === "START_FRANCHISE_SEASON")
-    return startFranchiseSeason(state, action.seed);
+    return startFranchiseSeason(processOffseason(state), action.seed);
   if (action.type === "TRADE")
     return applyTrade(state, action.teamId, action.giveId, action.receiveId);
   if (action.type === "NEW_RUN")
@@ -66,7 +70,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   if (action.type === "APPLY_PLAYOFFS") {
     if (
       action.source !== run ||
-      ![3, 4].includes(run.result?.modelVersion ?? 0) ||
+      ![3, 4, 5].includes(run.result?.modelVersion ?? 0) ||
       state.franchise?.phase === "offseason" ||
       !run.result?.league
     )

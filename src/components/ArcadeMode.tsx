@@ -281,6 +281,7 @@ export function ArcadeMode({ run, onExit }: { run: Run; onExit: () => void }) {
   };
   const start = () => {
     const opponent = prepared.teams.find((team) => team.id === opponentId);
+    const user = prepared.teams.find((team) => team.id === 0);
     if (!ready || !opponent) return;
     try {
       const random = new Uint32Array(1);
@@ -290,12 +291,15 @@ export function ArcadeMode({ run, onExit }: { run: Run; onExit: () => void }) {
       const state = createGame({
         teams: [
           {
-            name:
-              prepared.teams.find((team) => team.id === 0)?.name ??
-              "Kanto Basketball Club",
+            name: user?.name ?? "Kanto Basketball Club",
             roster: { ...run.roster },
+            development: user?.development,
           },
-          { name: opponent.name, roster: { ...opponent.roster } },
+          {
+            name: opponent.name,
+            roster: { ...opponent.roster },
+            development: opponent.development,
+          },
         ],
         seed: random[0],
       });

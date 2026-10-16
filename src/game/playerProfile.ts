@@ -1,5 +1,9 @@
 import { attributes, clamp, positionRating } from "./ratings";
 import {
+  DEVELOPMENT_SKILLS,
+  type DevelopmentRatings,
+} from "./developmentTypes";
+import {
   POSITIONS,
   type Attributes,
   type Pokemon,
@@ -45,12 +49,22 @@ export interface PlayerProfile {
 // caller supplies a different Pokémon with the same species id.
 const profiles = new WeakMap<Pokemon, PlayerProfile>();
 
-export function playerProfile(mon: Pokemon): PlayerProfile {
-  const cached = profiles.get(mon);
+const developedProfiles = new WeakMap<Pokemon, Map<string, PlayerProfile>>();
+
+export function playerProfile(
+  mon: Pokemon,
+  offsets?: DevelopmentRatings,
+): PlayerProfile {
+  // Cache values, not offset-object identity: callers can update maps in place.
+  const key = offsets
+    ? DEVELOPMENT_SKILLS.map((skill) => offsets[skill] ?? 0).join(",")
+    : undefined;
+  const variants = developedProfiles.get(mon);
+  const cached = key === undefined ? profiles.get(mon) : variants?.get(key);
   if (cached) return cached;
-  const a = attributes(mon);
+  const a = attributes(mon, offsets);
   const positions = Object.fromEntries(
-    POSITIONS.map((p) => [p, positionRating(mon, p)]),
+    POSITIONS.map((p) => [p, positionRating(mon, p, offsets)]),
   ) as Record<Position, number>;
   const bestPosition = POSITIONS.reduce(
     (best, p) => (positions[p] > positions[best] ? p : best),
@@ -148,6 +162,12 @@ export function playerProfile(mon: Pokemon): PlayerProfile {
     weaknesses,
     scouting: `${roles[0][0]} with a natural fit at ${bestPosition}. Best tools: ${strengths.slice(0, 2).join(" and ").toLowerCase()}. Relative development areas: ${weaknesses.join(" and ").toLowerCase()}.`,
   };
-  profiles.set(mon, profile);
+  if (key === undefined) profiles.set(mon, profile);
+  else {
+    const cache = variants ?? new Map<string, PlayerProfile>();
+    if (cache.size >= 32) cache.clear();
+    cache.set(key, profile);
+    developedProfiles.set(mon, cache);
+  }
   return profile;
 }

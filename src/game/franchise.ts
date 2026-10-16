@@ -12,6 +12,7 @@ import {
   type TradeEvaluation,
 } from "./franchiseTypes";
 import { positionRating, teamRatings } from "./ratings";
+import { exchangePlayers } from "./rosterTrades";
 import {
   POSITIONS,
   ROSTER_SLOTS,
@@ -23,7 +24,7 @@ import {
 
 function validPhase(franchise: Franchise, phase: Franchise["phase"]) {
   return (
-    franchise.modelVersion === 1 &&
+    [1, 2].includes(franchise.modelVersion) &&
     franchise.phase === phase &&
     Number.isInteger(franchise.year) &&
     franchise.year >= 1 &&
@@ -105,8 +106,8 @@ function addSeason(careers: CareerPlayer[], run: Run): CareerPlayer[] {
 export function careerPlayers(franchise: Franchise, run?: Run): CareerPlayer[] {
   if (
     validPhase(franchise, "season") &&
-    run?.result?.modelVersion === 4 &&
-    run.result.league &&
+    [4, 5].includes(run?.result?.modelVersion ?? 0) &&
+    run?.result?.league &&
     sameMembership(franchise.teams, run.result.league.teams)
   )
     return addSeason(franchise.careers, run);
@@ -228,7 +229,7 @@ export function enterOffseason(state: GameState): GameState {
   if (
     previous
       ? !validPhase(previous, "season") ||
-        run.result?.modelVersion !== 4 ||
+        ![4, 5].includes(run.result?.modelVersion ?? 0) ||
         !run.leagueTeams
       : run.result?.modelVersion !== 3
   )
@@ -246,13 +247,14 @@ export function enterOffseason(state: GameState): GameState {
     archive = seasonArchive(run, year);
   if (!archive) return state;
   const franchise: Franchise = {
-    modelVersion: 1,
+    modelVersion: previous?.modelVersion ?? 1,
     year,
     phase: "offseason",
     teams,
     careers: addSeason(previous?.careers ?? [], run),
     history: [...(previous?.history ?? []), archive],
     trades: previous?.trades ?? [],
+    ...(previous?.offseasons ? { offseasons: previous.offseasons } : {}),
   };
   return { ...state, franchise };
 }
@@ -334,20 +336,28 @@ export function evaluateTrade(
   const outgoing = POKEMON_BY_ID.get(giveId)!,
     incoming = POKEMON_BY_ID.get(receiveId)!;
   values.outgoingValue = Math.max(
-    ...POSITIONS.map((position) => positionRating(outgoing, position)),
+    ...POSITIONS.map((position) =>
+      positionRating(outgoing, position, user.development?.[giveId]),
+    ),
   );
   values.incomingValue = Math.max(
-    ...POSITIONS.map((position) => positionRating(incoming, position)),
+    ...POSITIONS.map((position) =>
+      positionRating(incoming, position, partner.development?.[receiveId]),
+    ),
   );
   values.partnerBefore = teamRatings(
     partner.roster,
     partner.tactic,
     partner.rotation,
+    partner.development,
   ).overall;
   values.partnerAfter = teamRatings(
     { ...partner.roster, [receiveSlot]: giveId },
     partner.tactic,
     partner.rotation,
+    partner.development
+      ? { ...partner.development, [giveId]: user.development?.[giveId] ?? {} }
+      : undefined,
   ).overall;
   const abilityChange = values.outgoingValue - values.incomingValue;
   const fitChange = values.partnerAfter - values.partnerBefore;
@@ -386,20 +396,7 @@ export function applyTrade(
     !evaluateTrade(franchise, teamId, giveId, receiveId).accepted
   )
     return state;
-  const teams = franchise.teams.map((team) => {
-    if (team.id !== 0 && team.id !== teamId) return team;
-    const from = team.id === 0 ? giveId : receiveId,
-      to = team.id === 0 ? receiveId : giveId;
-    const slot = ROSTER_SLOTS.find(
-      (candidate) => team.roster[candidate] === from,
-    )!;
-    const roster = { ...team.roster, [slot]: to };
-    return {
-      ...team,
-      roster,
-      ratings: teamRatings(roster, team.tactic, team.rotation),
-    };
-  });
+  const teams = exchangePlayers(franchise.teams, 0, teamId, giveId, receiveId);
   return {
     ...state,
     franchise: {

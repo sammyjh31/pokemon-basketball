@@ -1,0 +1,239 @@
+.development-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid #625331;
+  border-radius: 5px;
+  background: #28291e;
+}
+.development-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+.development-summary > span {
+  border: 1px solid var(--line);
+  background: #141e27;
+  padding: 14px;
+  color: #aeb9c8;
+  font-size: 12px;
+}
+.development-summary b {
+  display: block;
+  color: var(--gold);
+  font: 700 28px var(--display);
+}
+.development-controls {
+  flex-wrap: wrap;
+}
+.development-controls .league-field {
+  min-width: 160px;
+  flex: 1 1 180px;
+}
+.franchise-panel .development-count {
+  margin: 14px 0;
+}
+.development-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.development-player {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #141e27;
+  margin: 8px 0;
+}
+.development-player summary {
+  cursor: pointer;
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 6px 18px;
+  padding: 12px 16px;
+}
+.development-player summary::-webkit-details-marker {
+  display: none;
+}
+.development-identity {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+.development-identity > span:last-child {
+  min-width: 0;
+}
+.development-identity strong {
+  font: 700 20px var(--display);
+}
+.development-identity small,
+.development-rating small {
+  display: block;
+  margin-top: 5px;
+  color: #aeb9c8;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.development-identity .portrait {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+.development-rating {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.development-rating b {
+  font: 700 20px var(--display);
+}
+.development-detail-label {
+  grid-column: 1 / -1;
+  color: var(--gold);
+  font-size: 11px;
+  padding-top: 4px;
+}
+.development-detail-label::before {
+  content: "+ ";
+}
+.development-player[open] .development-detail-label::before {
+  content: "− ";
+}
+.development-detail {
+  padding: 14px 16px;
+  border-top: 1px solid var(--line);
+}
+.development-skills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+  margin: 14px 0;
+}
+.development-skills li {
+  padding: 6px 9px;
+  background: #1e2934;
+  border-radius: 3px;
+  font-size: 12px;
+}
+.development-gain,
+.development-rating .development-gain {
+  color: #b0dda8;
+}
+.development-loss,
+.development-rating .development-loss {
+  color: #f4b2a9;
+}
+.development-reasons {
+  padding-left: 18px;
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #c2ccd9;
+  line-height: 1.8;
+}
+.development-transactions {
+  margin-top: 30px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.development-transactions ol {
+  list-style: none;
+  padding: 0;
+}
+.development-transactions li {
+  background: #141e27;
+  border: 1px solid var(--line);
+  padding: 16px;
+  margin-top: 10px;
+  border-radius: 5px;
+  overflow-wrap: anywhere;
+}
+.development-transactions li > span {
+  display: block;
+  margin-top: 8px;
+  color: #c2ccd9;
+  font-size: 12px;
+}
+.development-transactions li > p {
+  margin-top: 12px;
+}
+.franchise-roster li > small {
+  color: #d2bd88;
+  font: 700 11px var(--display);
+}
+@media (max-width: 640px) {
+  .development-prompt {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .development-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .development-player summary {
+    padding: 12px;
+    gap: 8px;
+  }
+  .development-identity {
+    gap: 7px;
+  }
+  .development-identity .portrait {
+    width: 36px;
+    height: 36px;
+  }
+  .development-identity strong,
+  .development-rating b {
+    font-size: 17px;
+  }
+  .development-detail {
+    padding: 12px;
+  }
+  .franchise-panel .franchise-navigation {
+    flex-wrap: wrap;
+  }
+  .franchise-panel .franchise-navigation button {
+    flex: 1 1 40%;
+    min-height: 44px;
+  }
+}
+.franchise-scout-button {
+  background: transparent;
+  color: inherit;
+  padding: 4px 2px;
+  min-height: 36px;
+  font-size: 11px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.franchise-scout-button:hover {
+  color: var(--gold);
+}
+.franchise-scout {
+  padding: 16px;
+  margin: 18px 0;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #141e27;
+}
+.franchise-scout > .text-button {
+  display: block;
+  margin-left: auto;
+  min-height: 44px;
+}
+.franchise-trade-players .text-button {
+  align-self: flex-start;
+  min-height: 36px;
+  padding-inline: 0;
+}
+.development-identity strong {
+  overflow-wrap: anywhere;
+}
+.development-controls select,
+.development-controls input {
+  min-height: 44px;
+}

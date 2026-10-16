@@ -83,7 +83,7 @@ export function SeasonPanel({
     wins = showing.filter((g) => g.won).length,
     losses = showing.length - wins;
   const done = !!result && visible === 82;
-  const league = [3, 4].includes(result?.modelVersion ?? 0)
+  const league = [3, 4, 5].includes(result?.modelVersion ?? 0)
     ? result?.league
     : undefined;
   const archived =

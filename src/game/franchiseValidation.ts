@@ -1,6 +1,18 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { OPPONENTS } from "../data/opponents";
-import { teamRatings } from "./ratings";
+import { positionRating, teamRatings } from "./ratings";
+import {
+  DEVELOPMENT_SKILLS,
+  DEVELOPMENT_MIN,
+  DEVELOPMENT_MAX,
+  DEVELOPMENT_YEAR_MIN,
+  DEVELOPMENT_YEAR_MAX,
+  CPU_TRADE_LIMIT,
+  type DevelopmentRatings,
+  type PlayerDevelopment,
+  type OffseasonReport,
+  type PlayerDevelopmentChange,
+} from "./developmentTypes";
 import {
   CAREER_KEYS,
   FRANCHISE_MAX_YEARS,
@@ -9,10 +21,12 @@ import {
   type CareerTotals,
   type Franchise,
   type FranchiseSeason,
+  type FranchiseTrade,
   type HistoricalHonor,
 } from "./franchiseTypes";
 import {
   DEFENSE_SCHEMES,
+  POSITIONS,
   ROTATIONS,
   ROSTER_SLOTS,
   TACTICS,
@@ -74,13 +88,183 @@ function sameMembers(a: readonly number[], b: readonly number[]): boolean {
   return a.length === b.length && a.every((id) => b.includes(id));
 }
 
+function developmentRatings(
+  value: unknown,
+  min = DEVELOPMENT_MIN,
+  max = DEVELOPMENT_MAX,
+): DevelopmentRatings {
+  const source = object(value),
+    result: DevelopmentRatings = {};
+  for (const [key, value] of Object.entries(source)) {
+    if (!DEVELOPMENT_SKILLS.includes(key as never)) return fail();
+    result[key as keyof DevelopmentRatings] = integer(value, min, max);
+  }
+  return result;
+}
+function development(value: unknown, roster: Roster): PlayerDevelopment {
+  const source = object(value),
+    result: PlayerDevelopment = {},
+    ids = Object.values(roster);
+  if (Object.keys(source).length !== 8) return fail();
+  for (const [key, value] of Object.entries(source)) {
+    const id = Number(key);
+    if (String(id) !== key || !ids.includes(id)) return fail();
+    result[id] = developmentRatings(value);
+  }
+  return result;
+}
+function sameDevelopment(
+  actual: PlayerDevelopment | undefined,
+  expected: PlayerDevelopment,
+  ids: number[],
+): void {
+  if (!actual) return fail();
+  for (const id of ids)
+    for (const skill of DEVELOPMENT_SKILLS)
+      if ((actual[id]?.[skill] ?? 0) !== (expected[id]?.[skill] ?? 0))
+        return fail();
+}
+function reports(
+  value: unknown,
+  history: FranchiseSeason[],
+  trades: FranchiseTrade[],
+  lastYear: number,
+): {
+  reports: OffseasonReport[];
+  cumulative: PlayerDevelopment;
+  previous: PlayerDevelopment;
+} {
+  if (!Array.isArray(value) || !value.length || value.length > history.length)
+    return fail();
+  const cumulative: PlayerDevelopment = {},
+    previous: PlayerDevelopment = {},
+    cpuIndices = new Set<number>();
+  let priorYear: number | undefined,
+    previousTradeEnd = 0;
+  const parsed: OffseasonReport[] = value.map((value) => {
+    const row = object(value),
+      year = integer(row.year, 1, lastYear),
+      archived = history[year - 1];
+    if (
+      !archived ||
+      row.modelVersion !== 1 ||
+      (priorYear !== undefined && year !== priorYear + 1)
+    )
+      return fail();
+    priorYear = year;
+    const seen = new Set<number>();
+    const players = array(row.players, 240).map(
+      (value): PlayerDevelopmentChange => {
+        const player = object(value),
+          pokemonId = integer(player.pokemonId, 1, 251),
+          teamId = integer(player.teamId, 0, 29);
+        if (
+          seen.has(pokemonId) ||
+          !archived.rosters[teamId].includes(pokemonId)
+        )
+          return fail();
+        seen.add(pokemonId);
+        const changes = developmentRatings(
+            player.changes,
+            DEVELOPMENT_YEAR_MIN,
+            DEVELOPMENT_YEAR_MAX,
+          ),
+          beforeOffsets = cumulative[pokemonId] ?? {},
+          afterOffsets = { ...beforeOffsets };
+        for (const skill of DEVELOPMENT_SKILLS) {
+          const updated = (beforeOffsets[skill] ?? 0) + (changes[skill] ?? 0);
+          if (updated < DEVELOPMENT_MIN || updated > DEVELOPMENT_MAX)
+            return fail();
+          if (updated) afterOffsets[skill] = updated;
+          else delete afterOffsets[skill];
+        }
+        const best = (offsets: DevelopmentRatings) =>
+          Math.round(
+            Math.max(
+              ...POSITIONS.map((position) =>
+                positionRating(
+                  POKEMON_BY_ID.get(pokemonId)!,
+                  position,
+                  offsets,
+                ),
+              ),
+            ) * 10,
+          ) / 10;
+        const before = number(player.before, 0, 100),
+          after = number(player.after, 0, 100);
+        if (before !== best(beforeOffsets) || after !== best(afterOffsets))
+          return fail();
+        if (year < lastYear) previous[pokemonId] = { ...afterOffsets };
+        cumulative[pokemonId] = afterOffsets;
+        if (
+          !["breakout", "growth", "steady", "decline", "slump"].includes(
+            player.outcome as string,
+          ) ||
+          !Array.isArray(player.reasons) ||
+          !player.reasons.length ||
+          player.reasons.length > 32
+        )
+          return fail();
+        return {
+          pokemonId,
+          teamId,
+          before,
+          after,
+          minutesPerGame: number(player.minutesPerGame, 0, 1000),
+          impactPer36: number(player.impactPer36, -10000, 10000),
+          changes,
+          outcome: player.outcome as PlayerDevelopmentChange["outcome"],
+          reasons: player.reasons.map((reason) => text(reason)),
+        };
+      },
+    );
+    const tradeStart = integer(row.tradeStart, previousTradeEnd, trades.length),
+      tradeCount = integer(row.tradeCount, 0, CPU_TRADE_LIMIT),
+      used = new Set<number>();
+    if (tradeStart + tradeCount > trades.length) return fail();
+    for (let i = tradeStart; i < tradeStart + tradeCount; i++) {
+      const trade = trades[i];
+      if (
+        trade.year !== year ||
+        trade.source !== "cpu" ||
+        used.has(trade.fromTeamId!) ||
+        used.has(trade.teamId)
+      )
+        return fail();
+      used.add(trade.fromTeamId!);
+      used.add(trade.teamId);
+      cpuIndices.add(i);
+    }
+    if (
+      trades.slice(0, tradeStart).some((trade) => trade.year > year) ||
+      trades.slice(tradeStart + tradeCount).some((trade) => trade.year < year)
+    )
+      return fail();
+    previousTradeEnd = tradeStart + tradeCount;
+    return { modelVersion: 1, year, players, tradeStart, tradeCount };
+  });
+  if (
+    parsed.at(-1)!.year !== lastYear ||
+    trades.some(
+      (trade, index) => trade.source === "cpu" && !cpuIndices.has(index),
+    )
+  )
+    return fail();
+  return { reports: parsed, cumulative, previous };
+}
+
 /** Reconstruct fixed league inputs; cached ratings never influence replay. */
 export function validateLeagueTeams(
   value: unknown,
   includeLegends: boolean,
 ): LeagueTeam[] {
   const taken = new Set<number>();
-  return array(value, 30).map((value, index) => {
+  const rows = array(value, 30),
+    developed = rows.filter((value) =>
+      Object.hasOwn(object(value), "development"),
+    ).length;
+  if (developed !== 0 && developed !== 30) return fail();
+  return rows.map((value, index) => {
     const row = object(value),
       source = object(row.roster),
       roster = {} as Roster;
@@ -103,6 +287,9 @@ export function validateLeagueTeams(
     }
     const tactic = row.tactic as LeagueTeam["tactic"],
       rotation = row.rotation as LeagueTeam["rotation"];
+    const offsets = developed
+      ? development(row.development, roster)
+      : undefined;
     return {
       id: index,
       name,
@@ -110,7 +297,8 @@ export function validateLeagueTeams(
       tactic,
       rotation,
       defense: row.defense as LeagueTeam["defense"],
-      ratings: teamRatings(roster, tactic, rotation),
+      ratings: teamRatings(roster, tactic, rotation, offsets),
+      ...(offsets ? { development: offsets } : {}),
     };
   });
 }
@@ -469,7 +657,7 @@ export function validateFranchise(
   const row = object(value),
     year = integer(row.year, 1, FRANCHISE_MAX_YEARS);
   if (
-    row.modelVersion !== 1 ||
+    (row.modelVersion !== 1 && row.modelVersion !== 2) ||
     (row.phase !== "season" && row.phase !== "offseason") ||
     (row.phase === "season" && year < 2)
   )
@@ -483,14 +671,43 @@ export function validateFranchise(
   const parsedCareers = careers(row.careers, history, leagueIds);
   if (!Array.isArray(row.trades) || row.trades.length > FRANCHISE_MAX_TRADES)
     return fail();
+  if (
+    row.modelVersion === 1 &&
+    (Object.hasOwn(row, "offseasons") ||
+      teams.some((team) => team.development) ||
+      run.leagueTeams?.some((team) => team.development))
+  )
+    return fail();
+  if (row.modelVersion === 2 && teams.some((team) => !team.development))
+    return fail();
   let previousYear = 1;
-  const trades = row.trades.map((value) => {
+  const trades = row.trades.map((value): FranchiseTrade => {
     const trade = object(value),
       tradeYear = integer(trade.year, previousYear, historyCount);
     previousYear = tradeYear;
+    const cpu = trade.source === "cpu";
+    if (Object.hasOwn(trade, "source") && !cpu) return fail();
+    if (
+      row.modelVersion === 1 &&
+      ["source", "fromTeamId", "reason"].some((key) =>
+        Object.hasOwn(trade, key),
+      )
+    )
+      return fail();
+    if (
+      !cpu &&
+      ["fromTeamId", "reason"].some((key) => Object.hasOwn(trade, key))
+    )
+      return fail();
+    const teamId = integer(trade.teamId, 1, 29),
+      fromTeamId = cpu ? integer(trade.fromTeamId, 1, 29) : 0;
+    if (teamId === fromTeamId) return fail();
     return {
       year: tradeYear,
-      teamId: integer(trade.teamId, 1, 29),
+      teamId,
+      ...(cpu
+        ? { source: "cpu" as const, fromTeamId, reason: text(trade.reason) }
+        : {}),
       giveId: species(trade.giveId, run.includeLegends),
       receiveId: species(trade.receiveId, run.includeLegends),
     };
@@ -502,11 +719,12 @@ export function validateFranchise(
     expected = archived.rosters.map((roster) => [...roster]);
     while (trades[tradeIndex]?.year === archived.year) {
       const trade = trades[tradeIndex++],
-        giveSlot = expected[0].indexOf(trade.giveId),
+        fromTeamId = trade.fromTeamId ?? 0,
+        giveSlot = expected[fromTeamId].indexOf(trade.giveId),
         receiveSlot = expected[trade.teamId].indexOf(trade.receiveId);
       if (giveSlot < 0 || receiveSlot < 0 || trade.giveId === trade.receiveId)
         return fail();
-      expected[0][giveSlot] = trade.receiveId;
+      expected[fromTeamId][giveSlot] = trade.receiveId;
       expected[trade.teamId][receiveSlot] = trade.giveId;
     }
   }
@@ -514,6 +732,17 @@ export function validateFranchise(
     teams.map((team) => ROSTER_SLOTS.map((slot) => team.roster[slot]!)),
     expected,
   );
+  const developmentHistory =
+    row.modelVersion === 2
+      ? reports(row.offseasons, history, trades, historyCount)
+      : undefined;
+  if (developmentHistory)
+    for (const team of teams)
+      sameDevelopment(
+        team.development,
+        developmentHistory.cumulative,
+        Object.values(team.roster) as number[],
+      );
   if (year === 1 ? run.leagueTeams !== undefined : !run.leagueTeams)
     return fail();
   if (run.leagueTeams) {
@@ -524,21 +753,43 @@ export function validateFranchise(
       fixed,
       row.phase === "offseason" ? history.at(-1)!.rosters : expected,
     );
+    if (developmentHistory) {
+      const prior =
+        row.phase === "offseason"
+          ? developmentHistory.previous
+          : developmentHistory.cumulative;
+      const shouldBeDeveloped = developmentHistory.reports[0].year < year;
+      for (const team of run.leagueTeams) {
+        if (shouldBeDeveloped)
+          sameDevelopment(
+            team.development,
+            prior,
+            Object.values(team.roster) as number[],
+          );
+        else if (team.development) return fail();
+      }
+    }
     if (!sameMembers(Object.values(run.roster) as number[], fixed[0]))
       return fail();
   }
   const franchise: Franchise = {
-    modelVersion: 1,
+    modelVersion: row.modelVersion,
     year,
     phase: row.phase,
     teams,
     careers: parsedCareers,
     history,
     trades,
+    ...(developmentHistory ? { offseasons: developmentHistory.reports } : {}),
   };
   if (!preliminary) {
     if (year === 1 && run.result?.modelVersion !== 3) return fail();
-    if (year > 1 && run.result && run.result.modelVersion !== 4) return fail();
+    if (
+      year > 1 &&
+      run.result &&
+      run.result.modelVersion !== (run.leagueTeams?.[0].development ? 5 : 4)
+    )
+      return fail();
     if (row.phase === "offseason") verifyCurrentArchive(franchise, run);
     else if (run.result?.league)
       compareRosters(

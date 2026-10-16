@@ -618,7 +618,7 @@ function Rosters({
               );
               const position = POSITIONS.includes(slot as Position)
                 ? (slot as Position)
-                : bestPosition(mon);
+                : bestPosition(mon, team.development?.[mon.id]);
               return (
                 <tr key={`${team.id}:${mon.id}`}>
                   <th scope="row">
@@ -626,7 +626,13 @@ function Rosters({
                   </th>
                   <td>{slot.startsWith("B") ? "Reserve" : "Starter"}</td>
                   <td>{position}</td>
-                  <td>{positionRating(mon, position).toFixed(1)}</td>
+                  <td>
+                    {positionRating(
+                      mon,
+                      position,
+                      team.development?.[mon.id],
+                    ).toFixed(1)}
+                  </td>
                   <td>{p?.gamesPlayed ?? 0}</td>
                   {[
                     p?.minutes,

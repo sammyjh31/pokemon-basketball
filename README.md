@@ -75,13 +75,15 @@ Existing model-3 league seasons can begin playoffs without repeating the regular
 
 After completing the Finals, choose **Continue as franchise**. The completed season becomes Year 1. Your eight-player team and all 29 opposing rosters persist into each new season.
 
+- **Development:** each offseason changes real basketball skills across all 240 players, using minutes, per-minute performance, skill-specific production and frequent breakout/slump surprises. Individual skills can move −10 to +12 in a year. The **Development report** explains every change and can be filtered by year, team, player or rating direction. Existing offseason saves show **Run offseason development** once.
+- **CPU trades:** other clubs negotiate up to six one-for-one exchanges per offseason, with at most one per club. Both teams must improve their rotation; your roster is excluded. The report lists both sides and their reasoning. Trained skills and careers follow the player.
 - **Offseason trades:** select another club and offer one of your Pokémon for one of theirs. The club evaluates basketball ability and how the exchange affects its roster. Accepted trades swap roster slots, keep every club at eight players and preserve unique species across the league. The trade log records each deal.
 - **Next season:** start a new year, rearrange your eight players and choose coaching before tipoff. A fresh seed generates another 82-game season and best-of-seven playoffs. Franchise years do not inflate challenge attempt counters.
 - **Careers:** league-wide regular-season and playoff totals follow Pokémon across trades. Search/filter players and inspect career honors, including every award, All-League/All-Defense selection, Finals MVP and championship ring.
 - **History:** season records and rosters, award winners, Finals results and champions remain available after advancing. Only the active season retains individual game box scores; earlier statistics contribute to career totals.
-- **Saving:** the existing v3 browser save gains a versioned franchise extension. Fixed-roster seasons use model 4; ordinary model-3 seasons replay unchanged. Active games are verified through deterministic replay. Archived summaries and career totals undergo structural and cross-reference validation rather than replaying every past season. This is a local game, not an anti-cheat system. Saves stay in this browser and are not synchronized through GitHub.
+- **Saving:** the existing v3 browser save gains a versioned franchise extension. Developed fixed-roster seasons use model 5 and franchise model 2; old model-3/4 seasons replay unchanged. Active games are verified through deterministic replay. Archived summaries and career totals undergo structural and cross-reference validation rather than replaying every past season. This is a local game, not an anti-cheat system. Saves stay in this browser and are not synchronized through GitHub.
 
-Injuries, aging, contracts, free agency, CPU-initiated trades, generations beyond II, multiplayer accounts and public hosting are not included.
+Injuries, aging, contracts, free agency, generations beyond II, multiplayer accounts and public hosting are not included.
 
 ## Data and artwork
 
@@ -91,7 +93,7 @@ Visual direction inspired by [Pokémon All-22](https://all22pokemon.com/); origi
 
 ## Five-on-five arcade exhibition
 
-Complete all eight roster slots, then select **Play arcade**. Choose a CPU opponent and **Tip off**. Your five starters take the floor with three reserves available from the pause menu. Franchise exhibitions use the current traded rosters, including during the offseason. Exhibitions have four one-minute quarters, a 14-second shot clock, and 30-second overtimes. Results include both teams' box scores and player of the game.
+Complete all eight roster slots, then select **Play arcade**. Choose a CPU opponent and **Tip off**. Your five starters take the floor with three reserves available from the pause menu. Franchise exhibitions use current traded rosters and developed skills, including during the offseason. Exhibitions have four one-minute quarters, a 14-second shot clock, and 30-second overtimes. Results include both teams' box scores and player of the game.
 
 - **WASD / arrow keys:** move. **J:** hold and release to shoot; jump/block on defense.
 - **K:** pass toward movement or the highlighted receiver; steal on defense.

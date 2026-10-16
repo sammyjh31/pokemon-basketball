@@ -32,7 +32,12 @@ export function seasonTeams(run: Run): LeagueTeam[] {
     tactic: run.tactic,
     rotation: run.rotation,
     defense: run.defense ?? "man",
-    ratings: teamRatings(run.roster, run.tactic, run.rotation),
+    ratings: teamRatings(
+      run.roster,
+      run.tactic,
+      run.rotation,
+      teams[0].development,
+    ),
   };
   return teams;
 }
@@ -117,7 +122,11 @@ function seasonBuilder(run: Run) {
     const honors = leagueHonors(players, standings),
       mvp = honors.awards.find((a) => a.id === "mvp")!;
     return {
-      modelVersion: run.leagueTeams ? 4 : 3,
+      modelVersion: run.leagueTeams
+        ? teams.some((team) => team.development !== undefined)
+          ? 5
+          : 4
+        : 3,
       games,
       wins: standings[0].wins,
       losses: standings[0].losses,

@@ -1,10 +1,14 @@
 import type { Attributes, Position, Roster } from "../types";
+import type { PlayerDevelopment } from "../developmentTypes";
 export type Side = 0 | 1;
 export type Phase = "tipoff" | "live" | "inbound" | "break" | "final";
 export type PlayerAction =
   "idle" | "run" | "shoot" | "pass" | "dunk" | "block" | "steal" | "screen";
 export interface ArcadeSetup {
-  teams: [{ name: string; roster: Roster }, { name: string; roster: Roster }];
+  teams: [
+    { name: string; roster: Roster; development?: PlayerDevelopment },
+    { name: string; roster: Roster; development?: PlayerDevelopment },
+  ];
   seed: number;
 }
 export interface ArcadeInput {

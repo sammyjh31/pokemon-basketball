@@ -1,3 +1,4 @@
+import type { PlayerDevelopment } from "../game/developmentTypes";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { positionRating } from "../game/ratings";
 import {
@@ -11,6 +12,7 @@ import {
 import { Portrait } from "./Portrait";
 export function Court({
   run,
+  development,
   ratings,
   pending,
   swap,
@@ -18,6 +20,7 @@ export function Court({
   onReset,
 }: {
   run: Run;
+  development?: PlayerDevelopment;
   ratings: TeamRatings;
   pending: number | null;
   swap: RosterSlot | null;
@@ -81,7 +84,7 @@ export function Court({
               <span className="slot-name">{mon?.name ?? "Empty"}</span>
               <span className="slot-rating">
                 {mon
-                  ? `${Math.round(positionRating(mon, position))} POS RATING`
+                  ? `${Math.round(positionRating(mon, position, development?.[mon.id]))} POS RATING`
                   : POSITION_NAMES[position]}
               </span>
             </button>

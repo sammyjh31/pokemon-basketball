@@ -1,5 +1,12 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
+  DEVELOPMENT_SKILLS,
+  DEVELOPMENT_MIN,
+  DEVELOPMENT_MAX,
+  type DevelopmentRatings,
+  type PlayerDevelopment,
+} from "./developmentTypes";
+import {
   BENCH_SLOTS,
   POSITIONS,
   ROSTER_SLOTS,
@@ -101,7 +108,10 @@ const baseStat = (stat: number) =>
 const size = (value: number, cap: number) =>
   (100 * Math.log1p(clamp(value, 0, cap))) / Math.log1p(cap);
 
-export function attributes(mon: Pokemon): Attributes {
+export function attributes(
+  mon: Pokemon,
+  offsets?: DevelopmentRatings,
+): Attributes {
   const hp = baseStat(mon.stats.hp),
     attack = baseStat(mon.stats.attack),
     defense = baseStat(mon.stats.defense);
@@ -160,17 +170,28 @@ export function attributes(mon: Pokemon): Attributes {
     );
     raw[key] = clamp(raw[key] + trait);
   }
-  // Summary skills are convex blends; modest type traits stay modest here too.
-  raw.shooting =
-    0.5 * raw.threePoint + 0.3 * raw.midRange + 0.2 * raw.freeThrow;
-  raw.playmaking =
-    0.5 * raw.passing + 0.35 * raw.ballHandling + 0.15 * raw.composure;
   raw.perimeterDefense = clamp(
     0.42 * raw.speed + 0.35 * defense + 0.23 * raw.steal,
   );
   raw.interiorDefense = clamp(
     0.4 * defense + 0.3 * raw.strength + 0.3 * raw.block,
   );
+  // Defense is a trainable primitive too. Develop all primitives after the
+  // factual-stat baseline, so speed/strength do not compound defense gains.
+  if (offsets) {
+    for (const key of DEVELOPMENT_SKILLS) {
+      const offset = offsets[key] ?? 0;
+      if (offset)
+        raw[key] = clamp(
+          raw[key] + clamp(offset, DEVELOPMENT_MIN, DEVELOPMENT_MAX),
+        );
+    }
+  }
+  // Summary skills are convex blends; modest type traits stay modest here too.
+  raw.shooting =
+    0.5 * raw.threePoint + 0.3 * raw.midRange + 0.2 * raw.freeThrow;
+  raw.playmaking =
+    0.5 * raw.passing + 0.35 * raw.ballHandling + 0.15 * raw.composure;
   raw.rebounding = 0.45 * raw.offensiveRebound + 0.55 * raw.defensiveRebound;
   return raw;
 }
@@ -227,36 +248,45 @@ const ROLE_REQUIREMENTS: Record<Position, (keyof Attributes)[]> = {
   PF: ["strength", "rebounding"],
   C: ["interiorDefense", "rebounding"],
 };
-export function positionRating(mon: Pokemon, position: Position): number {
-  const a = attributes(mon);
+export function positionRating(
+  mon: Pokemon,
+  position: Position,
+  offsets?: DevelopmentRatings,
+): number {
+  const a = attributes(mon, offsets);
   // A weak essential skill cannot be hidden by an unrelated exceptional stat.
   return clamp(
     0.8 * weighted(a, POSITION_WEIGHTS[position]) +
       0.2 * Math.min(...ROLE_REQUIREMENTS[position].map((key) => a[key])),
   );
 }
-export function bestPosition(mon: Pokemon): Position {
+export function bestPosition(
+  mon: Pokemon,
+  offsets?: DevelopmentRatings,
+): Position {
   return POSITIONS.reduce(
     (best, position) =>
-      positionRating(mon, position) > positionRating(mon, best)
+      positionRating(mon, position, offsets) >
+      positionRating(mon, best, offsets)
         ? position
         : best,
     "PG",
   );
 }
-function players(roster: Roster) {
+function players(roster: Roster, development?: PlayerDevelopment) {
   return ROSTER_SLOTS.flatMap((slot) => {
     const mon = POKEMON_BY_ID.get(roster[slot] ?? -1);
     if (!mon) return [];
+    const offsets = development?.[mon.id];
     const position = POSITIONS.includes(slot as Position)
       ? (slot as Position)
-      : bestPosition(mon);
+      : bestPosition(mon, offsets);
     return [
       {
         slot,
         mon,
-        a: attributes(mon),
-        fit: positionRating(mon, position),
+        a: attributes(mon, offsets),
+        fit: positionRating(mon, position, offsets),
         starter: POSITIONS.includes(slot as Position),
       },
     ];
@@ -266,11 +296,12 @@ function players(roster: Roster) {
 export function rotationMinutes(
   roster: Roster,
   rotation: RotationStyle = "balanced",
+  development?: PlayerDevelopment,
 ): Record<RosterSlot, number> {
   const minutes = Object.fromEntries(
     ROSTER_SLOTS.map((slot) => [slot, 0]),
   ) as Record<RosterSlot, number>;
-  const available = players(roster);
+  const available = players(roster, development);
   if (!available.length) return minutes;
   const starterBase =
     rotation === "starters" ? 37 : rotation === "bench" ? 30 : 34;
@@ -304,8 +335,9 @@ export function teamRatings(
   roster: Roster,
   tactic: Tactic = "balanced",
   rotation: RotationStyle = "balanced",
+  development?: PlayerDevelopment,
 ): TeamRatings {
-  const available = players(roster),
+  const available = players(roster, development),
     filled = available.filter((p) => p.starter).length;
   const empty = {
     offense: 0,
@@ -321,7 +353,7 @@ export function teamRatings(
     chemistry: 0,
   };
   if (!available.length) return empty;
-  const minutes = rotationMinutes(roster, rotation),
+  const minutes = rotationMinutes(roster, rotation, development),
     total = Object.values(minutes).reduce((sum, n) => sum + n, 0) || 1;
   const avg = (pick: (p: (typeof available)[number]) => number) =>
     available.reduce((sum, p) => sum + pick(p) * minutes[p.slot], 0) / total;

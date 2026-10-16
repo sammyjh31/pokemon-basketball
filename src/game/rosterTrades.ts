@@ -1,0 +1,168 @@
+import { POKEMON_BY_ID } from "../data/pokemon";
+import { teamRatings, positionRating } from "./ratings";
+import {
+  POSITIONS,
+  ROSTER_SLOTS,
+  type LeagueTeam,
+  type Position,
+} from "./types";
+import type { FranchiseTrade } from "./franchiseTypes";
+import { CPU_TRADE_LIMIT, type PlayerDevelopment } from "./developmentTypes";
+import { nextRandom } from "./random";
+
+/** Move skill development with the species; historical season snapshots are untouched. */
+export function exchangePlayers(
+  teams: LeagueTeam[],
+  fromTeamId: number,
+  teamId: number,
+  giveId: number,
+  receiveId: number,
+): LeagueTeam[] {
+  const source = teams[fromTeamId],
+    partner = teams[teamId];
+  return teams.map((team) => {
+    if (team.id !== fromTeamId && team.id !== teamId) return team;
+    const from = team.id === fromTeamId ? giveId : receiveId;
+    const to = team.id === fromTeamId ? receiveId : giveId;
+    const other = team.id === fromTeamId ? partner : source;
+    const slot = ROSTER_SLOTS.find((s) => team.roster[s] === from)!;
+    const roster = { ...team.roster, [slot]: to };
+    let development: PlayerDevelopment | undefined;
+    if (team.development) {
+      development = {
+        ...team.development,
+        [to]: { ...(other.development?.[to] ?? {}) },
+      };
+      delete development[from];
+    }
+    return {
+      ...team,
+      roster,
+      ...(development ? { development } : {}),
+      ratings: teamRatings(roster, team.tactic, team.rotation, development),
+    };
+  });
+}
+
+export function cpuTrades(
+  teams: LeagueTeam[],
+  year: number,
+  seasonSeed: number,
+  limit = CPU_TRADE_LIMIT,
+): { teams: LeagueTeam[]; trades: FranchiseTrade[] } {
+  const allDevelopment: PlayerDevelopment = Object.assign(
+    {},
+    ...teams.map((t) => t.development),
+  );
+  const profiles = new Map(
+    teams.flatMap((team) =>
+      Object.values(team.roster).map((id) => {
+        const positions = Object.fromEntries(
+          POSITIONS.map((pos) => [
+            pos,
+            positionRating(POKEMON_BY_ID.get(id!)!, pos, allDevelopment[id!]),
+          ]),
+        ) as Record<Position, number>;
+        return [
+          id!,
+          { positions, best: Math.max(...Object.values(positions)) },
+        ] as const;
+      }),
+    ),
+  );
+  let seed = (seasonSeed ^ Math.imul(year, 0x51c8a361)) >>> 0;
+  const roll = () => {
+    const next = nextRandom(seed);
+    seed = next.seed;
+    return next.value;
+  };
+  const candidates: {
+    first: number;
+    second: number;
+    give: number;
+    receive: number;
+    aGain: number;
+    bGain: number;
+    score: number;
+  }[] = [];
+  for (let first = 1; first < teams.length; first++)
+    for (let second = first + 1; second < teams.length; second++) {
+      const a = teams[first],
+        b = teams[second];
+      const options: { give: number; receive: number; potential: number }[] =
+        [];
+      for (const aSlot of ROSTER_SLOTS)
+        for (const bSlot of ROSTER_SLOTS) {
+          const give = a.roster[aSlot]!,
+            receive = b.roster[bSlot]!,
+            ap = profiles.get(give)!,
+            bp = profiles.get(receive)!;
+          if (Math.abs(ap.best - bp.best) > 6) continue;
+          const fit = (id: number, slot: string) =>
+            POSITIONS.includes(slot as Position)
+              ? profiles.get(id)!.positions[slot as Position]
+              : profiles.get(id)!.best;
+          const aFit = fit(receive, aSlot) - fit(give, aSlot),
+            bFit = fit(give, bSlot) - fit(receive, bSlot);
+          options.push({ give, receive, potential: aFit + bFit });
+        }
+      // Shortlist the two strongest positional fits per club pair before the
+      // full rotation evaluation, keeping league negotiations responsive.
+      // Spacing or depth can improve even when the vacant-slot fit is flat.
+      options.sort(
+        (a, b) =>
+          b.potential - a.potential || a.give - b.give || a.receive - b.receive,
+      );
+      for (const { give, receive } of options.slice(0, 2)) {
+        const swapped = exchangePlayers(teams, first, second, give, receive);
+        const aGain = swapped[first].ratings.overall - a.ratings.overall,
+          bGain = swapped[second].ratings.overall - b.ratings.overall;
+        const ability = profiles.get(receive)!.best - profiles.get(give)!.best;
+        if (
+          aGain < 0.05 ||
+          bGain < 0.05 ||
+          aGain + bGain < 0.15 ||
+          ability + 2 * aGain < -2.5 ||
+          -ability + 2 * bGain < -2.5
+        )
+          continue;
+        candidates.push({
+          first,
+          second,
+          give,
+          receive,
+          aGain,
+          bGain,
+          score: aGain + bGain + roll() * 0.35,
+        });
+      }
+    }
+  candidates.sort(
+    (a, b) =>
+      b.score - a.score ||
+      a.first - b.first ||
+      a.second - b.second ||
+      a.give - b.give,
+  );
+  const used = new Set<number>(),
+    trades: FranchiseTrade[] = [];
+  let updated = teams;
+  for (const candidate of candidates) {
+    if (trades.length >= Math.min(CPU_TRADE_LIMIT, limit)) break;
+    const { first, second, give, receive, aGain, bGain } = candidate;
+    if (used.has(first) || used.has(second)) continue;
+    updated = exchangePlayers(updated, first, second, give, receive);
+    used.add(first);
+    used.add(second);
+    trades.push({
+      year,
+      fromTeamId: first,
+      teamId: second,
+      giveId: give,
+      receiveId: receive,
+      source: "cpu",
+      reason: `Both clubs improve their rotation fit: ${teams[first].name} +${aGain.toFixed(1)}, ${teams[second].name} +${bGain.toFixed(1)} in roster rating.`,
+    });
+  }
+  return { teams: updated, trades };
+}

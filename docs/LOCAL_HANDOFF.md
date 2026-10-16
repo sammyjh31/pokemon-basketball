@@ -2,6 +2,18 @@
 
 Development continues in `/Users/sam/Documents/PokeBBall`, synchronized to `main` at `https://github.com/sammyjh31/pokemon-basketball.git`. The league update was `36f760a`, and playoffs were `8a1257a`; franchise mode builds on both. A concurrent arcade-design documentation commit was preserved.
 
+## Development and CPU trade update
+
+- Entering an offseason now trains all 240 players, then runs CPU club negotiations exactly once. The user requested **large swings and frequent surprises**: 17 primitive skills can change −10…+12 annually, with cumulative offsets bounded at ±30 and final skills at 0…100. Minutes, per-36 impact, skill-specific efficiency and production, workload, regression and seeded form all contribute. Pokémon facts remain unchanged.
+- The **Development report** filters by year, last-season team, player and gains/declines; expand a player for each skill delta and explanations. Current scouting, roster/rotation ratings, trade previews, regular/postseason matches and arcade exhibitions use developed skills. CPU clubs make up to six mutually beneficial one-for-one swaps, at most one per club, excluding team 0. Both sides and reasons appear in the report and permanent trade history. Skills travel with species.
+- New fixed-roster simulations use model 5; franchise model 2 validates report arithmetic, owned offsets, chronology and CPU trade membership. Existing model-1 franchises migrate in their current offseason through **Run offseason development**; prior years remain unchanged. Active inputs freeze pre-season development so current boxes and historical summaries stay stable. Repeat actions and refreshes never reroll changes. Existing model-3/4 and arcade fingerprints remain unchanged without development.
+- CPU negotiation first shortlists two positional fits per club pair before exact rotation evaluation, keeping the annual action responsive. Full development/trade equations are documented in `LEAGUE_MODEL.md`.
+- Independent review caught a per-game/per-36 conversion error and an arcade UI forwarding omission. Both have regression tests that failed before the fix and passed afterward. The integration test runs two real development cycles with trades, fresh seasons, playoffs, exact save replay and immutable prior history. The existing arcade work and concurrent franchise-arcade design documentation were preserved.
+
+Browser QA used the existing `localhost:5173` test save, separate from the user's `127.0.0.1:5173` save. It migrated Year 2, resumed developed Year 3 after reload, completed a 28–54 season and an 83-game postseason, then entered Year 3's offseason and reloaded again. Cinnabar beat New Bark in the Finals 4–3; Tyranitar was Finals MVP (37.7 PPG, 15.7 RPG, 5.4 APG). Year 3's final report showed 115 improvements, 123 declines, 70 breakouts and 72 slumps; Sneasel improved 53.5→61.0 with 26.6 impact/36. Ecruteak traded Raichu to Olivine for Murkrow. Both annual reports and the transaction survived refresh. Search/team filters, expanded skill explanations and CPU trade cards were checked. No document overflow at 1440, 390 or 320px; checked console logs were empty. Screenshots: `docs/design/development-desktop.jpg` and `development-mobile.jpg`.
+
+Verification: **327 tests passed across 51 files**; TypeScript and production build passed. The new arcade UI test was rerun after an explicit test-result type annotation (2/2 passed). Diff whitespace checks passed. Vite retains a non-blocking 524.25 KB main-chunk advisory. Independent review has no outstanding findings; standalone Playwright CLI was not run in this desktop session.
+
 ## Franchise update
 
 - After the Finals, **Continue as franchise** archives the existing league as Year 1. All 30 eight-player rosters persist, with 240 unique species. Later years use fresh seeds and the same 82-game season and best-of-seven playoffs.
@@ -52,7 +64,7 @@ The final test league finished 21–61 and restored the identical result and awa
 
 ## Scope and verification limits
 
-- No injuries, aging, contracts, free agency, CPU-initiated trades, generations after II, accounts, multiplayer or public hosting.
+- No injuries, aging, contracts, free agency, generations after II, accounts, multiplayer or public hosting.
 - The clock uses 7.5-second ticks and one-minute substitution decisions. The simulation is statistical, not a spatial or fully officiated real-league simulator. Depleted rosters retain only enough disqualified players to remain five-on-five; subsequent fouls add a technical free throw.
 - A previous browser security decision denied a PNG download test. No retry or workaround was made. Downloaded PNG output remains unverified.
 - Standalone Playwright CLI tests were not executed in this desktop session; browser checks used the supported in-app browser. An environment with authorized automation can run `npm run test:e2e`.
@@ -63,6 +75,6 @@ The final test league finished 21–61 and restored the identical result and awa
 2. Node ≥24.15, tested 24.19.0. Run `npm ci` after dependency changes. Local bundled Node is `/Users/sam/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin`.
 3. Preview: `npm run dev -- --host 127.0.0.1 --port 5173 --strictPort`. Cloud may need `--host 0.0.0.0` and its forwarded URL.
 4. Run appropriate checks, commit and push before switching environments. Reconcile concurrent work without force-pushing.
-5. **Preserve regular-season models 3/4, postseason model 1 and franchise model 1 before changing deterministic inputs or outputs.** Roster draft, schedule, event probabilities, profiles, aggregation and award formulas all affect replay validation. Future behavioral changes need new model versions and migration.
+5. **Preserve regular-season models 3/4/5, postseason model 1 and franchise models 1/2 before changing deterministic inputs or outputs.** Roster draft, schedule, event probabilities, profiles, aggregation and award formulas all affect replay validation. Future behavioral changes need new model versions and migration.
 
 Browser saves stay in their browser. Shared links carry eight player IDs, not coaching or results. See [league formulas](LEAGUE_MODEL.md), [design QA](../design-qa.md), [screenshots](design/), [README](../README.md), and the [implementation plan](superpowers/plans/2026-10-15-league-simulation.md).

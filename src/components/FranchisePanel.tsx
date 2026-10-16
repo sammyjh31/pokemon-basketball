@@ -14,6 +14,9 @@ import {
   type Run,
 } from "../game/types";
 import { Portrait } from "./Portrait";
+import { ScoutReport } from "./ScoutReport";
+import { OffseasonReport, TradeActivity } from "./OffseasonReport";
+import { bestPosition, positionRating } from "../game/ratings";
 import "../league.css";
 import "../franchise.css";
 
@@ -22,6 +25,7 @@ export interface FranchisePanelProps {
   disabled?: boolean;
   onEnterOffseason: () => void;
   onStartSeason: () => void;
+  onProcessOffseason?: () => void;
   onTrade: (teamId: number, giveId: number, receiveId: number) => void;
 }
 
@@ -50,13 +54,30 @@ function Offseason({
   disabled,
   onStartSeason,
   onTrade,
-}: Pick<FranchisePanelProps, "disabled" | "onStartSeason" | "onTrade"> & {
+  onProcessOffseason,
+  onReviewDevelopment,
+}: Pick<
+  FranchisePanelProps,
+  "disabled" | "onStartSeason" | "onTrade" | "onProcessOffseason"
+> & {
+  onReviewDevelopment: () => void;
   franchise: Franchise;
 }) {
   const partners = franchise.teams.filter((team) => team.id !== 0);
   const user = franchise.teams.find((team) => team.id === 0)!;
   const [partnerId, setPartnerId] = useState(partners[0]?.id ?? 1);
   const partner = partners.find((team) => team.id === partnerId) ?? partners[0];
+  const [scoutId, setScoutId] = useState<number | null>(null);
+  const scoutRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (scoutId === null) return;
+    scoutRef.current?.focus();
+    scoutRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [scoutId]);
+  const scoutTeam = franchise.teams.find((team) =>
+    rosterIds(team).includes(scoutId ?? -1),
+  );
+  const scoutMon = POKEMON_BY_ID.get(scoutId ?? -1);
   const outgoing = rosterIds(user),
     incoming = partner ? rosterIds(partner) : [];
   const [selectedGive, setSelectedGive] = useState(outgoing[0]);
@@ -70,9 +91,13 @@ function Offseason({
       ? evaluateTrade(franchise, partner.id, giveId, receiveId)
       : null;
   const currentTrades = franchise.trades.filter(
-    (trade) => trade.year === franchise.year,
+    (trade) => trade.year === franchise.year && trade.source !== "cpu",
   );
   const latestTrade = currentTrades.at(-1);
+  const reportReady =
+    franchise.offseasons?.some((report) => report.year === franchise.year) ??
+    false;
+  const needsDevelopment = !!onProcessOffseason && !reportReady;
   return (
     <section aria-label="Franchise offseason">
       <div className="franchise-section-heading">
@@ -86,12 +111,47 @@ function Offseason({
         <button
           className="button primary"
           type="button"
-          disabled={disabled || franchise.year >= FRANCHISE_MAX_YEARS}
+          disabled={
+            disabled ||
+            needsDevelopment ||
+            franchise.year >= FRANCHISE_MAX_YEARS
+          }
           onClick={onStartSeason}
         >
           Start season {franchise.year + 1}
         </button>
       </div>
+      {needsDevelopment && (
+        <div className="development-prompt">
+          <p>
+            Run this offseason once to discover player breakouts, slumps and CPU
+            trades before starting the next year.
+          </p>
+          <button
+            type="button"
+            className="button secondary"
+            disabled={disabled}
+            onClick={onProcessOffseason}
+          >
+            Run offseason development
+          </button>
+        </div>
+      )}
+      {reportReady && (
+        <div className="development-prompt">
+          <p>
+            Player development and CPU activity are ready. Review this year's
+            changes before your next season.
+          </p>
+          <button
+            type="button"
+            className="button secondary"
+            onClick={onReviewDevelopment}
+          >
+            Review development and CPU trades
+          </button>
+        </div>
+      )}
       {franchise.year >= FRANCHISE_MAX_YEARS && (
         <p role="status">
           This franchise has reached 1,000 seasons. Your career stats and
@@ -106,12 +166,52 @@ function Offseason({
               <li key={slot}>
                 <span className="franchise-roster-slot">{slot}</span>
                 <PlayerPortrait id={id} />
-                <strong>{playerName(id)}</strong>
+                <button
+                  type="button"
+                  className="franchise-scout-button"
+                  aria-label={`Scout ${playerName(id)}`}
+                  onClick={() => setScoutId(id)}
+                >
+                  {playerName(id)}
+                </button>
+                {(() => {
+                  const mon = POKEMON_BY_ID.get(id);
+                  const offsets = user.development?.[id];
+                  return (
+                    mon && (
+                      <small>
+                        {Math.round(
+                          positionRating(
+                            mon,
+                            bestPosition(mon, offsets),
+                            offsets,
+                          ),
+                        )}{" "}
+                        FIT
+                      </small>
+                    )
+                  );
+                })()}
               </li>
             )
           );
         })}
       </ul>
+      {scoutMon && (
+        <div className="franchise-scout" ref={scoutRef} tabIndex={-1}>
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => setScoutId(null)}
+          >
+            Close scouting report
+          </button>
+          <ScoutReport
+            mon={scoutMon}
+            development={scoutTeam?.development?.[scoutMon.id]}
+          />
+        </div>
+      )}
       <p className="stat-legend">
         You can reorder your lineup and adjust coaching after starting the next
         season.
@@ -186,6 +286,14 @@ function Offseason({
               <div>
                 <small>YOU SEND</small>
                 <strong>{playerName(giveId)}</strong>
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => setScoutId(giveId)}
+                  aria-label={`Scout outgoing ${playerName(giveId)}`}
+                >
+                  Scout player
+                </button>
                 <span>Player value {evaluation.outgoingValue.toFixed(1)}</span>
               </div>
               <span aria-hidden="true" className="franchise-trade-arrow">
@@ -194,6 +302,14 @@ function Offseason({
               <div>
                 <small>YOU RECEIVE</small>
                 <strong>{playerName(receiveId)}</strong>
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => setScoutId(receiveId)}
+                  aria-label={`Scout incoming ${playerName(receiveId)}`}
+                >
+                  Scout player
+                </button>
                 <span>Player value {evaluation.incomingValue.toFixed(1)}</span>
               </div>
             </div>
@@ -224,7 +340,7 @@ function Offseason({
         <p className="franchise-trade-status" role="status">
           {latestTrade
             ? `Trade completed: ${playerName(latestTrade.receiveId)} joined your team; ${playerName(latestTrade.giveId)} joined ${teamName(franchise.teams, latestTrade.teamId)}.`
-            : "No trades completed this offseason."}
+            : "No trades from your club completed this offseason."}
         </p>
         {franchise.trades.length > 0 && (
           <details className="franchise-trade-log">
@@ -234,12 +350,11 @@ function Offseason({
                 <li key={`${trade.year}:${index}`}>
                   <strong>
                     Year {trade.year} ·{" "}
+                    {teamName(franchise.teams, trade.fromTeamId ?? 0)} ⇄{" "}
                     {teamName(franchise.teams, trade.teamId)}
+                    {trade.source === "cpu" ? " · CPU trade" : ""}
                   </strong>
-                  <span>
-                    Sent {playerName(trade.giveId)} · Received{" "}
-                    {playerName(trade.receiveId)}
-                  </span>
+                  <TradeActivity trade={trade} teams={franchise.teams} />
                 </li>
               ))}
             </ol>
@@ -941,10 +1056,11 @@ export function FranchisePanel({
   onEnterOffseason,
   onStartSeason,
   onTrade,
+  onProcessOffseason,
 }: FranchisePanelProps) {
-  const [view, setView] = useState<"overview" | "careers" | "history">(
-    "overview",
-  );
+  const [view, setView] = useState<
+    "overview" | "careers" | "history" | "development"
+  >("overview");
   const { franchise, run } = state;
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -1006,6 +1122,7 @@ export function FranchisePanel({
               id: "overview",
               label: franchise.phase === "offseason" ? "Offseason" : "Overview",
             },
+            { id: "development", label: "Development report" },
             { id: "careers", label: "Career stats" },
             { id: "history", label: "History" },
           ] as const
@@ -1028,6 +1145,8 @@ export function FranchisePanel({
             disabled={disabled}
             onStartSeason={onStartSeason}
             onTrade={onTrade}
+            onProcessOffseason={onProcessOffseason}
+            onReviewDevelopment={() => setView("development")}
           />
         ) : (
           <section
@@ -1060,6 +1179,7 @@ export function FranchisePanel({
             )}
           </section>
         ))}
+      {view === "development" && <OffseasonReport franchise={franchise} />}
       {view === "careers" && <Careers franchise={franchise} run={run} />}
       {view === "history" && <History franchise={franchise} />}
     </section>

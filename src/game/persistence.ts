@@ -138,7 +138,7 @@ function validate(value: unknown, replay?: SeasonResult): GameState {
     const result = object(raw.result);
     if (
       chosen.length !== 8 ||
-      (result.modelVersion === 4 && !run.leagueTeams) ||
+      ([4, 5].includes(result.modelVersion as number) && !run.leagueTeams) ||
       !Array.isArray(result.games) ||
       result.games.length !== 82
     )
@@ -186,7 +186,7 @@ function validateSavedGame(value: unknown, replay?: SeasonResult): LoadedGame {
       const candidate = object(raw.playoffs);
       if (
         !state.run.result ||
-        ![3, 4].includes(state.run.result?.modelVersion as number) ||
+        ![3, 4, 5].includes(state.run.result?.modelVersion as number) ||
         !state.run.result.league ||
         candidate.modelVersion !== 1 ||
         !Array.isArray(candidate.series) ||
@@ -222,7 +222,10 @@ function validateSavedGame(value: unknown, replay?: SeasonResult): LoadedGame {
     } catch {
       // A fixed-roster season cannot become a standalone challenge save: doing
       // so would silently discard the only copy of its previous years.
-      if (state.run.leagueTeams || state.run.result?.modelVersion === 4)
+      if (
+        state.run.leagueTeams ||
+        [4, 5].includes(state.run.result?.modelVersion as number)
+      )
         return fail();
       loaded = {
         state,
@@ -278,7 +281,8 @@ function readGame(
     franchiseSave =
       Object.hasOwn(root, "franchise") ||
       Object.hasOwn(raw, "leagueTeams") ||
-      (!!raw.result && object(raw.result).modelVersion === 4);
+      (!!raw.result &&
+        [4, 5].includes(object(raw.result).modelVersion as number));
     if (
       deferLeague &&
       root.version === 3 &&
@@ -319,7 +323,7 @@ function readGame(
     }
     return validateSavedGame(parsed);
   } catch {
-    return failedLoad(fallbackSeed, franchiseSave, deferLeague);
+    return failedLoad(fallbackSeed, franchiseSave, true);
   }
 }
 /** Synchronous loader retained for non-UI callers and archived model validation. */

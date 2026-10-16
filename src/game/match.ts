@@ -1,6 +1,7 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { clamp, rotationMinutes } from "./ratings";
 import { nextRandom } from "./random";
+import { DEVELOPMENT_SKILLS } from "./developmentTypes";
 import { playerProfile, type PlayerProfile } from "./playerProfile";
 import {
   POSITIONS,
@@ -54,10 +55,23 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   ) {
     throw new Error("A match requires eight unique Pokémon in each roster.");
   }
-  const key = `${ids.join(",")}:${config.rotation}`;
+  const offsetsKey = config.development
+    ? ids
+        .map((id) =>
+          DEVELOPMENT_SKILLS.map(
+            (skill) => config.development?.[id!]?.[skill] ?? 0,
+          ).join(","),
+        )
+        .join(";")
+    : "";
+  const key = `${ids.join(",")}:${config.rotation}:${offsetsKey}`;
   let targets = targetCache.get(key);
   if (!targets) {
-    targets = rotationMinutes(config.roster, config.rotation);
+    targets = rotationMinutes(
+      config.roster,
+      config.rotation,
+      config.development,
+    );
     // A bounded cache covers many seasons without retaining every custom roster.
     if (targetCache.size > 240) targetCache.clear();
     targetCache.set(key, targets);
@@ -65,7 +79,10 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   const players = ROSTER_SLOTS.map((slot, index): Player => {
     const pokemonId = ids[index]!;
     return {
-      profile: playerProfile(POKEMON_BY_ID.get(pokemonId)!),
+      profile: playerProfile(
+        POKEMON_BY_ID.get(pokemonId)!,
+        config.development?.[pokemonId],
+      ),
       target: targets![slot],
       energy: 100,
       consecutive: 0,

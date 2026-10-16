@@ -1,3 +1,4 @@
+import type { PlayerDevelopment } from "../game/developmentTypes";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
   attributes,
@@ -30,6 +31,7 @@ const tacticNotes: Record<Tactic, string> = {
 };
 export function BenchPanel({
   run,
+  development,
   ratings,
   pending,
   swap,
@@ -40,6 +42,7 @@ export function BenchPanel({
   onDefense,
 }: {
   run: Run;
+  development?: PlayerDevelopment;
   ratings: TeamRatings;
   pending: number | null;
   swap: RosterSlot | null;
@@ -49,7 +52,7 @@ export function BenchPanel({
   onRotation: (rotation: RotationStyle) => void;
   onDefense: (defense: DefenseScheme) => void;
 }) {
-  const minutes = rotationMinutes(run.roster, run.rotation),
+  const minutes = rotationMinutes(run.roster, run.rotation, development),
     locked = !!run.result;
   return (
     <section className="bench-panel" aria-label="Bench and coaching">
@@ -94,12 +97,12 @@ export function BenchPanel({
               <strong>{mon?.name ?? "Empty slot"}</strong>
               <small>
                 {mon
-                  ? `${bestPosition(mon)} · ${Math.round(positionRating(mon, bestPosition(mon)))} FIT`
+                  ? `${bestPosition(mon, development?.[mon.id])} · ${Math.round(positionRating(mon, bestPosition(mon, development?.[mon.id]), development?.[mon.id]))} FIT`
                   : "Pick any position"}
               </small>
               <span className="bench-minutes">
                 {mon
-                  ? `${minutes[slot]} MIN · ${Math.round(attributes(mon).stamina)} STA`
+                  ? `${minutes[slot]} MIN · ${Math.round(attributes(mon, development?.[mon.id]).stamina)} STA`
                   : "Ready to contribute"}
               </span>
             </button>

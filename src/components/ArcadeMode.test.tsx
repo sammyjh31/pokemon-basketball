@@ -7,6 +7,10 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRun } from "../game/draft";
+import { createLeague } from "../game/league";
+import { POKEMON_BY_ID } from "../data/pokemon";
+import { playerProfile } from "../game/playerProfile";
+import * as arcadeSetup from "../game/arcade/setup";
 import { ArcadeMode } from "./ArcadeMode";
 vi.mock("../arcade/renderer", () => ({
   loadArcadeAssets: async () => new Map(),
@@ -54,5 +58,64 @@ describe("arcade exhibition flow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Leave game" }));
     expect(exit).toHaveBeenCalledOnce();
     expect(JSON.stringify(run)).toBe(before);
+  });
+  it("carries both clubs' developed skills through Tip off against the selected opponent", async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+      setTransform: () => {},
+    } as unknown as CanvasRenderingContext2D);
+    // The spy calls the real engine: assertions inspect the resulting players.
+    const create = vi.spyOn(arcadeSetup, "createGame");
+    const run = {
+      ...createRun("free", false, 11),
+      roster: {
+        PG: 65,
+        SG: 135,
+        SF: 149,
+        PF: 68,
+        C: 143,
+        B1: 121,
+        B2: 6,
+        B3: 131,
+      },
+    };
+    const teams = createLeague(run);
+    const opponent = teams[2],
+      opponentPlayer = opponent.roster.PG!;
+    teams[0].development = { 65: { passing: 12 } };
+    opponent.development = { [opponentPlayer]: { speed: -12 } };
+    const savedRun = { ...run, leagueTeams: teams },
+      before = JSON.stringify(savedRun);
+    render(<ArcadeMode run={savedRun} onExit={() => {}} />);
+    fireEvent.change(screen.getByLabelText("CPU team"), {
+      target: { value: "2" },
+    });
+    const tipoff = screen.getByRole("button", { name: /tip off/i });
+    await waitFor(() => expect(tipoff).toBeEnabled());
+    fireEvent.click(tipoff);
+    expect(
+      screen.getByLabelText(/five-on-five basketball court/i),
+    ).toBeInTheDocument();
+    const state: ReturnType<typeof arcadeSetup.createGame> =
+      create.mock.results[0].value;
+    const homePlayer = state.players.find(
+      (p) => p.team === 0 && p.pokemonId === 65,
+    )!;
+    const awayPlayer = state.players.find(
+      (p) => p.team === 1 && p.pokemonId === opponentPlayer,
+    )!;
+    expect(homePlayer.attributes.passing).toBeCloseTo(
+      Math.min(
+        100,
+        playerProfile(POKEMON_BY_ID.get(65)!).attributes.passing + 12,
+      ),
+    );
+    expect(awayPlayer.attributes.speed).toBeCloseTo(
+      Math.max(
+        0,
+        playerProfile(POKEMON_BY_ID.get(opponentPlayer)!).attributes.speed - 12,
+      ),
+    );
+    expect(state.names[1]).toBe(opponent.name);
+    expect(JSON.stringify(savedRun)).toBe(before);
   });
 });

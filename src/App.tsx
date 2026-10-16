@@ -55,9 +55,10 @@ export default function App({
   const [animatedRun, setAnimatedRun] = useState<string | null>(null),
     [announcement, setAnnouncement] = useState("");
   const archived = !!run.result && (run.result.modelVersion ?? 1) < 2;
+  const development = run.leagueTeams?.[0].development;
   const ratings = archived
     ? legacyTeamRatings(run.roster)
-    : teamRatings(run.roster, run.tactic, run.rotation);
+    : teamRatings(run.roster, run.tactic, run.rotation, development);
   const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("pixel");
   const start = (mode: Mode, includeLegends: boolean) => {
     if (simulating || playoffSimulating || restoring) return;
@@ -122,10 +123,16 @@ export default function App({
     <FranchisePanel
       state={state}
       disabled={simulating || playoffSimulating || restoring}
+      onProcessOffseason={() => {
+        dispatch({ type: "PROCESS_OFFSEASON" });
+        setAnnouncement(
+          "Player development and league trades are complete. Review the offseason report before starting the next season.",
+        );
+      }}
       onEnterOffseason={() => {
         dispatch({ type: "ENTER_OFFSEASON" });
         setAnnouncement(
-          `Year ${state.franchise?.year ?? 1} archived. The offseason is open for trades.`,
+          `Year ${state.franchise?.year ?? 1} archived. Player development and league trades are complete.`,
         );
       }}
       onStartSeason={() => {
@@ -224,6 +231,7 @@ export default function App({
                   <div className="court-column">
                     <Court
                       run={run}
+                      development={development}
                       ratings={ratings}
                       pending={pending}
                       swap={swap}
@@ -233,6 +241,7 @@ export default function App({
                     {!archived && (
                       <BenchPanel
                         run={run}
+                        development={development}
                         ratings={ratings}
                         pending={pending}
                         swap={swap}

@@ -1,5 +1,6 @@
 import type { Playoffs } from "./playoffTypes";
 import type { Franchise } from "./franchiseTypes";
+import type { PlayerDevelopment } from "./developmentTypes";
 
 export const POSITIONS = ["PG", "SG", "SF", "PF", "C"] as const;
 export type Position = (typeof POSITIONS)[number];
@@ -166,7 +167,7 @@ export interface SeasonResult {
   wins: number;
   losses: number;
   mvpId: number;
-  modelVersion?: 1 | 2 | 3 | 4;
+  modelVersion?: 1 | 2 | 3 | 4 | 5;
   league?: LeagueResult;
   mvpTeamId?: number;
   playerStats?: SeasonPlayer[];
@@ -223,6 +224,8 @@ export interface LeagueTeam {
   rotation: RotationStyle;
   defense: DefenseScheme;
   ratings: TeamRatings;
+  /** Frozen cumulative skill changes for this club's eight players. */
+  development?: PlayerDevelopment;
 }
 export interface LeagueFixture {
   id: string;

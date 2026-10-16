@@ -1,3 +1,4 @@
+import type { DevelopmentRatings } from "../game/developmentTypes";
 import {
   ATTRIBUTE_KEYS,
   ATTRIBUTE_LABELS,
@@ -74,10 +75,16 @@ function SkillRows({
     </dl>
   );
 }
-export function ScoutReport({ mon }: { mon: Pokemon }) {
-  const a = attributes(mon),
-    best = bestPosition(mon),
-    profile = playerProfile(mon);
+export function ScoutReport({
+  mon,
+  development,
+}: {
+  mon: Pokemon;
+  development?: DevelopmentRatings;
+}) {
+  const a = attributes(mon, development),
+    best = bestPosition(mon, development),
+    profile = playerProfile(mon, development);
   const ranked = [...DETAILED_ATTRIBUTE_KEYS].sort((x, y) => a[y] - a[x]);
   const strengths = ranked.slice(0, 3),
     tradeoffs = ranked.slice(-2).reverse();
@@ -101,7 +108,7 @@ export function ScoutReport({ mon }: { mon: Pokemon }) {
           Best fit <b>{POSITION_NAMES[best]}</b>
         </span>
         <strong>
-          {Math.round(positionRating(mon, best))}
+          {Math.round(positionRating(mon, best, development))}
           <small>/100</small>
         </strong>
       </div>
@@ -109,7 +116,9 @@ export function ScoutReport({ mon }: { mon: Pokemon }) {
         {POSITIONS.map((position) => (
           <div key={position} className={position === best ? "best" : ""}>
             <span>{position}</span>
-            <strong>{Math.round(positionRating(mon, position))}</strong>
+            <strong>
+              {Math.round(positionRating(mon, position, development))}
+            </strong>
           </div>
         ))}
       </div>

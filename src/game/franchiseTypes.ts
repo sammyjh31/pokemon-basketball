@@ -1,5 +1,6 @@
 import type { LeaguePlayer, LeagueTeam, Standing, SeasonAward } from "./types";
 import type { FinalsMvp } from "./playoffTypes";
+import type { OffseasonReport } from "./developmentTypes";
 
 export const FRANCHISE_MAX_YEARS = 1000;
 export const FRANCHISE_MAX_TRADES = 10000;
@@ -62,15 +63,19 @@ export interface FranchiseTrade {
   teamId: number;
   giveId: number;
   receiveId: number;
+  fromTeamId?: number;
+  source?: "cpu";
+  reason?: string;
 }
 export interface Franchise {
-  modelVersion: 1;
+  modelVersion: 1 | 2;
   year: number;
   phase: "season" | "offseason";
   teams: LeagueTeam[];
   careers: CareerPlayer[];
   history: FranchiseSeason[];
   trades: FranchiseTrade[];
+  offseasons?: OffseasonReport[];
 }
 export interface TradeEvaluation {
   accepted: boolean;
