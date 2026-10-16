@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ALL_POKEMON, POKEMON_BY_ID } from "../data/pokemon";
+import { FRANCHISE_POKEMON, POKEMON_BY_ID } from "../data/pokemon";
 import { playerProfile } from "../game/playerProfile";
 import { evaluateShot, type ShotZone } from "../game/shotModel";
 import {
@@ -75,7 +75,7 @@ export function MatchupLab() {
                   );
                 }}
               >
-                {ALL_POKEMON.map((p) => (
+                {FRANCHISE_POKEMON.map((p) => (
                   <option key={p.id} value={p.id}>
                     #{p.id} {p.name}
                   </option>
@@ -88,7 +88,7 @@ export function MatchupLab() {
                 value={defender}
                 onChange={(e) => setDefender(Number(e.target.value))}
               >
-                {ALL_POKEMON.map((p) => (
+                {FRANCHISE_POKEMON.map((p) => (
                   <option key={p.id} value={p.id}>
                     #{p.id} {p.name}
                   </option>
