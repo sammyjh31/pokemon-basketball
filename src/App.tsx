@@ -220,6 +220,7 @@ export default function App({
           "Your next franchise season is ready. Set your rotation and coaching before tipoff.",
         );
       }}
+      onSimulateSeason={() => void advanceSeason(82)}
       onTraining={(plans) => dispatch({ type: "TRAINING_PLANS", plans })}
       onTrade={(teamId, giveId, receiveId) =>
         dispatch({ type: "TRADE", teamId, giveId, receiveId })

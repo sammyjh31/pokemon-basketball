@@ -29,6 +29,7 @@ export interface FranchisePanelProps {
   disabled?: boolean;
   onEnterOffseason: () => void;
   onStartSeason: () => void;
+  onSimulateSeason?: () => void;
   onProcessOffseason?: () => void;
   onTraining?: (plans: TrainingPlans) => void;
   onTrade: (teamId: number, giveId: number, receiveId: number) => void;
@@ -1093,6 +1094,7 @@ export function FranchisePanel({
   onTrade,
   onProcessOffseason,
   onTraining,
+  onSimulateSeason,
 }: FranchisePanelProps) {
   const [view, setView] = useState<
     "overview" | "careers" | "history" | "development" | "training"
@@ -1206,6 +1208,21 @@ export function FranchisePanel({
                     : "Set your rotation, then play or simulate scheduled games with your returning roster."}
               </p>
             </div>
+            {!run.result && onSimulateSeason && (
+              <div className="franchise-game-actions">
+                <button
+                  className="button primary"
+                  type="button"
+                  disabled={disabled}
+                  onClick={onSimulateSeason}
+                >
+                  {(run.seasonProgress?.completedRounds ?? 0) > 0
+                    ? `Simulate rest of season ${franchise.year}`
+                    : `Simulate season ${franchise.year}`}
+                </button>
+                <a className="button" href="#season">Play or view schedule</a>
+              </div>
+            )}
             {complete && (
               <button
                 className="button primary"

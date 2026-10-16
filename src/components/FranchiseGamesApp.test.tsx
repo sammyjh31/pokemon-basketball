@@ -205,3 +205,18 @@ it("records a scheduled playoff game in the bracket and uses its official box", 
     String(official[0].match.awayScore),
   );
 }, 15000);
+
+it("lets a returning franchise simulate its next season directly from the overview", async () => {
+  let saved = "";
+  render(<App initial={ready} storage={{ getItem: () => null, setItem: (_key, value) => { saved = value; } }} />);
+  const overview = screen.getByRole("region", { name: "Current franchise season" });
+  const start = within(overview).getByRole("button", { name: "Simulate season 2" });
+  expect(within(overview).getByRole("link", { name: "Play or view schedule" })).toHaveAttribute("href", "#season");
+  fireEvent.click(start);
+  expect(start).toBeDisabled();
+  await waitFor(() => {
+    expect((JSON.parse(saved) as GameState).run.result?.games).toHaveLength(82);
+  }, { timeout: 20000 });
+  expect(screen.queryByRole("button", { name: "Simulate season 2" })).not.toBeInTheDocument();
+  expect((JSON.parse(saved) as GameState).franchise?.year).toBe(2);
+}, 30000);
