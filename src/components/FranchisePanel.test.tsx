@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { applyTrade } from "../game/franchise";
+import { beginRookieDraft } from "../game/rookieDraft";
 import {
   CAREER_KEYS,
   type CareerTotals,
@@ -246,6 +247,83 @@ describe("franchise hub", () => {
     expect(table).toHaveTextContent("—");
   });
 
+  it("shows defensive career totals and per-36 rates without changing their meaning across scopes", () => {
+    const state = fixture();
+    Object.assign(state.franchise!.careers[0].regular, {
+      gamesPlayed: 2,
+      minutes: 60,
+      defensiveRebounds: 18,
+      steals: 4,
+      blocks: 2,
+      fouls: 6,
+    });
+    setup(state);
+    fireEvent.click(screen.getByRole("button", { name: "Career stats" }));
+    fireEvent.change(screen.getByLabelText("Search career players"), {
+      target: { value: "Bulbasaur" },
+    });
+    const category = screen.getByRole("group", {
+      name: "Career stat category",
+    });
+    fireEvent.click(within(category).getByRole("button", { name: "Defense" }));
+    const table = screen.getByRole("table", {
+      name: /Career player statistics/,
+    });
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((h) => h.textContent?.replace(/[↑↓↕]/g, "")),
+    ).toEqual([
+      "PLAYER / CURRENT TEAM",
+      "GP",
+      "MIN",
+      "DREB",
+      "STL",
+      "BLK",
+      "STL+BLK",
+      "PF",
+      "DREB/36",
+      "STL/36",
+      "BLK/36",
+    ]);
+    expect(
+      within(table)
+        .getAllByRole("cell")
+        .map((cell) => cell.textContent),
+    ).toEqual([
+      "2",
+      "30.0",
+      "9.0",
+      "2.0",
+      "1.0",
+      "3.0",
+      "3.0",
+      "10.8",
+      "2.4",
+      "1.2",
+    ]);
+    expect(screen.getByText(/Stocks.*steals plus blocks/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Totals" }));
+    expect(
+      within(table)
+        .getAllByRole("cell")
+        .map((cell) => cell.textContent),
+    ).toEqual(["2", "60", "18", "4", "2", "6", "6", "10.8", "2.4", "1.2"]);
+    fireEvent.click(screen.getByRole("button", { name: "Playoffs" }));
+    expect(
+      within(table)
+        .getAllByRole("cell")
+        .slice(-3)
+        .map((cell) => cell.textContent),
+    ).toEqual(["—", "—", "—"]);
+    fireEvent.click(
+      within(category).getByRole("button", { name: "All stats" }),
+    );
+    expect(
+      within(table).getByRole("button", { name: "Sort careers by points" }),
+    ).toBeInTheDocument();
+  });
+
   it("rejects an unfair offer and updates the displayed roster and trade log after an accepted offer", () => {
     const state = fixture();
     const { props, rerender } = setup(state);
@@ -369,7 +447,9 @@ describe("franchise hub", () => {
     expect(history).toHaveTextContent("4–2");
     expect(history).toHaveTextContent("50–32");
     expect(history).toHaveTextContent("Bulbasaur");
-    expect(history).toHaveTextContent(/Newly archived seasons preserve player stats and every game/i);
+    expect(history).toHaveTextContent(
+      /Newly archived seasons preserve player stats and every game/i,
+    );
     expect(
       within(
         screen.getByRole("table", { name: "Year 1 final standings" }),
@@ -589,5 +669,171 @@ describe("developed offseason scouting and trade attribution", () => {
     expect(history).toHaveTextContent(
       "Club 3 sends Pidgeotto to Pallet Pioneers",
     );
+  });
+});
+
+describe("complete offseason workspace", () => {
+  function readyState() {
+    const state = fixture();
+    state.franchise!.modelVersion = 3;
+    state.franchise!.offseasons = [
+      { modelVersion: 1, year: 1, tradeStart: 0, tradeCount: 0, players: [] },
+    ];
+    return state;
+  }
+  const newCallbacks = () => ({
+    onTradePackage: vi.fn(),
+    onRoster: vi.fn(),
+    onBeginDraft: vi.fn(),
+    onAdvanceDraft: vi.fn(),
+    onPickRookie: vi.fn(),
+  });
+
+  it("requires this offseason's rookie draft and forwards beginning and individual picks", () => {
+    const state = readyState(),
+      callbacks = newCallbacks();
+    const { props, rerender } = setup(state, callbacks);
+    expect(
+      screen.getByRole("button", { name: "Start season 2" }),
+    ).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Rookie draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Begin rookie draft" }));
+    expect(callbacks.onBeginDraft).toHaveBeenCalledOnce();
+    const drafting = beginRookieDraft(state);
+    rerender(<FranchisePanel {...props} state={drafting} />);
+    expect(
+      screen.getByRole("button", { name: "Start season 2" }),
+    ).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Search rookie prospects"), {
+      target: { value: "Treecko" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Scout Treecko" }));
+    fireEvent.change(screen.getByLabelText("Player to release"), {
+      target: { value: "1" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Draft Treecko" }));
+    expect(callbacks.onPickRookie).toHaveBeenCalledWith(252, 1);
+    const complete = structuredClone(drafting);
+    complete.franchise!.rookieDrafts![0].complete = true;
+    rerender(<FranchisePanel {...props} state={complete} />);
+    fireEvent.click(screen.getByRole("button", { name: "Start season 2" }));
+    expect(props.onStartSeason).toHaveBeenCalledOnce();
+    complete.franchise!.year = 2;
+    rerender(<FranchisePanel {...props} state={{ ...complete }} />);
+    expect(
+      screen.getByRole("button", { name: "Start season 3" }),
+    ).toBeDisabled();
+  });
+
+  it("forwards CPU draft progress and prevents trading during a partial draft", () => {
+    const state = readyState();
+    state.franchise!.rookieDrafts = [
+      {
+        modelVersion: 1,
+        year: 1,
+        generation: 3,
+        order: [1, 0, ...Array.from({ length: 28 }, (_, index) => index + 2)],
+        picks: [],
+        complete: false,
+        tradeIndex: 0,
+      },
+    ];
+    const callbacks = newCallbacks();
+    setup(state, callbacks);
+    fireEvent.click(screen.getByRole("button", { name: "Rookie draft" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Advance to your pick" }),
+    );
+    expect(callbacks.onAdvanceDraft).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "Trade market" }));
+    expect(
+      screen.getByText("Complete the current rookie draft before trading."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Target Caterpie" }),
+    ).toBeDisabled();
+  });
+
+  it("edits offseason roles and sends accepted packages through the new callbacks", () => {
+    const callbacks = newCallbacks();
+    const { props } = setup(readyState(), callbacks);
+    fireEvent.change(screen.getByLabelText("Point guard player"), {
+      target: { value: "6" },
+    });
+    expect(callbacks.onRoster).toHaveBeenCalledWith(
+      expect.objectContaining({
+        roster: expect.objectContaining({ PG: 6, B1: 1 }),
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Trade market" }));
+    expect(screen.queryByLabelText("Player you send")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Target Caterpie" }));
+    fireEvent.click(screen.getByLabelText("Send Venusaur"));
+    fireEvent.click(screen.getByLabelText("Send Charizard"));
+    fireEvent.click(screen.getByLabelText("Receive Metapod"));
+    fireEvent.click(screen.getByRole("button", { name: "Complete trade" }));
+    expect(callbacks.onTradePackage).toHaveBeenCalledWith({
+      teamId: 1,
+      giveIds: [3, 6],
+      receiveIds: [10, 11],
+    });
+    expect(props.onTrade).not.toHaveBeenCalled();
+  });
+
+  it("retains released players' career totals and historic honors", () => {
+    const state = readyState();
+    state.franchise!.teams[0] = {
+      ...state.franchise!.teams[0],
+      roster: { ...state.franchise!.teams[0].roster, PG: 252 },
+    };
+    setup(state);
+    fireEvent.click(screen.getByRole("button", { name: "Career stats" }));
+    fireEvent.change(
+      screen.getByLabelText("Filter career players by current team"),
+      { target: { value: "released" } },
+    );
+    const table = screen.getByRole("table", {
+      name: /Career player statistics/,
+    });
+    expect(within(table).getAllByRole("row")).toHaveLength(2);
+    const player = screen.getByRole("button", {
+      name: "View Bulbasaur honors",
+    });
+    expect(player).toHaveTextContent("Released");
+    expect(within(table).getAllByRole("cell")[0]).toHaveTextContent("15.0");
+    fireEvent.click(
+      within(
+        screen.getByRole("group", { name: "Career stat category" }),
+      ).getByRole("button", { name: "Defense" }),
+    );
+    expect(within(table).getAllByRole("row")).toHaveLength(2);
+    expect(player).toHaveTextContent("Released");
+    fireEvent.click(player);
+    expect(
+      screen.getByRole("region", { name: "Bulbasaur career honors" }),
+    ).toHaveTextContent("Year 1 · Your team");
+  });
+
+  it("keeps the full package transaction history available in the new workspace", () => {
+    const state = readyState();
+    state.franchise!.trades = [
+      {
+        year: 1,
+        fromTeamId: 1,
+        teamId: 2,
+        giveId: 9,
+        receiveId: 17,
+        source: "cpu",
+        packageVersion: 1,
+        giveIds: [9, 10],
+        receiveIds: [17, 18],
+      },
+    ];
+    setup(state, newCallbacks());
+    fireEvent.click(screen.getByText("Trade history (1)"));
+    const history = screen.getByText("Trade history (1)").closest("details")!;
+    expect(history).toHaveTextContent("Blastoise and Caterpie");
+    expect(history).toHaveTextContent("Pidgeotto and Pidgeot");
+    expect(history).toHaveTextContent("CPU trade");
   });
 });

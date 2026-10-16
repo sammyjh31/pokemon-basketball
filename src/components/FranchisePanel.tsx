@@ -1,7 +1,12 @@
 import { CareerDetail } from "./CareerDetail";
 import { HistoricalGames } from "./HistoricalGames";
 import { TrainingPanel } from "./TrainingPanel";
+import { TradeCenter } from "./TradeCenter";
+import { OffseasonRoster } from "./OffseasonRoster";
+import { RookieDraftPanel } from "./RookieDraftPanel";
 import type { TrainingPlans } from "../game/franchiseFeatures";
+import type { TradePackage } from "../game/tradeTypes";
+import type { OffseasonRosterSettings } from "../game/offseasonRoster";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { careerPlayers, evaluateTrade } from "../game/franchise";
@@ -33,6 +38,11 @@ export interface FranchisePanelProps {
   onProcessOffseason?: () => void;
   onTraining?: (plans: TrainingPlans) => void;
   onTrade: (teamId: number, giveId: number, receiveId: number) => void;
+  onTradePackage?: (offer: TradePackage) => void;
+  onRoster?: (settings: OffseasonRosterSettings) => void;
+  onBeginDraft?: () => void;
+  onAdvanceDraft?: () => void;
+  onPickRookie?: (pokemonId: number, releasedId: number) => void;
 }
 
 const playerName = (id: number) =>
@@ -56,15 +66,30 @@ function PlayerPortrait({ id }: { id: number }) {
 }
 
 function Offseason({
+  state,
   franchise,
   disabled,
   onStartSeason,
   onTrade,
   onProcessOffseason,
   onReviewDevelopment,
+  onTradePackage,
+  onRoster,
+  onBeginDraft,
+  onAdvanceDraft,
+  onPickRookie,
 }: Pick<
   FranchisePanelProps,
-  "disabled" | "onStartSeason" | "onTrade" | "onProcessOffseason"
+  | "state"
+  | "disabled"
+  | "onStartSeason"
+  | "onTrade"
+  | "onProcessOffseason"
+  | "onTradePackage"
+  | "onRoster"
+  | "onBeginDraft"
+  | "onAdvanceDraft"
+  | "onPickRookie"
 > & {
   onReviewDevelopment: () => void;
   franchise: Franchise;
@@ -104,14 +129,28 @@ function Offseason({
     franchise.offseasons?.some((report) => report.year === franchise.year) ??
     false;
   const needsDevelopment = !!onProcessOffseason && !reportReady;
+  const draftEnabled = !!(onBeginDraft && onAdvanceDraft && onPickRookie);
+  const currentDraft = franchise.rookieDrafts?.find(
+    (draft) => draft.year === franchise.year,
+  );
+  const needsDraft = draftEnabled && !currentDraft?.complete;
+  const [workspace, setWorkspace] = useState("roster");
+  const sections = [
+    ...(onRoster ? [{ id: "roster", label: "Roster & coaching" }] : []),
+    ...(onTradePackage ? [{ id: "market", label: "Trade market" }] : []),
+    ...(draftEnabled ? [{ id: "draft", label: "Rookie draft" }] : []),
+  ];
+  const activeWorkspace = sections.some((section) => section.id === workspace)
+    ? workspace
+    : sections[0]?.id;
   return (
     <section aria-label="Franchise offseason">
       <div className="franchise-section-heading">
         <div>
           <h3>Make your next move.</h3>
           <p>
-            Your eight-player roster carries forward. Exchange players with
-            another club, then begin a fresh 82-game season.
+            Your eight-player roster carries forward. Shape your lineup, explore
+            trades and prepare for a fresh 82-game season.
           </p>
         </div>
         <button
@@ -120,6 +159,7 @@ function Offseason({
           disabled={
             disabled ||
             needsDevelopment ||
+            needsDraft ||
             franchise.year >= FRANCHISE_MAX_YEARS
           }
           onClick={onStartSeason}
@@ -164,209 +204,278 @@ function Offseason({
           championship history remain available.
         </p>
       )}
-      <ul className="franchise-roster" aria-label="Your offseason roster">
-        {ROSTER_SLOTS.map((slot) => {
-          const id = user.roster[slot];
-          return (
-            id !== null && (
-              <li key={slot}>
-                <span className="franchise-roster-slot">{slot}</span>
-                <PlayerPortrait id={id} />
-                <button
-                  type="button"
-                  className="franchise-scout-button"
-                  aria-label={`Scout ${playerName(id)}`}
-                  onClick={() => setScoutId(id)}
-                >
-                  {playerName(id)}
-                </button>
-                {(() => {
-                  const mon = POKEMON_BY_ID.get(id);
-                  const offsets = user.development?.[id];
-                  return (
-                    mon && (
-                      <small>
-                        {Math.round(
-                          positionRating(
-                            mon,
-                            bestPosition(mon, offsets),
-                            offsets,
-                          ),
-                        )}{" "}
-                        FIT
-                      </small>
-                    )
-                  );
-                })()}
-              </li>
-            )
-          );
-        })}
-      </ul>
-      {scoutMon && (
-        <div className="franchise-scout" ref={scoutRef} tabIndex={-1}>
-          <button
-            type="button"
-            className="text-button"
-            onClick={() => setScoutId(null)}
-          >
-            Close scouting report
-          </button>
-          <ScoutReport
-            mon={scoutMon}
-            development={scoutTeam?.development?.[scoutMon.id]}
-          />
+      {needsDraft && !needsDevelopment && (
+        <div className="franchise-section-heading">
+          <p>
+            Next: {currentDraft ? "finish" : "begin and complete"} this year's
+            two-round rookie draft to unlock season {franchise.year + 1}.
+          </p>
+          {activeWorkspace !== "draft" && (
+            <button
+              className="button secondary"
+              type="button"
+              onClick={() => setWorkspace("draft")}
+            >
+              Open rookie draft
+            </button>
+          )}
         </div>
       )}
-      <p className="stat-legend">
-        You can reorder your lineup and adjust coaching after starting the next
-        season.
-      </p>
-      <section
-        className="franchise-trade"
-        aria-labelledby="franchise-trade-title"
-      >
-        <div>
-          <span className="eyebrow">TRADE DESK</span>
-          <h4 id="franchise-trade-title">One player in. One player out.</h4>
-          <p>
-            Clubs weigh player ability and roster fit before accepting your
-            offer.
-          </p>
-        </div>
-        <div className="league-controls">
-          <label className="league-field">
-            Trade partner
-            <select
-              value={partner?.id ?? ""}
-              disabled={disabled}
-              onChange={(event) => {
-                setPartnerId(Number(event.target.value));
-                setSelectedReceive(-1);
-              }}
-            >
-              {partners.map((team) => (
-                <option key={team.id} value={team.id}>
-                  {team.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="league-field">
-            Player you send
-            <select
-              value={giveId ?? ""}
-              disabled={disabled}
-              onChange={(event) => setSelectedGive(Number(event.target.value))}
-            >
-              {outgoing.map((id) => (
-                <option key={id} value={id}>
-                  {playerName(id)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="league-field">
-            Player you receive
-            <select
-              value={receiveId ?? ""}
-              disabled={disabled}
-              onChange={(event) =>
-                setSelectedReceive(Number(event.target.value))
-              }
-            >
-              {incoming.map((id) => (
-                <option key={id} value={id}>
-                  {playerName(id)}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        {evaluation && partner && (
-          <div
-            className={`franchise-trade-preview ${evaluation.accepted ? "accepted" : "rejected"}`}
-            aria-label="Trade offer preview"
-          >
-            <div className="franchise-trade-players">
-              <div>
-                <small>YOU SEND</small>
-                <strong>{playerName(giveId)}</strong>
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={() => setScoutId(giveId)}
-                  aria-label={`Scout outgoing ${playerName(giveId)}`}
-                >
-                  Scout player
-                </button>
-                <span>Player value {evaluation.outgoingValue.toFixed(1)}</span>
-              </div>
-              <span aria-hidden="true" className="franchise-trade-arrow">
-                ⇄
-              </span>
-              <div>
-                <small>YOU RECEIVE</small>
-                <strong>{playerName(receiveId)}</strong>
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={() => setScoutId(receiveId)}
-                  aria-label={`Scout incoming ${playerName(receiveId)}`}
-                >
-                  Scout player
-                </button>
-                <span>Player value {evaluation.incomingValue.toFixed(1)}</span>
-              </div>
-            </div>
-            <div className="franchise-trade-verdict" aria-live="polite">
-              <strong>
-                {evaluation.accepted ? "Offer accepted" : "Offer declined"}
-              </strong>
-              <p>{evaluation.reason}</p>
-              <p>
-                {partner.name} roster rating:{" "}
-                {evaluation.partnerBefore.toFixed(1)} →{" "}
-                {evaluation.partnerAfter.toFixed(1)}
-              </p>
-            </div>
+      {!!sections.length && (
+        <nav className="league-navigation" aria-label="Offseason workspace">
+          {sections.map((section) => (
             <button
-              className="button primary"
+              key={section.id}
               type="button"
-              disabled={disabled || !evaluation.accepted}
-              onClick={() => {
-                if (evaluation.accepted && !disabled)
-                  onTrade(partner.id, giveId, receiveId);
-              }}
+              aria-pressed={activeWorkspace === section.id}
+              onClick={() => setWorkspace(section.id)}
             >
-              Complete trade
+              {section.label}
             </button>
+          ))}
+        </nav>
+      )}
+      {activeWorkspace === "roster" && onRoster && (
+        <OffseasonRoster
+          franchise={franchise}
+          disabled={disabled}
+          onChange={onRoster}
+        />
+      )}
+      {activeWorkspace === "market" && onTradePackage && (
+        <TradeCenter
+          franchise={franchise}
+          disabled={disabled}
+          onTrade={onTradePackage}
+        />
+      )}
+      {activeWorkspace === "draft" &&
+        onBeginDraft &&
+        onAdvanceDraft &&
+        onPickRookie && (
+          <RookieDraftPanel
+            state={state}
+            disabled={disabled}
+            onBegin={onBeginDraft}
+            onAdvance={onAdvanceDraft}
+            onPick={onPickRookie}
+          />
+        )}
+      {!onRoster && (
+        <>
+          <ul className="franchise-roster" aria-label="Your offseason roster">
+            {ROSTER_SLOTS.map((slot) => {
+              const id = user.roster[slot];
+              return (
+                id !== null && (
+                  <li key={slot}>
+                    <span className="franchise-roster-slot">{slot}</span>
+                    <PlayerPortrait id={id} />
+                    <button
+                      type="button"
+                      className="franchise-scout-button"
+                      aria-label={`Scout ${playerName(id)}`}
+                      onClick={() => setScoutId(id)}
+                    >
+                      {playerName(id)}
+                    </button>
+                    {(() => {
+                      const mon = POKEMON_BY_ID.get(id);
+                      const offsets = user.development?.[id];
+                      return (
+                        mon && (
+                          <small>
+                            {Math.round(
+                              positionRating(
+                                mon,
+                                bestPosition(mon, offsets),
+                                offsets,
+                              ),
+                            )}{" "}
+                            FIT
+                          </small>
+                        )
+                      );
+                    })()}
+                  </li>
+                )
+              );
+            })}
+          </ul>
+          {scoutMon && (
+            <div className="franchise-scout" ref={scoutRef} tabIndex={-1}>
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => setScoutId(null)}
+              >
+                Close scouting report
+              </button>
+              <ScoutReport
+                mon={scoutMon}
+                development={scoutTeam?.development?.[scoutMon.id]}
+              />
+            </div>
+          )}
+          <p className="stat-legend">
+            You can reorder your lineup and adjust coaching after starting the
+            next season.
+          </p>
+        </>
+      )}
+      {!onTradePackage && (
+        <section
+          className="franchise-trade"
+          aria-labelledby="franchise-trade-title"
+        >
+          <div>
+            <span className="eyebrow">TRADE DESK</span>
+            <h4 id="franchise-trade-title">One player in. One player out.</h4>
+            <p>
+              Clubs weigh player ability and roster fit before accepting your
+              offer.
+            </p>
           </div>
-        )}
-        <p className="franchise-trade-status" role="status">
-          {latestTrade
-            ? `Trade completed: ${playerName(latestTrade.receiveId)} joined your team; ${playerName(latestTrade.giveId)} joined ${teamName(franchise.teams, latestTrade.teamId)}.`
-            : "No trades from your club completed this offseason."}
-        </p>
-        {franchise.trades.length > 0 && (
-          <details className="franchise-trade-log">
-            <summary>Trade history ({franchise.trades.length})</summary>
-            <ol>
-              {[...franchise.trades].reverse().map((trade, index) => (
-                <li key={`${trade.year}:${index}`}>
-                  <strong>
-                    Year {trade.year} ·{" "}
-                    {teamName(franchise.teams, trade.fromTeamId ?? 0)} ⇄{" "}
-                    {teamName(franchise.teams, trade.teamId)}
-                    {trade.source === "cpu" ? " · CPU trade" : ""}
-                  </strong>
-                  <TradeActivity trade={trade} teams={franchise.teams} />
-                </li>
-              ))}
-            </ol>
-          </details>
-        )}
-      </section>
+          <div className="league-controls">
+            <label className="league-field">
+              Trade partner
+              <select
+                value={partner?.id ?? ""}
+                disabled={disabled}
+                onChange={(event) => {
+                  setPartnerId(Number(event.target.value));
+                  setSelectedReceive(-1);
+                }}
+              >
+                {partners.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="league-field">
+              Player you send
+              <select
+                value={giveId ?? ""}
+                disabled={disabled}
+                onChange={(event) =>
+                  setSelectedGive(Number(event.target.value))
+                }
+              >
+                {outgoing.map((id) => (
+                  <option key={id} value={id}>
+                    {playerName(id)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="league-field">
+              Player you receive
+              <select
+                value={receiveId ?? ""}
+                disabled={disabled}
+                onChange={(event) =>
+                  setSelectedReceive(Number(event.target.value))
+                }
+              >
+                {incoming.map((id) => (
+                  <option key={id} value={id}>
+                    {playerName(id)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {evaluation && partner && (
+            <div
+              className={`franchise-trade-preview ${evaluation.accepted ? "accepted" : "rejected"}`}
+              aria-label="Trade offer preview"
+            >
+              <div className="franchise-trade-players">
+                <div>
+                  <small>YOU SEND</small>
+                  <strong>{playerName(giveId)}</strong>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => setScoutId(giveId)}
+                    aria-label={`Scout outgoing ${playerName(giveId)}`}
+                  >
+                    Scout player
+                  </button>
+                  <span>
+                    Player value {evaluation.outgoingValue.toFixed(1)}
+                  </span>
+                </div>
+                <span aria-hidden="true" className="franchise-trade-arrow">
+                  ⇄
+                </span>
+                <div>
+                  <small>YOU RECEIVE</small>
+                  <strong>{playerName(receiveId)}</strong>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => setScoutId(receiveId)}
+                    aria-label={`Scout incoming ${playerName(receiveId)}`}
+                  >
+                    Scout player
+                  </button>
+                  <span>
+                    Player value {evaluation.incomingValue.toFixed(1)}
+                  </span>
+                </div>
+              </div>
+              <div className="franchise-trade-verdict" aria-live="polite">
+                <strong>
+                  {evaluation.accepted ? "Offer accepted" : "Offer declined"}
+                </strong>
+                <p>{evaluation.reason}</p>
+                <p>
+                  {partner.name} roster rating:{" "}
+                  {evaluation.partnerBefore.toFixed(1)} →{" "}
+                  {evaluation.partnerAfter.toFixed(1)}
+                </p>
+              </div>
+              <button
+                className="button primary"
+                type="button"
+                disabled={disabled || !evaluation.accepted}
+                onClick={() => {
+                  if (evaluation.accepted && !disabled)
+                    onTrade(partner.id, giveId, receiveId);
+                }}
+              >
+                Complete trade
+              </button>
+            </div>
+          )}
+          <p className="franchise-trade-status" role="status">
+            {latestTrade
+              ? `Trade completed: ${playerName(latestTrade.receiveId)} joined your team; ${playerName(latestTrade.giveId)} joined ${teamName(franchise.teams, latestTrade.teamId)}.`
+              : "No trades from your club completed this offseason."}
+          </p>
+        </section>
+      )}
+      {franchise.trades.length > 0 && (
+        <details className="franchise-trade-log">
+          <summary>Trade history ({franchise.trades.length})</summary>
+          <ol>
+            {[...franchise.trades].reverse().map((trade, index) => (
+              <li key={`${trade.year}:${index}`}>
+                <strong>
+                  Year {trade.year} ·{" "}
+                  {teamName(franchise.teams, trade.fromTeamId ?? 0)} ⇄{" "}
+                  {teamName(franchise.teams, trade.teamId)}
+                  {trade.source === "cpu" ? " · CPU trade" : ""}
+                </strong>
+                <TradeActivity trade={trade} teams={franchise.teams} />
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
     </section>
   );
 }
@@ -376,7 +485,7 @@ type CareerColumn = {
   label: string;
   title: string;
   value: (totals: CareerTotals) => number | null;
-  kind?: "count" | "percentage";
+  kind?: "count" | "percentage" | "rate";
 };
 const percent = (made: number, attempted: number) =>
   attempted ? (100 * made) / attempted : null;
@@ -563,7 +672,8 @@ function Careers({ franchise, run }: { franchise: Franchise; run: Run }) {
   const [query, setQuery] = useState(""),
     [team, setTeam] = useState("all"),
     [totals, setTotals] = useState(false),
-    [playoffs, setPlayoffs] = useState(false);
+    [playoffs, setPlayoffs] = useState(false),
+    [defense, setDefense] = useState(false);
   const [sort, setSort] = useState({ key: "points", descending: true });
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [careerId, setCareerId] = useState<number | null>(null);
@@ -585,13 +695,59 @@ function Careers({ franchise, run }: { franchise: Franchise; run: Run }) {
         ? n / stats.gamesPlayed
         : null;
   };
-  const sortedColumn = columns.find((column) => column.key === sort.key)!;
+  const per36 = (value: number, minutes: number) =>
+    minutes ? (value * 36) / minutes : null;
+  const defenseColumns: CareerColumn[] = [
+    columns.find((column) => column.key === "games")!,
+    columns.find((column) => column.key === "minutes")!,
+    {
+      key: "defensiveRebounds",
+      label: "DREB",
+      title: "defensive rebounds",
+      value: (p) => p.defensiveRebounds,
+    },
+    columns.find((column) => column.key === "steals")!,
+    columns.find((column) => column.key === "blocks")!,
+    {
+      key: "stocks",
+      label: "STL+BLK",
+      title: "steals plus blocks",
+      value: (p) => p.steals + p.blocks,
+    },
+    columns.find((column) => column.key === "fouls")!,
+    {
+      key: "defensiveRebounds36",
+      label: "DREB/36",
+      title: "defensive rebounds per 36 minutes",
+      value: (p) => per36(p.defensiveRebounds, p.minutes),
+      kind: "rate",
+    },
+    {
+      key: "steals36",
+      label: "STL/36",
+      title: "steals per 36 minutes",
+      value: (p) => per36(p.steals, p.minutes),
+      kind: "rate",
+    },
+    {
+      key: "blocks36",
+      label: "BLK/36",
+      title: "blocks per 36 minutes",
+      value: (p) => per36(p.blocks, p.minutes),
+      kind: "rate",
+    },
+  ];
+  const visibleColumns = defense ? defenseColumns : columns;
+  const sortedColumn =
+    visibleColumns.find((column) => column.key === sort.key) ??
+    visibleColumns[0];
   const rows = careers
     .filter((player) => {
       const club = currentTeams.get(player.pokemonId);
       return (
-        (team === "all" || club?.id === Number(team)) &&
-        `${playerName(player.pokemonId)} ${club?.name ?? ""}`
+        (team === "all" ||
+          (team === "released" ? !club : club?.id === Number(team))) &&
+        `${playerName(player.pokemonId)} ${club?.name ?? "Released"}`
           .toLowerCase()
           .includes(query.trim().toLowerCase())
       );
@@ -668,6 +824,7 @@ function Careers({ franchise, run }: { franchise: Franchise; run: Run }) {
             onChange={(event) => setTeam(event.target.value)}
           >
             <option value="all">All teams</option>
+            <option value="released">Released players</option>
             {franchise.teams.map((club) => (
               <option key={club.id} value={club.id}>
                 {club.name}
@@ -692,6 +849,34 @@ function Careers({ franchise, run }: { franchise: Franchise; run: Run }) {
           </button>
         </div>
       </div>
+      <div className="stat-mode" role="group" aria-label="Career stat category">
+        <button
+          type="button"
+          aria-pressed={!defense}
+          onClick={() => {
+            setDefense(false);
+            setSort({ key: "points", descending: true });
+          }}
+        >
+          All stats
+        </button>
+        <button
+          type="button"
+          aria-pressed={defense}
+          onClick={() => {
+            setDefense(true);
+            setSort({ key: "stocks", descending: true });
+          }}
+        >
+          Defense
+        </button>
+      </div>
+      {defense && (
+        <p>
+          Stocks (STL+BLK) are steals plus blocks. DREB/36, STL/36 and BLK/36
+          are per 36 minutes in both display modes; no minutes means no rate.
+        </p>
+      )}
       {selectedId !== null && (
         <section
           ref={honorRef}
@@ -752,11 +937,12 @@ function Careers({ franchise, run }: { franchise: Franchise; run: Run }) {
             Career player statistics —{" "}
             {playoffs ? "playoffs" : "regular season"} —{" "}
             {totals ? "totals" : "per game averages"}
+            {defense ? " — defense; /36 columns remain rates" : ""}
           </caption>
           <thead>
             <tr>
               <th scope="col">PLAYER / CURRENT TEAM</th>
-              {columns.map((column) => (
+              {visibleColumns.map((column) => (
                 <th
                   key={column.key}
                   scope="col"
@@ -811,7 +997,7 @@ function Careers({ franchise, run }: { franchise: Franchise; run: Run }) {
                         {playerName(player.pokemonId)}
                         <small>
                           {currentTeams.get(player.pokemonId)?.name ??
-                            "Unknown team"}
+                            "Released"}
                         </small>
                       </span>
                     </span>
@@ -825,7 +1011,7 @@ function Careers({ franchise, run }: { franchise: Franchise; run: Run }) {
                     Career page
                   </button>
                 </th>
-                {columns.map((column) => {
+                {visibleColumns.map((column) => {
                   const value = getValue(
                     playoffs ? player.playoffs : player.regular,
                     column,
@@ -841,11 +1027,13 @@ function Careers({ franchise, run }: { franchise: Franchise; run: Run }) {
                         ? "—"
                         : column.kind === "percentage"
                           ? `${value.toFixed(1)}%`
-                          : column.kind === "count" || totals
-                            ? value.toLocaleString("en-US", {
-                                maximumFractionDigits: 1,
-                              })
-                            : value.toFixed(1)}
+                          : column.kind === "rate"
+                            ? value.toFixed(1)
+                            : column.kind === "count" || totals
+                              ? value.toLocaleString("en-US", {
+                                  maximumFractionDigits: 1,
+                                })
+                              : value.toFixed(1)}
                     </td>
                   );
                 })}
@@ -1095,6 +1283,11 @@ export function FranchisePanel({
   onProcessOffseason,
   onTraining,
   onSimulateSeason,
+  onTradePackage,
+  onRoster,
+  onBeginDraft,
+  onAdvanceDraft,
+  onPickRookie,
 }: FranchisePanelProps) {
   const [view, setView] = useState<
     "overview" | "careers" | "history" | "development" | "training"
@@ -1182,12 +1375,18 @@ export function FranchisePanel({
         (franchise.phase === "offseason" ? (
           <Offseason
             key={franchise.year}
+            state={state}
             franchise={franchise}
             disabled={disabled}
             onStartSeason={onStartSeason}
             onTrade={onTrade}
             onProcessOffseason={onProcessOffseason}
             onReviewDevelopment={() => setView("development")}
+            onTradePackage={onTradePackage}
+            onRoster={onRoster}
+            onBeginDraft={onBeginDraft}
+            onAdvanceDraft={onAdvanceDraft}
+            onPickRookie={onPickRookie}
           />
         ) : (
           <section
@@ -1220,7 +1419,9 @@ export function FranchisePanel({
                     ? `Simulate rest of season ${franchise.year}`
                     : `Simulate season ${franchise.year}`}
                 </button>
-                <a className="button" href="#season">Play or view schedule</a>
+                <a className="button" href="#season">
+                  Play or view schedule
+                </a>
               </div>
             )}
             {complete && (

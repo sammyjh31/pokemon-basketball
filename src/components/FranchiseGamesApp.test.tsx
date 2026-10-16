@@ -103,6 +103,13 @@ it("connects minutes, training, played fixtures, careers and historical boxes ac
     { name: "Play next game" },
     { timeout: 10000 },
   );
+  await waitFor(
+    () =>
+      expect(
+        (JSON.parse(value!) as GameState).run.seasonProgress!.completedRounds,
+      ).toBe(1),
+    { timeout: 10000 },
+  );
   const played = JSON.parse(value!) as GameState;
   expect(played.run.seasonProgress!.completedRounds).toBe(1);
   expect(Object.keys(played.run.seasonProgress!.playedGames)).toHaveLength(1);
@@ -208,15 +215,38 @@ it("records a scheduled playoff game in the bracket and uses its official box", 
 
 it("lets a returning franchise simulate its next season directly from the overview", async () => {
   let saved = "";
-  render(<App initial={ready} storage={{ getItem: () => null, setItem: (_key, value) => { saved = value; } }} />);
-  const overview = screen.getByRole("region", { name: "Current franchise season" });
-  const start = within(overview).getByRole("button", { name: "Simulate season 2" });
-  expect(within(overview).getByRole("link", { name: "Play or view schedule" })).toHaveAttribute("href", "#season");
+  render(
+    <App
+      initial={ready}
+      storage={{
+        getItem: () => null,
+        setItem: (_key, value) => {
+          saved = value;
+        },
+      }}
+    />,
+  );
+  const overview = screen.getByRole("region", {
+    name: "Current franchise season",
+  });
+  const start = within(overview).getByRole("button", {
+    name: "Simulate season 2",
+  });
+  expect(
+    within(overview).getByRole("link", { name: "Play or view schedule" }),
+  ).toHaveAttribute("href", "#season");
   fireEvent.click(start);
   expect(start).toBeDisabled();
-  await waitFor(() => {
-    expect((JSON.parse(saved) as GameState).run.result?.games).toHaveLength(82);
-  }, { timeout: 20000 });
-  expect(screen.queryByRole("button", { name: "Simulate season 2" })).not.toBeInTheDocument();
+  await waitFor(
+    () => {
+      expect((JSON.parse(saved) as GameState).run.result?.games).toHaveLength(
+        82,
+      );
+    },
+    { timeout: 20000 },
+  );
+  expect(
+    screen.queryByRole("button", { name: "Simulate season 2" }),
+  ).not.toBeInTheDocument();
   expect((JSON.parse(saved) as GameState).franchise?.year).toBe(2);
 }, 30000);

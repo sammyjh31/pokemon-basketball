@@ -99,7 +99,9 @@ function validate(
       roster[position] = null;
       continue;
     }
-    const mon = POKEMON_BY_ID.get(integer(id, 1, 251));
+    const mon = POKEMON_BY_ID.get(
+      integer(id, 1, Object.hasOwn(root, "franchise") ? 1025 : 251),
+    );
     if (!mon || (!raw.includeLegends && mon.legendary)) return fail();
     roster[position] = mon.id;
   }

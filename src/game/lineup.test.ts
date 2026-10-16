@@ -27,7 +27,7 @@ describe("shareable basketball lineups", () => {
     for (const value of [
       "1,2",
       "1,2,3,4,4",
-      "1,2,3,4,252",
+      "1,2,3,4,1026",
       "1,2,3,4,NaN",
       "1,2,3,4,1.5",
       "-1,2,3,4,5",
@@ -44,6 +44,18 @@ describe("shareable basketball lineups", () => {
       B2: null,
       B3: null,
     });
+  });
+  it("keeps later generations in franchise rookie drafts, outside fresh lineup imports", () => {
+    expect(parseLineup("?lineup=252,135,6,68,143,9,94,59")).toBeNull();
+    const free = gameReducer(initialState(1), {
+      type: "NEW_RUN",
+      mode: "free",
+      includeLegends: true,
+      seed: 2,
+    });
+    expect(
+      gameReducer(free, { type: "SET_LINEUP", roster: { ...roster, PG: 252 } }),
+    ).toBe(free);
   });
   it("randomizes into eight unique eligible Pokémon and is reproducible", () => {
     for (let seed = 0; seed < 100; seed++) {
@@ -70,7 +82,7 @@ describe("shareable basketball lineups", () => {
     for (const invalid of [
       { ...roster, C: 65 },
       { ...roster, C: 150 },
-      { ...roster, C: 999 },
+      { ...roster, C: 1026 },
     ])
       expect(gameReducer(free, { type: "SET_LINEUP", roster: invalid })).toBe(
         free,

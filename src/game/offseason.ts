@@ -1,3 +1,4 @@
+import { cpuMarketTrades } from "./tradeMarket";
 import { developPlayer } from "./development";
 import {
   DEVELOPMENT_SKILLS,
@@ -70,15 +71,30 @@ export function processOffseason(state: GameState): GameState {
       ),
     };
   });
-  const activity = cpuTrades(
-    developed,
-    f.year,
-    state.run.seasonSeed,
-    Math.min(
-      CPU_TRADE_LIMIT,
-      Math.max(0, FRANCHISE_MAX_TRADES - f.trades.length),
-    ),
+  const limit = Math.min(
+    CPU_TRADE_LIMIT,
+    Math.max(0, FRANCHISE_MAX_TRADES - f.trades.length),
   );
+  const activity =
+    f.modelVersion === 3
+      ? cpuMarketTrades(
+          {
+            ...f,
+            teams: developed,
+            offseasons: [
+              ...(f.offseasons ?? []),
+              {
+                modelVersion: 1,
+                year: f.year,
+                players,
+                tradeStart: f.trades.length,
+                tradeCount: 0,
+              },
+            ],
+          },
+          limit,
+        )
+      : cpuTrades(developed, f.year, state.run.seasonSeed, limit);
   return {
     ...state,
     franchise: {

@@ -2,7 +2,11 @@ import { POKEMON, POKEMON_BY_ID } from "../data/pokemon";
 import { nextRandom } from "./random";
 import { ROSTER_SLOTS, type Roster } from "./types";
 
-export function validRoster(value: Roster, includeLegends = true): boolean {
+export function validRoster(
+  value: Roster,
+  includeLegends = true,
+  maxSpeciesId = 251,
+): boolean {
   if (!value || Object.keys(value).length !== 8) return false;
   const ids = ROSTER_SLOTS.map((position) => value[position]);
   const filled = ids.filter((id) => id !== null);
@@ -11,7 +15,7 @@ export function validRoster(value: Roster, includeLegends = true): boolean {
     ids.every((id) => {
       if (id === null) return true;
       const mon = POKEMON_BY_ID.get(id);
-      return !!mon && (includeLegends || !mon.legendary);
+      return !!mon && id <= maxSpeciesId && (includeLegends || !mon.legendary);
     })
   );
 }
@@ -21,7 +25,8 @@ export function parseLineup(search: string): Roster | null {
   if (!source || !/^\d{1,3}(,\d{1,3}){4}(,\d{1,3}){0,3}$/.test(source))
     return null;
   const ids = source.split(",").map(Number);
-  if (ids.length !== 5 && ids.length !== 8) return null;
+  if ((ids.length !== 5 && ids.length !== 8) || ids.some((id) => id > 251))
+    return null;
   const roster = Object.fromEntries(
     ROSTER_SLOTS.map((p, i) => [p, ids[i] || null]),
   ) as Roster;

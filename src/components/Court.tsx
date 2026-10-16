@@ -31,7 +31,11 @@ export function Court({
     <section className="lineup-panel" aria-label="Your starting lineup">
       <div className="panel-heading">
         <div>
-          <span className="eyebrow">KANTO + JOHTO · 251 POKÉMON</span>
+          <span className="eyebrow">
+            {run.leagueTeams
+              ? "YOUR FRANCHISE · EIGHT-PLAYER ROSTER"
+              : "KANTO + JOHTO · 251 POKÉMON"}
+          </span>
           <h2>
             The starting five
             <span className="count-chip">{ratings.filled} / 5</span>

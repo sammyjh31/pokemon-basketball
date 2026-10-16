@@ -37,7 +37,7 @@ describe("draft rules", () => {
     const run = createRun("spin", true, 32);
     const id = run.offerIds[0];
     const picked = placePokemon(run, id, "PG");
-    expect(placePokemon(run, 999, "PG")).toBe(run);
+    expect(placePokemon(run, 1026, "PG")).toBe(run);
     expect(placePokemon(picked, picked.offerIds[0], "PG")).toBe(picked);
     expect(placePokemon(picked, id, "SG")).toBe(picked);
     expect(swapPositions(picked, "PG", "C")).toBe(picked);
@@ -50,6 +50,7 @@ describe("draft rules", () => {
     let run = createRun("free", false, 1);
     expect(run.offerIds).toEqual([]);
     expect(placePokemon(run, 150, "PG")).toBe(run);
+    expect(placePokemon(run, 252, "PG")).toBe(run);
     run = placePokemon(run, 65, "PG");
     run = placePokemon(run, 143, "C");
     expect(placePokemon(run, 65, "SF")).toBe(run);

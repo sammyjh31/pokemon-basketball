@@ -98,6 +98,17 @@
 .league-leaders-table th:first-child {
   min-width: 224px;
 }
+.league-stat-categories {
+  width: fit-content;
+  margin: 16px 0;
+}
+.league-stat-categories button {
+  min-height: 44px;
+  min-width: 108px;
+}
+.league-defense-table {
+  min-width: 920px;
+}
 .league-standings {
   min-width: 900px;
 }

@@ -63,6 +63,23 @@ describe("league box scores", () => {
       expect(within(totals).getAllByRole("cell")[1]).toHaveTextContent(
         String(score),
       );
+      const playerBoxes = team.id === 0 ? replay.homeBox : replay.awayBox;
+      const headers = within(table)
+        .getAllByRole("columnheader")
+        .map((header) => header.textContent);
+      for (const [label, key] of [
+        ["DREB", "defensiveRebounds"],
+        ["OREB", "offensiveRebounds"],
+      ] as const) {
+        expect(
+          within(table).getByRole("columnheader", { name: label }),
+        ).toBeInTheDocument();
+        expect(
+          within(totals).getAllByRole("cell")[headers.indexOf(label) - 1],
+        ).toHaveTextContent(
+          String(playerBoxes.reduce((sum, p) => sum + p[key], 0)),
+        );
+      }
       expect(
         within(table).getByRole("columnheader", { name: "PF" }),
       ).toBeInTheDocument();

@@ -1,0 +1,73 @@
+{
+  "retrieved": "2026-10-16T07:14:08.013192+00:00",
+  "factsCommit": "81d20919845b6a445969b9265aab5cec6b04cece",
+  "spritesCommit": "ba403973fdf9d0ac59175813861e6a1f8ed5020c",
+  "importedIds": [
+    252,
+    1025
+  ],
+  "preservedIds": [
+    1,
+    251
+  ],
+  "generations": {
+    "3": [
+      252,
+      386
+    ],
+    "4": [
+      387,
+      493
+    ],
+    "5": [
+      494,
+      649
+    ],
+    "6": [
+      650,
+      721
+    ],
+    "7": [
+      722,
+      809
+    ],
+    "8": [
+      810,
+      905
+    ],
+    "9": [
+      906,
+      1025
+    ]
+  },
+  "files": {
+    "pokemon.csv": {
+      "source": "https://raw.githubusercontent.com/PokeAPI/pokeapi/81d20919845b6a445969b9265aab5cec6b04cece/data/v2/csv/pokemon.csv",
+      "sha256": "16c81c33188b0eac403aa2f759fcbe9e42c611f722d263f5b5a6a5bff9f8ce6b"
+    },
+    "pokemon_stats.csv": {
+      "source": "https://raw.githubusercontent.com/PokeAPI/pokeapi/81d20919845b6a445969b9265aab5cec6b04cece/data/v2/csv/pokemon_stats.csv",
+      "sha256": "fa2c44263a3706468682fefc3e0b3c4f5487fe9febed7d4ebcd6939c34b16aa8"
+    },
+    "pokemon_types.csv": {
+      "source": "https://raw.githubusercontent.com/PokeAPI/pokeapi/81d20919845b6a445969b9265aab5cec6b04cece/data/v2/csv/pokemon_types.csv",
+      "sha256": "f1fc4bfd657a034ea3bf6972423b10276424aa068577b304a78a08996425ba05"
+    },
+    "types.csv": {
+      "source": "https://raw.githubusercontent.com/PokeAPI/pokeapi/81d20919845b6a445969b9265aab5cec6b04cece/data/v2/csv/types.csv",
+      "sha256": "37f039c8d722f47d51ba1c5c5ecf9b7007235b1a9a1af2827645c777b70307c8"
+    },
+    "pokemon_species.csv": {
+      "source": "https://raw.githubusercontent.com/PokeAPI/pokeapi/81d20919845b6a445969b9265aab5cec6b04cece/data/v2/csv/pokemon_species.csv",
+      "sha256": "e66e2eeb25fd3836b0ebab6bf87bbf01960aa3c0555e2bac495fa8393c5e0c45"
+    },
+    "pokemon_species_names.csv": {
+      "source": "https://raw.githubusercontent.com/PokeAPI/pokeapi/81d20919845b6a445969b9265aab5cec6b04cece/data/v2/csv/pokemon_species_names.csv",
+      "sha256": "820cde17074cdb1c2b0595c997fb8f998e773bd5da3bb525dec85703c86c5fd9"
+    },
+    "generations.csv": {
+      "source": "https://raw.githubusercontent.com/PokeAPI/pokeapi/81d20919845b6a445969b9265aab5cec6b04cece/data/v2/csv/generations.csv",
+      "sha256": "d39634465251f1334aa0389b5adc4b4f2754eaec61f305fceb9432a3d4c96748"
+    }
+  }
+}

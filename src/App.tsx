@@ -222,6 +222,13 @@ export default function App({
       }}
       onSimulateSeason={() => void advanceSeason(82)}
       onTraining={(plans) => dispatch({ type: "TRAINING_PLANS", plans })}
+      onTradePackage={(offer) => dispatch({ type: "TRADE_PACKAGE", offer })}
+      onRoster={(settings) => dispatch({ type: "OFFSEASON_ROSTER", settings })}
+      onBeginDraft={() => dispatch({ type: "BEGIN_ROOKIE_DRAFT" })}
+      onAdvanceDraft={() => dispatch({ type: "ADVANCE_ROOKIE_DRAFT" })}
+      onPickRookie={(pokemonId, releasedId) =>
+        dispatch({ type: "PICK_ROOKIE", pokemonId, releasedId })
+      }
       onTrade={(teamId, giveId, receiveId) =>
         dispatch({ type: "TRADE", teamId, giveId, receiveId })
       }

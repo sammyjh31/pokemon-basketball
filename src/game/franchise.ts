@@ -1,3 +1,6 @@
+import type { TradePackage } from "./tradeTypes";
+import { evaluateTradePackage } from "./tradeMarket";
+import { exchangePackage } from "./rosterTrades";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { createRun } from "./draft";
 import { captureSeasonReplay } from "./archive";
@@ -263,6 +266,7 @@ export function enterOffseason(state: GameState): GameState {
     careers: addSeason(previous?.careers ?? [], run),
     history: [...(previous?.history ?? []), archive],
     trades: previous?.trades ?? [],
+    ...(previous?.rookieDrafts ? { rookieDrafts: previous.rookieDrafts } : {}),
     ...(previous?.offseasons ? { offseasons: previous.offseasons } : {}),
     ...(previous?.trainingPlans
       ? { trainingPlans: previous.trainingPlans }
@@ -280,7 +284,10 @@ export function startFranchiseSeason(
     !franchise ||
     !validPhase(franchise, "offseason") ||
     !Number.isSafeInteger(seed) ||
-    franchise.year >= FRANCHISE_MAX_YEARS
+    franchise.year >= FRANCHISE_MAX_YEARS ||
+    (franchise.rookieDrafts !== undefined &&
+      (franchise.rookieDrafts.at(-1)?.year !== franchise.year ||
+        !franchise.rookieDrafts.at(-1)?.complete))
   )
     return state;
   let teams: LeagueTeam[];
@@ -406,6 +413,12 @@ export function evaluateTrade(
   });
   if (!validPhase(franchise, "offseason"))
     return reject("Trades are available only during the offseason.");
+  if (
+    franchise.rookieDrafts?.some(
+      (draft) => draft.year === franchise.year && !draft.complete,
+    )
+  )
+    return reject("Complete the current rookie draft before trading.");
   if (franchise.trades.length >= FRANCHISE_MAX_TRADES)
     return reject(
       "This franchise has reached its 10,000-trade save limit. You can still continue playing seasons.",
@@ -509,6 +522,50 @@ export function applyTrade(
       trades: [
         ...franchise.trades,
         { year: franchise.year, teamId, giveId, receiveId },
+      ],
+    },
+  };
+}
+
+/** The preview and execution use the same current ownership and coach evaluation. */
+export function applyTradePackage(
+  state: GameState,
+  offer: TradePackage,
+): GameState {
+  const f = state.franchise;
+  if (!f || !offer) return state;
+  const evaluation = evaluateTradePackage(f, offer);
+  if (!evaluation.accepted) return state;
+  const giveIds = [...offer.giveIds].sort((a, b) => a - b),
+    receiveIds = [...offer.receiveIds].sort((a, b) => a - b);
+  const teams = exchangePackage(f.teams, 0, offer.teamId, giveIds, receiveIds);
+  return {
+    ...state,
+    franchise: {
+      ...f,
+      modelVersion: 3,
+      teams,
+      ...(f.trainingPlans
+        ? {
+            trainingPlans: Object.fromEntries(
+              Object.entries(f.trainingPlans).filter(
+                ([id]) => !giveIds.includes(Number(id)),
+              ),
+            ),
+          }
+        : {}),
+      trades: [
+        ...f.trades,
+        {
+          year: f.year,
+          teamId: offer.teamId,
+          giveId: giveIds[0],
+          receiveId: receiveIds[0],
+          packageVersion: 1,
+          giveIds,
+          receiveIds,
+          reason: evaluation.reason,
+        },
       ],
     },
   };

@@ -208,7 +208,7 @@ describe("Pokémon basketball ratings", () => {
     expect(
       Object.values(rotationMinutes(emptyRoster())).every((n) => n === 0),
     ).toBe(true);
-    const minutes = rotationMinutes({ ...emptyRoster(), PG: 65, B1: 999 });
+    const minutes = rotationMinutes({ ...emptyRoster(), PG: 65, B1: 1026 });
     expect(minutes.PG).toBeGreaterThan(0);
     expect(minutes.PG).toBeLessThanOrEqual(40);
     expect(

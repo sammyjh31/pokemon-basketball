@@ -58,12 +58,23 @@ it("continues a completed league into the next season and restores its careers w
   expect(
     screen.queryByRole("region", { name: "Your starting lineup" }),
   ).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Start season 2" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Open rookie draft" }));
+  fireEvent.click(screen.getByRole("button", { name: "Begin rookie draft" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Draft recommended pick" }),
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: "Draft recommended pick" }),
+  );
+  const drafted = JSON.parse(storage.getItem(STORAGE_KEY)!) as GameState;
+  expect(drafted.franchise!.rookieDrafts![0].picks).toHaveLength(60);
   fireEvent.click(screen.getByRole("button", { name: "Start season 2" }));
   const ready = JSON.parse(storage.getItem(STORAGE_KEY)!) as GameState;
   expect(ready.franchise?.year).toBe(2);
   expect(ready.run.result).toBeNull();
   expect(ready.run.playoffs).toBeUndefined();
-  expect(ready.run.leagueTeams).toEqual(archived.franchise!.teams);
+  expect(ready.run.leagueTeams).toEqual(drafted.franchise!.teams);
   expect(screen.getByRole("button", { name: "Lineup builder" })).toBeDisabled();
   fireEvent.click(
     screen.getByRole("button", {
@@ -114,6 +125,7 @@ it("continues a completed league into the next season and restores its careers w
   ).toBeInTheDocument();
 }, 20000);
 
+import { suggestTrades } from "../game/tradeMarket";
 import { POKEMON_BY_ID } from "../data/pokemon";
 const nameOf = (id: number) => POKEMON_BY_ID.get(id)!.name;
 
@@ -121,41 +133,32 @@ it("saves an accepted offseason trade, keeps careers, and restores both rosters"
   vi.useFakeTimers();
   const offseason = enterOffseason(finished),
     franchise = offseason.franchise!;
-  const offer = franchise.teams
-    .slice(1)
-    .flatMap((team) =>
-      Object.values(franchise.teams[0].roster).flatMap((giveId) =>
-        Object.values(team.roster).map((receiveId) => ({
-          teamId: team.id,
-          giveId: giveId!,
-          receiveId: receiveId!,
-        })),
-      ),
-    )
-    .find(
-      ({ teamId, giveId, receiveId }) =>
-        evaluateTrade(franchise, teamId, giveId, receiveId).accepted,
-    )!;
+  const offer = suggestTrades(franchise, { packageSize: 2, limit: 1 })[0]
+    ?.offer;
   expect(offer).toBeDefined();
   const storage = memory();
   const mounted = render(<App initial={offseason} storage={storage} />);
+  fireEvent.click(screen.getByRole("button", { name: "Trade market" }));
   fireEvent.change(screen.getByLabelText("Trade partner"), {
     target: { value: String(offer.teamId) },
   });
-  fireEvent.change(screen.getByLabelText("Player you send"), {
-    target: { value: String(offer.giveId) },
-  });
-  fireEvent.change(screen.getByLabelText("Player you receive"), {
-    target: { value: String(offer.receiveId) },
-  });
+  for (const id of offer.giveIds)
+    fireEvent.click(screen.getByLabelText(`Send ${nameOf(id)}`));
+  for (const id of offer.receiveIds)
+    fireEvent.click(screen.getByLabelText(`Receive ${nameOf(id)}`));
   fireEvent.click(screen.getByRole("button", { name: "Complete trade" }));
   const traded = JSON.parse(storage.getItem(STORAGE_KEY)!) as GameState;
-  expect(traded.franchise!.trades).toEqual([{ year: 1, ...offer }]);
+  expect(traded.franchise!.trades).toHaveLength(1);
+  expect(traded.franchise!.trades[0]).toMatchObject({
+    year: 1,
+    ...offer,
+    packageVersion: 1,
+  });
   expect(Object.values(traded.franchise!.teams[0].roster)).toContain(
-    offer.receiveId,
+    offer.receiveIds[0],
   );
   expect(Object.values(traded.franchise!.teams[offer.teamId].roster)).toContain(
-    offer.giveId,
+    offer.giveIds[0],
   );
   expect(traded.franchise!.careers).toEqual(franchise.careers);
   expect(traded.run).toEqual(offseason.run);
@@ -166,8 +169,8 @@ it("saves an accepted offseason trade, keeps careers, and restores both rosters"
   });
   expect(JSON.parse(storage.getItem(STORAGE_KEY)!)).toEqual(traded);
   expect(
-    screen.getByRole("list", { name: "Your offseason roster" }),
-  ).toHaveTextContent(nameOf(offer.receiveId));
+    screen.getByRole("region", { name: "Offseason roster management" }),
+  ).toHaveTextContent(nameOf(offer.receiveIds[0]));
   fireEvent.click(
     screen.getByRole("button", { name: "End franchise / new draft" }),
   );

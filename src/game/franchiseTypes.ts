@@ -1,3 +1,4 @@
+import type { RookieDraft } from "./rookieDraftTypes";
 import type { TrainingPlans, SeasonReplayArchive } from "./franchiseFeatures";
 import type { LeaguePlayer, LeagueTeam, Standing, SeasonAward } from "./types";
 import type { FinalsMvp } from "./playoffTypes";
@@ -61,6 +62,9 @@ export interface FranchiseSeason {
   replay?: SeasonReplayArchive;
 }
 export interface FranchiseTrade {
+  packageVersion?: 1;
+  giveIds?: number[];
+  receiveIds?: number[];
   year: number;
   teamId: number;
   giveId: number;
@@ -79,6 +83,7 @@ export interface Franchise {
   trades: FranchiseTrade[];
   offseasons?: OffseasonReport[];
   trainingPlans?: TrainingPlans;
+  rookieDrafts?: RookieDraft[];
 }
 export interface TradeEvaluation {
   accepted: boolean;

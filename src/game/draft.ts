@@ -63,6 +63,7 @@ export function placePokemon(
   if (
     run.result ||
     !mon ||
+    pokemonId > 251 ||
     !ROSTER_SLOTS.includes(position) ||
     (!run.includeLegends && mon.legendary) ||
     Object.values(run.roster).includes(pokemonId)

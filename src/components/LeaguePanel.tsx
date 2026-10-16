@@ -125,6 +125,46 @@ const columns: Column[] = [
     value: (p) => p.plusMinus,
   },
 ];
+const defenseColumns: Column[] = [
+  columns.find((column) => column.key === "gp")!,
+  columns.find((column) => column.key === "minutes")!,
+  {
+    key: "defensiveRebounds",
+    label: "DREB",
+    title: "defensive rebounds",
+    value: (p) => p.defensiveRebounds,
+  },
+  columns.find((column) => column.key === "steals")!,
+  columns.find((column) => column.key === "blocks")!,
+  {
+    key: "stocks",
+    label: "STL+BLK",
+    title: "steals plus blocks (stocks)",
+    value: (p) => p.steals + p.blocks,
+  },
+  columns.find((column) => column.key === "fouls")!,
+  {
+    key: "dreb36",
+    label: "DREB/36",
+    title: "defensive rebounds per 36 minutes",
+    value: (p) => ratio(p.defensiveRebounds * 36, p.minutes),
+    kind: "ratio",
+  },
+  {
+    key: "stl36",
+    label: "STL/36",
+    title: "steals per 36 minutes",
+    value: (p) => ratio(p.steals * 36, p.minutes),
+    kind: "ratio",
+  },
+  {
+    key: "blk36",
+    label: "BLK/36",
+    title: "blocks per 36 minutes",
+    value: (p) => ratio(p.blocks * 36, p.minutes),
+    kind: "ratio",
+  },
+];
 const formatted = (
   value: number | null,
   kind?: Column["kind"],
@@ -194,9 +234,11 @@ export function Leaders({
   const [team, setTeam] = useState("all"),
     [query, setQuery] = useState(""),
     [totals, setTotals] = useState(false),
-    [qualified, setQualified] = useState(false);
+    [qualified, setQualified] = useState(false),
+    [defense, setDefense] = useState(false);
   const [sort, setSort] = useState({ key: "points", descending: true });
-  const column = columns.find((c) => c.key === sort.key)!;
+  const displayedColumns = defense ? defenseColumns : columns;
+  const column = displayedColumns.find((c) => c.key === sort.key)!;
   const value = (p: LeaguePlayer, c: Column) => {
     const n = c.value(p);
     return n === null || c.kind || totals ? n : perGame(p, n);
@@ -227,9 +269,11 @@ export function Leaders({
       <div className="results-section-heading">
         <div>
           <h4>
-            {postseason
-              ? "Every playoff possession."
-              : "Every player. Every possession."}
+            {defense
+              ? "Defensive production."
+              : postseason
+                ? "Every playoff possession."
+                : "Every player. Every possession."}
           </h4>
           <p>
             {players.length} of {league.players.length} players · Select a
@@ -256,6 +300,36 @@ export function Leaders({
             Totals
           </button>
         </div>
+      </div>
+      <div
+        className="league-stat-categories stat-mode"
+        role="group"
+        aria-label={`${scope} statistic category`}
+      >
+        <button
+          type="button"
+          aria-pressed={!defense}
+          onClick={() => {
+            if (defense) {
+              setDefense(false);
+              setSort({ key: "points", descending: true });
+            }
+          }}
+        >
+          All stats
+        </button>
+        <button
+          type="button"
+          aria-pressed={defense}
+          onClick={() => {
+            if (!defense) {
+              setDefense(true);
+              setSort({ key: "stocks", descending: true });
+            }
+          }}
+        >
+          Defense
+        </button>
       </div>
       <div className="league-controls">
         <label className="league-field">
@@ -294,7 +368,9 @@ export function Leaders({
         role="region"
         aria-label={`Scrollable ${scope.toLowerCase()} player statistics`}
       >
-        <table className="results-table league-leaders-table">
+        <table
+          className={`results-table league-leaders-table${defense ? " league-defense-table" : ""}`}
+        >
           <caption className="sr-only">
             {scope} player statistics —{" "}
             {totals
@@ -302,11 +378,12 @@ export function Leaders({
                 ? "playoff totals"
                 : "season totals"
               : "per game averages"}
+            {defense ? " — defense" : ""}
           </caption>
           <thead>
             <tr>
               <th scope="col">PLAYER / TEAM</th>
-              {columns.map((c) => (
+              {displayedColumns.map((c) => (
                 <th
                   key={c.key}
                   scope="col"
@@ -344,7 +421,7 @@ export function Leaders({
                 <th scope="row">
                   <PlayerName player={p} />
                 </th>
-                {columns.map((c) => (
+                {displayedColumns.map((c) => (
                   <td
                     key={c.key}
                     className={sort.key === c.key ? "sorted-stat" : undefined}
@@ -361,12 +438,27 @@ export function Leaders({
         <p className="league-empty">No players match these filters.</p>
       )}
       <p className="stat-legend">
-        Per-game points, rebounds and assists are PPG, RPG and APG.{" "}
-        {postseason
-          ? "Playoff games only; every qualified team's players are included, with no minimum sample. "
-          : "Qualified leaders require 58 games. When sorting percentages, also require 300 FGA for FG% / TS%, 82 three-point attempts for 3P%, or 125 FTA for FT%. "}
-        TS% = PTS ÷ [2 × (FGA + 0.44 × FTA)]. Per-36 and AST/TOV are ratios in
-        both modes. — means no denominator.
+        {defense ? (
+          <>
+            DREB = defensive rebounds. Stocks (STL+BLK) = steals + blocks. PF =
+            personal fouls. Per-36 rates divide the recorded total by minutes
+            played, then multiply by 36; these rates stay the same in both
+            display modes.{" "}
+            {postseason
+              ? "Playoff games only, with no minimum sample."
+              : "Qualified leaders require 58 games."}{" "}
+            — means no denominator.
+          </>
+        ) : (
+          <>
+            Per-game points, rebounds and assists are PPG, RPG and APG.{" "}
+            {postseason
+              ? "Playoff games only; every qualified team's players are included, with no minimum sample. "
+              : "Qualified leaders require 58 games. When sorting percentages, also require 300 FGA for FG% / TS%, 82 three-point attempts for 3P%, or 125 FTA for FT%. "}
+            TS% = PTS ÷ [2 × (FGA + 0.44 × FTA)]. Per-36 and AST/TOV are ratios
+            in both modes. — means no denominator.
+          </>
+        )}
       </p>
     </section>
   );

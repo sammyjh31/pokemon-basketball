@@ -24,3 +24,31 @@ Pixel sprites for all 251 species are PokeAPI's [Generation V Black/White sprite
 Inter and Roboto Condensed are bundled through the `@fontsource/inter` and `@fontsource/roboto-condensed` npm packages under the SIL Open Font License. Their license texts are retained in those installed packages. The UI uses the Latin 400/500/600 Inter and 700/800 Roboto Condensed subsets.
 
 The [Pokémon All-22](https://all22pokemon.com/) reference was inspected on 2026-10-15 for layout, typography, pixel-sprite presentation, and builder interactions. Basketball court geometry, components, and styles are maintained in this repository; no reference-site source code was imported.
+# Rookie franchise catalog
+
+The original `pokemon.json`, source manifest, artwork and pixel manifests remain
+unchanged. Rookie drafts use `rookie-pokemon.json`, imported separately from the
+official [PokeAPI CSV database](https://github.com/PokeAPI/pokeapi/tree/81d20919845b6a445969b9265aab5cec6b04cece/data/v2/csv)
+at commit `81d20919845b6a445969b9265aab5cec6b04cece`.
+`rookie-source-manifest.json` records each input's SHA-256 digest and the import time.
+Generation assignments come from `pokemon_species.csv`; `generations.csv` lists
+Generation IX as the latest generation in this pinned snapshot. The bundled ranges
+are III 252–386, IV 387–493, V 494–649, VI 650–721, VII 722–809, VIII 810–905,
+and IX 906–1025. Legendary and mythical flags both use the existing legendary toggle.
+
+Each species uses its default form's six base stats, metric height and weight,
+ordered types and English species name. These are factual inputs to this project's
+fictional basketball ratings. `POKEMON` remains the initial 251-player catalog;
+`FRANCHISE_POKEMON` and `POKEMON_BY_ID` additionally expose franchise rookies.
+
+Rookie portraits and pixels are bundled under the existing `/pokemon/{id}.png`
+and `/pokemon-pixel/{id}.png` paths. Their separate `rookie-manifest.json` files
+record the source URL and SHA-256 for every image, pinned to the official
+[PokeAPI sprites repository](https://github.com/PokeAPI/sprites/tree/ba403973fdf9d0ac59175813861e6a1f8ed5020c)
+at commit `ba403973fdf9d0ac59175813861e6a1f8ed5020c`. Generations III–V use the Generation V pixel collection; later generations use
+the repository's default sprite collection because the Generation V game did not
+contain those species. No runtime network request is needed to load these images.
+
+Reproduce the separate import with `python3 scripts/import-rookies.py --assets`.
+Verified HTTPS stays enabled, existing rookie images are checked against their
+manifest, and the script never writes the original 251 facts or asset manifests.

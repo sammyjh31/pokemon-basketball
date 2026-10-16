@@ -15,6 +15,12 @@ const playerName = (id: number) =>
 const clubName = (teams: LeagueTeam[], id: number) =>
   teams.find((team) => team.id === id)?.name ?? `Team ${id}`;
 const signed = (value: number) => `${value > 0 ? "+" : ""}${value}`;
+const packageNames = (ids: number[]) => {
+  const names = ids.map(playerName);
+  return names.length < 2
+    ? names[0]
+    : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+};
 
 export function TradeActivity({
   trade,
@@ -28,10 +34,11 @@ export function TradeActivity({
   return (
     <>
       <span>
-        {from} sends {playerName(trade.giveId)} to {to}.
+        {from} sends {packageNames(trade.giveIds ?? [trade.giveId])} to {to}.
       </span>
       <span>
-        {to} sends {playerName(trade.receiveId)} to {from}.
+        {to} sends {packageNames(trade.receiveIds ?? [trade.receiveId])} to{" "}
+        {from}.
       </span>
       {trade.reason && <p>{trade.reason}</p>}
     </>

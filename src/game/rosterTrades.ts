@@ -172,3 +172,119 @@ export function cpuTrades(
   }
   return { teams: updated, trades };
 }
+
+/** Exchange equal packages, assigning incoming players only to the vacated slots. */
+export function exchangePackage(
+  teams: LeagueTeam[],
+  fromTeamId: number,
+  teamId: number,
+  giveIds: number[],
+  receiveIds: number[],
+): LeagueTeam[] {
+  const source = teams.find((team) => team.id === fromTeamId),
+    partner = teams.find((team) => team.id === teamId);
+  const owns = (team: LeagueTeam, ids: number[]) =>
+    ids.every(
+      (id) => POKEMON_BY_ID.has(id) && Object.values(team.roster).includes(id),
+    );
+  if (
+    !source ||
+    !partner ||
+    source === partner ||
+    !Array.isArray(giveIds) ||
+    !Array.isArray(receiveIds) ||
+    giveIds.length < 1 ||
+    giveIds.length > 3 ||
+    giveIds.length !== receiveIds.length ||
+    new Set([...giveIds, ...receiveIds]).size !== giveIds.length * 2 ||
+    !owns(source, giveIds) ||
+    !owns(partner, receiveIds)
+  )
+    return teams;
+  const replace = (
+    team: LeagueTeam,
+    other: LeagueTeam,
+    outgoing: number[],
+    incoming: number[],
+  ): LeagueTeam => {
+    const slots = ROSTER_SLOTS.filter((slot) =>
+      outgoing.includes(team.roster[slot]!),
+    );
+    const candidates = [...incoming].sort((a, b) => a - b);
+    const fits = new Map(
+      candidates.map((id) => [
+        id,
+        POSITIONS.map((position) =>
+          positionRating(
+            POKEMON_BY_ID.get(id)!,
+            position,
+            other.development?.[id],
+          ),
+        ),
+      ]),
+    );
+    let best = candidates,
+      bestScore = -Infinity;
+    const assign = (order: number[], remaining: number[]) => {
+      if (remaining.length) {
+        for (const id of remaining)
+          assign(
+            [...order, id],
+            remaining.filter((candidate) => candidate !== id),
+          );
+        return;
+      }
+      const score = order.reduce((sum, id, index) => {
+        const slot = slots[index],
+          starter = POSITIONS.indexOf(slot as Position),
+          ratings = fits.get(id)!;
+        const minutes =
+          team.rotationPlan?.minutes[slot] ?? (starter >= 0 ? 34 : 23);
+        return (
+          sum +
+          (starter >= 0 ? ratings[starter] : Math.max(...ratings)) * minutes
+        );
+      }, 0);
+      if (score > bestScore + 1e-9) {
+        best = order;
+        bestScore = score;
+      }
+    };
+    assign([], candidates);
+    const roster = { ...team.roster };
+    slots.forEach((slot, index) => {
+      roster[slot] = best[index];
+    });
+    const development: PlayerDevelopment | undefined =
+      team.development || other.development
+        ? { ...team.development }
+        : undefined;
+    if (development) {
+      outgoing.forEach((id) => {
+        delete development[id];
+      });
+      incoming.forEach((id) => {
+        development[id] = { ...(other.development?.[id] ?? {}) };
+      });
+    }
+    return {
+      ...team,
+      roster,
+      ...(development ? { development } : {}),
+      ratings: teamRatings(
+        roster,
+        team.tactic,
+        team.rotation,
+        development,
+        team.rotationPlan,
+      ),
+    };
+  };
+  return teams.map((team) =>
+    team.id === fromTeamId
+      ? replace(team, partner, giveIds, receiveIds)
+      : team.id === teamId
+        ? replace(team, source, receiveIds, giveIds)
+        : team,
+  );
+}

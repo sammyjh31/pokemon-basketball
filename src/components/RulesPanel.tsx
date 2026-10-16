@@ -53,9 +53,9 @@ export function RulesPanel() {
             <p>
               Each Pokémon can appear only once across the entire league. Your
               eight picks are reserved before the other 29 teams draft their
-              rosters. Excluding legendary and mythical species leaves exactly
-              240 eligible players. All eight slots must be filled before you
-              simulate. Changing modes or the legendary pool starts a new run.
+              rosters. The legendary toggle also controls mythical species. All
+              eight slots must be filled before you simulate. Changing modes or
+              the legendary pool starts a new run.
             </p>
           </div>
           <div>
@@ -281,25 +281,71 @@ export function RulesPanel() {
         <h3>Keep building your franchise</h3>
         <p>
           After the Finals, choose <b>Continue as franchise</b>. Your completed
-          season becomes Year 1, and every club keeps its eight Pokémon. In each
-          offseason, offer one player for a player on another team. Other clubs
-          evaluate ability and roster fit before accepting. Trades preserve
-          eight players per team and unique species across the league.
+          season becomes Year 1. Development changes basketball skills based on
+          minutes, production and individual training. The report explains each
+          player's gains and declines. Other clubs can make up to six trades,
+          with at most one deal per club; your players are never traded
+          automatically.
+        </p>
+        <p>
+          Search the trade market by player, club, position or availability.
+          Offer one, two or three players for the same number from one club.
+          Other clubs consider talent, coaching, position coverage, development
+          and their recent season. Available, Listening and Core player labels
+          describe asking price. Use <b>Find deals</b> for accepted suggestions
+          around a target or outgoing package, then review the offer. The search
+          checks a limited set of packages, and every deal is evaluated again
+          before execution. Trades preserve eight players per club and unique
+          species across the league.
+        </p>
+        <p>
+          During the offseason, swap any two roster slots, promote reserves, and
+          set offense, defense and rotation. You can assign 240 minutes and five
+          positive-minute closers. Minutes belong to slots, so a trade or rookie
+          replacement inherits its destination's minutes. Retained players keep
+          their development and training plans. These changes carry into the
+          next season while completed games stay unchanged.
+        </p>
+        <h3>A new rookie class every offseason</h3>
+        <p>
+          After development, begin a two-round rookie draft: 30 picks in each
+          round. The worst prior-season record picks first, with lower point
+          differential and then club ID breaking ties. Both rounds use the same
+          order. Your first class is Generation III, followed by IV through IX.
+          Existing franchises begin with Generation III when they first draft.
+        </p>
+        <p>
+          Search prospects, filter by position and inspect scouting reports.
+          Choose both a rookie and the owned player they replace, or use the
+          displayed coaching recommendation. Every pick keeps the club at eight
+          players. CPU clubs draft for ability and roster need, advancing to
+          your next turn; the board shows every pick and release. Trades pause
+          while a draft is incomplete, and the draft must finish before you
+          start the next season.
+        </p>
+        <p>
+          After Generation IX, classes draw from remaining eligible
+          later-generation prospects. Anyone previously drafted or rostered is
+          ineligible, even after release. The legendary setting applies to
+          rookies. If no eligible prospects remain, the board explains that the
+          remaining picks were skipped and you can continue the franchise.
         </p>
         <p>
           Start the next season with a fresh schedule, set your positions and
           coaching, then play another regular season and playoffs. Career totals
-          follow each Pokémon across trades, with regular-season and playoff
-          statistics kept separately. Season history preserves league awards,
-          All-League and All-Defense selections, champions and Finals MVPs.
-          Championship rings belong to all eight players on the winning roster.
+          follow each Pokémon across trades and remain after a rookie-draft
+          release, with regular-season and playoff statistics kept separately.
+          Season history preserves league awards, All-League and All-Defense
+          selections, champions and Finals MVPs. Championship rings belong to
+          all eight players on the winning roster.
         </p>
         <p>
-          Full box scores are available for the active season. Older seasons
-          retain records, rosters and honors while their statistics contribute
-          to career totals. Franchise seasons do not add attempts to your Spin &
-          Pick or Free Draft records. Progress saves in this browser; ending a
-          franchise replaces its history with a new draft.
+          Newly archived seasons preserve frozen rosters, coaching and full game
+          details. Earlier saves without detailed archives still retain their
+          records, rosters, honors and career totals. Franchise seasons do not
+          add attempts to your Spin & Pick or Free Draft records. Progress saves
+          in this browser; ending a franchise replaces its history with a new
+          draft.
         </p>
         <p>
           Older saves keep their original results and records. Completed league

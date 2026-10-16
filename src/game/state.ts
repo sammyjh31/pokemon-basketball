@@ -1,4 +1,14 @@
 import {
+  beginRookieDraft,
+  advanceRookieDraft,
+  selectRookie,
+} from "./rookieDraft";
+import type { TradePackage } from "./tradeTypes";
+import {
+  updateOffseasonRoster,
+  type OffseasonRosterSettings,
+} from "./offseasonRoster";
+import {
   autoFillBench,
   createRun,
   placePokemon,
@@ -27,12 +37,18 @@ import {
   archiveFranchiseSeason,
   startInteractiveFranchiseSeason,
   applyTrade,
+  applyTradePackage,
 } from "./franchise";
 import { processOffseason } from "./offseason";
 import type { RotationPlan, TrainingPlans } from "./franchiseFeatures";
 import { validateRotationPlan } from "./rotationPlan";
 import { validateTrainingPlans } from "./training";
 export type GameAction =
+  | { type: "TRADE_PACKAGE"; offer: TradePackage }
+  | { type: "BEGIN_ROOKIE_DRAFT" }
+  | { type: "ADVANCE_ROOKIE_DRAFT" }
+  | { type: "PICK_ROOKIE"; pokemonId: number; releasedId: number }
+  | { type: "OFFSEASON_ROSTER"; settings: OffseasonRosterSettings }
   | { type: "ROTATION_PLAN"; plan: RotationPlan | undefined }
   | { type: "TRAINING_PLANS"; plans: TrainingPlans }
   | { type: "APPLY_FRANCHISE_RUN"; source: Run; run: Run }
@@ -64,6 +80,15 @@ export function initialState(seed: number): GameState {
 }
 export function gameReducer(state: GameState, action: GameAction): GameState {
   const run = state.run;
+  if (action.type === "TRADE_PACKAGE")
+    return applyTradePackage(state, action.offer);
+  if (action.type === "BEGIN_ROOKIE_DRAFT")
+    return beginRookieDraft(processOffseason(state));
+  if (action.type === "ADVANCE_ROOKIE_DRAFT") return advanceRookieDraft(state);
+  if (action.type === "PICK_ROOKIE")
+    return selectRookie(state, action.pokemonId, action.releasedId);
+  if (action.type === "OFFSEASON_ROSTER")
+    return updateOffseasonRoster(state, action.settings);
   if (action.type === "ENTER_OFFSEASON")
     return processOffseason(archiveFranchiseSeason(state));
   if (action.type === "PROCESS_OFFSEASON") return processOffseason(state);
@@ -188,7 +213,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         }
       : state;
   if (action.type === "SET_LINEUP") {
-    if (run.mode !== "free" || !validRoster(action.roster, run.includeLegends))
+    if (
+      run.mode !== "free" ||
+      !validRoster(action.roster, run.includeLegends) ||
+      Object.values(action.roster).some((id) => id !== null && id > 251)
+    )
       return state;
     return { ...state, run: { ...run, roster: { ...action.roster } } };
   }

@@ -10,6 +10,7 @@ import {
   bestPosition,
   positionRating,
 } from "../game/ratings";
+import type { DevelopmentRatings } from "../game/developmentTypes";
 import type { LeaguePlayer, Run } from "../game/types";
 import { FranchiseDetailDialog } from "./FranchiseDetailDialog";
 
@@ -17,18 +18,56 @@ const average = (total: number, games: number) =>
   games ? (total / games).toFixed(1) : "—";
 const percentage = (made: number, attempts: number) =>
   attempts ? `${((100 * made) / attempts).toFixed(1)}%` : "—";
-function statCells(row: CareerTotals) {
+const count = (total: number, games: number, totals: boolean) =>
+  totals
+    ? total.toLocaleString("en-US", { maximumFractionDigits: 1 })
+    : average(total, games);
+const per36 = (total: number, minutes: number) =>
+  minutes ? ((total * 36) / minutes).toFixed(1) : "—";
+function defenseCells(row: CareerTotals, totals: boolean) {
+  return [
+    row.gamesPlayed,
+    ...[
+      row.minutes,
+      row.defensiveRebounds,
+      row.steals,
+      row.blocks,
+      row.steals + row.blocks,
+      row.fouls,
+    ].map((value) => count(value, row.gamesPlayed, totals)),
+    per36(row.defensiveRebounds, row.minutes),
+    per36(row.steals, row.minutes),
+    per36(row.blocks, row.minutes),
+  ];
+}
+const defenseHeaders = [
+  "GP",
+  "MIN",
+  "DREB",
+  "STL",
+  "BLK",
+  "STL+BLK",
+  "PF",
+  "DREB/36",
+  "STL/36",
+  "BLK/36",
+];
+function statCells(row: CareerTotals, totals: boolean) {
   return [
     row.gamesPlayed,
     row.gamesStarted,
-    average(row.minutes, row.gamesPlayed),
-    average(row.points, row.gamesPlayed),
-    average(row.offensiveRebounds + row.defensiveRebounds, row.gamesPlayed),
-    average(row.assists, row.gamesPlayed),
-    average(row.steals, row.gamesPlayed),
-    average(row.blocks, row.gamesPlayed),
-    average(row.turnovers, row.gamesPlayed),
-    average(row.plusMinus, row.gamesPlayed),
+    count(row.minutes, row.gamesPlayed, totals),
+    count(row.points, row.gamesPlayed, totals),
+    count(
+      row.offensiveRebounds + row.defensiveRebounds,
+      row.gamesPlayed,
+      totals,
+    ),
+    count(row.assists, row.gamesPlayed, totals),
+    count(row.steals, row.gamesPlayed, totals),
+    count(row.blocks, row.gamesPlayed, totals),
+    count(row.turnovers, row.gamesPlayed, totals),
+    count(row.plusMinus, row.gamesPlayed, totals),
     percentage(row.fgm, row.fga),
     percentage(row.threePM, row.threePA),
     percentage(row.ftm, row.fta),
@@ -69,6 +108,11 @@ export function CareerDetail({
   onClose: () => void;
 }) {
   const [phase, setPhase] = useState<"regular" | "playoffs">("regular");
+  const [defense, setDefense] = useState(false),
+    [totals, setTotals] = useState(false);
+  const headers = defense ? defenseHeaders : statHeaders;
+  const cells = (row: CareerTotals) =>
+    defense ? defenseCells(row, totals) : statCells(row, totals);
   const pokemon = POKEMON_BY_ID.get(pokemonId)!,
     team = franchise.teams.find((team) =>
       Object.values(team.roster).includes(pokemonId),
@@ -80,8 +124,23 @@ export function CareerDetail({
       ),
     [franchise, run, pokemonId],
   );
-  const skills = attributes(pokemon, team?.development?.[pokemonId]);
-  const best = bestPosition(pokemon, team?.development?.[pokemonId]);
+  const lastDevelopment =
+    team?.development?.[pokemonId] ??
+    (franchise.offseasons ?? []).reduce<DevelopmentRatings>(
+      (offsets, report) => {
+        const changes =
+          report.players.find((player) => player.pokemonId === pokemonId)
+            ?.changes ?? {};
+        for (const [key, value] of Object.entries(changes)) {
+          const skill = key as keyof DevelopmentRatings;
+          offsets[skill] = (offsets[skill] ?? 0) + value;
+        }
+        return offsets;
+      },
+      {},
+    );
+  const skills = attributes(pokemon, lastDevelopment);
+  const best = bestPosition(pokemon, lastDevelopment);
   const current = run.result ?? run.seasonProgress?.result;
   const currentPlayer =
     franchise.phase === "season"
@@ -96,16 +155,18 @@ export function CareerDetail({
     player?: LeaguePlayer;
     unavailable?: boolean;
     live?: boolean;
-  }[] = franchise.history.map((season) => ({
-    year: season.year,
-    teamId: season.rosters.findIndex((roster) => roster.includes(pokemonId)),
-    player: (phase === "regular"
-      ? season.replay?.regularPlayers
-      : season.replay?.playoffPlayers
-    )?.find((player) => player.pokemonId === pokemonId),
-    unavailable: !season.replay,
-  }));
-  if (franchise.phase === "season")
+  }[] = franchise.history
+    .map((season) => ({
+      year: season.year,
+      teamId: season.rosters.findIndex((roster) => roster.includes(pokemonId)),
+      player: (phase === "regular"
+        ? season.replay?.regularPlayers
+        : season.replay?.playoffPlayers
+      )?.find((player) => player.pokemonId === pokemonId),
+      unavailable: !season.replay,
+    }))
+    .filter((row) => row.teamId >= 0);
+  if (franchise.phase === "season" && team)
     rows.push({
       year: franchise.year,
       teamId: currentPlayer?.teamId ?? team?.id ?? 0,
@@ -157,16 +218,12 @@ export function CareerDetail({
   return (
     <FranchiseDetailDialog
       title={`${pokemon.name} career`}
-      eyebrow={`#${String(pokemonId).padStart(3, "0")} · ${team?.name ?? "Franchise player"}`}
+      eyebrow={`#${String(pokemonId).padStart(3, "0")} · ${team?.name ?? "Released"}`}
       onClose={onClose}
     >
       <div className="career-profile">
         <strong>
-          {positionRating(
-            pokemon,
-            best,
-            team?.development?.[pokemonId],
-          ).toFixed(1)}{" "}
+          {positionRating(pokemon, best, lastDevelopment).toFixed(1)}{" "}
           <small>BEST RATING · {best}</small>
         </strong>
         <p>
@@ -194,6 +251,48 @@ export function CareerDetail({
           Playoffs
         </button>
       </div>
+      <div className="stat-mode" role="group" aria-label="Player stat category">
+        <button
+          type="button"
+          aria-pressed={!defense}
+          onClick={() => setDefense(false)}
+        >
+          All stats
+        </button>
+        <button
+          type="button"
+          aria-pressed={defense}
+          onClick={() => setDefense(true)}
+        >
+          Defense
+        </button>
+      </div>
+      <div
+        className="stat-mode"
+        role="group"
+        aria-label="Player statistics display"
+      >
+        <button
+          type="button"
+          aria-pressed={!totals}
+          onClick={() => setTotals(false)}
+        >
+          Per game
+        </button>
+        <button
+          type="button"
+          aria-pressed={totals}
+          onClick={() => setTotals(true)}
+        >
+          Totals
+        </button>
+      </div>
+      {defense && (
+        <p>
+          Stocks (STL+BLK) are steals plus blocks. DREB/36, STL/36 and BLK/36
+          are per 36 minutes in both display modes; no minutes means no rate.
+        </p>
+      )}
       <div
         className="results-table-wrap"
         role="region"
@@ -203,12 +302,15 @@ export function CareerDetail({
         <table className="results-table career-season-table">
           <caption>
             {phase === "regular" ? "Regular-season" : "Playoff"} season rows ·
-            MIN, PTS, REB, AST, STL, BLK, TOV and +/− per game; DD, TD and POG
-            are totals
+            {defense ? " Defense · " : " "}
+            {totals ? "Totals" : "Per game"}
+            {defense
+              ? "; /36 columns remain rates"
+              : "; GP, GS, HIGH, DD, TD and POG are counts; shooting percentages remain rates"}
           </caption>
           <thead>
             <tr>
-              {["YEAR", "CLUB", ...statHeaders].map((header) => (
+              {["YEAR", "CLUB", ...headers].map((header) => (
                 <th key={header} scope="col">
                   {header}
                 </th>
@@ -224,14 +326,11 @@ export function CareerDetail({
                 </th>
                 <td>{franchise.teams[row.teamId]?.name ?? "—"}</td>
                 {row.player ? (
-                  statCells(row.player).map((value, index) => (
+                  cells(row.player).map((value, index) => (
                     <td key={index}>{value}</td>
                   ))
                 ) : (
-                  <td
-                    colSpan={statHeaders.length}
-                    className="career-unavailable"
-                  >
+                  <td colSpan={headers.length} className="career-unavailable">
                     {row.unavailable
                       ? "Season detail unavailable · retained in career totals"
                       : row.live
@@ -248,7 +347,7 @@ export function CareerDetail({
                 <th scope="row" colSpan={2}>
                   Career
                 </th>
-                {statCells(career[phase]).map((value, index) => (
+                {cells(career[phase]).map((value, index) => (
                   <td key={index}>{value}</td>
                 ))}
               </tr>
@@ -257,7 +356,7 @@ export function CareerDetail({
         </table>
       </div>
       <section>
-        <h3>Current skills</h3>
+        <h3>{team ? "Current skills" : "Skills at release"}</h3>
         <dl className="career-skills">
           {[...ATTRIBUTE_KEYS, ...DETAILED_ATTRIBUTE_KEYS].map((key) => (
             <div key={key}>

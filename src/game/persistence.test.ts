@@ -54,7 +54,7 @@ describe("saved progress", () => {
     [
       "unknown id",
       (s: GameState) => {
-        s.run.roster.PG = 999;
+        s.run.roster.PG = 1026;
       },
     ],
     [

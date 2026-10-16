@@ -51,6 +51,164 @@ describe("franchise detail dialogs", () => {
     fireEvent.keyDown(dialog, { key: "Escape" });
     expect(close).toHaveBeenCalledOnce();
   });
+  it("keeps a released player's seasons and last developed skills without inventing a live row", () => {
+    const state = enterOffseason(finished),
+      f = state.franchise!;
+    const first = f.history[0];
+    f.history = [
+      first,
+      {
+        ...first,
+        year: 2,
+        rosters: first.rosters.map((ids) =>
+          ids.map((id) => (id === 129 ? 252 : id)),
+        ),
+      },
+    ];
+    f.teams = f.teams.map((team) => ({
+      ...team,
+      roster: Object.fromEntries(
+        Object.entries(team.roster).map(([slot, id]) => [
+          slot,
+          id === 129 ? 252 : id,
+        ]),
+      ) as typeof team.roster,
+    }));
+    f.year = 3;
+    f.phase = "season";
+    render(
+      <CareerDetail
+        pokemonId={129}
+        franchise={f}
+        run={{ ...state.run, result: null, playoffs: undefined }}
+        onClose={() => {}}
+      />,
+    );
+    const dialog = screen.getByRole("dialog", { name: /Magikarp/ });
+    expect(within(dialog).getByText(/Released/)).toBeInTheDocument();
+    expect(within(dialog).queryByText(/LIVE/)).not.toBeInTheDocument();
+    const table = within(dialog).getByRole("table", { name: /season rows/ });
+    expect(table.querySelectorAll("tbody tr")).toHaveLength(1);
+  });
+  it("shows recorded defense for each season and career with honest zero-minute rates", () => {
+    const state = archiveFranchiseSeason(finished),
+      f = state.franchise!;
+    const player = f.history[0].replay!.regularPlayers.find(
+      (p) => p.pokemonId === 129,
+    )!;
+    Object.assign(player, {
+      gamesPlayed: 2,
+      minutes: 60,
+      defensiveRebounds: 18,
+      steals: 4,
+      blocks: 2,
+      fouls: 6,
+    });
+    Object.assign(f.careers.find((p) => p.pokemonId === 129)!.regular, {
+      gamesPlayed: 2,
+      minutes: 60,
+      defensiveRebounds: 18,
+      steals: 4,
+      blocks: 2,
+      fouls: 6,
+    });
+    Object.assign(f.careers.find((p) => p.pokemonId === 129)!.playoffs, {
+      gamesPlayed: 0,
+      minutes: 0,
+      defensiveRebounds: 0,
+      steals: 0,
+      blocks: 0,
+      fouls: 0,
+    });
+    render(
+      <CareerDetail
+        pokemonId={129}
+        franchise={f}
+        run={state.run}
+        onClose={() => {}}
+      />,
+    );
+    const dialog = screen.getByRole("dialog", { name: /Magikarp/ });
+    const category = within(dialog).getByRole("group", {
+      name: "Player stat category",
+    });
+    fireEvent.click(within(category).getByRole("button", { name: "Defense" }));
+    const table = within(dialog).getByRole("table", { name: /season rows/ });
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((h) => h.textContent),
+    ).toEqual([
+      "YEAR",
+      "CLUB",
+      "GP",
+      "MIN",
+      "DREB",
+      "STL",
+      "BLK",
+      "STL+BLK",
+      "PF",
+      "DREB/36",
+      "STL/36",
+      "BLK/36",
+    ]);
+    const seasonCells = () =>
+      Array.from(table.querySelectorAll("tbody tr td"))
+        .slice(1)
+        .map((cell) => cell.textContent);
+    const careerCells = () =>
+      Array.from(table.querySelectorAll("tfoot tr td")).map(
+        (cell) => cell.textContent,
+      );
+    expect(seasonCells()).toEqual([
+      "2",
+      "30.0",
+      "9.0",
+      "2.0",
+      "1.0",
+      "3.0",
+      "3.0",
+      "10.8",
+      "2.4",
+      "1.2",
+    ]);
+    expect(careerCells()).toEqual(seasonCells());
+    fireEvent.click(within(dialog).getByRole("button", { name: "Totals" }));
+    expect(seasonCells()).toEqual([
+      "2",
+      "60",
+      "18",
+      "4",
+      "2",
+      "6",
+      "6",
+      "10.8",
+      "2.4",
+      "1.2",
+    ]);
+    expect(careerCells()).toEqual(seasonCells());
+    fireEvent.click(within(dialog).getByRole("button", { name: "Playoffs" }));
+    expect(careerCells().slice(-3)).toEqual(["—", "—", "—"]);
+    fireEvent.click(within(dialog).getByRole("button", { name: "Per game" }));
+    expect(careerCells()).toEqual([
+      "0",
+      "—",
+      "—",
+      "—",
+      "—",
+      "—",
+      "—",
+      "—",
+      "—",
+      "—",
+    ]);
+    fireEvent.click(
+      within(category).getByRole("button", { name: "All stats" }),
+    );
+    expect(
+      within(table).getByRole("columnheader", { name: "PTS" }),
+    ).toBeInTheDocument();
+  });
   it("does not invent old game boxes", () => {
     const state = enterOffseason(finished);
     render(

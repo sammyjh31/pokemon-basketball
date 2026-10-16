@@ -8,6 +8,7 @@ import {
   type Run,
 } from "../game/types";
 import { SeasonPanel } from "./SeasonPanel";
+import { Leaders } from "./LeaguePanel";
 
 const ratings = {
   offense: 60,
@@ -324,5 +325,204 @@ describe("league browsing details", () => {
       screen.getByRole("progressbar", { name: "League simulation progress" }),
     ).toHaveAttribute("value", "315");
     expect(screen.getByRole("status")).toHaveTextContent("315 / 1,230");
+  });
+});
+
+describe("defensive player leaders", () => {
+  const defensePlayers: LeaguePlayer[] = [
+    {
+      ...players[0],
+      gamesPlayed: 60,
+      minutes: 1200,
+      defensiveRebounds: 240,
+      steals: 60,
+      blocks: 30,
+      fouls: 120,
+    },
+    {
+      ...players[1],
+      teamId: 1,
+      teamName: "Pallet Pioneers",
+      playerId: "1:2",
+      gamesPlayed: 10,
+      minutes: 100,
+      defensiveRebounds: 50,
+      steals: 20,
+      blocks: 10,
+      fouls: 20,
+    },
+    {
+      ...players[2],
+      gamesPlayed: 0,
+      minutes: 0,
+      defensiveRebounds: 0,
+      steals: 0,
+      blocks: 0,
+      fouls: 0,
+    },
+  ];
+
+  it("ranks defensive production and keeps per-36 rates stable when switching to totals", () => {
+    render(<Leaders league={{ teams, players: defensePlayers }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Defense" }));
+    const table = screen.getByRole("table", {
+      name: /League player statistics/,
+    });
+    expect(within(table).getAllByRole("rowheader")[0]).toHaveTextContent(
+      "Ivysaur",
+    );
+    const bulbasaur = within(table)
+      .getByRole("rowheader", { name: /Bulbasaur/ })
+      .closest("tr")!;
+    expect(
+      within(bulbasaur)
+        .getAllByRole("cell")
+        .map((cell) => cell.textContent),
+    ).toEqual([
+      "60",
+      "20.0",
+      "4.0",
+      "1.0",
+      "0.5",
+      "1.5",
+      "2.0",
+      "7.2",
+      "1.8",
+      "0.9",
+    ]);
+    expect(screen.getByText(/Stocks.*steals.*blocks/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Totals" }));
+    expect(within(table).getAllByRole("rowheader")[0]).toHaveTextContent(
+      "Bulbasaur",
+    );
+    expect(
+      within(bulbasaur)
+        .getAllByRole("cell")
+        .map((cell) => cell.textContent),
+    ).toEqual([
+      "60",
+      "1,200",
+      "240",
+      "60",
+      "30",
+      "90",
+      "120",
+      "7.2",
+      "1.8",
+      "0.9",
+    ]);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Sort league by steals per 36 minutes",
+      }),
+    );
+    expect(within(table).getAllByRole("rowheader")[0]).toHaveTextContent(
+      "Ivysaur",
+    );
+    expect(within(table).getAllByRole("rowheader")[2]).toHaveTextContent(
+      "Venusaur",
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Sort league by steals per 36 minutes",
+      }),
+    );
+    expect(within(table).getAllByRole("rowheader")[0]).toHaveTextContent(
+      "Bulbasaur",
+    );
+    expect(within(table).getAllByRole("rowheader")[2]).toHaveTextContent(
+      "Venusaur",
+    );
+    const noMinutes = within(table)
+      .getByRole("rowheader", { name: /Venusaur/ })
+      .closest("tr")!;
+    expect(
+      within(noMinutes)
+        .getAllByRole("cell")
+        .slice(-3)
+        .map((cell) => cell.textContent),
+    ).toEqual(["—", "—", "—"]);
+  });
+
+  it("retains filters and qualification when moving between all stats and defense", () => {
+    render(<Leaders league={{ teams, players: defensePlayers }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Defense" }));
+    fireEvent.click(screen.getByLabelText("Qualified leaders only"));
+    const table = screen.getByRole("table", {
+      name: /League player statistics/,
+    });
+    expect(within(table).getAllByRole("rowheader")).toHaveLength(1);
+    expect(within(table).getByRole("rowheader")).toHaveTextContent("Bulbasaur");
+    fireEvent.click(screen.getByLabelText("Qualified leaders only"));
+    fireEvent.change(screen.getByLabelText("Filter players by team"), {
+      target: { value: "1" },
+    });
+    fireEvent.change(screen.getByLabelText("Search league players"), {
+      target: { value: "Ivysaur" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "All stats" }));
+    expect(within(table).getAllByRole("rowheader")).toHaveLength(1);
+    expect(within(table).getByRole("rowheader")).toHaveTextContent("Ivysaur");
+    expect(
+      screen.getByRole("button", { name: "Sort league by points" }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Defense" }));
+    expect(screen.getByLabelText("Search league players")).toHaveValue(
+      "Ivysaur",
+    );
+    expect(screen.getByLabelText("Filter players by team")).toHaveValue("1");
+    expect(
+      screen.getByRole("button", { name: "Sort league by defensive rebounds" }),
+    ).toBeInTheDocument();
+  });
+
+  it("uses only the supplied playoff totals without a regular-season qualification threshold", () => {
+    render(
+      <Leaders
+        league={{
+          teams,
+          players: [
+            {
+              ...defensePlayers[1],
+              gamesPlayed: 2,
+              minutes: 36,
+              defensiveRebounds: 8,
+              steals: 3,
+              blocks: 1,
+              fouls: 4,
+            },
+          ],
+        }}
+        postseason
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Defense" }));
+    expect(
+      screen.queryByLabelText("Qualified leaders only"),
+    ).not.toBeInTheDocument();
+    const table = screen.getByRole("table", {
+      name: /Playoff player statistics/,
+    });
+    expect(
+      within(table)
+        .getAllByRole("cell")
+        .map((cell) => cell.textContent),
+    ).toEqual([
+      "2",
+      "18.0",
+      "4.0",
+      "1.5",
+      "0.5",
+      "2.0",
+      "2.0",
+      "8.0",
+      "3.0",
+      "1.0",
+    ]);
+    expect(
+      screen.getByRole("button", {
+        name: "Sort playoffs by blocks per 36 minutes",
+      }),
+    ).toBeInTheDocument();
   });
 });
