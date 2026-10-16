@@ -39,6 +39,7 @@ it("saves one complete playoff slate, blocks duplicate work and resets, then res
   expect(advance).toBeDisabled();
   expect(screen.getByRole("button", { name: "New run" })).toBeDisabled();
   expect(screen.getByRole("button", { name: "Lineup builder" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Play arcade" })).toBeDisabled();
   expect(
     JSON.parse(storage.getItem(STORAGE_KEY)!).run.playoffs,
   ).toBeUndefined();
@@ -55,6 +56,7 @@ it("saves one complete playoff slate, blocks duplicate work and resets, then res
   expect(saved.run.result).toEqual(finished.run.result);
   expect(saved.records).toEqual(finished.records);
   expect(advance).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Play arcade" })).toBeEnabled();
   mounted.unmount();
 
   render(

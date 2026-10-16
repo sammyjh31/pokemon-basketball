@@ -53,6 +53,16 @@ Court 28 × 15 logical units, baskets (1.5,7.5)/(26.5,7.5). Player collision rad
 
 ### Task 5: App integration and delivery
 - [x] Add integration test proving Play arcade opens for a complete roster and exit preserves its saved season. Add small App entry/switch integration and README controls.
-- [ ] Run all tests, typecheck, build and whitespace checks using bundled Node 24.19.0.
-- [ ] Play actual browser match and inspect desktop/mobile/reduced motion, pausing, scoring, results, rematch and storage invariants. Record screenshots and measured frame pacing; fix findings.
-- [ ] Obtain independent review, resolve actionable findings, update this plan, and commit only arcade changes. Reconcile latest committed playoff changes before integrating into the user's main checkout when safe.
+- [x] Run all tests, typecheck, build and whitespace checks using bundled Node 24.19.0.
+- [x] Play actual browser match and inspect desktop/mobile/reduced motion, pausing, scoring, results, rematch and storage invariants. Record screenshots; visually inspect pacing and document measurement limits; fix findings.
+- [x] Obtain independent review, resolve actionable findings, update this plan, and commit only arcade changes. Reconcile the latest committed playoff changes and deliver the isolated preview; leave the primary checkout untouched while franchise work is uncommitted.
+
+## Delivery record
+
+- Arcade committed on `codex/five-on-five-arcade` at `653592c`; merged committed playoff baseline `8a1257a` into the arcade branch. The primary checkout has active uncommitted franchise edits and was left untouched. This branch is ready for later integration after that work is committed.
+- Final verification: **218 tests in 39 files passed**; `npm run typecheck`, `npm run build`, and `git diff --check` passed with bundled Node 24.19.0. Arcade is lazy-loaded; no new runtime dependencies.
+- Browser: played through all four quarters to results, verified 20:00 team minutes, both box scores, fresh rematch, exit confirmation, and unchanged eight-player roster after reopening. Tested keyboard movement, passing, receiver selection, turbo, timed shot release, defense, pause/resume, touch movement/shooting, audio/reduced effects, manual bench swaps, halftime basket reversal, and a second opponent.
+- Inspected 1280×720 desktop, 390×844 portrait, and 844×390 landscape. Fixed initial scroll position and short-window court sizing. No browser warning/error entries in the checked session. Physical-mobile performance and measured frame pacing remain unverified.
+- Review fixes: stale shot charge after steals, reachable boundary calls, correct possession resets after rim contact, assist timing at release, once-per-pass interception checks, stable AI roles after substitutions, restored focus after removing `inert`, and cancellation of keyboard-held touch actions on blur. Playoff simulation now blocks arcade entry until the operation finishes.
+- Screenshots: `docs/design/arcade-court-desktop.jpg`, `arcade-court-mobile.jpg`, `arcade-results-desktop.jpg`. Preview is running at `http://127.0.0.1:5179/`; open **Play arcade** and **Tip off**.
+- Matches remain local exhibitions and are not saved. No deployment or remote push performed.

@@ -267,6 +267,7 @@ export default function App({
                     className="button primary"
                     disabled={
                       simulating ||
+                      playoffSimulating ||
                       restoring ||
                       importPending ||
                       Object.values(run.roster).some((id) => id === null)

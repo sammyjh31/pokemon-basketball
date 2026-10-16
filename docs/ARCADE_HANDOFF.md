@@ -25,8 +25,12 @@ Scenario tests cover roster isolation, seeded outcomes, pause cancellation, shot
 
 Independent engine review completed 30 seeded CPU games with consistent scores, playing time, active-player counts, and ball ownership. No remaining actionable review findings. CPU games scored 12–36 combined points, with 32–65 attempts.
 
-Browser verification and final command results are recorded in the implementation plan. Screenshots live in `docs/design/arcade-*.jpg`.
+Final checks: 218 tests across 39 files, TypeScript, production build, and whitespace validation passed. Browser verification completed four quarters, both box scores, rematch, exit, unchanged roster, desktop/mobile layouts, keyboard/touch controls, and settings. Details are recorded in the implementation plan. Screenshots live in `docs/design/arcade-*.jpg`.
 
 ## Current limits
 
 Single player versus CPU; no multiplayer, gamepad, player combat abilities, or playable scheduled league fixtures. Animation transforms the existing pixel sprites. Court rules intentionally omit fouls, free throws, and goaltending. Very short portrait windows can scroll to retain usable touch targets; landscape provides more court space. Frame pacing has been visually inspected but has not been measured on physical mobile hardware.
+
+## Local delivery
+
+Preview: `http://127.0.0.1:5179/`, running from the managed `codex/five-on-five-arcade` worktree at `/Users/sam/.codex/worktrees/five-on-five-arcade/PokeBBall`. The branch includes the committed playoff implementation. The primary checkout contains ongoing uncommitted franchise changes and has not been modified by arcade delivery; integrate this branch when that checkout is ready.
