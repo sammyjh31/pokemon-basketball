@@ -104,7 +104,7 @@
   image-rendering: pixelated;
 }
 .franchise-roster strong {
-  font-size: 11px;
+  font-size: 12px;
   overflow-wrap: anywhere;
 }
 .franchise-roster-slot {
@@ -139,7 +139,7 @@
   gap: 5px;
 }
 .franchise-trade-players small {
-  font: 700 10px var(--display);
+  font: 700 12px var(--display);
   color: #a9b5c4;
   letter-spacing: 0.08em;
 }
@@ -224,7 +224,7 @@
 }
 .franchise-panel .stat-legend {
   margin: 12px 0 0;
-  font-size: 11px;
+  font-size: 12px;
 }
 .franchise-honors {
   padding: 18px;
@@ -358,7 +358,7 @@
   .franchise-panel .league-navigation button {
     flex: 1 1 0;
     padding: 10px 5px;
-    font-size: 11px;
+    font-size: 12px;
   }
   .franchise-trade-preview {
     padding: 14px;
@@ -371,7 +371,7 @@
     overflow-wrap: anywhere;
   }
   .franchise-trade-players span {
-    font-size: 11px;
+    font-size: 12px;
   }
   .franchise-history-summary,
   .franchise-archived-awards {
@@ -385,12 +385,85 @@
     height: 44px;
   }
   .franchise-roster strong {
-    font-size: 10px;
+    font-size: 12px;
   }
   .franchise-panel .stat-mode {
     max-width: 100%;
   }
   .franchise-panel .stat-mode button {
     flex: 1;
+  }
+}
+
+/* Offseason stepper: every step shows its status; Start explains why it waits. */
+.offseason-stepper {
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+.offseason-step {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #0b0f14;
+}
+.offseason-step[aria-current="step"] {
+  border-color: var(--gold);
+}
+.offseason-step-number {
+  flex: 0 0 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid #5a636f;
+  font: 800 14px var(--display);
+}
+.offseason-step.is-done .offseason-step-number {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #101115;
+}
+.offseason-step-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+.offseason-step-body strong {
+  font: 700 16px var(--display);
+  text-transform: uppercase;
+}
+.offseason-step-status {
+  font-size: 12px;
+  font-weight: 700;
+  color: #c3c9d2;
+}
+.offseason-step.is-todo .offseason-step-status {
+  color: var(--gold);
+}
+.offseason-step-body p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.offseason-step-body .button {
+  margin-top: 6px;
+  white-space: normal;
+  text-align: left;
+  min-height: 40px;
+  padding: 9px 12px;
+  font-size: 13px;
+}
+@media (max-width: 640px) {
+  .offseason-stepper {
+    grid-template-columns: 1fr;
   }
 }

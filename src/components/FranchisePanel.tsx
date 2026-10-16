@@ -15,7 +15,15 @@ import { FreeAgentMarket } from "./FreeAgentMarket";
 import type { TrainingPlans } from "../game/franchiseFeatures";
 import type { TradePackage } from "../game/tradeTypes";
 import type { OffseasonRosterSettings } from "../game/offseasonRoster";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { freeAgencyReady } from "../game/freeAgency";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { careerPlayers, evaluateTrade } from "../game/franchise";
 import { FRANCHISE_MAX_YEARS } from "../game/franchiseTypes";
@@ -85,6 +93,8 @@ function Offseason({
   onTrade,
   onProcessOffseason,
   onReviewDevelopment,
+  onOpenCoaches,
+  reviewed,
   onTradePackage,
   onRoster,
   onBeginDraft,
@@ -108,6 +118,8 @@ function Offseason({
   | "onCpuFreeAgency"
 > & {
   onReviewDevelopment: () => void;
+  onOpenCoaches: () => void;
+  reviewed: boolean;
   franchise: Franchise;
 }) {
   const partners = franchise.teams.filter((team) => team.id !== 0);
@@ -150,8 +162,9 @@ function Offseason({
     (draft) => draft.year === franchise.year,
   );
   const needsDraft = draftEnabled && !currentDraft?.complete;
+  const coachesInUse = franchise.teams.some((t) => t.coach);
   const needsCoach =
-    franchise.teams.some((t) => t.coach) &&
+    coachesInUse &&
     projectedCoaches(
       franchise.teams,
       franchise.coachOffice,
@@ -169,91 +182,208 @@ function Offseason({
   const activeWorkspace = sections.some((section) => section.id === workspace)
     ? workspace
     : sections[0]?.id;
+  const startReasonId = useId();
+  const atLimit = franchise.year >= FRANCHISE_MAX_YEARS;
+  const freeAgencyOpen = freeAgencyReady(franchise);
+  const cpuSigned =
+    franchise.freeAgency?.cpuYears.includes(franchise.year) ?? false;
+  const startBlocked = needsDevelopment
+    ? "Run offseason development first."
+    : needsDraft
+      ? `Finish this year's two-round rookie draft to unlock season ${franchise.year + 1}.`
+      : needsCoach
+        ? "Your head-coach position is vacant. Hire a trainer in Coaches first."
+        : atLimit
+          ? "This franchise has reached 1,000 seasons. Your career stats and championship history remain available."
+          : disabled
+            ? "Wait for the current simulation to finish."
+            : null;
+  type StepStatus = "done" | "todo" | "waiting" | "optional";
+  const steps: {
+    id: string;
+    label: string;
+    status: StepStatus;
+    statusLabel: string;
+    detail?: string;
+    action?: ReactNode;
+  }[] = [
+    {
+      id: "development",
+      label: "Development",
+      status: needsDevelopment ? "todo" : "done",
+      statusLabel: needsDevelopment ? "To do" : "Done",
+      detail: needsDevelopment
+        ? "Discover player breakouts, slumps and CPU trades."
+        : undefined,
+      action: needsDevelopment && (
+        <button
+          type="button"
+          className="button secondary"
+          disabled={disabled}
+          onClick={onProcessOffseason}
+        >
+          Run offseason development
+        </button>
+      ),
+    },
+    {
+      id: "review",
+      label: "Review",
+      status: !reportReady ? "waiting" : reviewed ? "done" : "optional",
+      statusLabel: !reportReady
+        ? "After development"
+        : reviewed
+          ? "Reviewed"
+          : "Ready · optional",
+      action: reportReady && (
+        <button
+          type="button"
+          className="button secondary"
+          onClick={() => {
+            onReviewDevelopment();
+          }}
+        >
+          Review development and CPU trades
+        </button>
+      ),
+    },
+    ...(draftEnabled
+      ? [
+          {
+            id: "draft",
+            label: "Rookie draft",
+            status: (!needsDraft
+              ? "done"
+              : needsDevelopment
+                ? "waiting"
+                : "todo") as StepStatus,
+            statusLabel: !needsDraft
+              ? "Complete"
+              : needsDevelopment
+                ? "After development"
+                : currentDraft
+                  ? "In progress"
+                  : "To do",
+            action: needsDraft &&
+              !needsDevelopment &&
+              activeWorkspace !== "draft" && (
+                <button
+                  className="button secondary"
+                  type="button"
+                  onClick={() => setWorkspace("draft")}
+                >
+                  Open rookie draft
+                </button>
+              ),
+          },
+        ]
+      : []),
+    ...(onSignFreeAgent && onCpuFreeAgency
+      ? [
+          {
+            id: "free-agency",
+            label: "Free agency",
+            status: (cpuSigned
+              ? "done"
+              : freeAgencyOpen
+                ? "optional"
+                : "waiting") as StepStatus,
+            statusLabel: cpuSigned
+              ? "CPU signings complete"
+              : freeAgencyOpen
+                ? "Open · optional"
+                : "After the draft",
+            action: freeAgencyOpen && activeWorkspace !== "free-agents" && (
+              <button
+                className="button secondary"
+                type="button"
+                onClick={() => setWorkspace("free-agents")}
+              >
+                Open free agency
+              </button>
+            ),
+          },
+        ]
+      : []),
+    ...(coachesInUse
+      ? [
+          {
+            id: "coaching",
+            label: "Coaching",
+            status: (needsCoach ? "todo" : "done") as StepStatus,
+            statusLabel: needsCoach ? "Hire a trainer" : "Trainer in place",
+            action: (
+              <button
+                className="button secondary"
+                type="button"
+                onClick={onOpenCoaches}
+              >
+                {needsCoach ? "Hire a trainer" : "Open coaches"}
+              </button>
+            ),
+          },
+        ]
+      : []),
+    {
+      id: "start",
+      label: "Start",
+      status: startBlocked ? "waiting" : "todo",
+      statusLabel: startBlocked ? "Locked" : "Ready",
+      detail:
+        startBlocked ?? `Season ${franchise.year + 1} is ready to tip off.`,
+      action: (
+        <button
+          className="button primary"
+          type="button"
+          disabled={!!startBlocked}
+          aria-describedby={startBlocked ? startReasonId : undefined}
+          onClick={onStartSeason}
+        >
+          Start season {franchise.year + 1}
+        </button>
+      ),
+    },
+  ];
+  const currentStep = steps.find(
+    (step) => step.status === "todo" || step.id === "start",
+  )?.id;
   return (
     <section aria-label="Franchise offseason">
       <div className="franchise-section-heading">
         <div>
           <h3>Make your next move.</h3>
           <p>
-            Your eight-player roster carries forward. Shape your lineup, explore
-            trades and prepare for a fresh 82-game season.
+            Your eight-player roster carries forward. Work through the steps
+            below, then start a fresh 82-game season.
           </p>
         </div>
-        <button
-          className="button primary"
-          type="button"
-          disabled={
-            disabled ||
-            needsDevelopment ||
-            needsDraft ||
-            needsCoach ||
-            franchise.year >= FRANCHISE_MAX_YEARS
-          }
-          onClick={onStartSeason}
-        >
-          Start season {franchise.year + 1}
-        </button>
       </div>
-      {needsCoach && (
-        <p className="notice">
-          Your head-coach position is vacant. Open the Coaches tab and hire a
-          trainer before starting next season.
-        </p>
-      )}
-      {needsDevelopment && (
-        <div className="development-prompt">
-          <p>
-            Run this offseason once to discover player breakouts, slumps and CPU
-            trades before starting the next year.
-          </p>
-          <button
-            type="button"
-            className="button secondary"
-            disabled={disabled}
-            onClick={onProcessOffseason}
+      <ol className="offseason-stepper" aria-label="Offseason steps">
+        {steps.map((step, i) => (
+          <li
+            key={step.id}
+            className={`offseason-step is-${step.status}`}
+            aria-current={step.id === currentStep ? "step" : undefined}
           >
-            Run offseason development
-          </button>
-        </div>
-      )}
-      {reportReady && (
-        <div className="development-prompt">
-          <p>
-            Player development and CPU activity are ready. Review this year's
-            changes before your next season.
-          </p>
-          <button
-            type="button"
-            className="button secondary"
-            onClick={onReviewDevelopment}
-          >
-            Review development and CPU trades
-          </button>
-        </div>
-      )}
-      {franchise.year >= FRANCHISE_MAX_YEARS && (
-        <p role="status">
-          This franchise has reached 1,000 seasons. Your career stats and
-          championship history remain available.
-        </p>
-      )}
-      {needsDraft && !needsDevelopment && (
-        <div className="franchise-section-heading">
-          <p>
-            Next: {currentDraft ? "finish" : "begin and complete"} this year's
-            two-round rookie draft to unlock season {franchise.year + 1}.
-          </p>
-          {activeWorkspace !== "draft" && (
-            <button
-              className="button secondary"
-              type="button"
-              onClick={() => setWorkspace("draft")}
-            >
-              Open rookie draft
-            </button>
-          )}
-        </div>
-      )}
+            <span className="offseason-step-number" aria-hidden="true">
+              {step.status === "done" ? "✓" : i + 1}
+            </span>
+            <div className="offseason-step-body">
+              <strong>{step.label}</strong>
+              <span className="offseason-step-status">
+                <span className="sr-only">Status: </span>
+                {step.statusLabel}
+              </span>
+              {step.detail && (
+                <p id={step.id === "start" ? startReasonId : undefined}>
+                  {step.detail}
+                </p>
+              )}
+              {step.action}
+            </div>
+          </li>
+        ))}
+      </ol>
       {!!sections.length && (
         <nav className="league-navigation" aria-label="Offseason workspace">
           {sections.map((section) => (
@@ -1351,6 +1481,11 @@ export function FranchisePanel({
     "overview" | "careers" | "history" | "development" | "training" | "coaches"
   >("overview");
   const { franchise, run } = state;
+  const [reviewedYear, setReviewedYear] = useState<number | null>(null);
+  useEffect(() => {
+    if (view === "development" && franchise?.phase === "offseason")
+      setReviewedYear(franchise.year);
+  }, [view, franchise?.phase, franchise?.year]);
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     if (!franchise) return;
@@ -1460,6 +1595,8 @@ export function FranchisePanel({
             onTrade={onTrade}
             onProcessOffseason={onProcessOffseason}
             onReviewDevelopment={() => setView("development")}
+            onOpenCoaches={() => setView("coaches")}
+            reviewed={reviewedYear === franchise.year}
             onTradePackage={onTradePackage}
             onRoster={onRoster}
             onBeginDraft={onBeginDraft}
