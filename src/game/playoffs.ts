@@ -13,7 +13,7 @@ import {
 import { recordScouting, scoutingForMatch } from "./opponentScouting";
 import type { ScoutingMemory, MatchScouting } from "./typeTacticsTypes";
 import { validateLocalFormat } from "./localFormat";
-import { addBox, leaguePlayers, playerImpact } from "./leagueStats";
+import { addBox, leaguePlayers, playerImpact, seededCoin } from "./leagueStats";
 import { simulateMatch } from "./match";
 import { nextRandom } from "./random";
 import type {
@@ -74,11 +74,43 @@ export function createPlayoffs(
     )
   )
     throw new Error("Finish the full regular season before starting playoffs.");
+  const balanced = league.teams[0].courtVersion === 3;
+  // Version 3 ties: head-to-head among the tied clubs, point differential, then a
+  // seeded coin flip. Earlier versions fell back to team ID, which favoured club 0.
+  const headToHead = new Map<number, number>();
+  if (balanced)
+    for (const row of league.standings) {
+      const tied = new Set(
+        league.standings
+          .filter((s) => s.wins === row.wins)
+          .map((s) => s.teamId),
+      );
+      let won = 0,
+        played = 0;
+      for (const g of league.games) {
+        const home = g.homeTeamId === row.teamId;
+        if (!home && g.awayTeamId !== row.teamId) continue;
+        const other = home ? g.awayTeamId : g.homeTeamId;
+        if (!tied.has(other) || other === row.teamId) continue;
+        played++;
+        won += Number(
+          home ? g.homeScore > g.awayScore : g.awayScore > g.homeScore,
+        );
+      }
+      headToHead.set(row.teamId, played ? won / played : 0.5);
+    }
   const seeds = [...league.standings]
     .sort(
       (a, b) =>
         b.wins - a.wins ||
+        (balanced
+          ? headToHead.get(b.teamId)! - headToHead.get(a.teamId)!
+          : 0) ||
         b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst) ||
+        (balanced
+          ? seededCoin(_seasonSeed, a.teamId) -
+            seededCoin(_seasonSeed, b.teamId)
+          : 0) ||
         a.teamId - b.teamId,
     )
     .slice(0, qualifiers)

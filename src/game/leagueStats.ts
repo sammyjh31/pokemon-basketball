@@ -4,6 +4,7 @@ import {
   mergeAbilityActivations,
 } from "./abilities";
 import { emptyBox } from "./boxscore";
+import { nextRandom } from "./random";
 import {
   ROSTER_SLOTS,
   type LeagueAward,
@@ -91,10 +92,21 @@ export const playerImpact = (p: LeaguePlayer) =>
     0.4 * (p.fga - p.fgm) -
     0.4 * (p.fta - p.ftm)) /
   Math.max(1, p.gamesPlayed);
+/** A repeatable coin flip for exact ties, independent of team or roster order. */
+export function seededCoin(seed: number, key: number) {
+  return nextRandom((seed ^ Math.imul(key + 1, 0x9e3779b1)) >>> 0).value;
+}
+const playerKey = (p: LeaguePlayer) => p.teamId * 2048 + p.pokemonId;
+/** Court version 3 honors: seeded tiebreaks instead of club order. */
+export interface HonorRules {
+  balanced: true;
+  seed: number;
+}
 export function leagueHonors(
   players: LeaguePlayer[],
   standings: Standing[],
   gamesPerTeam = 82,
+  rules?: HonorRules,
 ) {
   const minimumGames = Math.ceil((gamesPerTeam * 58) / 82);
   const qualified = players.filter((p) => p.gamesPlayed >= minimumGames);
@@ -116,7 +128,13 @@ export function leagueHonors(
   const rank = (pool: LeaguePlayer[], score: (p: LeaguePlayer) => number) =>
     [...pool].sort(
       (a, b) =>
-        score(b) - score(a) || a.teamId - b.teamId || a.pokemonId - b.pokemonId,
+        score(b) - score(a) ||
+        (rules
+          ? seededCoin(rules.seed, playerKey(a)) -
+            seededCoin(rules.seed, playerKey(b))
+          : 0) ||
+        a.teamId - b.teamId ||
+        a.pokemonId - b.pokemonId,
     );
   const pg = (value: number, p: LeaguePlayer) =>
     (value / Math.max(1, p.gamesPlayed)).toFixed(1);

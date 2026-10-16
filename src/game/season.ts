@@ -214,7 +214,14 @@ export function seasonBuilder(
   const finish = (): SeasonResult => {
     const honors =
         completedRounds === 82
-          ? leagueHonors(players, standings)
+          ? leagueHonors(
+              players,
+              standings,
+              82,
+              teams[0].courtVersion === 3
+                ? { balanced: true, seed: run.seasonSeed }
+                : undefined,
+            )
           : { awards: [], allLeague: [], allDefense: [] },
       mvp = honors.awards.find((a) => a.id === "mvp");
     return {
