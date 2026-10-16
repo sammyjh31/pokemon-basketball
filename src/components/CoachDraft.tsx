@@ -106,8 +106,9 @@ export function CoachDraft({
       </div>
       {!visible.length && <p>No trainers match that search.</p>}
       <p className="coach-footnote">
-        Coaches stay with their club across seasons. Trainer identities come
-        from Pokémon; basketball styles are original to this game.{" "}
+        Coaches stay with their club until an offseason coaching change. Trainer
+        identities come from Pokémon; basketball styles are original to this
+        game.{" "}
         <a href="/coaches/credits.html" target="_blank" rel="noreferrer">
           Portrait credits
         </a>

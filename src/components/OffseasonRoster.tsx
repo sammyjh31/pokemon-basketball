@@ -1,3 +1,4 @@
+import { projectedCoaches } from "../game/coachOffice";
 import { CoachSummary } from "./CoachSummary";
 import { useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -28,7 +29,12 @@ export function OffseasonRoster({
   disabled?: boolean;
   onChange: (settings: OffseasonRosterSettings) => void;
 }) {
-  const team = franchise.teams[0];
+  const team = projectedCoaches(
+    franchise.teams,
+    franchise.coachOffice,
+    franchise.year,
+  )[0];
+  const automaticCoaching = !!franchise.teams[0].coach;
   const [message, setMessage] = useState("");
   const settings: OffseasonRosterSettings = {
     roster: team.roster,
@@ -108,7 +114,11 @@ export function OffseasonRoster({
           })}
         </div>
         {team.coach ? (
-          <CoachSummary team={team} />
+          <CoachSummary team={team} nextSeason />
+        ) : automaticCoaching ? (
+          <p className="notice">
+            Hire a head coach in the Coaches tab before starting next season.
+          </p>
         ) : (
           <div className="league-controls">
             <label className="league-field">
@@ -176,7 +186,7 @@ export function OffseasonRoster({
         )}
       </fieldset>
       <p role="status">{message}</p>
-      {!team.coach && (
+      {!automaticCoaching && !team.coach && (
         <RotationEditor
           run={run}
           disabled={disabled}

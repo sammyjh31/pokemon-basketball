@@ -1,3 +1,6 @@
+import { CoachOfficePanel } from "./CoachOfficePanel";
+import { projectedCoaches } from "../game/coachOffice";
+import { franchiseCoachRecords } from "../game/coachCareers";
 import { CareerDetail } from "./CareerDetail";
 import { HistoricalGames } from "./HistoricalGames";
 import { TrainingPanel } from "./TrainingPanel";
@@ -31,6 +34,8 @@ import "../league.css";
 import "../franchise.css";
 
 export interface FranchisePanelProps {
+  onHireCoach?: (id: string | null) => void;
+  onReviewCoaches?: () => void;
   state: GameState;
   disabled?: boolean;
   onEnterOffseason: () => void;
@@ -141,6 +146,13 @@ function Offseason({
     (draft) => draft.year === franchise.year,
   );
   const needsDraft = draftEnabled && !currentDraft?.complete;
+  const needsCoach =
+    franchise.teams.some((t) => t.coach) &&
+    projectedCoaches(
+      franchise.teams,
+      franchise.coachOffice,
+      franchise.year,
+    ).some((t) => !t.coach);
   const [workspace, setWorkspace] = useState("roster");
   const sections = [
     ...(onRoster ? [{ id: "roster", label: "Roster & coaching" }] : []),
@@ -170,6 +182,7 @@ function Offseason({
             disabled ||
             needsDevelopment ||
             needsDraft ||
+            needsCoach ||
             franchise.year >= FRANCHISE_MAX_YEARS
           }
           onClick={onStartSeason}
@@ -177,6 +190,12 @@ function Offseason({
           Start season {franchise.year + 1}
         </button>
       </div>
+      {needsCoach && (
+        <p className="notice">
+          Your head-coach position is vacant. Open the Coaches tab and hire a
+          trainer before starting next season.
+        </p>
+      )}
       {needsDevelopment && (
         <div className="development-prompt">
           <p>
@@ -1296,6 +1315,8 @@ function History({ franchise }: { franchise: Franchise }) {
 }
 
 export function FranchisePanel({
+  onHireCoach,
+  onReviewCoaches,
   state,
   disabled = false,
   onEnterOffseason,
@@ -1313,7 +1334,7 @@ export function FranchisePanel({
   onCpuFreeAgency,
 }: FranchisePanelProps) {
   const [view, setView] = useState<
-    "overview" | "careers" | "history" | "development" | "training"
+    "overview" | "careers" | "history" | "development" | "training" | "coaches"
   >("overview");
   const { franchise, run } = state;
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -1380,6 +1401,7 @@ export function FranchisePanel({
             ...(onTraining
               ? [{ id: "training" as const, label: "Training plans" }]
               : []),
+            { id: "coaches", label: "Coaches" },
             { id: "careers", label: "Career stats" },
             { id: "history", label: "History" },
           ] as const
@@ -1465,6 +1487,19 @@ export function FranchisePanel({
             )}
           </section>
         ))}
+      {view === "coaches" && (
+        <CoachOfficePanel
+          teams={franchise.teams}
+          office={franchise.coachOffice}
+          year={franchise.year}
+          offseason={franchise.phase === "offseason"}
+          humans={[{ teamId: 0, name: "You" }]}
+          records={franchiseCoachRecords(franchise, run)}
+          disabled={disabled}
+          onHire={onHireCoach ? (_teamId, id) => onHireCoach(id) : undefined}
+          onReview={onReviewCoaches}
+        />
+      )}
       {view === "training" && onTraining && (
         <TrainingPanel
           roster={

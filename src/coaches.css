@@ -264,3 +264,124 @@
     max-height: none;
   }
 }
+
+.coach-office {
+  min-width: 0;
+  padding: 22px 0;
+}
+.coach-office-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+}
+.coach-office h3 {
+  font-size: 28px;
+  margin: 8px 0 14px;
+}
+.coach-office h4 {
+  font-size: 24px;
+}
+.coach-office p {
+  color: var(--muted);
+  line-height: 1.65;
+  margin-bottom: 12px;
+}
+.coach-office-heading label {
+  display: grid;
+  gap: 10px;
+  min-width: 220px;
+}
+.coach-office select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+  width: 100%;
+}
+.coach-scope,
+.coach-market,
+.coach-directory,
+.coach-news {
+  border-top: 1px solid var(--line);
+  margin-top: 26px;
+  padding-top: 22px;
+}
+.coach-office summary {
+  color: var(--gold);
+  cursor: pointer;
+  padding-bottom: 14px;
+  font-weight: 600;
+}
+.coach-office .results-table-wrap {
+  max-height: 380px;
+  overflow: auto;
+  max-width: 100%;
+}
+.coach-office tr[aria-selected="true"] {
+  background: #263124;
+}
+.coach-career-detail {
+  background: #12191f;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 24px;
+  margin-top: 20px;
+}
+.coach-career-totals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 24px 0;
+}
+.coach-career-totals span {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.coach-career-totals b {
+  color: var(--gold);
+  font-size: 26px;
+}
+.coach-season-list details {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin-top: 16px;
+}
+.coach-season-list li {
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+.coach-news ol {
+  display: grid;
+  gap: 18px;
+  padding-left: 22px;
+}
+.coach-news li {
+  padding-left: 6px;
+}
+.coach-news b {
+  line-height: 1.6;
+}
+@media (max-width: 640px) {
+  .coach-office-heading {
+    display: grid;
+  }
+  .coach-office-heading label {
+    min-width: 0;
+  }
+  .coach-career-detail {
+    padding: 16px;
+  }
+  .coach-career-totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .coach-office .coach-cards {
+    max-height: none;
+  }
+}
+.coach-market .coach-cards {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+}

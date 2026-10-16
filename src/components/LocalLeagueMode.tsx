@@ -1,3 +1,7 @@
+import { CoachOfficePanel } from "./CoachOfficePanel";
+import { projectedCoaches } from "../game/coachOffice";
+import { localCoachRecords } from "../game/coachCareers";
+import { appointLocalCoach, reviewLocalCoaches } from "../game/coachLocal";
 import { CoachDraft } from "./CoachDraft";
 import { CoachSummary } from "./CoachSummary";
 import { localCoachTurn, selectLocalCoach } from "../game/coachSelection";
@@ -50,7 +54,17 @@ function ReviewTeams({
   disabled: boolean;
 }) {
   const [teamId, setTeamId] = useState(draft.managers[0].teamId);
-  const teams = useMemo(() => localLeagueTeams(draft), [draft]);
+  const teams = useMemo(
+    () =>
+      draft.career?.phase === "offseason"
+        ? projectedCoaches(
+            localLeagueTeams(draft),
+            draft.career.coachOffice,
+            draft.career.year,
+          )
+        : localLeagueTeams(draft),
+    [draft],
+  );
   const team = teams[teamId];
   return (
     <section className="local-panel" aria-label="Review friends' teams">
@@ -137,7 +151,13 @@ function ReviewTeams({
           </p>
         )}
         {team.coach ? (
-          <CoachSummary team={team} />
+          <CoachSummary
+            team={team}
+            nextSeason={draft.career?.phase === "offseason"}
+          />
+        ) : draft.career?.phase === "offseason" &&
+          draft.career.teams[teamId].coach ? (
+          <p className="notice">Hire a head coach in the coaching office.</p>
         ) : (
           <div className="local-coaching">
             <label>
@@ -277,6 +297,32 @@ export function LocalLeagueMode({
             </p>
           )}
           {(!draft || draft.version === 2) && <MatchupLab />}
+          {draft &&
+            ready &&
+            !draft.coachDraftRequired &&
+            draft.coaching.some((c) => c.coach) && (
+              <details className="local-panel" open={offseason}>
+                <summary>Coaches · hiring and career records</summary>
+                <CoachOfficePanel
+                  teams={localLeagueTeams(draft)}
+                  office={draft.career?.coachOffice}
+                  year={year}
+                  offseason={offseason}
+                  humans={draft.managers}
+                  records={localCoachRecords(
+                    draft.career,
+                    localLeagueTeams(draft),
+                    result,
+                    playoffs,
+                  )}
+                  disabled={busy}
+                  onReview={() => change(reviewLocalCoaches)}
+                  onHire={(teamId, id) =>
+                    change((current) => appointLocalCoach(current, teamId, id))
+                  }
+                />
+              </details>
+            )}
           {!draft ? (
             <LocalLeagueSetup onStart={change} />
           ) : draft.coachDraftRequired ? (

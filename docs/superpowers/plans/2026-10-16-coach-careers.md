@@ -20,15 +20,23 @@
 ### Task 1: Shared records and appointment market
 - [x] Write/run failing tests for record attribution, partial season counting, immutable events, uniqueness, protected human/champion jobs and deterministic CPU turnover.
 - [x] Implement `coachCareers.ts` and `coachOffice.ts` with versioned office types, projection, hiring/firing, CPU review and validation helpers.
-- [ ] Run focused tests and commit.
+- [x] Run focused tests and commit.
 
 ### Task 2: Solo and local lifecycle/persistence
 - [x] Write/run integration failures for offseason changes, vacancy/start guard, next-year assignment, old-save compatibility and local round-trip/chronology.
 - [x] Wire office into franchise/local types, transitions and validators. Capture local coach records, derive solo records from frozen replays.
-- [ ] Run focused integration/persistence tests, build and commit.
+- [x] Run focused integration/persistence tests, build and commit.
 
 ### Task 3: Hiring UI and career directory
 - [x] Add shared office with current coach, available trainers, fit/record, fire/hire, CPU review/news and scope explanation.
 - [x] Add searchable career directory and season/series details; wire solo/local management.
-- [ ] Verify user flows with focused component tests and desktop/mobile browser checks; preserve the user's live save.
-- [ ] Independent final code review, repair important findings, update handoff, build, commit and push GitHub main.
+- [x] Verify user flows with focused component tests and desktop/mobile browser checks; preserve the user's live save.
+- [x] Independent final code review, repair important findings, update handoff and build. Commit and push are the delivery step.
+
+## Verification and review
+
+- 56 focused engine/lifecycle/UI regression tests passed in the final 12-file batch, plus both full solo franchise tests (including archive/save/reload and next-season appointment restoration).
+- Production build passed. Existing bundle-size warning remains.
+- Browser checks: desktop fire/hire and career series disclosure; 390px mobile hire with no document overflow; fresh final preview had no browser errors. Screenshot: `docs/design/coaching-office.png` (isolated fixture preview).
+- Independent review found two local compatibility/validation issues. Both were reproduced with failing tests and fixed: preserve CPU jobs when legacy Finals opponents are unknown; reject coached season boundaries with vacancies, including imported saves. A separate failing component regression fixed the offseason roster's stale prior-coach summary.
+- Review tuning decision: retain the documented, deterministic performance/roster-fit heuristics. Basketball balance may need further tuning through play; no additional match-engine policy changes were made.

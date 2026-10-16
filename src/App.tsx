@@ -1,3 +1,4 @@
+import { projectedCoaches } from "./game/coachOffice";
 import { CoachDraft } from "./components/CoachDraft";
 import { CoachSummary } from "./components/CoachSummary";
 import { canSelectTrainer } from "./game/coachSelection";
@@ -76,7 +77,15 @@ export default function App({
     rotation: run.rotation,
     defense: run.defense ?? "man",
     ratings: teamRatings(run.roster),
-    coach: state.franchise?.pendingCoach ?? run.coach,
+    coach:
+      state.franchise?.phase === "offseason"
+        ? (state.franchise.pendingCoach ??
+          projectedCoaches(
+            state.franchise.teams,
+            state.franchise.coachOffice,
+            state.franchise.year,
+          )[0].coach)
+        : run.coach,
   };
   const [arcadeOpen, setArcadeOpen] = useState(false);
   const [localLeagueOpen, setLocalLeagueOpen] = useState(
@@ -244,6 +253,8 @@ export default function App({
     );
   const franchisePanel = (
     <FranchisePanel
+      onHireCoach={(id) => dispatch({ type: "APPOINT_COACH", id })}
+      onReviewCoaches={() => dispatch({ type: "PROCESS_CPU_COACHES" })}
       state={state}
       disabled={simulating || playoffSimulating || restoring}
       onProcessOffseason={() => {
@@ -391,7 +402,7 @@ export default function App({
               {coachTeam.coach && (
                 <CoachSummary
                   team={coachTeam}
-                  nextSeason={!!state.franchise?.pendingCoach}
+                  nextSeason={state.franchise?.phase === "offseason"}
                 />
               )}
               {state.franchise?.phase !== "offseason" && !choosingCoach && (

@@ -1,3 +1,4 @@
+import { projectedCoaches } from "../game/coachOffice";
 import { useEffect, useRef, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
@@ -240,6 +241,11 @@ export function LocalCareerPanel({ draft, change }: Props) {
   const career = draft.career!;
   const archive = career.history.at(-1)!;
   const turn = currentLocalRookieTurn(draft);
+  const needsCoach =
+    career.teams.some((t) => t.coach) &&
+    projectedCoaches(career.teams, career.coachOffice, career.year).some(
+      (t) => !t.coach,
+    );
   return (
     <section aria-label="Local offseason" className="local-career">
       <div className="local-panel">
@@ -303,6 +309,12 @@ export function LocalCareerPanel({ draft, change }: Props) {
           <Trades key={archive.trades.length} draft={draft} change={change} />
           <div className="local-panel">
             <h3>Ready for year {career.year + 1}</h3>
+            {needsCoach && (
+              <p className="notice">
+                Every club needs a head coach. Fill vacant jobs in the coaching
+                office above.
+              </p>
+            )}
             <p>
               Review your lineups and coaching below, then start the next
               season. Your past standings, champion, games, and player
@@ -311,6 +323,7 @@ export function LocalCareerPanel({ draft, change }: Props) {
             <button
               className="button primary"
               type="button"
+              disabled={needsCoach}
               onClick={() => change(startNextLocalSeason)}
             >
               Start year {career.year + 1}
