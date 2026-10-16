@@ -278,13 +278,36 @@ export function RulesPanel() {
           MVP rewards total production and efficiency during the Finals among
           players on the championship team.
         </p>
+        <h3>Keep building your franchise</h3>
+        <p>
+          After the Finals, choose <b>Continue as franchise</b>. Your completed
+          season becomes Year 1, and every club keeps its eight Pokémon. In each
+          offseason, offer one player for a player on another team. Other clubs
+          evaluate ability and roster fit before accepting. Trades preserve
+          eight players per team and unique species across the league.
+        </p>
+        <p>
+          Start the next season with a fresh schedule, set your positions and
+          coaching, then play another regular season and playoffs. Career totals
+          follow each Pokémon across trades, with regular-season and playoff
+          statistics kept separately. Season history preserves league awards,
+          All-League and All-Defense selections, champions and Finals MVPs.
+          Championship rings belong to all eight players on the winning roster.
+        </p>
+        <p>
+          Full box scores are available for the active season. Older seasons
+          retain records, rosters and honors while their statistics contribute
+          to career totals. Franchise seasons do not add attempts to your Spin &
+          Pick or Free Draft records. Progress saves in this browser; ending a
+          franchise replaces its history with a new draft.
+        </p>
         <p>
           Older saves keep their original results and records. Completed league
-          seasons can start playoffs immediately. Five-player
-          seasons remain archived recaps. Earlier eight-player seasons retain
-          their personal statistics, box scores and team awards; those honors
-          remain awards within your roster. Start a new season to play the full
-          league and earn league honors.
+          seasons can start playoffs immediately. Five-player seasons remain
+          archived recaps. Earlier eight-player seasons retain their personal
+          statistics, box scores and team awards; those honors remain awards
+          within your roster. Start a new season to play the full league and
+          earn league honors.
         </p>
       </div>
     </details>

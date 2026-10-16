@@ -1,5 +1,17 @@
 # All-22 basketball adaptation — design QA
 
+## Franchise mode — 2026-10-15
+
+Added an offseason, career and history hub using the existing dark surfaces, gold active controls, local sprites and condensed typography. The eight-player roster persists; the trade desk presents both players' values, the partner's before/after roster rating and its decision. Career tables pin player names on mobile and scroll inside their panel. Selecting a player exposes honors with the original year and team. Entering the offseason moves keyboard focus and scrolls to the new hub.
+
+Evidence: `docs/design/franchise-history-desktop.jpg` (1440×1100) and `docs/design/franchise-offseason-mobile.jpg` (390×844). Checked the career and honors view at 320px too; no document overflow at any checked width. Final captures use explicit screenshot bounds matching the tested CSS viewport because the browser's unbounded screenshot scaled to its default aspect ratio.
+
+Verified a rejected Diglett-for-Venomoth offer, accepted Vaporeon-for-Venomoth trade, trade persistence, new-year roster preservation, starter/bench swap, coaching adjustment and reload before simulation. Completed a second 82-game season (26–56), its 85-game postseason, and another offseason/reload. History correctly keeps Year 1's Cherrygrove title and Year 2's Cinnabar title over Pewter, with Tyranitar Finals MVP (28.2 PPG, 14.8 RPG, 3.7 APG). Vaporeon retains 4,604 points in 164 regular-season games despite changing clubs; Furret's Year 2 Sixth Player award and Tyranitar's ring/Finals MVP appear in career honors.
+
+During development, an old duplicate preview overwrote newer progress when refresh reran effects. Added guards against repeated mount restoration and unchanged-state writes, reproduced the latter in a regression test, closed the duplicate preview and repeated the two-season save check successfully. Checked logs after the final reload contain no warnings/errors. The separate user-origin 69–13 older season remains intact.
+
+214 tests across 34 files passed. TypeScript and production build passed; Vite reports a non-blocking main-bundle size advisory. Review findings on lifecycle bounds and continuation focus are resolved. The prior PNG-export and standalone Playwright CLI verification limits below still apply.
+
 ## Eight-player refinement — 2026-10-15
 
 The new feature pass revisited [All-22 scouting](https://all22pokemon.com/scouting) and [patch notes](https://all22pokemon.com/patch-notes). Adapted player scouting, game box scores, season statistics, depth, and coaching; kept the basketball court and existing visual direction. Team-only awards are labeled explicitly.

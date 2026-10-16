@@ -66,8 +66,11 @@ export function useGame(
   const [storageNotice, setStorageNotice] = useState<string | null>(
     loaded.notice,
   );
+  const restoredOnce = useRef(false);
   useEffect(() => {
-    if (!loaded.restore) return;
+    // Development refresh reruns effects while retaining hook state. Never
+    // replay the mount-time snapshot over progress made since restoration.
+    if (!loaded.restore || restoredOnce.current) return;
     const controller = new AbortController();
     busy.current = true;
     void loaded
@@ -77,6 +80,7 @@ export function useGame(
       }, controller.signal)
       .then((restored) => {
         if (controller.signal.aborted) return;
+        restoredOnce.current = true;
         rawDispatch({ type: "RESTORE_SAVED", state: restored.state });
         setStorageNotice(restored.notice);
         setCanSave(!restored.preserveSource && restored.notice === null);
@@ -132,7 +136,7 @@ export function useGame(
     const league = source.result?.league;
     if (
       busy.current ||
-      source.result?.modelVersion !== 3 ||
+      ![3, 4].includes(source.result?.modelVersion ?? 0) ||
       !league ||
       source.playoffs?.championId != null
     )
@@ -195,9 +199,13 @@ export function useGame(
     url.searchParams.delete("lineup");
     window.history.replaceState(null, "", url);
   }, [loaded.roster, importPending, restoring]);
+  const lastPersistedState = useRef<GameState | null>(null);
   useEffect(() => {
-    if (restoring || !canSave) return;
+    if (restoring || !canSave || lastPersistedState.current === state) return;
     const saved = saveGame(storage, state);
+    // Effects can rerun without a game action during development refresh.
+    // An idle preview must not overwrite another tab's newer saved progress.
+    if (saved.notice === null) lastPersistedState.current = state;
     setStorageNotice(saved.notice);
   }, [state, storage, restoring, canSave]);
   return {

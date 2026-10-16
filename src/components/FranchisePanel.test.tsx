@@ -1,0 +1,415 @@
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { applyTrade } from "../game/franchise";
+import {
+  CAREER_KEYS,
+  type CareerTotals,
+  type Franchise,
+} from "../game/franchiseTypes";
+import { ROSTER_SLOTS, type GameState, type LeagueTeam } from "../game/types";
+import { FranchisePanel, type FranchisePanelProps } from "./FranchisePanel";
+
+const emptyTotals = (): CareerTotals =>
+  Object.fromEntries(
+    CAREER_KEYS.map((key) => [key, 0]),
+  ) as unknown as CareerTotals;
+function fixture(): GameState {
+  const teams: LeagueTeam[] = Array.from({ length: 30 }, (_, id) => ({
+    id,
+    name:
+      id === 0 ? "Your team" : id === 1 ? "Pallet Pioneers" : `Club ${id + 1}`,
+    roster: Object.fromEntries(
+      ROSTER_SLOTS.map((slot, index) => [slot, id * 8 + index + 1]),
+    ) as LeagueTeam["roster"],
+    tactic: "balanced",
+    defense: "man",
+    rotation: "balanced",
+    ratings: {
+      offense: 60,
+      defense: 60,
+      overall: 60,
+      filled: 5,
+      complete: true,
+    },
+  }));
+  const standings = teams.map((team) => ({
+    teamId: team.id,
+    wins: 50,
+    losses: 32,
+    pointsFor: 8200,
+    pointsAgainst: 8000,
+    homeWins: 25,
+    awayWins: 25,
+    streak: 1,
+    lastTen: 5,
+  }));
+  const finalsMvp = {
+    playerId: "0:1",
+    pokemonId: 1,
+    teamId: 0,
+    score: 100,
+    value: "25.0 PPG · 6.0 RPG · 5.0 APG",
+  };
+  const franchise: Franchise = {
+    modelVersion: 1,
+    year: 1,
+    phase: "offseason",
+    teams,
+    trades: [],
+    careers: Array.from({ length: 240 }, (_, index) => ({
+      pokemonId: index + 1,
+      seasons: 1,
+      teamIds: [Math.floor(index / 8)],
+      regular: {
+        ...emptyTotals(),
+        gamesPlayed: 2,
+        gamesStarted: 1,
+        points: 30,
+        fgm: 10,
+        fga: 20,
+        threePM: 2,
+        threePA: 5,
+        ftm: 8,
+        fta: 10,
+        highPoints: 20,
+        doubleDoubles: 1,
+      },
+      playoffs: { ...emptyTotals(), gamesPlayed: 1, points: 8, fgm: 0, fga: 0 },
+    })),
+    history: [
+      {
+        year: 1,
+        seasonSeed: 99,
+        standings,
+        rosters: teams.map((team) =>
+          ROSTER_SLOTS.map((slot) => team.roster[slot]!),
+        ),
+        awards: [
+          {
+            id: "mvp",
+            title: "Most Valuable Player",
+            pokemonId: 1,
+            teamId: 0,
+            description: "Season leader",
+            value: "15.0 PPG",
+          },
+        ],
+        allLeague: [{ pokemonId: 1, teamId: 0 }],
+        allDefense: [{ pokemonId: 1, teamId: 0 }],
+        championId: 0,
+        runnerUpId: 1,
+        runnerUpWins: 2,
+        finalsMvp,
+      },
+    ],
+  };
+  return {
+    version: 3,
+    franchise,
+    records: {
+      spin: { runs: 0, bestWins: 0, perfectSeasons: 0 },
+      free: { runs: 1, bestWins: 50, perfectSeasons: 0 },
+    },
+    run: {
+      id: "franchise-fixture",
+      mode: "free",
+      includeLegends: false,
+      roster: teams[0].roster,
+      offerIds: [],
+      rerollsLeft: 0,
+      draftSeed: 1,
+      seasonSeed: 99,
+      tactic: "balanced",
+      rotation: "balanced",
+      defense: "man",
+      result: {
+        modelVersion: 3,
+        wins: 50,
+        losses: 32,
+        mvpId: 1,
+        games: [],
+        league: {
+          teams,
+          standings,
+          players: [],
+          games: [],
+          awards: [],
+          allLeague: [],
+          allDefense: [],
+        },
+      },
+      playoffs: {
+        modelVersion: 1,
+        seeds: [],
+        series: [],
+        players: [],
+        finalsPlayers: [],
+        championId: 0,
+        finalsMvp,
+      },
+    },
+  };
+}
+function setup(
+  state = fixture(),
+  overrides: Partial<FranchisePanelProps> = {},
+) {
+  const props = {
+    state,
+    onEnterOffseason: vi.fn(),
+    onStartSeason: vi.fn(),
+    onTrade: vi.fn(),
+    ...overrides,
+  };
+  return { ...render(<FranchisePanel {...props} />), props };
+}
+
+describe("franchise hub", () => {
+  it("offers continuation only after completed model-3 playoffs", () => {
+    const state = fixture();
+    delete state.franchise;
+    const { props, rerender } = setup(state);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue as franchise" }),
+    );
+    expect(props.onEnterOffseason).toHaveBeenCalledOnce();
+    rerender(
+      <FranchisePanel
+        {...props}
+        state={{ ...state, run: { ...state.run, playoffs: undefined } }}
+      />,
+    );
+    expect(
+      screen.queryByRole("region", { name: "Franchise" }),
+    ).not.toBeInTheDocument();
+    rerender(
+      <FranchisePanel
+        {...props}
+        state={{
+          ...state,
+          run: {
+            ...state.run,
+            result: { ...state.run.result!, modelVersion: 2 },
+          },
+        }}
+      />,
+    );
+    expect(
+      screen.queryByRole("region", { name: "Franchise" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps all eight offseason players visible and offers every trading partner", () => {
+    const { props } = setup();
+    expect(
+      within(
+        screen.getByRole("list", { name: "Your offseason roster" }),
+      ).getAllByRole("listitem"),
+    ).toHaveLength(8);
+    expect(
+      within(screen.getByLabelText("Trade partner")).getAllByRole("option"),
+    ).toHaveLength(29);
+    expect(
+      within(screen.getByLabelText("Player you send")).getAllByRole("option"),
+    ).toHaveLength(8);
+    expect(
+      within(screen.getByLabelText("Player you receive")).getAllByRole(
+        "option",
+      ),
+    ).toHaveLength(8);
+    fireEvent.click(screen.getByRole("button", { name: "Start season 2" }));
+    expect(props.onStartSeason).toHaveBeenCalledOnce();
+  });
+
+  it("filters species-level careers and keeps per-game, totals and playoff scopes separate", () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "Career stats" }));
+    const table = screen.getByRole("table", {
+      name: /Career player statistics/,
+    });
+    expect(within(table).getAllByRole("row")).toHaveLength(241);
+    fireEvent.change(
+      screen.getByLabelText("Filter career players by current team"),
+      { target: { value: "0" } },
+    );
+    expect(within(table).getAllByRole("row")).toHaveLength(9);
+    fireEvent.change(screen.getByLabelText("Search career players"), {
+      target: { value: "Bulbasaur" },
+    });
+    expect(within(table).getAllByRole("row")).toHaveLength(2);
+    expect(within(table).getAllByRole("cell")[0]).toHaveTextContent("15.0");
+    expect(table).toHaveTextContent("50.0%");
+    fireEvent.click(screen.getByRole("button", { name: "Totals" }));
+    expect(within(table).getAllByRole("cell")[0]).toHaveTextContent("30");
+    fireEvent.click(screen.getByRole("button", { name: "Playoffs" }));
+    expect(within(table).getAllByRole("cell")[0]).toHaveTextContent("8");
+    expect(table).toHaveTextContent("—");
+  });
+
+  it("rejects an unfair offer and updates the displayed roster and trade log after an accepted offer", () => {
+    const state = fixture();
+    const { props, rerender } = setup(state);
+    const complete = screen.getByRole("button", { name: "Complete trade" });
+    expect(complete).toBeDisabled();
+    expect(screen.getByLabelText("Trade offer preview")).toHaveTextContent(
+      "Offer declined",
+    );
+    fireEvent.click(complete);
+    expect(props.onTrade).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Player you send"), {
+      target: { value: "3" },
+    });
+    fireEvent.change(screen.getByLabelText("Player you receive"), {
+      target: { value: "10" },
+    });
+    expect(complete).toBeEnabled();
+    expect(screen.getByLabelText("Trade offer preview")).toHaveTextContent(
+      "Venusaur",
+    );
+    expect(screen.getByLabelText("Trade offer preview")).toHaveTextContent(
+      "Caterpie",
+    );
+    fireEvent.click(complete);
+    expect(props.onTrade).toHaveBeenCalledWith(1, 3, 10);
+    const traded = applyTrade(state, 1, 3, 10);
+    rerender(<FranchisePanel {...props} state={traded} />);
+    const roster = screen.getByRole("list", { name: "Your offseason roster" });
+    expect(roster).toHaveTextContent("Caterpie");
+    expect(roster).not.toHaveTextContent("Venusaur");
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Caterpie joined your team",
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Venusaur joined Pallet Pioneers",
+    );
+    expect(screen.getByText("Trade history (1)")).toBeInTheDocument();
+    rerender(<FranchisePanel {...props} state={traded} disabled />);
+    expect(
+      screen.getByRole("button", { name: "Start season 2" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Complete trade" }),
+    ).toBeDisabled();
+    expect(screen.getByLabelText("Trade partner")).toBeDisabled();
+  });
+
+  it("includes active-year additions in career stats without counting the archived season twice", () => {
+    const state = fixture();
+    state.franchise!.phase = "season";
+    state.franchise!.year = 2;
+    state.run.result!.modelVersion = 4;
+    state.run.playoffs = undefined;
+    state.run.result!.league!.players = [
+      {
+        ...emptyTotals(),
+        teamId: 0,
+        teamName: "Your team",
+        playerId: "0:1",
+        pokemonId: 1,
+        slot: "PG",
+        gamesPlayed: 2,
+        points: 20,
+      },
+    ];
+    setup(state);
+    fireEvent.click(screen.getByRole("button", { name: "Career stats" }));
+    fireEvent.change(screen.getByLabelText("Search career players"), {
+      target: { value: "Bulbasaur" },
+    });
+    const table = screen.getByRole("table", {
+      name: /Career player statistics/,
+    });
+    expect(within(table).getAllByRole("cell")[0]).toHaveTextContent("12.5");
+    fireEvent.click(screen.getByRole("button", { name: "Totals" }));
+    expect(within(table).getAllByRole("cell")[0]).toHaveTextContent("50");
+    expect(state.franchise!.careers[0].regular.points).toBe(30);
+  });
+
+  it("retains a traded player's championship and award affiliations", () => {
+    const state = fixture();
+    state.franchise!.teams[0].roster = {
+      ...state.franchise!.teams[0].roster,
+      PG: 9,
+    };
+    state.franchise!.teams[1].roster = {
+      ...state.franchise!.teams[1].roster,
+      PG: 1,
+    };
+    setup(state);
+    fireEvent.click(screen.getByRole("button", { name: "Career stats" }));
+    fireEvent.change(screen.getByLabelText("Search career players"), {
+      target: { value: "Bulbasaur" },
+    });
+    const player = screen.getByRole("button", {
+      name: "View Bulbasaur honors",
+    });
+    expect(player).toHaveTextContent("Pallet Pioneers");
+    fireEvent.click(player);
+    const honors = screen.getByRole("region", {
+      name: "Bulbasaur career honors",
+    });
+    expect(honors).toHaveTextContent("Championship ring");
+    expect(honors).toHaveTextContent("Most Valuable Player");
+    expect(honors).toHaveTextContent("All-League");
+    expect(honors).toHaveTextContent("All-Defense");
+    expect(honors).toHaveTextContent("Finals MVP");
+    expect(honors).toHaveTextContent("Year 1 · Your team");
+    expect(honors).not.toHaveTextContent("Pallet Pioneers");
+  });
+
+  it("shows archived standings, Finals, awards and the champion's original roster", () => {
+    const state = fixture();
+    state.franchise!.history[0].standings[1].wins = 60;
+    state.franchise!.history[0].standings[1].losses = 22;
+    state.franchise!.history[0].standings[2].pointsFor = 8500;
+    setup(state);
+    fireEvent.click(screen.getByRole("button", { name: "History" }));
+    expect(screen.getByLabelText("Archived season")).toHaveValue("1");
+    const history = screen.getByRole("region", { name: "Season history" });
+    expect(history).toHaveTextContent("4–2");
+    expect(history).toHaveTextContent("50–32");
+    expect(history).toHaveTextContent("Bulbasaur");
+    expect(history).toHaveTextContent(/Only the active season.*box scores/i);
+    expect(
+      within(
+        screen.getByRole("table", { name: "Year 1 final standings" }),
+      ).getAllByRole("row"),
+    ).toHaveLength(31);
+    const rankedTeams = within(
+      screen.getByRole("table", { name: "Year 1 final standings" }),
+    ).getAllByRole("rowheader");
+    expect(rankedTeams[0]).toHaveTextContent("Pallet Pioneers");
+    expect(rankedTeams[1]).toHaveTextContent("Club 3");
+    expect(rankedTeams[2]).toHaveTextContent("Your team");
+    expect(
+      within(
+        screen.getByRole("list", { name: "Year 1 championship roster" }),
+      ).getAllByRole("listitem"),
+    ).toHaveLength(8);
+  });
+
+  it("allows offseason entry only when the current Finals finish and disables mutations while busy", () => {
+    const state = fixture();
+    state.franchise!.phase = "season";
+    state.franchise!.year = 2;
+    state.run.playoffs!.championId = null;
+    const { props, rerender } = setup(state);
+    expect(
+      screen.queryByRole("button", { name: "Enter offseason" }),
+    ).not.toBeInTheDocument();
+    const finished = {
+      ...state,
+      run: {
+        ...state.run,
+        playoffs: { ...state.run.playoffs!, championId: 0 },
+      },
+    };
+    rerender(<FranchisePanel {...props} state={finished} disabled />);
+    expect(
+      screen.getByRole("button", { name: "Enter offseason" }),
+    ).toBeDisabled();
+    rerender(<FranchisePanel {...props} state={finished} />);
+    fireEvent.click(screen.getByRole("button", { name: "Enter offseason" }));
+    expect(props.onEnterOffseason).toHaveBeenCalledOnce();
+  });
+});

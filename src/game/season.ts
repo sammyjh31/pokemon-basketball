@@ -1,6 +1,8 @@
 import { createLeague, leagueSchedule } from "./league";
 import { simulateMatch } from "./match";
 import { addBox, leagueHonors, leaguePlayers } from "./leagueStats";
+import { validateLeagueTeams } from "./franchiseValidation";
+import { teamRatings } from "./ratings";
 import type {
   GameResult,
   LeagueFixture,
@@ -8,11 +10,35 @@ import type {
   Run,
   SeasonResult,
   Standing,
+  LeagueTeam,
 } from "./types";
 export { resolveScore, winProbability, SEASON_RULES } from "./v2Season";
+export function seasonTeams(run: Run): LeagueTeam[] {
+  if (!run.leagueTeams) return createLeague(run);
+  const teams = validateLeagueTeams(run.leagueTeams, run.includeLegends);
+  const members = new Set(Object.values(teams[0].roster));
+  const chosen = Object.values(run.roster);
+  if (
+    chosen.length !== 8 ||
+    new Set(chosen).size !== 8 ||
+    chosen.some((id) => !members.has(id))
+  )
+    throw new Error(
+      "Franchise rosters can change only through offseason trades.",
+    );
+  teams[0] = {
+    ...teams[0],
+    roster: { ...run.roster },
+    tactic: run.tactic,
+    rotation: run.rotation,
+    defense: run.defense ?? "man",
+    ratings: teamRatings(run.roster, run.tactic, run.rotation),
+  };
+  return teams;
+}
 function seasonBuilder(run: Run) {
   if (run.result) throw new Error("This roster has already played its season.");
-  const teams = createLeague(run),
+  const teams = seasonTeams(run),
     fixtures = leagueSchedule(run.seasonSeed),
     players = leaguePlayers(teams);
   const byPlayer = new Map(players.map((p) => [p.playerId, p]));
@@ -91,7 +117,7 @@ function seasonBuilder(run: Run) {
     const honors = leagueHonors(players, standings),
       mvp = honors.awards.find((a) => a.id === "mvp")!;
     return {
-      modelVersion: 3,
+      modelVersion: run.leagueTeams ? 4 : 3,
       games,
       wins: standings[0].wins,
       losses: standings[0].losses,
