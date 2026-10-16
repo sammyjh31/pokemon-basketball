@@ -53,7 +53,7 @@ Create `CoachDraft.tsx`, `CoachSummary.tsx`, `TrainerCoachInsights.tsx` and styl
 - [x] Run complete suite; repair actual regressions and run meaningful targeted follow-ups.
 - [x] Run varied-coach audit and old replay comparison; inspect performance and accounting.
 - [x] Fresh-context review, repair findings, update README/handoff and execution evidence.
-- [ ] Integrate latest main safely, push main, verify remote SHA and active local preview.
+- [x] Integrate latest main safely, push main, verify remote SHA and active local preview.
 
 ## Execution rulings
 
@@ -83,3 +83,5 @@ The seeded audit covers **64 games / 32 coach styles**, with 336 recorded adjust
 Browser QA used isolated port 5176: three challenge offers, free catalog search, coach selection, projected rotation, local friends choosing before CPUs, persistence between human turns, taken-coach disabling and Pokémon draft unlock. A 390px iframe viewport had 390px document scroll width and working trainer search/selection. Checked console errors were empty. Temporary QA files, tab and server were removed. The user's port 5173 save and active preview remain intact. Screenshot: `docs/design/trainer-coaches.png`.
 
 Standalone Playwright scripts were updated for trainer selection and automatic coaching; CLI browser automation was not run in this desktop session.
+
+Delivery verified: implementation commit `b2f7e51` fast-forwarded GitHub `main` and the feature branch. Both remote refs matched the local commit; `http://127.0.0.1:5173/` returned HTTP 200. The attached checkout remains in place to serve the local game; unrelated worktrees were preserved.
