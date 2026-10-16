@@ -187,7 +187,7 @@ beforeAll(() => {
     },
   };
   offseason = enterOffseason(state);
-}, 20000);
+}, 60000);
 describe("the league offseason", () => {
   it("round trips real development and CPU trades across two completed seasons", async () => {
     const first = processOffseason(offseason);

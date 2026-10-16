@@ -380,7 +380,7 @@ export default function App({
                 (state.franchise?.phase === "offseason" &&
                   canSelectTrainer(state))) && (
                 <CoachDraft
-                  key={run.id}
+                  key={`coach-${run.id}`}
                   seed={run.seasonSeed}
                   offered={!state.franchise && run.mode === "spin"}
                   nextSeason={state.franchise?.phase === "offseason"}

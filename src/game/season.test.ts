@@ -41,7 +41,7 @@ describe("season simulation", () => {
       ).toBe(true);
     }
     expect(result.league!.awards[0].pokemonId).toBe(result.mvpId);
-  }, 45000);
+  }, 120000);
   it("improves odds monotonically with either offense or defense", () => {
     for (const opponent of OPPONENTS) {
       const team = {

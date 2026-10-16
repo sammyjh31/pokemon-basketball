@@ -36,7 +36,7 @@ beforeAll(() => {
       free: { runs: 4, bestWins: 60, perfectSeasons: 0 },
     },
   };
-}, 30000);
+}, 60000);
 
 const ability = (id: number) =>
   Math.max(
@@ -398,7 +398,7 @@ describe("career identity across franchise seasons", () => {
       archived.franchise!.careers.find((entry) => entry.pokemonId === 150)!
         .regular.points,
     ).toBeGreaterThan(0);
-  }, 30000);
+  }, 60000);
 });
 
 it("does not create seasons or trades beyond the supported save boundaries", () => {

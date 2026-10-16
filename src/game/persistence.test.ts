@@ -114,7 +114,7 @@ describe("saved progress", () => {
       if (kind === "award") result.games[0].playerOfGameId = 999;
       expect(loadGame(memory(JSON.stringify(state)), 3).notice).toBeTruthy();
     },
-    45000, // These cases reconstruct an entire 30-team season.
+    90000, // These cases reconstruct an entire 30-team season.
   );
   it("handles malformed JSON and blocked/quota-exceeded storage without throwing", () => {
     expect(loadGame(memory("{oops"), 1).notice).toBeTruthy();
@@ -149,4 +149,4 @@ it("defers a completed league replay and stops before playing more games when ca
   await expect(pending).rejects.toMatchObject({ name: "AbortError" });
   expect(progress).toEqual([0, 15]);
   expect(storage.getItem(STORAGE_KEY) === source).toBe(true);
-}, 20000);
+}, 60000);

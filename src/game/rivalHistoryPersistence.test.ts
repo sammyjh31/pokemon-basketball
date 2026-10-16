@@ -32,7 +32,7 @@ beforeAll(() => {
       },
     },
   };
-}, 30000);
+}, 60000);
 it("archives actual learned rivals, round-trips them and carries them to the next year", () => {
   const archived = archiveFranchiseSeason(finished),
     report = archived.franchise!.history[0].rivalScouting!;

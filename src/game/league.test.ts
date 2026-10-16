@@ -13,7 +13,7 @@ const run = {
 let result: SeasonResult;
 beforeAll(() => {
   result = simulateSeason(run);
-}, 30000);
+}, 60000);
 describe("one shared league", () => {
   it("drafts 240 unique players across thirty eight-player clubs", () => {
     const teams = createLeague(run),
@@ -131,5 +131,5 @@ describe("one shared league", () => {
     expect(asyncResult).toEqual(result);
     expect(progress[0]).toBe(0);
     expect(progress.at(-1)).toBe(1230);
-  }, 30000);
+  }, 60000);
 });

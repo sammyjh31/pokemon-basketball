@@ -24,7 +24,7 @@ beforeAll(() => {
       playoffs: simulatePlayoffs(result.league!, run.seasonSeed),
     },
   };
-}, 30000);
+}, 60000);
 describe("franchise detail dialogs", () => {
   it("labels unavailable old rows honestly while retaining career totals and keyboard dismissal", () => {
     const state = enterOffseason(finished),

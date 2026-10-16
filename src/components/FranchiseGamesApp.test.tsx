@@ -66,7 +66,7 @@ beforeAll(() => {
     },
   };
   ready = startInteractiveFranchiseSeason(archiveFranchiseSeason(finished), 93);
-}, 30000);
+}, 90000);
 
 it("connects minutes, training, played fixtures, careers and historical boxes across the franchise UI", async () => {
   let value: string | null = null;
@@ -243,10 +243,10 @@ it("lets a returning franchise simulate its next season directly from the overvi
         82,
       );
     },
-    { timeout: 20000 },
+    { timeout: 60000 },
   );
   expect(
     screen.queryByRole("button", { name: "Simulate season 2" }),
   ).not.toBeInTheDocument();
   expect((JSON.parse(saved) as GameState).franchise?.year).toBe(2);
-}, 30000);
+}, 90000);

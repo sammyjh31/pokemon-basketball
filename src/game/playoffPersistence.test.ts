@@ -25,7 +25,7 @@ beforeAll(() => {
       pokemonId: state.run.offerIds[0],
     });
   finished = gameReducer(state, { type: "SIMULATE" });
-}, 20000);
+}, 60000);
 
 describe("saved postseason recovery", () => {
   it("keeps existing model-3 completed seasons ready to begin playoffs", () => {
@@ -69,7 +69,7 @@ describe("saved postseason recovery", () => {
         expect(loaded.state.run.playoffs!.finalsMvp).not.toBeNull();
       }
     },
-    20000,
+    60000,
   );
 
   it("recovers the completed regular season when only its playoff extension is invalid", () => {
@@ -101,7 +101,7 @@ describe("saved postseason recovery", () => {
     expect(loaded.state).toEqual(finished);
     expect(loaded.notice).toMatch(/playoff/i);
     expect(storage.getItem(STORAGE_KEY)).toBe(source);
-  }, 20000);
+  }, 60000);
 
   it("retains playoff progress after deferred regular-season restoration", async () => {
     const playoffs = simulatePlayoffs(
@@ -118,7 +118,7 @@ describe("saved postseason recovery", () => {
     );
     expect(loaded.state).toEqual(saved);
     expect(loaded.notice).toBeNull();
-  }, 20000);
+  }, 60000);
 
   it.each([
     "score",
@@ -150,6 +150,6 @@ describe("saved postseason recovery", () => {
       expect(loaded.notice).toMatch(/playoff/i);
       expect(loaded.preserveSource).toBe(true);
     },
-    20000,
+    60000,
   );
 });

@@ -98,15 +98,21 @@ test("friends draft a complete local league, compare results, and restore withou
     .inputValue();
   await page.getByLabel("PG player", { exact: true }).selectOption(center);
   await expect(page.getByLabel("C player", { exact: true })).toHaveValue(pg);
-  await page
-    .getByRole("combobox", { name: "Offense", exact: true })
-    .selectOption("perimeter");
+  await expect(
+    page.getByRole("combobox", { name: "Offense", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("region", { name: /automatic coaching$/ }),
+  ).toBeVisible();
   await page
     .getByRole("combobox", { name: "Review friend", exact: true })
     .selectOption("24");
-  await page
-    .getByRole("combobox", { name: "Defense", exact: true })
-    .selectOption("zone");
+  await expect(
+    page.getByRole("combobox", { name: "Defense", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("region", { name: /automatic coaching$/ }),
+  ).toBeVisible();
   const draft = await page.evaluate(() =>
     JSON.parse(localStorage.getItem("pokemon-basketball:local-league:v1")!),
   );
@@ -121,8 +127,13 @@ test("friends draft a complete local league, compare results, and restore withou
   expect(
     new Set(draft.picks.map((p: { pokemonId: number }) => p.pokemonId)).size,
   ).toBe(240);
-  expect(draft.coaching[11].tactic).toBe("perimeter");
-  expect(draft.coaching[24].defense).toBe("zone");
+  expect(
+    [draft.coaching[11].coach.id, draft.coaching[24].coach.id].sort(),
+  ).toEqual(["ash", "misty"]);
+  expect(
+    new Set(draft.coaching.map((c: { coach: { id: string } }) => c.coach.id))
+      .size,
+  ).toBe(30);
   await page.getByRole("button", { name: "Simulate local season" }).click();
   const board = page.getByRole("table", { name: "Friends leaderboard" });
   await expect(board).toBeVisible({ timeout: 25000 });

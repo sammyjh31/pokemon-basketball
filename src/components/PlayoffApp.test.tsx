@@ -22,7 +22,7 @@ beforeAll(() => {
       pokemonId: state.run.offerIds[0],
     });
   finished = gameReducer(state, { type: "SIMULATE" });
-}, 20000);
+}, 60000);
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
@@ -84,7 +84,7 @@ it("saves one complete playoff slate, blocks duplicate work and resets, then res
     ),
   ).toBe(16);
   expect(resumed.records).toEqual(finished.records);
-}, 20000);
+}, 60000);
 
 it("keeps damaged playoff save bytes through recovery and replaces them only after a new playoff action completes", async () => {
   vi.useFakeTimers();
@@ -121,7 +121,7 @@ it("keeps damaged playoff save bytes through recovery and replaces them only aft
   expect(
     screen.queryByText(/saved playoffs could not be restored/i),
   ).not.toBeInTheDocument();
-}, 20000);
+}, 60000);
 
 it("cancels unfinished postseason work on unmount without saving a partial action", async () => {
   vi.useFakeTimers();

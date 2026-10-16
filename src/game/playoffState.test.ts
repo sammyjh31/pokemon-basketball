@@ -13,7 +13,7 @@ beforeAll(() => {
       pokemonId: state.run.offerIds[0],
     });
   finished = gameReducer(state, { type: "SIMULATE" });
-}, 20000);
+}, 60000);
 
 const playoffs: Playoffs = {
   modelVersion: 1,

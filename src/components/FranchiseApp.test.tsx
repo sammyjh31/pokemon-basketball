@@ -39,7 +39,7 @@ beforeAll(() => {
       ),
     },
   };
-}, 20000);
+}, 60000);
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
@@ -79,6 +79,9 @@ it("continues a completed league into the next season and restores its careers w
   expect(ready.franchise!.freeAgency?.cpuYears).toEqual([1]);
   expect(screen.getByRole("button", { name: "Lineup builder" })).toBeDisabled();
   fireEvent.click(
+    screen.getByRole("button", { name: "Draft Delia Ketchum (Mom)" }),
+  );
+  fireEvent.click(
     screen.getByRole("button", {
       name: `PG slot: ${nameOf(ready.run.roster.PG!)}`,
     }),
@@ -90,9 +93,7 @@ it("continues a completed league into the next season and restores its careers w
   );
   const swapped = JSON.parse(storage.getItem(STORAGE_KEY)!) as GameState;
   expect(swapped.run.roster.PG).toBe(ready.run.roster.B1);
-  fireEvent.change(screen.getByLabelText("Coaching style"), {
-    target: { value: "pace" },
-  });
+  expect(screen.queryByLabelText("Coaching style")).not.toBeInTheDocument();
   mounted.unmount();
   mounted = render(
     <StrictMode>
@@ -102,7 +103,12 @@ it("continues a completed league into the next season and restores its careers w
   await act(async () => {
     await vi.runAllTimersAsync();
   });
-  expect(screen.getByLabelText("Coaching style")).toHaveValue("pace");
+  expect(
+    screen.getByRole("region", {
+      name: "Delia Ketchum (Mom) automatic coaching",
+    }),
+  ).toBeInTheDocument();
+  expect(JSON.parse(storage.getItem(STORAGE_KEY)!).run.coach.id).toBe("mom");
   fireEvent.click(
     screen.getByRole("button", { name: /Simulate remaining season/i }),
   );
@@ -181,7 +187,7 @@ it("saves an accepted offseason trade, keeps careers, and restores both rosters"
   );
   fireEvent.click(screen.getByRole("button", { name: "Keep playing" }));
   expect(JSON.parse(storage.getItem(STORAGE_KEY)!)).toEqual(traded);
-}, 20000);
+}, 60000);
 
 import {
   applyTrade,

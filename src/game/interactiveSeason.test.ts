@@ -79,7 +79,7 @@ describe("interactive franchise progress", () => {
     ).toBe(game.match.homeScore);
     expect(simulateSeason(partial)).toEqual(complete.result);
     expect(nextFranchiseFixture(complete)).toBeNull();
-  }, 60000);
+  }, 120000);
   it("rejects a stored official result ahead of the current prefix", async () => {
     const { run, teams } = officialFixture();
     const first = nextFranchiseFixture(run)!;

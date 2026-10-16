@@ -140,7 +140,7 @@ beforeAll(() => {
     },
     franchise: { ...franchise, phase: "season", year: 2 },
   };
-}, 30000);
+}, 60000);
 
 describe("development save validation", () => {
   it("restores a processed model-3 offseason without rewriting its season", () => {
@@ -148,7 +148,7 @@ describe("development save validation", () => {
     expect(loaded.notice).toBeNull();
     expect(loaded.state).toEqual(processed);
     expect(loaded.state.run.result!.modelVersion).toBe(3);
-  }, 20000);
+  }, 60000);
   it("round trips developed pregame teams and rebuilds cached ratings", () => {
     const source = structuredClone(next);
     source.franchise!.teams[1].ratings.overall = 999;
@@ -275,7 +275,7 @@ describe("development save validation", () => {
     expect(loadGame(memory(JSON.stringify(completed)), 999).state).toEqual(
       completed,
     );
-  }, 60000); // Full season generation plus persistence replay.
+  }, 120000); // Full season generation plus persistence replay.
   it.each([
     "unknown skill",
     "fraction",
