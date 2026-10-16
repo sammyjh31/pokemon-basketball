@@ -21,6 +21,7 @@ import { ROSTER_SLOTS } from "../game/types";
 import { STORAGE_KEY, type StorageLike } from "../game/persistence";
 import { StrictMode } from "react";
 import { simulateSeason as legacySeason } from "../game/legacySeason";
+import "../test/preloadPanels";
 const memory = (): StorageLike => {
   let s: string | null = null;
   return {

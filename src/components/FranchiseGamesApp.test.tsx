@@ -20,6 +20,7 @@ import { POKEMON_BY_ID } from "../data/pokemon";
 import { officialGameFromArcade } from "../game/officialGame";
 import { finishedGame } from "../game/officialGame.testUtils";
 import type { OfficialArcadeProps } from "./ArcadeMode";
+import "../test/preloadPanels";
 
 vi.mock("./ArcadeMode", () => ({
   ArcadeMode: ({

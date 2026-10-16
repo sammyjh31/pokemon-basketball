@@ -10,6 +10,7 @@ import {
 import { SeasonPanel } from "./SeasonPanel";
 import { Leaders, LeaguePanel } from "./LeaguePanel";
 import { simulateMatch } from "../game/match";
+import "../test/preloadPanels";
 
 const ratings = {
   offense: 60,

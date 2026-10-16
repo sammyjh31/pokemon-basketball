@@ -5,7 +5,7 @@ import { getCoach } from "../game/trainerCoaches";
 import { CoachPortrait } from "./CoachPortrait";
 import { coachGamePlan } from "../game/coachPolicy";
 import type { OfficialGame } from "../game/franchiseFeatures";
-import { useCallback, useId, useState } from "react";
+import { useCallback, useId, useMemo, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { bestPosition, positionRating } from "../game/ratings";
 import {
@@ -262,25 +262,31 @@ export function Leaders({
     const n = c.value(p);
     return n === null || c.kind || totals ? n : perGame(p, n);
   };
-  const players = league.players
-    .filter(
-      (p) =>
-        (team === "all" || p.teamId === Number(team)) &&
-        playerLabel(p).toLowerCase().includes(query.toLowerCase()) &&
-        (postseason || !qualified || qualifies(p)),
-    )
-    .sort((a, b) => {
-      const av = value(a, column),
-        bv = value(b, column);
-      return av === null
-        ? bv === null
-          ? a.playerId.localeCompare(b.playerId)
-          : 1
-        : bv === null
-          ? -1
-          : (av - bv) * (sort.descending ? -1 : 1) ||
-            a.playerId.localeCompare(b.playerId);
-    });
+  // Filtering and sorting hundreds of players only reruns when a control changes.
+  const players = useMemo(
+    () =>
+      league.players
+        .filter(
+          (p) =>
+            (team === "all" || p.teamId === Number(team)) &&
+            playerLabel(p).toLowerCase().includes(query.toLowerCase()) &&
+            (postseason || !qualified || qualifies(p)),
+        )
+        .map((p) => ({ p, v: value(p, column) }))
+        .sort((a, b) =>
+          a.v === null
+            ? b.v === null
+              ? a.p.playerId.localeCompare(b.p.playerId)
+              : 1
+            : b.v === null
+              ? -1
+              : (a.v - b.v) * (sort.descending ? -1 : 1) ||
+                a.p.playerId.localeCompare(b.p.playerId),
+        )
+        .map(({ p }) => p),
+    // qualifies/value only read league, column and totals, listed below.
+    [league, team, query, postseason, qualified, column, totals, sort],
+  );
   return (
     <section aria-label={`${scope} player leaders`}>
       <div className="results-section-heading">
