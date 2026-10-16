@@ -1,3 +1,4 @@
+import { bodyProfile, previewBodyShot } from "../game/bodyMatchups";
 import { useState } from "react";
 import { FRANCHISE_POKEMON, POKEMON_BY_ID } from "../data/pokemon";
 import { playerProfile } from "../game/playerProfile";
@@ -29,10 +30,9 @@ export function MatchupLab() {
     b = POKEMON_BY_ID.get(defender)!,
     ap = playerProfile(a),
     bp = playerProfile(b);
-  const shot = evaluateShot({
+  const baseShot = evaluateShot({
+    resolvedMatchup: true,
     shooter: ap,
-    shooterTypes: a.types,
-    defenderTypes: b.types,
     defender: bp,
     shooterHeight: a.heightM,
     defenderHeight: b.heightM,
@@ -44,6 +44,21 @@ export function MatchupLab() {
     roleFitPenalty:
       Math.max(...Object.values(ap.positions)) - ap.positions[position],
   });
+  const body = previewBodyShot(
+    baseShot.probability,
+    { body: bodyProfile(a), profile: ap, types: a.types, energy },
+    { body: bodyProfile(b), profile: bp, types: b.types, energy: 100 },
+    { play, zone, coverage },
+  );
+  const shot = {
+    ...baseShot,
+    probability: body.probability,
+    factors: [
+      ...baseShot.factors,
+      { label: "Physical contest", change: body.physicalChange },
+      { label: "Type matchup", change: body.typeChange },
+    ],
+  };
   const type = typeMatchup(a.types, b.types);
   return (
     <section className="matchup-lab local-panel" aria-label="Matchup explorer">
@@ -52,9 +67,9 @@ export function MatchupLab() {
           <span className="eyebrow">LEARN BEFORE YOU DRAFT</span>
           <h3>Matchup explorer</h3>
           <p>
-            Change one variable to explore the base shot formula. Live games
-            also add physical effects, chemistry, signatures, and resolved
-            contests.
+            Explore how body, typing and skill interact against a specific
+            defender. This preview uses the same physical contests as new
+            simulated games.
           </p>
         </div>
         <button
@@ -215,6 +230,55 @@ export function MatchupLab() {
               basketball matchup.
             </p>
           </section>
+          <section
+            className="type-matchup-insight"
+            aria-label="Physical matchup"
+          >
+            <strong>Who creates the mismatch?</strong>
+            <p>
+              Post leverage:{" "}
+              {body.edges.contact > 0.04
+                ? a.name
+                : body.edges.contact < -0.04
+                  ? b.name
+                  : "even"}
+              . Reach edge:{" "}
+              {body.edges.reach > 0.04
+                ? a.name
+                : body.edges.reach < -0.04
+                  ? b.name
+                  : "even"}
+              . Turning / first-step edge:{" "}
+              {body.edges.quickness > 0.04
+                ? a.name
+                : body.edges.quickness < -0.04
+                  ? b.name
+                  : "even"}
+              .
+            </p>
+            <p>
+              <output aria-label="Advantage creation chance">
+                {(body.advantageChance * 100).toFixed(1)}%
+              </output>{" "}
+              chance to create{" "}
+              {play === "post" && zone === "rim"
+                ? "a deep post seal"
+                : "separation"}{" "}
+              with this action.
+            </p>
+            <p>
+              If the attack wins position:{" "}
+              {(body.wonProbability * 100).toFixed(1)}% shot chance. If
+              contained: {(body.containedProbability * 100).toFixed(1)}%. The
+              overall preview averages both outcomes.
+            </p>
+            <small>
+              Mass provides contact and screen leverage, but increases turning
+              costs and fatigue. Reach helps contests and short rebounds; quick
+              players can attack a heavy defender in space. Type advantage also
+              changes the contest itself.
+            </small>
+          </section>
           <output aria-label="Shot make probability">
             {(shot.probability * 100).toFixed(1)}%
           </output>
@@ -244,10 +308,11 @@ export function MatchupLab() {
             Changes apply in this order and add to the displayed probability.
             Pokémon types affect skills and the matchup shown above. Type
             effects are strongest at the rim; help defenders can soften them in
-            games. Height helps selected matchups with diminishing returns,
-            capped at 3.5 m. More extreme size never guarantees a basket. This
-            is the first revised game model, not a model fitted to real-world
-            results.
+            games. Catalog dimensions are smoothly compressed into basketball
+            reach and leverage; they are not measured standing reach. Extreme
+            size never guarantees a basket. The preview uses the newest matchup
+            rules; archived games keep their saved rules. Coefficients are game
+            tuning, not a model fitted to real-world results.
           </p>
         </>
       )}

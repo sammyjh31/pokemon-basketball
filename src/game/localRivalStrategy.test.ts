@@ -49,6 +49,7 @@ function drafted(
     },
   );
   // Exact counterexample choices below belong to the original frozen season rules.
+  if (originalRules) delete draft.matchupVersion;
   if (originalRules) delete draft.possessionVersion;
   while (currentLocalTurn(draft)) {
     draft = advanceLocalCpu(draft);

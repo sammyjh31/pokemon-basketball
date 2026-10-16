@@ -1,6 +1,18 @@
-# Local and cloud handoff — 2026-10-15
+# Local and cloud handoff — 2026-10-16
 
 Development continues in `/Users/sam/Documents/PokeBBall`, synchronized to `main` at `https://github.com/sammyjh31/pokemon-basketball.git`. The league update was `36f760a`, and playoffs were `8a1257a`; franchise mode builds on both. A concurrent arcade-design documentation commit was preserved.
+
+## Physical and type matchup engine
+
+The current basketball checkout and local preview use `/Users/sam/.codex/worktrees/pokemon-matchup-engine/PokeBBall` on `main`. The primary directory is temporarily used by another project branch; preserve its work. The preview retains `http://127.0.0.1:5173/`, so existing browser saves stay on the same origin. Keep the attached worktree while it serves the game.
+
+New simulated seasons use `matchupVersion: 1`. `bodyMatchups.ts` combines compressed catalog height/weight, current energy, basketball skills and typing to resolve post seals, separation and containment. The outcomes affect play/recipient selection, defensive assignments, screens, help and kickouts, shots, turnovers, fouls, blocks, rebounding and fatigue. Mass improves contact but costs turning speed and workload. All points still come from basketball events; no score bonuses determine the winner.
+
+The shared model powers **Matchup explorer** and **Inside this result → Matchups that shaped the attacks**. The report uses the actual final attacker and defender, including kickouts, and distinguishes observed points from conditional shot-chance shifts. Detailed formulas and verification evidence are in [the matchup specification](superpowers/specs/2026-10-16-pokemon-matchup-engine.md) and [implementation record](superpowers/plans/2026-10-16-pokemon-matchup-engine.md). Reproduce the 1,000-game audit with `node scripts/matchup-audit.mjs --samples=100`.
+
+Standard franchises adopt these rules at the next season boundary. New configurable local leagues opt in; existing local careers retain their frozen engine across future years. Archives, mixed-version validation and historical replay preserve saved flags. Do not silently opt old local drafts into the new rules. Arcade gameplay remains its separate engine.
+
+The sections below record earlier milestones and their verification at the time; current feature availability is documented in the README.
 
 ## Connected franchise games, coaching and history
 
@@ -80,7 +92,7 @@ Browser QA uses `localhost:5173`, a separate origin from the user's `127.0.0.1:5
 
 The final test league finished 21–61 and restored the identical result and awards after refresh with visible restoration progress. Verified league leader search, eight-player opponent rosters, cross-team comparison, game filtering, both-team box scores and award finalists. No document overflow at 1440, 390 or 320 pixels; no warning/error entries in the checked browser session. Final screenshots: `docs/design/league-awards-desktop.png` and `docs/design/league-awards-mobile.png`.
 
-## Scope and verification limits
+## Historical scope and verification limits (initial league release)
 
 - No injuries, aging, contracts, free agency, generations after II, accounts, multiplayer or public hosting.
 - The clock uses 7.5-second ticks and one-minute substitution decisions. The simulation is statistical, not a spatial or fully officiated real-league simulator. Depleted rosters retain only enough disqualified players to remain five-on-five; subsequent fouls add a technical free throw.

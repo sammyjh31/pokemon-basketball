@@ -1,3 +1,4 @@
+import { matchupEdges } from "./bodyMatchups";
 import type { Player } from "./matchLineups";
 import { POSITIONS, type DefenseScheme } from "./types";
 import type { OpponentScouting } from "./typeTacticsTypes";
@@ -38,6 +39,14 @@ function guardScore(
     ? profileShare * (1 - confidence) +
       (observed.rimAttempts / observed.attempts) * confidence
     : profileShare;
+  const body =
+    attack.body && defender.body ? matchupEdges(attack, defender) : undefined;
+  const physicalThreat = body
+    ? 18 *
+      (rimShare *
+        (Math.max(0, body.contact) * 0.6 + Math.max(0, body.reach) * 0.4) +
+        (1 - rimShare) * Math.max(0, body.quickness))
+    : 0;
   return (
     ready(defender, "interiorDefense") * rimShare * 0.55 +
     ready(defender, "perimeterDefense") * (1 - rimShare) * 0.55 -
@@ -49,7 +58,8 @@ function guardScore(
       attack.profile.attributes.strength - defender.profile.attributes.strength,
     ) *
       0.06 -
-    edge(attack, defender) * 9
+    edge(attack, defender) * 9 -
+    physicalThreat
   );
 }
 
@@ -125,8 +135,18 @@ export function chooseTypeHelp(
   defense: Player[],
   guards: Map<Player, Player>,
   scouting: OpponentScouting,
+  advantageWon?: boolean,
 ): { helper: Player; abandoned: Player } | undefined {
+  const body =
+    shooter.body && defender.body ? matchupEdges(shooter, defender) : undefined;
   const need =
+    (advantageWon === undefined ? 0 : advantageWon ? 9 : -5) +
+    (body
+      ? Math.max(
+          0,
+          body.contact * 0.55 + body.quickness * 0.7 + body.reach * 0.25,
+        ) * 24
+      : 0) +
     edge(shooter, defender) * 9 +
     (scoutedThreat(shooter, scouting) - 1) * 12 +
     Math.max(
@@ -148,7 +168,8 @@ export function chooseTypeHelp(
     const score =
       need -
       edge(shooter, helper) * 7 +
-      ready(helper, "interiorDefense") * 0.1 -
+      ready(helper, "interiorDefense") * 0.1 +
+      (helper.body ? helper.body.reach * 5 : 0) -
       shootingRisk -
       4;
     if (score > bestScore) {

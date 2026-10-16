@@ -160,7 +160,9 @@ it("carries scouting into playoffs and agrees across batch, step, async and repl
 
 it("keeps old rules opt-in and rejects incompatible context", () => {
   const [home, away] = teams();
+  delete home.matchupVersion;
   delete home.typeTacticsVersion;
+  delete away.matchupVersion;
   delete away.typeTacticsVersion;
   expect(simulateMatch(home, away, 12).typeTactics).toBeUndefined();
   expect(() =>

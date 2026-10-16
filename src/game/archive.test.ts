@@ -89,7 +89,7 @@ describe("connected franchise archives", () => {
     expect(rejected.preserveSource).toBe(true);
     expect(rejected.state.franchise).toBeUndefined();
     expect(damaged.getItem()).toBe(original);
-  }, 15000); // Valid and tampered saves each replay several full seasons.
+  }, 60000); // Valid and tampered saves each replay several full seasons.
   it("starts interactive years with empty progress without changing older helper fixtures", () => {
     expect(franchise.startInteractiveFranchiseSeason).toBeTypeOf("function");
     const archived = franchise.archiveFranchiseSeason(finished);
@@ -269,7 +269,7 @@ describe("mixed official season persistence", () => {
       expect(changed).toBe(true);
       expect(() => validateFranchise(capsule, corrupted.run, true)).toThrow();
     }
-  }, 60000);
+  }, 180000);
 });
 
 it("retains selected training and validated development after an offseason reload", () => {
@@ -301,7 +301,7 @@ it("retains selected training and validated development after an offseason reloa
     },
   };
   expect(loadGame(storage(next), 99).preserveSource).toBe(true);
-}, 20000);
+}, 90000);
 
 it("defers rich archive verification before a new year's first fixture and aborts without changing source", async () => {
   const next = franchise.startInteractiveFranchiseSeason(

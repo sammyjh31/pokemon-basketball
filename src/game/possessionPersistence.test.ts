@@ -22,7 +22,7 @@ it("opts new runs and all clubs in, validates the version and freezes archive ru
     replay: { teams, seasonModel: 4 },
   } as FranchiseSeason;
   expect(archivedSeasonRun(season).possessionVersion).toBe(1);
-  const old = createLeague({ ...r, possessionVersion: undefined });
+  const old = createLeague({ ...r, matchupVersion: undefined, possessionVersion: undefined });
   expect(old.every((t) => t.possessionVersion === undefined)).toBe(true);
   expect(
     archivedSeasonRun({ ...season, replay: { ...season.replay!, teams: old } })
@@ -46,6 +46,7 @@ it("new local leagues opt in but loading historical local inputs never adds a ve
   );
   expect(draft.possessionVersion).toBe(1);
   expect(parseLocalLeague(JSON.stringify(draft)).possessionVersion).toBe(1);
+  delete draft.matchupVersion;
   delete draft.possessionVersion;
   expect(
     parseLocalLeague(JSON.stringify(draft)).possessionVersion,

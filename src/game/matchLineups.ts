@@ -1,3 +1,4 @@
+import { matchupPreference, type BodyProfile } from "./bodyMatchups";
 import type { EngineProfile } from "./engineDepth";
 import type { PlayerProfile } from "./playerProfile";
 import { typeLineupBonuses } from "./typeCoaching";
@@ -5,6 +6,7 @@ import { POSITIONS, type LeagueBox, type LeagueTeam } from "./types";
 type Side = "home" | "away";
 export interface Player {
   depth?: EngineProfile;
+  body?: BodyProfile;
   types: readonly string[];
   typeEdges: Map<Player, number>;
   profile: PlayerProfile;
@@ -53,7 +55,32 @@ function scoutLineup(team: Team, opponents: readonly Player[]) {
   return new Map(
     team.config.typeMatchupsVersion === 1
       ? team.players.map(
-          (p) => [p, typeLineupBonuses(p, opponents, edge)] as const,
+          (p) =>
+            [
+              p,
+              typeLineupBonuses(p, opponents, edge).map(
+                (bonus, role) =>
+                  bonus +
+                  (p.body && opponents[role]?.body
+                    ? Math.log(
+                        matchupPreference(
+                          p,
+                          opponents[role],
+                          role >= 3 ? "post" : "isolation",
+                        ),
+                      ) *
+                        4 -
+                      Math.log(
+                        matchupPreference(
+                          opponents[role],
+                          p,
+                          role >= 3 ? "post" : "isolation",
+                        ),
+                      ) *
+                        4
+                    : 0),
+              ),
+            ] as const,
         )
       : [],
   );
@@ -63,14 +90,20 @@ function recordCounters(
   team: Team,
   previous: Player[],
   bonuses: Map<Player, number[]>,
+  opponents: readonly Player[],
 ) {
   if (team.counterSubstitutions === undefined) return;
+  // The reported counter statistic measures typing, even when a physical
+  // mismatch also influenced the coach's selection.
+  const typeBonus = (p: Player, role: number) =>
+    p.body
+      ? (typeLineupBonuses(p, opponents, edge)[role] ?? 0)
+      : (bonuses.get(p)?.[role] ?? 0);
   team.floor.forEach((p, role) => {
     if (
       !previous.includes(p) &&
       !team.floor.includes(previous[role]) &&
-      (bonuses.get(p)?.[role] ?? 0) >
-        (bonuses.get(previous[role])?.[role] ?? 0) + 0.5
+      typeBonus(p, role) > typeBonus(previous[role], role) + 0.5
     )
       team.counterSubstitutions!++;
   });
@@ -134,7 +167,7 @@ export function chooseLineup(
   }
   const previous = team.floor;
   team.floor = chosen;
-  if (minute > 0) recordCounters(team, previous, bonuses);
+  if (minute > 0) recordCounters(team, previous, bonuses, opponents);
 }
 
 export function replaceFoulOut(
@@ -162,5 +195,5 @@ export function replaceFoulOut(
     );
     team.floor[role] = available[0];
   });
-  recordCounters(team, previous, bonuses);
+  recordCounters(team, previous, bonuses, opponents);
 }

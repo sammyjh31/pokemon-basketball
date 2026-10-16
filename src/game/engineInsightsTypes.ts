@@ -9,6 +9,7 @@ export interface EngineRules {
   familiarity: number;
 }
 export interface ShotEvent {
+  matchup?: import("./bodyMatchups").MatchupEvidence;
   creatorId?: string;
   putback?: boolean;
   kickout?: boolean;

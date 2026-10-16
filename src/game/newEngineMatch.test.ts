@@ -5,6 +5,7 @@ import { simulateMatch } from "./match";
 const teams = createLeague({
   ...createRun("free", false, 42),
   // Compare the two historical shot models without the new type-rule layer.
+  matchupVersion: undefined,
   typeMatchupsVersion: undefined,
   typeTacticsVersion: undefined,
   roster: { PG: 65, SG: 135, SF: 149, PF: 68, C: 143, B1: 121, B2: 6, B3: 131 },

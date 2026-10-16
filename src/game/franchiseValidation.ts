@@ -289,13 +289,17 @@ export function validateLeagueTeams(
   if (developed !== 0 && developed !== 30) return fail();
   const typeVersion = object(rows[0]).typeMatchupsVersion;
   if (typeVersion !== undefined && typeVersion !== 1) return fail();
+  const matchupVersion = object(rows[0]).matchupVersion;
   const possessionVersion = object(rows[0]).possessionVersion;
+  if (matchupVersion !== undefined && matchupVersion !== 1) return fail();
   if (possessionVersion !== undefined && possessionVersion !== 1) return fail();
   const tacticsVersion = object(rows[0]).typeTacticsVersion;
   if (
     (tacticsVersion !== undefined && tacticsVersion !== 1) ||
     (tacticsVersion === 1 && typeVersion !== 1)
   )
+    return fail();
+  if (matchupVersion === 1 && (possessionVersion !== 1 || tacticsVersion !== 1))
     return fail();
   return rows.map((value, index) => {
     const row = object(value),
@@ -312,6 +316,7 @@ export function validateLeagueTeams(
       !DEFENSE_SCHEMES.includes(row.defense as never) ||
       row.simulationVersion !== simulationVersion ||
       row.typeMatchupsVersion !== typeVersion ||
+      row.matchupVersion !== matchupVersion ||
       row.possessionVersion !== possessionVersion ||
       row.typeTacticsVersion !== tacticsVersion
     )
@@ -347,6 +352,7 @@ export function validateLeagueTeams(
       ...(simulationVersion === 2 ? { simulationVersion } : {}),
       ...(typeVersion === 1 ? { typeMatchupsVersion: 1 as const } : {}),
       ...(tacticsVersion === 1 ? { typeTacticsVersion: 1 as const } : {}),
+      ...(matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
       ...(possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
     };
   });
@@ -985,6 +991,7 @@ export function validateFranchise(
     teams.some(
       (team) =>
         team.typeTacticsVersion !== run.typeTacticsVersion ||
+        team.matchupVersion !== run.matchupVersion ||
         team.possessionVersion !== run.possessionVersion,
     )
   )

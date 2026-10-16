@@ -1,3 +1,12 @@
+import {
+  bodyProfile,
+  matchupEdges,
+  matchupPreference,
+  preferenceFromEdges,
+  resolveBodyMatchup,
+  screenLeverage,
+  type MatchupEvidence,
+} from "./bodyMatchups";
 import { resolveRebound, creationChance } from "./possessionModel";
 import { emptyPossessionPlayer, emptyPossessionTeam } from "./possessionTypes";
 import {
@@ -101,6 +110,10 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
     const pokemonId = ids[index]!;
     return {
       types: POKEMON_BY_ID.get(pokemonId)!.types,
+      body:
+        config.matchupVersion === 1
+          ? bodyProfile(POKEMON_BY_ID.get(pokemonId)!)
+          : undefined,
       typeEdges: new Map(),
       profile: playerProfile(
         POKEMON_BY_ID.get(pokemonId)!,
@@ -168,7 +181,8 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
 }
 
 const skill = (p: Player, key: keyof Attributes) => {
-  if (!p.depth) return p.profile.attributes[key] * (0.72 + p.energy * 0.0028);
+  if (!p.depth || p.body)
+    return p.profile.attributes[key] * (0.72 + p.energy * 0.0028);
   const physical = p.depth.physical;
   const addition =
     key === "speed"
@@ -224,6 +238,16 @@ export function simulateMatch(
     (home.possessionVersion !== undefined && home.possessionVersion !== 1)
   )
     throw new Error("Both teams must use valid, matching possession rules.");
+  if (
+    home.matchupVersion !== away.matchupVersion ||
+    (home.matchupVersion !== undefined && home.matchupVersion !== 1) ||
+    (home.matchupVersion === 1 &&
+      (home.possessionVersion !== 1 || home.typeTacticsVersion !== 1))
+  )
+    throw new Error(
+      "Both teams must use valid, matching physical matchup rules.",
+    );
+  const bodyEnabled = home.matchupVersion === 1;
   const possessionDepth = home.possessionVersion === 1;
   const advanced = home.typeTacticsVersion === 1;
   if (!advanced && options.scouting !== undefined)
@@ -303,7 +327,7 @@ export function simulateMatch(
       spotUp: { home: 0, away: 0 },
     },
     playerOfGameId: "",
-    ...(modern
+    ...(modern || bodyEnabled
       ? {
           shotQuality: {
             home: { attempts: 0, expectedPoints: 0, points: 0 },
@@ -426,6 +450,7 @@ export function simulateMatch(
   let lastRebounder: Player | undefined;
   let createdBy: Player | undefined;
   let screenBy: Player | undefined;
+  let activeMatchup: MatchupEvidence | undefined;
   const chemistryMap = new Map<string, number>();
   const chemistry = (team: Team) => {
     if (!team.config.engineRules) return 0;
@@ -497,6 +522,7 @@ export function simulateMatch(
     event: Omit<ShotEvent, "index" | "period" | "elapsedSeconds" | "x" | "y">,
   ) => {
     if (!result.insights) return;
+    if (activeMatchup) event = { ...event, matchup: activeMatchup };
     if (possessionDepth) {
       event = {
         ...event,
@@ -692,6 +718,7 @@ export function simulateMatch(
     if (possessionDepth) {
       const profile = (p: Player) => ({
         id: p.box.playerId,
+        ...(p.body ? { body: p.body } : {}),
         offense: skill(p, "offensiveRebound"),
         defense: skill(p, "defensiveRebound"),
         strength: skill(p, "strength"),
@@ -823,6 +850,7 @@ export function simulateMatch(
     for (;;) {
       createdBy = undefined;
       screenBy = undefined;
+      activeMatchup = undefined;
       if (phase) phase.secondChance = secondChance;
       let guards = advanced ? assignments(offense, defense) : undefined;
       let switched = false;
@@ -847,6 +875,7 @@ export function simulateMatch(
             p.profile.traits.screening + (p.depth?.physical.screening ?? 0),
             3,
           ) *
+          (bodyEnabled ? 0.75 + screenLeverage(p, guards!.get(handler)!) : 1) *
           (guards
             ? 1 +
               0.15 *
@@ -898,6 +927,23 @@ export function simulateMatch(
         weights[4] += 16 * observed.help;
         weights[1] += 12 * observed.switches;
       }
+      if (bodyEnabled) {
+        const matchups = offense.floor.map((p) =>
+          matchupEdges(p, guards!.get(p)!),
+        );
+        for (let i = 0; i < PLAY_TYPES.length; i++) {
+          const opportunities = matchups.map((e) =>
+            preferenceFromEdges(e, PLAY_TYPES[i]),
+          );
+          weights[i] *=
+            0.6 *
+              average(
+                offense.floor,
+                (_p) => opportunities[offense.floor.indexOf(_p)],
+              ) +
+            0.4 * Math.max(...opportunities);
+        }
+      }
       if (chaseThree) weights[4] += 45;
       const play = pick(
         possessionDepth
@@ -936,7 +982,13 @@ export function simulateMatch(
           offense.floor,
           (p) =>
             (p === handler ? 45 : p === screener ? 40 : 5) *
-            (1 + 0.15 * p.typeEdges.get(guards!.get(p)!)!) *
+            (bodyEnabled
+              ? matchupPreference(
+                  p,
+                  guards!.get(p)!,
+                  p === screener ? "post" : "pickRoll",
+                )
+              : 1 + 0.15 * p.typeEdges.get(guards!.get(p)!)!) *
             (p === screener
               ? skill(p, "finishing")
               : p === handler
@@ -967,10 +1019,12 @@ export function simulateMatch(
           return (
             rating ** 3 *
             (p.depth?.tendencies.usage ?? 1) *
-            (typed
-              ? 1 +
-                0.1 * p.typeEdges.get(guards?.get(p) ?? defense.floor[role])!
-              : 1)
+            (bodyEnabled
+              ? matchupPreference(p, guards!.get(p)!, play)
+              : typed
+                ? 1 +
+                  0.1 * p.typeEdges.get(guards?.get(p) ?? defense.floor[role])!
+                : 1)
           );
         });
       let putback =
@@ -1028,6 +1082,14 @@ export function simulateMatch(
         shotWeights[0] *= 0.82;
         shotWeights[2] *= 1.2;
       }
+      if (bodyEnabled) {
+        shotWeights[0] *= matchupPreference(
+          shooter,
+          defender,
+          play === "post" ? "post" : "isolation",
+        );
+        shotWeights[2] *= matchupPreference(shooter, defender, "spotUp");
+      }
       if (chaseThree) shotWeights[2] *= 3;
       let zone = pick<Zone>(
         ["rim", "mid", "three"],
@@ -1036,6 +1098,19 @@ export function simulateMatch(
       if (putback) zone = "rim";
       if (!advanced && defense.config.defense === "zone" && zone === "rim")
         defender = pick(defense.floor, (p) => skill(p, "interiorDefense") ** 3);
+      const coverageScheme =
+        advanced && play === "pickRoll"
+          ? screenCoverage(defense.config.defense, switched)
+          : defense.config.defense;
+      const bodyRoll = bodyEnabled ? random() : 0;
+      const probe = bodyEnabled
+        ? resolveBodyMatchup(
+            shooter,
+            defender,
+            { play, zone, coverage: coverageScheme, screener },
+            bodyRoll,
+          )
+        : undefined;
       if (guards && zone === "rim") {
         help = chooseTypeHelp(
           shooter,
@@ -1044,6 +1119,7 @@ export function simulateMatch(
           defense.floor,
           guards,
           scouting![defense.side],
+          probe?.won,
         );
         if (help) {
           result.typeTactics![defense.side].helpRotations++;
@@ -1065,6 +1141,21 @@ export function simulateMatch(
           }
         }
       }
+      const bodyMatch = bodyEnabled
+        ? resolveBodyMatchup(
+            shooter,
+            defender,
+            {
+              play,
+              zone,
+              coverage: coverageScheme,
+              screener,
+              helper: kickoutPasser ? undefined : help?.helper,
+              kickout: !!kickoutPasser,
+            },
+            bodyRoll,
+          )
+        : undefined;
       const typeEdge = typed ? shooter.typeEdges.get(defender)! : 0;
       const helpEdge = advanced
         ? zone === "rim" && help
@@ -1078,7 +1169,12 @@ export function simulateMatch(
             ) / 4
           : typeEdge;
       const typeEffect = typed
-        ? { edge: typeEdge, logOdds: typeShotLogOdds(typeEdge, zone, helpEdge) }
+        ? {
+            edge: typeEdge,
+            logOdds:
+              bodyMatch?.typeLogOdds ??
+              typeShotLogOdds(typeEdge, zone, helpEdge),
+          }
         : undefined;
       if (typeEffect && result.typeMatchups) {
         const summary = result.typeMatchups[offense.side];
@@ -1090,14 +1186,32 @@ export function simulateMatch(
         defense.floor,
         (p) => skill(p, "steal") * 0.5 + skill(p, "perimeterDefense") * 0.5,
       );
-      const carrier = play === "post" ? shooter : handler;
+      const carrier =
+        bodyEnabled && kickoutPasser
+          ? kickoutPasser
+          : play === "post"
+            ? shooter
+            : handler;
       const carrierDefender =
         guards?.get(carrier) ?? defense.floor[offense.floor.indexOf(carrier)];
       const typePressure = typed
         ? carrierDefender.typeEdges.get(carrier)! * 0.012
         : 0;
+      const carrierMatch = bodyEnabled
+        ? resolveBodyMatchup(
+            carrier,
+            carrierDefender,
+            {
+              play,
+              zone: play === "post" ? "rim" : zone,
+              coverage: coverageScheme,
+            },
+            bodyRoll,
+          )
+        : undefined;
       const turnoverRate = clamp(
         0.105 +
+          (carrierMatch?.turnoverDelta ?? 0) +
           typePressure +
           (pressure - skill(carrier, "ballHandling")) * 0.0016 +
           (65 - carrier.profile.traits.decisionMaking) * 0.0005 +
@@ -1219,10 +1333,6 @@ export function simulateMatch(
               ? 0.4
               : 1)
           : 0;
-      const coverageScheme =
-        advanced && play === "pickRoll"
-          ? screenCoverage(defense.config.defense, switched)
-          : defense.config.defense;
       const coverage =
         coverageScheme === "zone"
           ? zone === "rim"
@@ -1266,8 +1376,9 @@ export function simulateMatch(
       if (isClutch)
         accuracy += (shooter.profile.attributes.composure - 60) * 0.0007;
       accuracy = clamp(accuracy, 0.13, 0.82);
-      if (modern)
+      if (modern || bodyEnabled)
         accuracy = evaluateShot({
+          resolvedMatchup: bodyEnabled,
           shooter: shooter.profile,
           defender: defender.profile,
           shooterHeight: POKEMON_BY_ID.get(shooter.box.pokemonId)!.heightM,
@@ -1291,16 +1402,18 @@ export function simulateMatch(
           defenseFirst: defense.config.tactic === "defense",
         }).probability;
       // This coverage event explicitly alters resolution; it is not inferred from the outcome.
-      const contested = depthEnabled
-        ? random() <
-          clamp(
-            0.7 +
-              (defender.profile.traits.closeout - skill(shooter, "speed")) *
-                0.003,
-            0.4,
-            0.9,
-          )
-        : true;
+      const contested = bodyMatch
+        ? random() < bodyMatch.contestChance
+        : depthEnabled
+          ? random() <
+            clamp(
+              0.7 +
+                (defender.profile.traits.closeout - skill(shooter, "speed")) *
+                  0.003,
+              0.4,
+              0.9,
+            )
+          : true;
       if (depthEnabled) {
         const attack = shooter.depth?.physical,
           guard = defender.depth?.physical;
@@ -1319,7 +1432,7 @@ export function simulateMatch(
         };
         accuracy = clamp(
           accuracy +
-            clamp(physical, -0.025, 0.025) +
+            (bodyEnabled ? 0 : clamp(physical, -0.025, 0.025)) +
             chemistry(offense) +
             (contested ? -0.008 : 0.012) -
             (disrupted ? 0.012 : 0) +
@@ -1351,13 +1464,21 @@ export function simulateMatch(
           0.88,
         );
       }
-      if (advanced)
+      if (advanced && !bodyEnabled)
         accuracy = clamp(
           accuracy +
             (kickoutPasser ? 0.025 : help && zone === "rim" ? -0.02 : 0),
           0.1,
           0.88,
         );
+      const beforePhysical = accuracy;
+      if (bodyMatch)
+        accuracy = clamp(
+          applyTypeShotEffect(accuracy, bodyMatch.physicalLogOdds),
+          0.1,
+          0.88,
+        );
+      const physicalChanceDelta = accuracy - beforePhysical;
       // Measure type impact against the completed basketball/depth probability.
       let untypedAccuracy = accuracy;
       if (typeEffect)
@@ -1396,8 +1517,21 @@ export function simulateMatch(
         accuracy = clamp(accuracy + boost, 0.1, 0.88);
         untypedAccuracy = clamp(untypedAccuracy + boost, 0.1, 0.88);
       }
+      if (bodyMatch)
+        activeMatchup = {
+          ...bodyMatch,
+          attackerId: shooter.box.playerId,
+          defenderId: defender.box.playerId,
+          attackerHeight: shooter.body!.heightM,
+          defenderHeight: defender.body!.heightM,
+          attackerWeight: shooter.body!.weightKg,
+          defenderWeight: defender.body!.weightKg,
+          physicalChanceDelta,
+          typeChanceDelta: accuracy - untypedAccuracy,
+        };
       const shootingFoulRate = clamp(
         (zone === "rim" ? 0.16 : zone === "mid" ? 0.075 : 0.035) +
+          (bodyMatch?.foulDelta ?? 0) +
           (shooter.profile.traits.drawFoul -
             defender.profile.traits.discipline) *
             0.0007 +
@@ -1462,8 +1596,17 @@ export function simulateMatch(
                   : 1),
             )
           : defender;
+      const blockBody = bodyEnabled
+        ? resolveBodyMatchup(
+            shooter,
+            blocker,
+            { play, zone, coverage: coverageScheme },
+            bodyRoll,
+          )
+        : undefined;
       const blockRate = clamp(
         (zone === "rim" ? 0.052 : zone === "mid" ? 0.021 : 0.009) +
+          (blockBody?.blockDelta ?? 0) +
           (typed
             ? blocker.typeEdges.get(shooter)! * (zone === "rim" ? 0.008 : 0.003)
             : 0) +
@@ -1579,7 +1722,13 @@ export function simulateMatch(
               (100 - player.profile.attributes.stamina) * 0.025 +
               (team.config.tactic === "pace" ? 0.36 : 0) +
               (team.config.defense === "press" ? 0.4 : 0) +
-              (player.depth?.physical.fatigue ?? 0);
+              (player.body
+                ? player.body.workload *
+                  (team.config.tactic === "pace" ||
+                  team.config.defense === "press"
+                    ? 1.8
+                    : 1)
+                : (player.depth?.physical.fatigue ?? 0));
             player.energy = Math.max(25, player.energy - drain * 0.125);
           } else
             player.energy = Math.min(

@@ -187,6 +187,8 @@ export interface Run {
   typeTacticsVersion?: 1;
   /** Omitted on historical inputs for exact replay. */
   possessionVersion?: 1;
+  /** Physical/type possession contests. Absent on historical seeds. */
+  matchupVersion?: 1;
   id: string;
   mode: Mode;
   includeLegends: boolean;
@@ -239,6 +241,8 @@ export interface LeagueTeam {
   typeTacticsVersion?: 1;
   /** Omitted on historical inputs for exact replay. */
   possessionVersion?: 1;
+  /** Physical/type possession contests. Absent on historical seeds. */
+  matchupVersion?: 1;
   id: number;
   name: string;
   roster: Roster;

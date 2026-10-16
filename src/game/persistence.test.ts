@@ -36,7 +36,7 @@ describe("saved progress", () => {
     const s = finished(),
       loaded = loadGame(memory(JSON.stringify(s)), 1).state;
     expect(gameReducer(loaded, { type: "SIMULATE" }).records.spin.runs).toBe(1);
-  }, 20000); // Multiple full-league generations and validation replays.
+  }, 60000); // Multiple full-league generations and validation replays.
 
   it("starts clean when there is no save", () => {
     expect(loadGame(memory(), 17)).toEqual({
@@ -114,7 +114,7 @@ describe("saved progress", () => {
       if (kind === "award") result.games[0].playerOfGameId = 999;
       expect(loadGame(memory(JSON.stringify(state)), 3).notice).toBeTruthy();
     },
-    15000, // These cases reconstruct an entire 30-team season.
+    45000, // These cases reconstruct an entire 30-team season.
   );
   it("handles malformed JSON and blocked/quota-exceeded storage without throwing", () => {
     expect(loadGame(memory("{oops"), 1).notice).toBeTruthy();

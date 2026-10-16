@@ -33,6 +33,7 @@ export function createRun(
     id: `run-${seed >>> 0}`,
     typeMatchupsVersion: 1,
     typeTacticsVersion: 1,
+    matchupVersion: 1,
     possessionVersion: 1,
     mode,
     includeLegends,

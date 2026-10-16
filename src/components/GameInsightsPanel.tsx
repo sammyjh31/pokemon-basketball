@@ -1,6 +1,6 @@
+import { BodyMatchupInsights } from "./BodyMatchupInsights";
 import { PossessionInsightsPanel } from "./PossessionInsightsPanel";
 import { useMemo, useState } from "react";
-import { POKEMON_BY_ID } from "../data/pokemon";
 import {
   gameDrivers,
   lineupMetrics,
@@ -14,12 +14,8 @@ import type {
 import type { LeagueMatch, LeagueTeam } from "../game/types";
 import "../insights.css";
 
-export const insightPlayerName = (id: string) => {
-  const pokemonId = Number(id.split(":").at(-1));
-  return POKEMON_BY_ID.get(pokemonId)?.name ?? `#${pokemonId}`;
-};
-export const insightNumber = (value: number | null, decimals = 1) =>
-  value === null || !Number.isFinite(value) ? "—" : value.toFixed(decimals);
+export { insightPlayerName, insightNumber } from "./insightFormat";
+import { insightPlayerName, insightNumber } from "./insightFormat";
 const signed = (value: number) =>
   `${value > 0 ? "+" : ""}${insightNumber(value)}`;
 const zoneName = { rim: "Rim", mid: "Midrange", three: "Three-point" };
@@ -563,6 +559,10 @@ export function GameInsightsPanel({
         </p>
       ) : (
         <>
+          <BodyMatchupInsights
+            shots={match.insights.shots}
+            teams={[home, away]}
+          />
           <PossessionInsightsPanel
             detail={match.insights.possession}
             teams={[home, away]}

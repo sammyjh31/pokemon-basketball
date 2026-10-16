@@ -225,6 +225,21 @@ export function RulesPanel() {
             </span>
           </div>
         </div>
+        <h3>Make the physical matchup count</h3>
+        <p>
+          New simulated seasons resolve post position and separation before a
+          shot. Height and weight shape reach, contact leverage, turning speed
+          and workload. A heavy Pokémon can seal a smaller defender or set a
+          stronger screen, but a quick opponent can attack it in space. Long
+          rebounds favor pursuit; short rebounds favor reach and position.
+        </p>
+        <p>
+          Coaches consider these differences together with typing when choosing
+          attacks, defenders, switches and help. The matchup explorer previews
+          those contests. Game insights show the actual matchups and advantages
+          created. Catalog dimensions are compressed into game traits, so
+          extreme size never guarantees success.
+        </p>
         <h3>Play the type matchup</h3>
         <p>
           Offenses look for favorable type matchups while still valuing

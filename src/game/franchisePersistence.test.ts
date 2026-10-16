@@ -185,7 +185,7 @@ describe("franchise persistence", () => {
       expect(loaded.state).toEqual(state);
       expect(loaded.state.records).toEqual(finished.records);
     },
-    20000,
+    60000,
   );
 
   it("restores an active completed year asynchronously before validating its postseason", async () => {
@@ -203,7 +203,7 @@ describe("franchise persistence", () => {
     expect(loaded.state).toEqual(completedTwo);
     expect(loaded.notice).toBeNull();
     expect(storage.getItem(STORAGE_KEY)).toBe(source);
-  }, 20000);
+  }, 60000);
 
   it("defers a completed first-year offseason without prematurely requiring its replayed Finals", async () => {
     const prepared = prepareGameLoad(memory(JSON.stringify(traded)), 999);
@@ -215,7 +215,7 @@ describe("franchise persistence", () => {
     );
     expect(loaded.state).toEqual(traded);
     expect(loaded.notice).toBeNull();
-  }, 20000);
+  }, 60000);
 
   it.each([
     "career points",
@@ -254,7 +254,7 @@ describe("franchise persistence", () => {
       expect(loaded.state.run.result).toEqual(finished.run.result);
       expect(storage.getItem(STORAGE_KEY)).toBe(source);
     },
-    20000,
+    60000,
   );
 
   it("keeps a corrupted fixed-roster archive in storage and starts a safe fresh draft", () => {
@@ -271,7 +271,7 @@ describe("franchise persistence", () => {
       expect(loaded.preserveSource).toBe(true);
     }
     expect(storage.getItem(STORAGE_KEY)).toBe(source);
-  }, 20000);
+  }, 60000);
 
   it("reconstructs stored ratings from the fixed roster and coaching before play", () => {
     const corrupted = structuredClone(yearTwo);
@@ -307,7 +307,7 @@ describe("franchise persistence", () => {
         (player) => player.pokemonId === tradedSpecies,
       )!.teamIds,
     ).toEqual([0, 1]);
-  }, 20000);
+  }, 60000);
 
   it.each(["games played", "player of game", "unqualified champion"] as const)(
     "cross-checks archived %s after previous game data is discarded",

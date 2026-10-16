@@ -34,6 +34,7 @@ it("enables type interactions for new runs and retains their version through sav
   ).toEqual(Array(30).fill(1));
   const legacy = structuredClone(state);
   delete legacy.run.typeMatchupsVersion;
+  delete legacy.run.matchupVersion;
   delete legacy.run.typeTacticsVersion;
   expect(
     loadGame({ getItem: () => JSON.stringify(legacy), setItem: () => {} }, 1)
@@ -55,6 +56,7 @@ it("replays local leagues using the type rules they were saved with", () => {
     localLeagueTeams(draft).every((t) => t.typeMatchupsVersion === 1),
   ).toBe(true);
   delete draft.typeMatchupsVersion;
+  delete draft.matchupVersion;
   delete draft.typeTacticsVersion;
   const old = parseLocalLeague(JSON.stringify(draft));
   expect(old.typeMatchupsVersion).toBeUndefined();
@@ -66,6 +68,7 @@ it("changes seeded possessions and records genuine opportunities without breakin
   const teams = createLeague({ ...createRun("free", false, 42), roster });
   // Pin this regression to the original typing layer; deeper assignment tactics
   // deliberately remove some of the favorable matchups asserted below.
+  for (const team of teams) delete team.matchupVersion;
   for (const team of teams) delete team.typeTacticsVersion;
   const result = simulateMatch(teams[0], teams[1], 123);
   expect(result.typeMatchups).toBeDefined();
@@ -77,6 +80,7 @@ it("changes seeded possessions and records genuine opportunities without breakin
   const oldTeams = teams.map((t) => {
     const old = { ...t };
     delete old.typeMatchupsVersion;
+    delete old.matchupVersion;
     delete old.typeTacticsVersion;
     return old;
   });

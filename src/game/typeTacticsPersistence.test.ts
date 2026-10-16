@@ -88,6 +88,7 @@ describe("versioned tactics creation and persistence", () => {
     expect(load(current).state.run.typeTacticsVersion).toBe(1);
     for (const typed of [false, true]) {
       const legacy = structuredClone(current);
+      delete legacy.run.matchupVersion;
       delete legacy.run.typeTacticsVersion;
       if (!typed) delete legacy.run.typeMatchupsVersion;
       const restored = load(legacy);
@@ -124,6 +125,7 @@ describe("versioned tactics creation and persistence", () => {
   it("rejects mixed or malformed league team versions without upgrading historical teams", () => {
     const legacy = structuredClone(teams);
     legacy.forEach((team) => {
+      delete team.matchupVersion;
       delete team.typeTacticsVersion;
     });
     expect(
@@ -143,6 +145,7 @@ describe("versioned tactics creation and persistence", () => {
 
   it("enables tactics when a legacy franchise starts its next season, preserving its archive", () => {
     const run = completedDraft();
+    delete run.matchupVersion;
     delete run.typeTacticsVersion;
     const result = simulateSeason(run),
       playoffs = simulatePlayoffs(result.league!, run.seasonSeed);
@@ -155,6 +158,18 @@ describe("versioned tactics creation and persistence", () => {
     const next = startFranchiseSeason(offseason, 52);
     expect(next.franchise!.year).toBe(2);
     expect(next.run.typeTacticsVersion).toBe(1);
+    expect(next.run.matchupVersion).toBe(1);
+    expect(
+      next.run.leagueTeams!.every((team) => team.matchupVersion === 1),
+    ).toBe(true);
+    // This legacy helper stores summary-only history. Preserve that absence
+    // and the original season's team rules while upgrading the new season.
+    expect(saved.franchise!.history[0].replay).toBeUndefined();
+    expect(
+      saved.run.result!.league!.teams.every(
+        (team) => team.matchupVersion === undefined,
+      ),
+    ).toBe(true);
     expect(
       next.run.leagueTeams!.every((team) => team.typeTacticsVersion === 1),
     ).toBe(true);
@@ -165,10 +180,12 @@ describe("versioned tactics creation and persistence", () => {
     expect(offseason).toEqual(saved);
     expect(load(next).notice).toBeNull();
     const mixedRun = structuredClone(next);
+    delete mixedRun.run.matchupVersion;
     delete mixedRun.run.typeTacticsVersion;
     expect(load(mixedRun).notice).not.toBeNull();
     const mixedFranchise = structuredClone(next);
     mixedFranchise.franchise!.teams.forEach((team) => {
+      delete team.matchupVersion;
       delete team.typeTacticsVersion;
     });
     expect(load(mixedFranchise).notice).not.toBeNull();
@@ -199,6 +216,7 @@ describe("local tactics persistence", () => {
   it("does not inject new flags while restoring or converting a legacy local draft", () => {
     for (const typed of [false, true]) {
       const legacy = localDraft();
+      delete legacy.matchupVersion;
       delete legacy.typeTacticsVersion;
       if (!typed) delete legacy.typeMatchupsVersion;
       const restored = parseLocalLeague(JSON.stringify(legacy));
@@ -234,6 +252,7 @@ describe("local tactics persistence", () => {
     "retains saved tactics rules (%s) across local career reloads and year two",
     (tactics) => {
       let draft = localDraft();
+      if (!tactics) delete draft.matchupVersion;
       if (!tactics) delete draft.typeTacticsVersion;
       const result = simulateLocalSeason(draft),
         playoffs = simulatePlayoffs(result.league!, localSeasonSeed(draft));

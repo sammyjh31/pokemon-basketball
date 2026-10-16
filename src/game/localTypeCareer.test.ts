@@ -45,6 +45,7 @@ describe("local depth and type rules together", () => {
         },
       );
       if (!typed) delete draft.typeMatchupsVersion;
+      if (!typed) delete draft.matchupVersion;
       if (!typed) delete draft.typeTacticsVersion;
       draft = advanceLocalCpu(draft);
       while (currentLocalTurn(draft)) {

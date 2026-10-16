@@ -8,6 +8,7 @@ import {
   type Team,
 } from "./matchLineups";
 import { typeMatchup } from "./typeMatchups";
+import { bodyProfile } from "./bodyMatchups";
 import {
   POSITIONS,
   ROSTER_SLOTS,
@@ -64,6 +65,35 @@ const roster = [
 ];
 
 describe("type-aware rotation decisions", () => {
+  it("does not report a physical-only replacement as improved type coverage", () => {
+    const ours = team(Array(8).fill("normal"));
+    const foes = team(Array(8).fill("normal"));
+    scout(ours, foes);
+    for (const p of [...ours.players, ...foes.players])
+      p.body = bodyProfile({
+        ...POKEMON_BY_ID.get(25)!,
+        heightM: 1.5,
+        weightKg: 500,
+      });
+    ours.players[5].body = bodyProfile({
+      ...POKEMON_BY_ID.get(25)!,
+      heightM: 1.5,
+      weightKg: 1,
+    });
+    ours.players[5].profile.positions = {
+      PG: 70,
+      SG: 10,
+      SF: 10,
+      PF: 10,
+      C: 10,
+    };
+    ours.counterSubstitutions = 0;
+    chooseLineup(ours, 1, false, foes.floor);
+    expect(ours.floor[0]).toBe(ours.players[5]);
+    expect(ours.floor).not.toContain(ours.players[0]);
+    expect(ours.counterSubstitutions).toBe(0);
+  });
+
   it("does not count a role reshuffle as a direct counter substitution", () => {
     const ours = team([
       "normal",

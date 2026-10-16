@@ -182,3 +182,39 @@ it("uses the actual screen response for shot coverage in either shot model", () 
   expect(screenCoverage("zone", false)).toBe("zone");
   expect(screenCoverage("press", true)).toBe("press");
 });
+
+it("matches equal-skill bodies to avoid a post mismatch and a slow defender on a quick attacker", async () => {
+  const { bodyProfile } = await import("./bodyMatchups");
+  const withBody = (id: number, weightKg: number) => ({
+    ...player(id, "normal"),
+    body: bodyProfile({ ...POKEMON_BY_ID.get(25)!, heightM: 1.5, weightKg }),
+  });
+  const heavy = withBody(1, 500),
+    light = withBody(2, 10),
+    slowGuard = withBody(12, 500),
+    quickGuard = withBody(11, 10);
+  const attack = [
+    heavy,
+    light,
+    withBody(3, 80),
+    withBody(4, 80),
+    withBody(5, 80),
+  ];
+  const defense = [
+    quickGuard,
+    slowGuard,
+    withBody(13, 80),
+    withBody(14, 80),
+    withBody(15, 80),
+  ];
+  connect(attack, defense);
+  const map = assignTypeDefenders(attack, defense, empty());
+  expect(map.get(heavy)).toBe(slowGuard);
+  expect(map.get(light)).toBe(quickGuard);
+  expect(
+    shouldSwitchScreen(light, heavy, quickGuard, slowGuard, "switch", empty()),
+  ).toBe(false);
+  expect(
+    shouldSwitchScreen(light, heavy, slowGuard, quickGuard, "man", empty()),
+  ).toBe(true);
+});

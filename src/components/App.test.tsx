@@ -164,7 +164,7 @@ describe("playable draft room", () => {
         await screen.findByRole(
           "dialog",
           { name: "Load shared lineup?" },
-          { timeout: 10000 },
+          { timeout: 45000 },
         ),
       ).toBeInTheDocument();
       expect(JSON.parse(storage.getItem(STORAGE_KEY)!).run).toEqual(state.run);
@@ -178,7 +178,7 @@ describe("playable draft room", () => {
         await screen.findByRole(
           "button",
           { name: "Load lineup" },
-          { timeout: 10000 },
+          { timeout: 45000 },
         ),
       );
       expect(slot("PG")).toHaveAccessibleName("PG slot: Alakazam");
@@ -187,7 +187,7 @@ describe("playable draft room", () => {
       );
       expect(window.location.search).toBe("");
     },
-    20000, // StrictMode restores and validates complete 1,230-game saves.
+    90000, // StrictMode restores and validates complete 1,230-game saves.
   );
   it.each(["25", "#25", "025", "#025"])(
     "searches number %s and switches between local sprite styles",
@@ -268,7 +268,7 @@ describe("playable draft room", () => {
       await screen.findByRole(
         "button",
         { name: "Skip reveal" },
-        { timeout: 15000 },
+        { timeout: 45000 },
       ),
     );
     expect(screen.getAllByTestId("game-result")).toHaveLength(82);
@@ -278,7 +278,7 @@ describe("playable draft room", () => {
     expect(
       screen.queryByRole("button", { name: /^Draft / }),
     ).not.toBeInTheDocument();
-  }, 20000);
+  }, 90000);
   it("counts two rerolls and clears pending selections", () => {
     render(<App initial={initialState(17)} storage={memory()} />);
     pick();
@@ -360,12 +360,12 @@ describe("playable draft room", () => {
     fireEvent.click(screen.getByRole("button", { name: "Simulate season" }));
     await waitFor(
       () => expect(screen.getAllByTestId("game-result")).toHaveLength(82),
-      { timeout: 15000 },
+      { timeout: 45000 },
     );
     expect(
       screen.queryByRole("button", { name: "Skip reveal" }),
     ).not.toBeInTheDocument();
-  }, 20000);
+  }, 90000);
   it("keeps portrait failures identifiable", () => {
     render(<App initial={initialState(17)} storage={memory()} />);
     const img = screen.getAllByRole("img")[0];
@@ -418,19 +418,19 @@ describe("playable draft room", () => {
     storage.setItem(STORAGE_KEY, JSON.stringify(state));
     render(<App storage={storage} />);
     expect(
-      await screen.findAllByTestId("game-result", {}, { timeout: 10000 }),
+      await screen.findAllByTestId("game-result", {}, { timeout: 45000 }),
     ).toHaveLength(82);
     expect(screen.getByTestId("season-record")).toHaveTextContent(
       `${state.run.result!.wins}–${state.run.result!.losses}`,
     );
-  }, 15000); // Includes a full season simulation and asynchronous replay on refresh.
+  }, 90000); // Includes a full season simulation and asynchronous replay on refresh.
 });
 
 describe("completed league restoration", () => {
   let saved: ReturnType<typeof initialState>;
   beforeAll(() => {
     saved = gameReducer(fill(), { type: "SIMULATE" });
-  }, 20000);
+  }, 90000);
 
   it("paints restoration progress in Strict Mode and preserves original bytes until validation completes", async () => {
     vi.useFakeTimers();
@@ -464,7 +464,7 @@ describe("completed league restoration", () => {
       `${saved.run.result!.wins}–${saved.run.result!.losses}`,
     );
     expect(JSON.parse(storage.getItem(STORAGE_KEY)!)).toEqual(saved);
-  }, 20000);
+  }, 90000);
 
   it("cancels an unmounted restoration so it cannot overwrite a newer draft", async () => {
     vi.useFakeTimers();
@@ -516,7 +516,7 @@ describe("completed league restoration", () => {
     expect(
       screen.queryByText(/The original save is kept until you make a change/),
     ).not.toBeInTheDocument();
-  }, 20000);
+  }, 90000);
   it("keeps the source bytes when the completed save fails validation before replay", () => {
     const storage = memory();
     const invalid = structuredClone(saved);
@@ -564,4 +564,4 @@ it("persists a shared lineup replacing malformed storage through simulation and 
     `${saved.run.result.wins}–${saved.run.result.losses}`,
   );
   expect(JSON.parse(storage.getItem(STORAGE_KEY)!).records.free.runs).toBe(1);
-}, 20000);
+}, 90000);

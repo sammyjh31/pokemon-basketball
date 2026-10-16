@@ -5,6 +5,8 @@ import type { DefenseScheme, PlayType } from "./types";
 
 export type ShotZone = "rim" | "mid" | "three";
 export interface ShotContext {
+  /** The possession matchup model replaces the generic body and screen terms. */
+  resolvedMatchup?: boolean;
   shooter: PlayerProfile;
   shooterTypes?: readonly string[];
   defenderTypes?: readonly string[];
@@ -73,7 +75,7 @@ export function evaluateShot(c: ShotContext) {
     ],
     [
       "Screens",
-      c.play === "pickRoll"
+      !c.resolvedMatchup && c.play === "pickRoll"
         ? ((c.screening ?? 50) - 50) *
           0.003 *
           (c.coverage === "switch" ? 0.35 : 1)
@@ -81,10 +83,12 @@ export function evaluateShot(c: ShotContext) {
     ],
     [
       "Physical matchup",
-      (rim
-        ? (a.strength - def(d.strength)) * 0.0025
-        : (a.speed - def(d.speed)) * 0.0018) +
-        clamp(size, -0.75, 0.75) * (rim ? 0.12 : three ? 0.015 : 0.05),
+      c.resolvedMatchup
+        ? 0
+        : (rim
+            ? (a.strength - def(d.strength)) * 0.0025
+            : (a.speed - def(d.speed)) * 0.0018) +
+          clamp(size, -0.75, 0.75) * (rim ? 0.12 : three ? 0.015 : 0.05),
     ],
     [
       "Closeout",

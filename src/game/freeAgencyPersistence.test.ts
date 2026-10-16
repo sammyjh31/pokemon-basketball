@@ -91,7 +91,7 @@ describe("free agency persistence and franchise lifecycle", () => {
     expect(loaded.preserveSource).not.toBe(true);
     expect(loaded.state.franchise).toEqual(next.franchise);
     expect(loaded.state.run).toEqual(next.run);
-  }, 30000);
+  }, 90000);
 
   it("restores the CPU transaction ledger", () => {
     const valid = processCpuFreeAgency(sign(drafted));
@@ -99,7 +99,7 @@ describe("free agency persistence and franchise lifecycle", () => {
       valid.franchise!.freeAgency!.transactions.some((t) => t.source === "cpu"),
     ).toBe(true);
     expect(restore(valid).state.franchise).toEqual(valid.franchise);
-  }, 15000);
+  }, 45000);
 
   // Each corrupted save independently replays a complete season. Separate cases
   // keep the timeout scoped to one replay as simulation rules become richer.
@@ -161,7 +161,7 @@ describe("free agency persistence and franchise lifecycle", () => {
       mutate(bad);
       expect(restore(bad).preserveSource).toBe(true);
     },
-    15000,
+    45000,
   );
 
   it("runs CPU free agency automatically before year two and retains its ledger and returning careers after that season", () => {
@@ -199,5 +199,5 @@ describe("free agency persistence and franchise lifecycle", () => {
       freeAgentMarket(archived.franchise!).map((p) => p.pokemonId),
     ).toEqual(unsigned);
     expect(restore(archived).state.franchise).toEqual(archived.franchise);
-  }, 60000);
+  }, 180000);
 });

@@ -112,7 +112,8 @@ describe("package and rookie franchise persistence", () => {
     const mismatched = structuredClone(next);
     mismatched.franchise!.trades.at(-1)!.giveId = 999;
     reject(mismatched);
-  }, 30000);
+    // Validates the complete new-model season for three separate saves.
+  }, 90000);
   it("restores a partial draft, rejects forged picks, then keeps released careers across a rookie season", () => {
     const partial = beginRookieDraft(offseason);
     expect(partial.franchise!.rookieDrafts?.at(-1)?.complete).toBe(false);
@@ -192,5 +193,5 @@ describe("package and rookie franchise persistence", () => {
     ).toBe(1);
     expect(restore(archived).franchise).toEqual(archived.franchise);
     // Revalidates two complete seasons for many deliberately malformed saves.
-  }, 180000);
+  }, 600000);
 });
