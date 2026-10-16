@@ -2,6 +2,7 @@ import { POKEMON_BY_ID } from "../data/pokemon";
 import { initialState } from "./state";
 import { simulateSeason, simulateSeasonAsync } from "./season";
 import { replayPlayoffs } from "./playoffs";
+import { validateFranchise, validateLeagueTeams } from "./franchiseValidation";
 import {
   ROSTER_SLOTS,
   TACTICS,
@@ -129,10 +130,15 @@ function validate(value: unknown, replay?: SeasonResult): GameState {
     spin: records(history.spin),
     free: records(history.free),
   };
+  if (Object.hasOwn(raw, "leagueTeams")) {
+    if (!Object.hasOwn(root, "franchise") || chosen.length !== 8) return fail();
+    run.leagueTeams = validateLeagueTeams(raw.leagueTeams, run.includeLegends);
+  }
   if (raw.result !== null) {
     const result = object(raw.result);
     if (
       chosen.length !== 8 ||
+      (result.modelVersion === 4 && !run.leagueTeams) ||
       !Array.isArray(result.games) ||
       result.games.length !== 82
     )
@@ -148,9 +154,10 @@ function validate(value: unknown, replay?: SeasonResult): GameState {
     if (JSON.stringify(result) !== JSON.stringify(expected)) return fail();
     const record = parsedRecords[run.mode];
     if (
-      record.runs < 1 ||
-      record.bestWins < expected.wins ||
-      (expected.wins === 82 && record.perfectSeasons < 1)
+      !run.leagueTeams &&
+      (record.runs < 1 ||
+        record.bestWins < expected.wins ||
+        (expected.wins === 82 && record.perfectSeasons < 1))
     )
       return fail();
     run.result = expected;
@@ -171,42 +178,77 @@ export interface PreparedGameLoad extends LoadedGame {
 function validateSavedGame(value: unknown, replay?: SeasonResult): LoadedGame {
   // Only a verified regular season can supply teams or seeds for the playoffs.
   const state = validate(value, replay);
-  const raw = object(object(value).run);
-  if (!Object.hasOwn(raw, "playoffs")) return { state, notice: null };
-  try {
-    const candidate = object(raw.playoffs);
-    if (
-      state.run.result?.modelVersion !== 3 ||
-      !state.run.result.league ||
-      candidate.modelVersion !== 1 ||
-      !Array.isArray(candidate.series) ||
-      candidate.series.length !== 15
-    )
-      return fail();
-    // Bound replay work before examining user-controlled nested game data.
-    const gameCount = candidate.series.reduce((count, value) => {
-      const series = object(value);
-      if (!Array.isArray(series.games) || series.games.length > 7)
+  const root = object(value),
+    raw = object(root.run);
+  let loaded: LoadedGame = { state, notice: null };
+  if (Object.hasOwn(raw, "playoffs"))
+    try {
+      const candidate = object(raw.playoffs);
+      if (
+        !state.run.result ||
+        ![3, 4].includes(state.run.result?.modelVersion as number) ||
+        !state.run.result.league ||
+        candidate.modelVersion !== 1 ||
+        !Array.isArray(candidate.series) ||
+        candidate.series.length !== 15
+      )
         return fail();
-      return count + series.games.length;
-    }, 0);
-    integer(gameCount, 0, 105);
-    const expected = replayPlayoffs(
-      state.run.result.league,
-      state.run.seasonSeed,
-      gameCount,
-    );
-    if (JSON.stringify(candidate) !== JSON.stringify(expected)) return fail();
-    state.run.playoffs = expected;
-    return { state, notice: null };
-  } catch {
-    return {
-      state,
-      notice:
-        "Your saved playoffs could not be restored. Your regular season is safe. The original save is kept until you advance the playoffs or start a new run.",
-      preserveSource: true,
-    };
+      // Bound replay work before examining user-controlled nested game data.
+      const gameCount = candidate.series.reduce((count, value) => {
+        const series = object(value);
+        if (!Array.isArray(series.games) || series.games.length > 7)
+          return fail();
+        return count + series.games.length;
+      }, 0);
+      integer(gameCount, 0, 105);
+      const expected = replayPlayoffs(
+        state.run.result.league,
+        state.run.seasonSeed,
+        gameCount,
+      );
+      if (JSON.stringify(candidate) !== JSON.stringify(expected)) return fail();
+      state.run.playoffs = expected;
+    } catch {
+      loaded = {
+        state,
+        notice:
+          "Your saved playoffs could not be restored. Your regular season is safe. The original save is kept until you advance the playoffs or start a new run.",
+        preserveSource: true,
+      };
+    }
+  if (Object.hasOwn(root, "franchise")) {
+    try {
+      state.franchise = validateFranchise(root.franchise, state.run);
+    } catch {
+      // A fixed-roster season cannot become a standalone challenge save: doing
+      // so would silently discard the only copy of its previous years.
+      if (state.run.leagueTeams || state.run.result?.modelVersion === 4)
+        return fail();
+      loaded = {
+        state,
+        notice:
+          "Your saved franchise history could not be restored. Your verified season is safe. The original franchise save is kept until you make a change.",
+        preserveSource: true,
+      };
+    }
   }
+  return loaded;
+}
+
+function failedLoad(
+  fallbackSeed: number,
+  franchise: boolean,
+  preserveSource: boolean,
+): LoadedGame {
+  return {
+    state: initialState(fallbackSeed),
+    notice: franchise
+      ? "Your saved franchise could not be restored. A fresh draft is ready. The original franchise save is kept until you make a change."
+      : preserveSource
+        ? "Your saved game could not be restored. A fresh draft is ready. The original save is kept until you make a change."
+        : "Your saved game could not be restored. A fresh draft is ready.",
+    ...(franchise || preserveSource ? { preserveSource: true } : {}),
+  };
 }
 function readGame(
   storage: StorageLike,
@@ -228,10 +270,15 @@ function readGame(
   }
   if (source === null)
     return { state: initialState(fallbackSeed), notice: null };
+  let franchiseSave = false;
   try {
     const parsed: unknown = JSON.parse(source);
     const root = object(parsed),
       raw = object(root.run);
+    franchiseSave =
+      Object.hasOwn(root, "franchise") ||
+      Object.hasOwn(raw, "leagueTeams") ||
+      (!!raw.result && object(raw.result).modelVersion === 4);
     if (
       deferLeague &&
       root.version === 3 &&
@@ -241,6 +288,16 @@ function readGame(
       // Validate the inexpensive draft/history first; the app can paint before
       // the full league replay. Retain the original object for the final check.
       const state = validate({ ...root, run: { ...raw, result: null } });
+      if (Object.hasOwn(root, "franchise")) {
+        try {
+          state.franchise = validateFranchise(root.franchise, state.run, true);
+        } catch {
+          // An original model-3 season can still be recovered asynchronously.
+          // Fixed-roster seasons require a valid capsule before replay begins.
+          if (state.run.leagueTeams)
+            return failedLoad(fallbackSeed, true, true);
+        }
+      }
       return {
         state,
         notice: null,
@@ -255,25 +312,14 @@ function readGame(
             return validateSavedGame(parsed, replay);
           } catch (error) {
             if (signal.aborted) throw error;
-            return {
-              state: initialState(fallbackSeed),
-              notice:
-                "Your saved game could not be restored. A fresh draft is ready. The original save is kept until you make a change.",
-              preserveSource: true,
-            };
+            return failedLoad(fallbackSeed, franchiseSave, true);
           }
         },
       };
     }
     return validateSavedGame(parsed);
   } catch {
-    return {
-      state: initialState(fallbackSeed),
-      notice: deferLeague
-        ? "Your saved game could not be restored. A fresh draft is ready. The original save is kept until you make a change."
-        : "Your saved game could not be restored. A fresh draft is ready.",
-      ...(deferLeague ? { preserveSource: true } : {}),
-    };
+    return failedLoad(fallbackSeed, franchiseSave, deferLeague);
   }
 }
 /** Synchronous loader retained for non-UI callers and archived model validation. */

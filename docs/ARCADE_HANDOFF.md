@@ -1,6 +1,6 @@
 # Five-on-five arcade
 
-The arcade is a local exhibition mode using the drafted eight-player roster. Open **Play arcade**, choose one of the league's CPU teams, and tip off. Arcade results never write to season, playoff, franchise, or roster state.
+The arcade is a local exhibition mode using the current eight-player roster. Open **Play arcade**, choose one of the league's CPU teams, and tip off. In franchise mode, arcade uses the current traded rosters, including during the offseason and before the next season begins. Arcade results never write to season, playoff, franchise, or roster state.
 
 ## Play
 
@@ -25,7 +25,7 @@ Scenario tests cover roster isolation, seeded outcomes, pause cancellation, shot
 
 Independent engine review completed 30 seeded CPU games with consistent scores, playing time, active-player counts, and ball ownership. No remaining actionable review findings. CPU games scored 12–36 combined points, with 32–65 attempts.
 
-Final checks: 218 tests across 39 files, TypeScript, production build, and whitespace validation passed. Browser verification completed four quarters, both box scores, rematch, exit, unchanged roster, desktop/mobile layouts, keyboard/touch controls, and settings. Details are recorded in the implementation plan. Screenshots live in `docs/design/arcade-*.jpg`.
+Initial arcade checks: 218 tests across 39 files, TypeScript, production build, and whitespace validation passed. Browser verification completed four quarters, both box scores, rematch, exit, unchanged roster, desktop/mobile layouts, keyboard/touch controls, and settings. Franchise integration checks: 271 tests across 46 files, TypeScript, production build, and whitespace validation passed. Independent integration review found no actionable regressions. The existing main-bundle size advisory remains; arcade loads separately. Details are recorded in the implementation plan. Screenshots live in `docs/design/arcade-*.jpg`.
 
 ## Current limits
 
@@ -33,4 +33,4 @@ Single player versus CPU; no multiplayer, gamepad, player combat abilities, or p
 
 ## Local delivery
 
-Preview: `http://127.0.0.1:5179/`, running from the managed `codex/five-on-five-arcade` worktree at `/Users/sam/.codex/worktrees/five-on-five-arcade/PokeBBall`. The branch includes the committed playoff implementation. The primary checkout contains ongoing uncommitted franchise changes and has not been modified by arcade delivery; integrate this branch when that checkout is ready.
+Arcade is integrated with franchise baseline `97217aa` in the main game at `/Users/sam/Documents/PokeBBall`. Main preview: `http://127.0.0.1:5173/`. The merge preserves franchise simulation, persistence, career history, trades, and playoff logic. Regression tests exercise arcade entry and exit after an accepted trade in both the offseason and the next pregame, requiring exactly unchanged save bytes.

@@ -61,7 +61,7 @@ export function BenchPanel({
             <span>{BENCH_SLOTS.filter((s) => run.roster[s]).length}/3</span>
           </h2>
         </div>
-        {run.mode === "free" && !locked && (
+        {run.mode === "free" && !run.leagueTeams && !locked && (
           <button
             className="text-button"
             onClick={onAutoFill}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { OPPONENTS, SCHEDULE } from "../data/opponents";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
@@ -13,7 +13,8 @@ import { SeasonStats } from "./SeasonStats";
 import { BoxScore } from "./BoxScore";
 import { LeaguePanel } from "./LeaguePanel";
 import { LeagueBoxScore } from "./LeagueBoxScore";
-import { createLeague, leagueSchedule } from "../game/league";
+import { leagueSchedule } from "../game/league";
+import { seasonTeams } from "../game/season";
 import type { PlayoffMode } from "../game/playoffTypes";
 import { PlayoffPanel } from "./PlayoffPanel";
 export function SeasonPanel({
@@ -26,6 +27,8 @@ export function SeasonPanel({
   onPlayoffs,
   playoffSimulating = false,
   playoffProgress,
+  franchiseYear,
+  franchiseEntry,
 }: {
   run: Run;
   ratings: TeamRatings;
@@ -36,6 +39,8 @@ export function SeasonPanel({
   onPlayoffs?: (mode: PlayoffMode) => void;
   playoffSimulating?: boolean;
   playoffProgress?: { completed: number; total: number };
+  franchiseYear?: number;
+  franchiseEntry?: ReactNode;
 }) {
   const result = run.result;
   const skippedResult = useRef<typeof result>(null);
@@ -78,7 +83,9 @@ export function SeasonPanel({
     wins = showing.filter((g) => g.won).length,
     losses = showing.length - wins;
   const done = !!result && visible === 82;
-  const league = result?.modelVersion === 3 ? result.league : undefined;
+  const league = [3, 4].includes(result?.modelVersion ?? 0)
+    ? result?.league
+    : undefined;
   const archived =
     !!result &&
     !league &&
@@ -88,7 +95,7 @@ export function SeasonPanel({
   ).length;
   const ready = ratings.complete && rosterFilled === ROSTER_SLOTS.length;
   const previewTeams = useMemo(
-    () => (!result && ready ? createLeague(run) : []),
+    () => (!result && ready ? seasonTeams(run) : []),
     [run, result, ready],
   );
   const leagueTeams = league?.teams ?? previewTeams;
@@ -142,6 +149,12 @@ export function SeasonPanel({
       id="season"
       aria-labelledby="season-title"
     >
+      {franchiseYear && (
+        <p className="eyebrow">
+          FRANCHISE YEAR {franchiseYear} ·{" "}
+          {result ? "SEASON RESULTS" : "PRESEASON"}
+        </p>
+      )}
       <div className="season-heading">
         <div>
           <span className="eyebrow">THE ROAD TO 82–0</span>
@@ -343,6 +356,7 @@ export function SeasonPanel({
               result.
             </p>
           )}
+          {done && franchiseEntry}
           <div className="schedule-wrap">
             <table className="schedule-table">
               <caption className="sr-only">

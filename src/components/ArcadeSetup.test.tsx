@@ -96,4 +96,15 @@ describe("arcade setup", () => {
     fireEvent.click(screen.getByRole("button", { name: /tip off/i }));
     expect(start).toHaveBeenCalledOnce();
   });
+  it("uses the persistent franchise league before a new season has results", () => {
+    const teams = structuredClone(league);
+    [teams[1].roster.PG, teams[2].roster.PG] = [
+      teams[2].roster.PG,
+      teams[1].roster.PG,
+    ];
+    const franchiseRun = { ...run, leagueTeams: teams };
+    const before = JSON.stringify(franchiseRun);
+    expect(prepareArcadeTeams(franchiseRun).teams).toEqual(teams);
+    expect(JSON.stringify(franchiseRun)).toBe(before);
+  });
 });

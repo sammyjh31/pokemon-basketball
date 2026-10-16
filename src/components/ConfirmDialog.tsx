@@ -4,11 +4,13 @@ export function ConfirmDialog({
   onCancel,
   title = "Back to the draft?",
   confirmLabel = "Start new run",
+  description = "This replaces your current lineup. Your completed season records will stay saved.",
 }: {
   onConfirm: () => void;
   onCancel: () => void;
   title?: string;
   confirmLabel?: string;
+  description?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -56,10 +58,7 @@ export function ConfirmDialog({
       >
         <span className="eyebrow">A FRESH START</span>
         <h2 id="dialog-title">{title}</h2>
-        <p id="dialog-description">
-          This replaces your current lineup. Your completed season records will
-          stay saved.
-        </p>
+        <p id="dialog-description">{description}</p>
         <div className="dialog-actions">
           <button className="button secondary" onClick={onCancel}>
             Keep playing

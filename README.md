@@ -1,6 +1,6 @@
 # 82–0 Pokémon Basketball
 
-Build an eight-player Pokémon rotation — five starters and three reserves — then chase an undefeated 82-game season. An [All-22](https://all22pokemon.com/)-inspired lineup builder and draft challenge with 251 Pokémon from Gen I–II, 20 basketball skills plus advanced player traits, a complete 30-team league, league awards, and browser-local records.
+Build an eight-player Pokémon rotation — five starters and three reserves — then chase an undefeated 82-game season. An [All-22](https://all22pokemon.com/)-inspired lineup builder and draft challenge with 251 Pokémon from Gen I–II, 20 basketball skills plus advanced player traits, a complete 30-team league, league awards, multi-season franchises, and browser-local records.
 
 ## Run
 
@@ -22,7 +22,7 @@ Open [the local game](http://127.0.0.1:5173/). In a cloud workspace, bind the se
 - **Save image** downloads a PNG of the court, bench, and coaching panel. Browser download permission may be required.
 - Pokémon can appear only once in a lineup. Legendary/mythical Pokémon can be excluded with the toggle. Mode/pool changes start a new run, with confirmation if players are already placed.
 - Once all eight slots are filled, simulate the season. Results reveal gradually; use **Skip reveal** to see everything immediately. Reduced-motion settings skip the animation automatically.
-- One season per lineup. Refreshing restores the same completed results. **New run** starts another draft while preserving separate personal records for each mode.
+- Refreshing restores your saved progress. After the Finals, **Continue as franchise** keeps all 30 rosters for multiple seasons, with offseason trades, career stats and championship history. **New run** starts a fresh draft; ending an active franchise explicitly replaces its career history while preserving separate challenge records.
 - Ratings, normalization, and simulation rules are explained in the expandable playbook. Types identify Pokémon; battle effectiveness and special move abilities are outside this version.
 
 All game data and portraits are bundled locally. Gameplay needs no external API, accounts, database, or secrets. LocalStorage keeps a versioned save in the current browser; clearing site data clears progress. If saving is unavailable, play continues in memory with a notice. This is not a multiplayer leaderboard or an anti-cheat system.
@@ -71,7 +71,17 @@ Saves use `pokemon-basketball:v3`. Valid v1/v2 saves migrate without deleting th
 
 Existing model-3 league seasons can begin playoffs without repeating the regular season. Playoff progress saves independently, and regular-season awards and 82–0 challenge records stay unchanged. Finals MVP uses Finals-only production from the champion's roster.
 
-Careers, injuries, generations beyond II, multiplayer accounts and public hosting are not included.
+## Franchise mode
+
+After completing the Finals, choose **Continue as franchise**. The completed season becomes Year 1. Your eight-player team and all 29 opposing rosters persist into each new season.
+
+- **Offseason trades:** select another club and offer one of your Pokémon for one of theirs. The club evaluates basketball ability and how the exchange affects its roster. Accepted trades swap roster slots, keep every club at eight players and preserve unique species across the league. The trade log records each deal.
+- **Next season:** start a new year, rearrange your eight players and choose coaching before tipoff. A fresh seed generates another 82-game season and best-of-seven playoffs. Franchise years do not inflate challenge attempt counters.
+- **Careers:** league-wide regular-season and playoff totals follow Pokémon across trades. Search/filter players and inspect career honors, including every award, All-League/All-Defense selection, Finals MVP and championship ring.
+- **History:** season records and rosters, award winners, Finals results and champions remain available after advancing. Only the active season retains individual game box scores; earlier statistics contribute to career totals.
+- **Saving:** the existing v3 browser save gains a versioned franchise extension. Fixed-roster seasons use model 4; ordinary model-3 seasons replay unchanged. Active games are verified through deterministic replay. Archived summaries and career totals undergo structural and cross-reference validation rather than replaying every past season. This is a local game, not an anti-cheat system. Saves stay in this browser and are not synchronized through GitHub.
+
+Injuries, aging, contracts, free agency, CPU-initiated trades, generations beyond II, multiplayer accounts and public hosting are not included.
 
 ## Data and artwork
 
@@ -81,7 +91,7 @@ Visual direction inspired by [Pokémon All-22](https://all22pokemon.com/); origi
 
 ## Five-on-five arcade exhibition
 
-Complete all eight roster slots, then select **Play arcade**. Choose a CPU opponent and **Tip off**. Your five starters take the floor with three reserves available from the pause menu. Exhibitions have four one-minute quarters, a 14-second shot clock, and 30-second overtimes. Results include both teams' box scores and player of the game.
+Complete all eight roster slots, then select **Play arcade**. Choose a CPU opponent and **Tip off**. Your five starters take the floor with three reserves available from the pause menu. Franchise exhibitions use the current traded rosters, including during the offseason. Exhibitions have four one-minute quarters, a 14-second shot clock, and 30-second overtimes. Results include both teams' box scores and player of the game.
 
 - **WASD / arrow keys:** move. **J:** hold and release to shoot; jump/block on defense.
 - **K:** pass toward movement or the highlighted receiver; steal on defense.

@@ -100,9 +100,11 @@ export function Court({
               ? (run.result.modelVersion ?? 1) >= 2
                 ? "Season complete. Your eight-player roster is in the books."
                 : "Your original five-player season is preserved."
-              : run.mode === "spin"
-                ? "Pick a Pokémon, then tap an open position. Placements lock in."
-                : "Pick any Pokémon. Tap two occupied positions to swap them."}
+              : run.leagueTeams
+                ? "Tap two positions to swap your players. Trades reopen after the Finals."
+                : run.mode === "spin"
+                  ? "Pick a Pokémon, then tap an open position. Placements lock in."
+                  : "Pick any Pokémon. Tap two occupied positions to swap them."}
       </div>
       <div className="team-ratings">
         {(["offense", "defense", "overall"] as const).map((key) => (

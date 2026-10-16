@@ -1,4 +1,5 @@
 import type { Playoffs } from "./playoffTypes";
+import type { Franchise } from "./franchiseTypes";
 
 export const POSITIONS = ["PG", "SG", "SF", "PF", "C"] as const;
 export type Position = (typeof POSITIONS)[number];
@@ -165,7 +166,7 @@ export interface SeasonResult {
   wins: number;
   losses: number;
   mvpId: number;
-  modelVersion?: 1 | 2 | 3;
+  modelVersion?: 1 | 2 | 3 | 4;
   league?: LeagueResult;
   mvpTeamId?: number;
   playerStats?: SeasonPlayer[];
@@ -185,6 +186,8 @@ export interface Run {
   defense?: DefenseScheme;
   result: SeasonResult | null;
   playoffs?: Playoffs;
+  /** Fixed league membership for franchise seasons (model 4). */
+  leagueTeams?: LeagueTeam[];
 }
 export interface ModeRecords {
   runs: number;
@@ -199,6 +202,7 @@ export interface GameState {
   version: 3;
   run: Run;
   records: Records;
+  franchise?: Franchise;
 }
 
 export const DEFENSE_SCHEMES = ["man", "switch", "zone", "press"] as const;

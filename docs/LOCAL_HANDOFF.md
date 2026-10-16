@@ -1,6 +1,20 @@
 # Local and cloud handoff — 2026-10-15
 
-Development continues in `/Users/sam/Documents/PokeBBall`, synchronized to `main` at `https://github.com/sammyjh31/pokemon-basketball.git`. The league update was `36f760a`; the postseason update builds on it. A concurrent arcade-design documentation commit was preserved.
+Development continues in `/Users/sam/Documents/PokeBBall`, synchronized to `main` at `https://github.com/sammyjh31/pokemon-basketball.git`. The league update was `36f760a`, and playoffs were `8a1257a`; franchise mode builds on both. A concurrent arcade-design documentation commit was preserved.
+
+## Franchise update
+
+- After the Finals, **Continue as franchise** archives the existing league as Year 1. All 30 eight-player rosters persist, with 240 unique species. Later years use fresh seeds and the same 82-game season and best-of-seven playoffs.
+- Offseason one-for-one trades are evaluated by the other club using best-position ability and roster fit. The preview explains acceptance/rejection; successful trades update both rosters and a permanent transaction log. Careers and past honors keep their original attribution.
+- Start the next year, then swap starters/reserves and choose coaching. Drafting and arbitrary species replacement are disabled in franchise mode. Later years do not increment challenge records. Ending the franchise requires an explicit confirmation explaining the loss of its history.
+- League-wide careers show separate regular-season and postseason totals/averages, shooting percentages from combined attempts, game highs, double/triple doubles and player-of-game counts. Search/filter/sort and individual honors show awards, All-League/All-Defense selections, Finals MVPs and championship rings.
+- History retains every year's standings, rosters, league honors, champion, Finals result and Finals MVP. Only the active year retains replayable game boxes. Archiving is idempotent; live career additions stop once that year is archived.
+- The v3 save key/root gains franchise model 1; fixed-roster seasons use regular-season model 4 and playoff model 1. Only the active season replays on load. Archived records receive structural, arithmetic and cross-reference validation. Corrupt extensions preserve original bytes until an explicit new action. Ordinary model 3 and older saves remain compatible.
+- Lifecycle actions and validation share limits of 1,000 seasons and 10,000 trades. Save quota failures remain visible. Development refresh now avoids rerunning mount-time restoration or writing unchanged idle-tab state over newer progress.
+
+Verification: **214 tests passed across 34 files**, including lifecycle/uniqueness, fair trade evaluation, two-season fixed-roster replay, career accounting, corruption handling, UI flows and an idle-preview persistence regression. Production build and TypeScript passed; Vite reports a non-blocking 503.7 KB main-chunk size advisory. The test runner uses one worker because concurrent league replays caused older UI tests to miss their existing time limits; no timeouts were raised. Independent review's archive-boundary and keyboard-focus findings were reproduced and fixed.
+
+Browser QA used `localhost:5173`, separate from the user's original save. Traded Vaporeon to Pallet for Venomoth, refreshed, started Year 2, swapped Sneasel into PG and chose Run & gun, then refreshed again. The final QA Year 2 finished 26–56; Cinnabar beat Pewter 4–2 in an 85-game postseason, with Tyranitar Finals MVP. Entering the offseason and reloading retained both years, all rosters, the trade, Vaporeon's 4,604 points across 164 games, Furret's Year 2 Sixth Player award and Tyranitar's championship/Finals MVP. No page overflow at 1440, 390 or 320px. No warning/error logs after the final reload. The user's separate-origin 69–13 season and four challenge attempts remain intact. Screenshots: `docs/design/franchise-history-desktop.jpg` and `franchise-offseason-mobile.jpg`.
 
 ## Postseason update
 
@@ -38,7 +52,7 @@ The final test league finished 21–61 and restored the identical result and awa
 
 ## Scope and verification limits
 
-- No careers, injuries, generations after II, accounts, multiplayer or public hosting.
+- No injuries, aging, contracts, free agency, CPU-initiated trades, generations after II, accounts, multiplayer or public hosting.
 - The clock uses 7.5-second ticks and one-minute substitution decisions. The simulation is statistical, not a spatial or fully officiated real-league simulator. Depleted rosters retain only enough disqualified players to remain five-on-five; subsequent fouls add a technical free throw.
 - A previous browser security decision denied a PNG download test. No retry or workaround was made. Downloaded PNG output remains unverified.
 - Standalone Playwright CLI tests were not executed in this desktop session; browser checks used the supported in-app browser. An environment with authorized automation can run `npm run test:e2e`.
@@ -49,6 +63,6 @@ The final test league finished 21–61 and restored the identical result and awa
 2. Node ≥24.15, tested 24.19.0. Run `npm ci` after dependency changes. Local bundled Node is `/Users/sam/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin`.
 3. Preview: `npm run dev -- --host 127.0.0.1 --port 5173 --strictPort`. Cloud may need `--host 0.0.0.0` and its forwarded URL.
 4. Run appropriate checks, commit and push before switching environments. Reconcile concurrent work without force-pushing.
-5. **Preserve regular-season model 3 and postseason model 1 before changing deterministic inputs or outputs.** Roster draft, schedule, event probabilities, profiles, aggregation and award formulas all affect replay validation. Future behavioral changes need new model versions and migration.
+5. **Preserve regular-season models 3/4, postseason model 1 and franchise model 1 before changing deterministic inputs or outputs.** Roster draft, schedule, event probabilities, profiles, aggregation and award formulas all affect replay validation. Future behavioral changes need new model versions and migration.
 
 Browser saves stay in their browser. Shared links carry eight player IDs, not coaching or results. See [league formulas](LEAGUE_MODEL.md), [design QA](../design-qa.md), [screenshots](design/), [README](../README.md), and the [implementation plan](superpowers/plans/2026-10-15-league-simulation.md).

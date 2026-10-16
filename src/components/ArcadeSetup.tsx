@@ -28,7 +28,7 @@ export function prepareArcadeTeams(run: Run): {
         "Your roster needs eight distinct Pokémon. Return to the roster and review your lineup.",
     };
   try {
-    const existing = run.result?.league?.teams;
+    const existing = run.leagueTeams ?? run.result?.league?.teams;
     if (existing?.some((team) => team.id !== 0)) {
       const used = new Set(Object.values(run.roster));
       const valid = existing.every((team) => {

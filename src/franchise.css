@@ -1,0 +1,396 @@
+.franchise-roster-layout {
+  grid-template-columns: 1fr;
+}
+.franchise-roster-layout > .court-column {
+  grid-column: 1;
+  width: 100%;
+  max-width: 900px;
+  margin-inline: auto;
+}
+.franchise-draft-reset {
+  text-align: right;
+  margin-bottom: 18px;
+}
+.franchise-panel {
+  min-width: 0;
+  max-width: 100%;
+  padding: 26px;
+  margin: 24px 0;
+  border: 1px solid #625331;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1e221f, #111820 50%);
+}
+.franchise-panel h2 {
+  margin: 7px 0 0;
+  font: 700 32px var(--display);
+}
+.franchise-panel h3 {
+  margin: 0 0 8px;
+  font: 700 24px var(--display);
+}
+.franchise-panel h4 {
+  margin: 7px 0 10px;
+  font: 700 20px var(--display);
+}
+.franchise-panel p {
+  margin: 0;
+  color: #aeb9c8;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.franchise-panel .button {
+  min-height: 44px;
+  flex-shrink: 0;
+}
+.franchise-heading,
+.franchise-section-heading,
+.franchise-invitation,
+.franchise-season-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+}
+.franchise-heading {
+  margin-bottom: 24px;
+}
+.franchise-phase {
+  padding: 9px 12px;
+  border: 1px solid #625331;
+  border-radius: 4px;
+  background: #28291e;
+  color: #edd49a;
+  font: 700 14px var(--display);
+  white-space: nowrap;
+}
+.franchise-invitation p {
+  max-width: 620px;
+  margin-top: 12px;
+}
+.franchise-section-heading {
+  margin-bottom: 18px;
+}
+.franchise-section-heading > div,
+.franchise-season-status > div,
+.franchise-invitation > div {
+  min-width: 0;
+}
+.franchise-roster {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 12px;
+}
+.franchise-roster li {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 5px;
+  padding: 12px 4px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #151e28;
+}
+.franchise-roster .portrait {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+}
+.franchise-roster .portrait.pixel {
+  image-rendering: pixelated;
+}
+.franchise-roster strong {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.franchise-roster-slot {
+  color: #b5a16e;
+  font: 700 12px var(--display);
+}
+.franchise-trade {
+  margin-top: 26px;
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+.franchise-trade-preview {
+  padding: 20px;
+  border: 1px solid #536553;
+  border-radius: 6px;
+  background: #111c1b;
+}
+.franchise-trade-preview.rejected {
+  border-color: #675141;
+  background: #211d1a;
+}
+.franchise-trade-players {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.franchise-trade-players > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.franchise-trade-players small {
+  font: 700 10px var(--display);
+  color: #a9b5c4;
+  letter-spacing: 0.08em;
+}
+.franchise-trade-players strong {
+  font: 700 24px var(--display);
+}
+.franchise-trade-players span {
+  font-size: 12px;
+  color: #aeb9c8;
+}
+.franchise-trade-players .franchise-trade-arrow {
+  font-size: 28px;
+  color: var(--gold);
+}
+.franchise-trade-verdict {
+  border-top: 1px solid #38483c;
+  padding-top: 15px;
+  margin-bottom: 16px;
+}
+.franchise-trade-verdict > strong {
+  color: #afd3a6;
+  font-size: 13px;
+}
+.rejected .franchise-trade-verdict {
+  border-color: #554535;
+}
+.rejected .franchise-trade-verdict > strong {
+  color: #e8be92;
+}
+.franchise-trade-verdict p {
+  margin-top: 5px;
+}
+.franchise-panel .franchise-trade-status {
+  margin-top: 14px;
+  color: #ccdbc8;
+}
+.franchise-trade-log {
+  margin-top: 16px;
+  font-size: 12px;
+}
+.franchise-trade-log summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--gold);
+}
+.franchise-trade-log summary::before {
+  content: "+";
+  margin-right: 10px;
+}
+.franchise-trade-log[open] summary::before {
+  content: "−";
+}
+.franchise-trade-log ol {
+  margin: 0;
+  padding-left: 20px;
+}
+.franchise-trade-log li {
+  padding: 8px 0;
+}
+.franchise-trade-log li span {
+  display: block;
+  margin-top: 4px;
+  color: #aeb9c8;
+}
+.franchise-career-table {
+  min-width: 2060px;
+}
+.franchise-career-table th:first-child {
+  min-width: 230px;
+}
+.franchise-player-button {
+  color: inherit;
+  background: transparent;
+  padding: 3px 0;
+  text-align: left;
+  width: 100%;
+}
+.franchise-player-button:hover {
+  color: var(--gold);
+}
+.franchise-panel .stat-legend {
+  margin: 12px 0 0;
+  font-size: 11px;
+}
+.franchise-honors {
+  padding: 18px;
+  margin: 20px 0;
+  border: 1px solid #625331;
+  border-radius: 6px;
+  background: #1d251f;
+}
+.franchise-honors ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 14px;
+}
+.franchise-honors li,
+.franchise-honor-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+}
+.franchise-honors li span,
+.franchise-honor-list span,
+.franchise-honor-list small {
+  color: #aeb9c8;
+}
+.franchise-year-select {
+  flex: 0 1 240px;
+}
+.franchise-history-summary {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 0.8fr;
+  gap: 12px;
+  margin: 20px 0;
+}
+.franchise-history-summary article,
+.franchise-archived-awards > section {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #141e27;
+}
+.franchise-championship-roster {
+  margin: 26px 0;
+}
+.franchise-archived-awards {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 26px;
+}
+.franchise-honor-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.franchise-honor-list li {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.franchise-standings {
+  min-width: 620px;
+}
+.franchise-standings th:first-child {
+  min-width: 220px;
+}
+.franchise-panel :focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+@media (max-width: 1000px) {
+  .franchise-roster {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .franchise-archived-awards {
+    grid-template-columns: 1fr 1fr;
+  }
+  .franchise-archived-awards > section:first-child {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 640px) {
+  .franchise-career-table th:first-child {
+    width: 156px;
+    min-width: 156px;
+    max-width: 156px;
+    white-space: normal;
+  }
+  .franchise-career-table .stat-player {
+    gap: 5px;
+  }
+  .franchise-career-table .stat-player > span:first-child {
+    display: none;
+  }
+  .franchise-career-table .stat-player small {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .franchise-standings th:first-child {
+    width: 165px;
+    min-width: 165px;
+    max-width: 165px;
+    white-space: normal;
+  }
+  .franchise-panel {
+    padding: 18px 12px;
+  }
+  .franchise-heading,
+  .franchise-section-heading,
+  .franchise-invitation,
+  .franchise-season-status {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .franchise-phase {
+    align-self: flex-start;
+  }
+  .franchise-panel h2 {
+    font-size: 28px;
+  }
+  .franchise-panel h3 {
+    font-size: 23px;
+  }
+  .franchise-panel .league-field {
+    min-width: 0;
+    flex-basis: 100%;
+  }
+  .franchise-panel .league-navigation button {
+    flex: 1 1 0;
+    padding: 10px 5px;
+    font-size: 11px;
+  }
+  .franchise-trade-preview {
+    padding: 14px;
+  }
+  .franchise-trade-players {
+    gap: 10px;
+  }
+  .franchise-trade-players strong {
+    font-size: 20px;
+    overflow-wrap: anywhere;
+  }
+  .franchise-trade-players span {
+    font-size: 11px;
+  }
+  .franchise-history-summary,
+  .franchise-archived-awards {
+    grid-template-columns: 1fr;
+  }
+  .franchise-roster {
+    gap: 5px;
+  }
+  .franchise-roster .portrait {
+    width: 44px;
+    height: 44px;
+  }
+  .franchise-roster strong {
+    font-size: 10px;
+  }
+  .franchise-panel .stat-mode {
+    max-width: 100%;
+  }
+  .franchise-panel .stat-mode button {
+    flex: 1;
+  }
+}

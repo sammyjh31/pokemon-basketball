@@ -66,3 +66,11 @@ Court 28 × 15 logical units, baskets (1.5,7.5)/(26.5,7.5). Player collision rad
 - Review fixes: stale shot charge after steals, reachable boundary calls, correct possession resets after rim contact, assist timing at release, once-per-pass interception checks, stable AI roles after substitutions, restored focus after removing `inert`, and cancellation of keyboard-held touch actions on blur. Playoff simulation now blocks arcade entry until the operation finishes.
 - Screenshots: `docs/design/arcade-court-desktop.jpg`, `arcade-court-mobile.jpg`, `arcade-results-desktop.jpg`. Preview is running at `http://127.0.0.1:5179/`; open **Play arcade** and **Tip off**.
 - Matches remain local exhibitions and are not saved. No deployment or remote push performed.
+
+## Franchise integration — 2026-10-15
+
+- User requested merging arcade into the main game while retaining franchise work. Merged franchise baseline `97217aa` into the arcade branch, retaining both App interfaces and all franchise simulation, reducer, persistence, and history files unchanged.
+- Added regression tests before fixing roster selection: offseason arcade now reads current franchise teams after trades, and pregame arcade reuses persistent league teams. Both offseason and next-season tests require exactly unchanged save bytes and unchanged input state after entry and exit.
+- Combined verification: **271 tests passed across 46 files**; TypeScript, production build, and whitespace checks passed. Independent integration review reported no actionable findings. The pre-existing main-chunk size advisory remains; arcade is lazy-loaded.
+- Browser setup opens with the existing eight-player roster and CPU selection. Initial full-match browser QA remains recorded above.
+- Integrate this verified tree into local main by fast-forward. New player-development edits appeared concurrently in the primary checkout; preserve those separate edits and do not include them in the arcade merge. No remote push requested.
