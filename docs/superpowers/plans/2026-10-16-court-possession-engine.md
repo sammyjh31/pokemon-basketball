@@ -53,7 +53,7 @@ Files: audit script/results, handoff and this plan.
 - [x] Run entire test suite and repair genuine failures with reproductions.
 - [x] Audit varied rosters/tactics, timing, accounting and performance.
 - [x] Request independent whole-change review, address important findings and verify.
-- [ ] Commit delivery notes and push main; keep the active preview serving the basketball checkout.
+- [x] Commit delivery notes and push main; keep the active preview serving the basketball checkout.
 
 ## Execution evidence
 
@@ -80,4 +80,4 @@ The full run covered 125 files / 822 cases: initially 780 passed, 20 failed, and
 
 Additional final evidence: 26 engine/lifecycle/frozen-rule cases passed together; all 22 franchise-persistence cases passed; the full archive suite passed all nine cases; the four-season persistence and local season/playoff restore cases passed. Final TypeScript/production build, 48 legacy fixtures, 1,000-game audit, desktop/mobile inspection, and whitespace checks passed. The existing large-bundle build advisory remains. Standalone Playwright CLI was not run; browser QA used the supported in-app browser.
 
-The coordinated draft patch is commit `993dc85`; finishing-action and replay verification repairs are `f23cbda`. The basketball preview stays on port 5173 from this worktree, and the separate primary checkout remains untouched. GitHub synchronization is the final delivery step.
+The coordinated draft patch is commit `993dc85`; finishing-action and replay verification repairs are `f23cbda`. The basketball preview stays on port 5173 from this worktree, and the separate primary checkout remains untouched. The eight delivery commits through `0425e0d` were fast-forwarded to `main` and pushed; `git ls-remote` confirmed the same SHA on GitHub. This final documentation commit records that verification.
