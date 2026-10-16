@@ -77,6 +77,7 @@ export interface FranchiseTrade {
   reason?: string;
 }
 export interface Franchise {
+  coachOffice?: import("./coachOffice").CoachOffice;
   pendingCoach?: import("./trainerCoaches").CoachAssignment;
   modelVersion: 1 | 2 | 3;
   year: number;

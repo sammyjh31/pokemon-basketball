@@ -1,3 +1,7 @@
+import {
+  appointFranchiseCoach,
+  reviewFranchiseCoaches,
+} from "./coachFranchise";
 import { selectTrainerCoach } from "./coachSelection";
 import { processCpuFreeAgency, signFreeAgent } from "./freeAgency";
 import {
@@ -47,6 +51,8 @@ import { validateRotationPlan } from "./rotationPlan";
 import { validateTrainingPlans } from "./training";
 export type GameAction =
   | { type: "SELECT_COACH"; id: string }
+  | { type: "APPOINT_COACH"; id: string | null }
+  | { type: "PROCESS_CPU_COACHES" }
   | { type: "SIGN_FREE_AGENT"; pokemonId: number; releasedId: number }
   | { type: "PROCESS_CPU_FREE_AGENCY" }
   | { type: "TRADE_PACKAGE"; offer: TradePackage }
@@ -91,6 +97,10 @@ export function initialState(seed: number): GameState {
 }
 export function gameReducer(state: GameState, action: GameAction): GameState {
   const run = state.run;
+  if (action.type === "APPOINT_COACH")
+    return appointFranchiseCoach(state, action.id);
+  if (action.type === "PROCESS_CPU_COACHES")
+    return reviewFranchiseCoaches(state);
   if (action.type === "SELECT_COACH")
     return selectTrainerCoach(state, action.id);
   if (
@@ -112,7 +122,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   if (action.type === "OFFSEASON_ROSTER")
     return updateOffseasonRoster(state, action.settings);
   if (action.type === "ENTER_OFFSEASON")
-    return processOffseason(archiveFranchiseSeason(state));
+    return reviewFranchiseCoaches(
+      processOffseason(archiveFranchiseSeason(state)),
+    );
   if (action.type === "PROCESS_OFFSEASON") return processOffseason(state);
   if (action.type === "START_FRANCHISE_SEASON") {
     const next = startInteractiveFranchiseSeason(

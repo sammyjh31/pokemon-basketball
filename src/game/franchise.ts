@@ -1,3 +1,5 @@
+import { projectedCoaches } from "./coachOffice";
+import { reviewFranchiseCoaches } from "./coachFranchise";
 import { assignLeagueCoaches } from "./trainerCoaches";
 import { captureRivalScouting } from "./rivalScouting";
 import { processCpuFreeAgency } from "./freeAgency";
@@ -264,6 +266,7 @@ export function enterOffseason(state: GameState): GameState {
   if (!archive) return state;
   if (previous?.modelVersion === 3) archive.replay = captureSeasonReplay(run);
   const franchise: Franchise = {
+    ...(previous?.coachOffice ? { coachOffice: previous.coachOffice } : {}),
     modelVersion: previous?.modelVersion ?? 1,
     year,
     phase: "offseason",
@@ -296,11 +299,25 @@ export function startFranchiseSeason(
         !franchise.rookieDrafts.at(-1)?.complete))
   )
     return state;
-  const prepared = processCpuFreeAgency(state);
+  const reviewed = reviewFranchiseCoaches(state);
+  const appointments = projectedCoaches(
+    franchise.teams,
+    reviewed.franchise!.coachOffice,
+    franchise.year,
+  );
+  if (
+    franchise.teams.some((t) => t.coach) &&
+    appointments.some((t) => !t.coach)
+  )
+    return state;
+  const prepared = processCpuFreeAgency(reviewed);
   franchise = prepared.franchise!;
   let teams: LeagueTeam[];
   try {
-    teams = validateLeagueTeams(franchise.teams, state.run.includeLegends);
+    teams = validateLeagueTeams(
+      projectedCoaches(franchise.teams, franchise.coachOffice, franchise.year),
+      state.run.includeLegends,
+    );
   } catch {
     return state;
   }

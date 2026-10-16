@@ -1,3 +1,10 @@
+import {
+  projectedCoaches,
+  validateCoachOffice,
+  verifyCoachBaseline,
+} from "./coachOffice";
+import { captureCoachRecords, validateCoachRecords } from "./coachCareers";
+import { reviewLocalCoaches } from "./coachLocal";
 import { validateCoach } from "./trainerCoaches";
 import { FRANCHISE_POKEMON, POKEMON_BY_ID } from "../data/pokemon";
 import { developPlayer } from "./development";
@@ -63,6 +70,7 @@ export interface LocalDevelopment {
   changes: DevelopmentRatings;
 }
 export interface LocalSeasonArchive {
+  coachRecords?: import("./coachCareers").CoachSeasonRecord[];
   year: number;
   seasonSeed: number;
   teams: LocalTeamSnapshot[];
@@ -77,6 +85,7 @@ export interface LocalSeasonArchive {
   rivalScouting?: RivalScouting;
 }
 export interface LocalCareer {
+  coachOffice?: import("./coachOffice").CoachOffice;
   version: 1;
   year: number;
   phase: "season" | "offseason";
@@ -248,6 +257,7 @@ export function beginLocalOffseason(
   if (development.length !== draft.options.format.teamCount * 8) fail();
   const rivalScouting = captureRivalScouting(league, verified);
   const archived: LocalSeasonArchive = {
+    coachRecords: captureCoachRecords(teams, league.standings, verified, year),
     year,
     seasonSeed: localSeasonSeed(draft),
     teams: snapshot(teams),
@@ -265,6 +275,9 @@ export function beginLocalOffseason(
     ...draft,
     playoffGames: count,
     career: {
+      ...(draft.career?.coachOffice
+        ? { coachOffice: draft.career.coachOffice }
+        : {}),
       version: 1,
       year,
       phase: "offseason",
@@ -272,7 +285,7 @@ export function beginLocalOffseason(
       history: [...(draft.career?.history ?? []), archived],
     },
   };
-  return advanceLocalRookieCpu(next);
+  return reviewLocalCoaches(advanceLocalRookieCpu(next));
 }
 function appendRookie(
   draft: LocalLeague,
@@ -535,26 +548,28 @@ export function applyLocalTrade(
 }
 function nextYearTeams(career: LocalCareer): LeagueTeam[] {
   const archived = career.history.at(-1)!;
-  return career.teams.map((team) => {
-    const retained =
-      Object.values(team.roster).filter((id) =>
-        Object.values(archived.teams[team.id].roster).includes(id),
-      ).length / 8;
-    return {
-      ...team,
-      ...(team.engineRules
-        ? {
-            engineRules: {
-              ...team.engineRules,
-              familiarity: Math.min(
-                1,
-                (team.engineRules.familiarity + 0.15) * retained,
-              ),
-            },
-          }
-        : {}),
-    };
-  });
+  return projectedCoaches(career.teams, career.coachOffice, career.year).map(
+    (team) => {
+      const retained =
+        Object.values(team.roster).filter((id) =>
+          Object.values(archived.teams[team.id].roster).includes(id),
+        ).length / 8;
+      return {
+        ...team,
+        ...(team.engineRules
+          ? {
+              engineRules: {
+                ...team.engineRules,
+                familiarity: Math.min(
+                  1,
+                  (team.engineRules.familiarity + 0.15) * retained,
+                ),
+              },
+            }
+          : {}),
+      };
+    },
+  );
 }
 export function startNextLocalSeason(draft: LocalLeague): LocalLeague {
   if (
@@ -565,15 +580,22 @@ export function startNextLocalSeason(draft: LocalLeague): LocalLeague {
     fail("Complete the offseason rookie draft before the next season.");
   if (draft.career.year >= LOCAL_MAX_YEARS)
     fail("This local career has reached its season limit.");
+  draft = reviewLocalCoaches(draft);
+  const nextTeams = nextYearTeams(draft.career!);
+  if (
+    draft.career!.teams.some((t) => t.coach) &&
+    nextTeams.some((t) => !t.coach)
+  )
+    fail("Hire a head coach for every club before starting the next season.");
   const { playoffGames: _, ...base } = draft;
   return {
     ...base,
     completed: false,
     career: {
-      ...draft.career,
-      year: draft.career.year + 1,
+      ...draft.career!,
+      year: draft.career!.year + 1,
       phase: "season",
-      teams: nextYearTeams(draft.career),
+      teams: nextTeams,
     },
   };
 }
@@ -661,6 +683,19 @@ function verifyArchivedResult(
   )
     fail("This archived season does not match its frozen inputs.");
   if (
+    archived.coachRecords !== undefined &&
+    JSON.stringify(archived.coachRecords) !==
+      JSON.stringify(
+        captureCoachRecords(
+          result.league!.teams,
+          result.league!.standings,
+          playoffs,
+          archived.year,
+        ),
+      )
+  )
+    fail("This archived coaching record does not match its frozen inputs.");
+  if (
     archived.rivalScouting !== undefined &&
     JSON.stringify(archived.rivalScouting) !==
       JSON.stringify(captureRivalScouting(result.league!, playoffs))
@@ -715,7 +750,6 @@ function parseTeams(
       roster = {} as Roster;
     if (
       (row.coach !== undefined && !validateCoach(row.coach)) ||
-      row.coach?.id !== draft.coaching[id].coach?.id ||
       row.id !== id ||
       row.name !== LOCAL_TEAMS[id].name ||
       row.simulationVersion !== 2 ||
@@ -806,7 +840,11 @@ function sameRosterState(actual: LeagueTeam[], expected: LeagueTeam[]) {
   for (let i = 0; i < actual.length; i++) {
     const a = actual[i],
       e = expected[i];
-    if (JSON.stringify(a.engineRules) !== JSON.stringify(e.engineRules)) fail();
+    if (
+      JSON.stringify(a.engineRules) !== JSON.stringify(e.engineRules) ||
+      a.coach?.id !== e.coach?.id
+    )
+      fail();
     if (
       Object.values(a.roster).some(
         (id) => !Object.values(e.roster).includes(id),
@@ -906,6 +944,15 @@ export function parseLocalCareer(
     raw.history,
     raw.phase === "offseason" ? year : year - 1,
   );
+  const coachOffice =
+    raw.coachOffice === undefined
+      ? undefined
+      : validateCoachOffice(
+          raw.coachOffice,
+          draft.options.format.teamCount,
+          rawHistory.length,
+          draft.managers.map((m) => m.teamId),
+        );
   let expected = localLeagueTeams(draft);
   const history: LocalSeasonArchive[] = [];
   for (let i = 0; i < rawHistory.length; i++) {
@@ -913,6 +960,10 @@ export function parseLocalCareer(
       archiveYear = i + 1,
       teams = parseTeams(row.teams, draft, archiveYear);
     sameRosterState(teams, expected);
+    verifyCoachBaseline(
+      coachOffice?.years.find((r) => r.year === archiveYear),
+      teams,
+    );
     if (
       row.year !== archiveYear ||
       row.seasonSeed !== localSeasonSeed(draft, archiveYear)
@@ -999,6 +1050,20 @@ export function parseLocalCareer(
           teams.map((team) => ROSTER_SLOTS.map((slot) => team.roster[slot]!)),
         );
     const archived: LocalSeasonArchive = {
+      ...(row.coachRecords !== undefined
+        ? {
+            coachRecords: validateCoachRecords(
+              row.coachRecords,
+              teams,
+              standings,
+              archiveYear,
+              championId,
+              draft.options.format.playoffTeams,
+              draft.options.format.bestOf,
+              playoffGames,
+            ),
+          }
+        : {}),
       year: archiveYear,
       seasonSeed: row.seasonSeed,
       teams: snapshot(teams),
@@ -1019,6 +1084,7 @@ export function parseLocalCareer(
       career: {
         version: 1,
         year: archiveYear,
+        ...(coachOffice ? { coachOffice } : {}),
         phase: "offseason",
         teams: withDevelopment(teams, development),
         history: [...history, archived],
@@ -1070,6 +1136,7 @@ export function parseLocalCareer(
     fail();
   // A stored draft always pauses at the next human, as CPU turns are atomic.
   const result: LocalCareer = {
+    ...(coachOffice ? { coachOffice } : {}),
     version: 1,
     year,
     phase: raw.phase,

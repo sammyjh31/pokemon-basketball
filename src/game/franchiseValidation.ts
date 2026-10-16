@@ -1,3 +1,4 @@
+import { validateCoachOffice, verifyCoachChronology } from "./coachOffice";
 import { validateCoach } from "./trainerCoaches";
 import { captureRivalScouting, parseRivalScouting } from "./rivalScouting";
 import { validateRosterTransactions } from "./franchiseTransactions";
@@ -1041,6 +1042,16 @@ export function validateFranchise(
       verifiedArchives?.get(index + 1),
     ),
   );
+  const coachOffice =
+    row.coachOffice === undefined
+      ? undefined
+      : validateCoachOffice(row.coachOffice, teams.length, historyCount, [0]);
+  const coachSeasons = history.flatMap((h) =>
+    h.replay ? [{ year: h.year, teams: h.replay.teams }] : [],
+  );
+  if (row.phase === "season" || !coachSeasons.some((h) => h.year === year))
+    coachSeasons.push({ year, teams });
+  verifyCoachChronology(coachOffice, coachSeasons);
   if (
     row.modelVersion !== 3 &&
     (history.some((season) => season.replay) ||
@@ -1243,6 +1254,7 @@ export function validateFranchise(
   }
   const franchise: Franchise = {
     ...(pendingCoach ? { pendingCoach } : {}),
+    ...(coachOffice ? { coachOffice } : {}),
     modelVersion: row.modelVersion as Franchise["modelVersion"],
     year,
     phase: row.phase,
