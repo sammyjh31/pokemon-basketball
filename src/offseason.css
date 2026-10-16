@@ -76,7 +76,7 @@
   display: block;
   margin-top: 5px;
   color: #aeb9c8;
-  font-size: 11px;
+  font-size: 12px;
   overflow-wrap: anywhere;
 }
 .development-identity .portrait {
@@ -95,7 +95,7 @@
 .development-detail-label {
   grid-column: 1 / -1;
   color: var(--gold);
-  font-size: 11px;
+  font-size: 12px;
   padding-top: 4px;
 }
 .development-detail-label::before {
@@ -165,7 +165,7 @@
 }
 .franchise-roster li > small {
   color: #d2bd88;
-  font: 700 11px var(--display);
+  font: 700 12px var(--display);
 }
 @media (max-width: 640px) {
   .development-prompt {
@@ -206,7 +206,7 @@
   color: inherit;
   padding: 4px 2px;
   min-height: 36px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   overflow-wrap: anywhere;
 }

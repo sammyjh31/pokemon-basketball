@@ -82,7 +82,7 @@
   background: #171d25;
   height: 46px;
   white-space: nowrap;
-  font: 700 11px var(--display);
+  font: 700 12px var(--display);
 }
 .results-table th,
 .results-table td {
@@ -109,7 +109,7 @@
   gap: 3px;
   min-height: 30px;
   padding: 0;
-  font-size: 11px;
+  font-size: 12px;
   color: inherit;
   background: transparent;
 }
@@ -151,7 +151,7 @@
   display: block;
   margin-top: 4px;
   color: #8e9bac;
-  font: 700 10px var(--display);
+  font: 700 12px var(--display);
   letter-spacing: 0.05em;
 }
 .stat-legend {
@@ -208,7 +208,7 @@
   margin-top: 5px;
 }
 .team-award-card p {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   line-height: 1.6;
 }
@@ -312,7 +312,7 @@ button.game-score-button {
 }
 .box-score-versus {
   color: #79899b;
-  font: 700 11px var(--display);
+  font: 700 12px var(--display);
   letter-spacing: 0.1em;
 }
 .box-score-summary {
@@ -353,7 +353,7 @@ button.game-score-button {
     font-size: 21px;
   }
   .results-section-heading p {
-    font-size: 11px;
+    font-size: 12px;
   }
   .stat-mode {
     align-self: stretch;
@@ -370,7 +370,7 @@ button.game-score-button {
   }
   .stat-player {
     gap: 5px;
-    font-size: 11px;
+    font-size: 12px;
   }
   .stat-player .portrait,
   .stat-player .portrait-fallback {
@@ -384,7 +384,7 @@ button.game-score-button {
     padding: 12px;
   }
   .award-title {
-    font-size: 11px;
+    font-size: 12px;
   }
   .award-player {
     gap: 5px;
@@ -398,7 +398,7 @@ button.game-score-button {
     font-size: 17px;
   }
   .award-player div > span {
-    font-size: 10px;
+    font-size: 12px;
   }
   .box-score-overlay {
     padding: 10px;
@@ -435,7 +435,7 @@ button.game-score-button {
 .stats-scroll-hint {
   display: none;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   margin: 0 0 10px;
 }
 @media (max-width: 1200px) {

@@ -84,7 +84,7 @@
 }
 .rookie-recommendation small {
   color: #b8c3ae;
-  font-size: 11px;
+  font-size: 12px;
 }
 .rookie-recommendation .button {
   font-size: 12px;
@@ -108,7 +108,7 @@
 .rookie-draft label {
   display: grid;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
 }
 .rookie-draft input,
@@ -124,7 +124,7 @@
 .rookie-count {
   margin: 11px 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .rookie-prospects {
   display: grid;
@@ -168,7 +168,7 @@
 }
 .rookie-prospect small {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
 }
 .rookie-prospect > b {
   margin-left: auto;
@@ -222,7 +222,7 @@
 .rookie-order ol {
   columns: 3;
   padding-left: 28px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
 }
 .rookie-order li {
@@ -253,7 +253,7 @@
   top: 0;
   background: #18232e;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
 }
 .rookie-board th,
@@ -266,7 +266,7 @@
   display: block;
   margin-top: 4px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 12px;
 }
 @media (max-width: 760px) {
   .rookie-draft {

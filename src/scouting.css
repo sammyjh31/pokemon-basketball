@@ -63,7 +63,7 @@
 .scout-positions span {
   display: block;
   color: var(--muted);
-  font: 600 10px var(--display);
+  font: 600 12px var(--display);
 }
 .scout-positions strong {
   display: block;
@@ -80,14 +80,14 @@
 .scout-tools {
   color: #b9c3ce;
   line-height: 1.65;
-  font-size: 11px;
+  font-size: 12px;
 }
 .scout-tools b {
   color: #e8edf3;
 }
 .scout-summary {
   color: #c4cdd7;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.7;
   padding: 10px 12px;
   border-left: 2px solid #8e7943;
@@ -103,7 +103,7 @@
 }
 .scout-profile-note {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.7;
   margin: 10px 0 0;
 }
@@ -187,12 +187,12 @@
 .scout-tradeoffs b {
   display: block;
   color: #ddcf9e;
-  font-size: 11px;
+  font-size: 12px;
 }
 .scout-tradeoffs span {
   display: block;
   color: #aeb6c0;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
   margin-top: 3px;
 }
@@ -209,7 +209,7 @@
 }
 .scout-base-stats dt {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
 }
 .scout-base-stats dd {
   margin: 4px 0 0;
@@ -218,7 +218,7 @@
 }
 .scout-footnote {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.7;
   margin-top: 14px;
 }

@@ -18,7 +18,7 @@
 }
 .trade-center .eyebrow {
   color: #cfb87e;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.14em;
 }
 .trade-center h3 {
@@ -53,7 +53,7 @@
 .trade-market-heading > span,
 .trade-package-title > span {
   color: #aeb9c8;
-  font-size: 11px;
+  font-size: 12px;
 }
 .trade-market-filters {
   display: grid;
@@ -79,7 +79,7 @@
   align-items: center;
   gap: 10px;
   color: #aeb9c8;
-  font-size: 11px;
+  font-size: 12px;
 }
 .trade-sort select {
   min-height: 42px;
@@ -94,7 +94,7 @@
   min-height: 44px;
 }
 .trade-center .trade-market-key {
-  font-size: 10px;
+  font-size: 12px;
   color: #a8b1bf;
   margin: 0 0 15px;
 }
@@ -135,7 +135,7 @@
 .trade-market-identity small {
   display: block;
   color: #aeb9c8;
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 4px;
 }
 .trade-center .portrait {
@@ -156,7 +156,7 @@
 }
 .trade-player-rating small {
   display: block;
-  font: 700 8px var(--display);
+  font: 700 12px var(--display);
   letter-spacing: 0.08em;
   color: #aeb9c8;
   margin-top: 3px;
@@ -168,7 +168,7 @@
   gap: 8px;
   margin: 12px 0 8px;
   color: #c4cddb;
-  font-size: 10px;
+  font-size: 12px;
 }
 .trade-availability {
   display: inline-flex;
@@ -190,7 +190,7 @@
   background: #342c1e;
 }
 .trade-center .trade-market-reason {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
   min-height: 35px;
 }
@@ -198,7 +198,7 @@
   display: block;
   margin-top: 7px;
   color: #aab5c4;
-  font-size: 10px;
+  font-size: 12px;
 }
 .trade-trend.gain {
   color: #b0dda8;
@@ -215,7 +215,7 @@
 .trade-center .trade-market-actions .button {
   min-height: 38px;
   padding: 8px 12px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .trade-builder {
   margin-top: 28px;
@@ -254,7 +254,7 @@
 }
 .trade-club-profile p {
   margin-top: 4px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .trade-package-columns {
   display: grid;
@@ -313,7 +313,7 @@
 }
 .trade-package-identity small {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: #b7c1cd;
   margin-top: 4px;
 }
@@ -330,7 +330,7 @@
 }
 .trade-verdict .trade-package-count {
   color: #d9c79d;
-  font-size: 11px;
+  font-size: 12px;
   margin-bottom: 15px;
   padding-bottom: 12px;
   border-bottom: 1px solid #4b4935;
@@ -346,7 +346,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px 24px;
-  font-size: 11px;
+  font-size: 12px;
   color: #bcc8d4;
   margin: 16px 0;
 }
@@ -389,7 +389,7 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  font-size: 11px;
+  font-size: 12px;
   color: #d8dfd4;
 }
 .trade-factors strong span {
@@ -397,7 +397,7 @@
 }
 .trade-factors p {
   margin-top: 5px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .trade-verdict > .button {
   margin-top: 14px;
@@ -433,7 +433,7 @@
   flex: 1 1 150px;
 }
 .trade-search-context {
-  font-size: 11px;
+  font-size: 12px;
 }
 .trade-center .trade-results-count {
   margin: 18px 0 12px;
@@ -471,11 +471,11 @@
   border: 1px solid #5c573b;
   border-radius: 3px;
   padding: 4px 6px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .trade-suggestion-list li > p {
   margin-top: 8px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .trade-suggestion-list b {
   display: inline-block;
@@ -490,11 +490,11 @@
   margin-top: 14px;
 }
 .trade-suggestion-footer > span {
-  font-size: 11px;
+  font-size: 12px;
   color: #c9d4b6;
 }
 .trade-suggestion-footer .button {
-  font-size: 11px;
+  font-size: 12px;
   padding-inline: 12px;
 }
 .trade-center .trade-empty {
@@ -523,7 +523,7 @@
     gap: 8px;
   }
   .trade-market-heading > span {
-    font-size: 10px;
+    font-size: 12px;
   }
   .trade-market-list {
     grid-template-columns: 1fr;
@@ -536,7 +536,7 @@
     grid-column: 1 / -1;
   }
   .trade-market-filters .league-field {
-    font-size: 10px;
+    font-size: 12px;
   }
   .trade-market-toolbar {
     gap: 4px 12px;
@@ -549,10 +549,10 @@
   }
   .trade-sort select {
     max-width: 145px;
-    font-size: 11px;
+    font-size: 12px;
   }
   .trade-market-toolbar .text-button {
-    font-size: 10px;
+    font-size: 12px;
   }
   .trade-market-identity strong {
     font-size: 20px;
