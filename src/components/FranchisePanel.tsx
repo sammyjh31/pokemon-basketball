@@ -1429,7 +1429,11 @@ export function FranchisePanel({
                   ? "Enter the offseason to archive these results, make trades and prepare your next season."
                   : run.result
                     ? "The regular season is complete. Play through the Finals to open the next offseason."
-                    : "Set your rotation, then play or simulate scheduled games with your returning roster."}
+                    : run.coach
+                      ? "Your trainer handles game plans and rotations. Play or simulate scheduled games with your returning roster."
+                      : run.coachDraftRequired
+                        ? "Choose your trainer below before starting this season."
+                        : "Set your rotation, then play or simulate scheduled games with your returning roster."}
               </p>
             </div>
             {!run.result && onSimulateSeason && (

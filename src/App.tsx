@@ -264,10 +264,12 @@ export default function App({
         setSwap(null);
         setAnimatedRun(null);
         setAnnouncement(
-          "Your next franchise season is ready. Set your rotation and coaching before tipoff.",
+          "Your next franchise season is ready. Review your team and head coach before tipoff.",
         );
       }}
-      onSimulateSeason={() => void advanceSeason(82)}
+      onSimulateSeason={
+        choosingCoach ? undefined : () => void advanceSeason(82)
+      }
       onTraining={(plans) => dispatch({ type: "TRAINING_PLANS", plans })}
       onTradePackage={(offer) => dispatch({ type: "TRADE_PACKAGE", offer })}
       onRoster={(settings) => dispatch({ type: "OFFSEASON_ROSTER", settings })}

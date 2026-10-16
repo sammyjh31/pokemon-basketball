@@ -51,3 +51,28 @@ it("completes the real new-run coach step and removes manual coaching controls",
   expect(screen.queryByLabelText("Coaching style")).toBeNull();
   expect(screen.queryByLabelText("Defensive scheme")).toBeNull();
 });
+
+import { gameReducer } from "../game/state";
+import { rookieFixture } from "../game/rookieDraft.testUtils";
+it("gates the franchise overview's simulation shortcut until a coach is chosen", () => {
+  const initial = gameReducer(rookieFixture(), {
+    type: "START_FRANCHISE_SEASON",
+    seed: 82,
+  });
+  expect(initial.run.coachDraftRequired).toBe(true);
+  render(
+    <App
+      initial={initial}
+      storage={{ getItem: () => null, setItem: () => {} }}
+    />,
+  );
+  expect(
+    screen.queryByRole("button", { name: "Simulate season 2" }),
+  ).toBeNull();
+  fireEvent.click(
+    screen.getByRole("button", { name: "Draft Delia Ketchum (Mom)" }),
+  );
+  expect(
+    screen.getByRole("button", { name: "Simulate season 2" }),
+  ).toBeEnabled();
+});
