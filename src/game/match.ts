@@ -1,3 +1,5 @@
+import { resolveCourtPossession } from "./courtPossession";
+import type { CourtSequence } from "./courtTypes";
 import {
   bodyProfile,
   matchupEdges,
@@ -247,6 +249,10 @@ export function simulateMatch(
     throw new Error(
       "Both teams must use valid, matching physical matchup rules.",
     );
+  if (home.courtVersion !== away.courtVersion ||
+      (home.courtVersion !== undefined && home.courtVersion !== 1))
+    throw new Error("Both teams must use valid, matching court rules.");
+  const courtEnabled = home.courtVersion === 1;
   const bodyEnabled = home.matchupVersion === 1;
   const possessionDepth = home.possessionVersion === 1;
   const advanced = home.typeTacticsVersion === 1;
@@ -401,7 +407,7 @@ export function simulateMatch(
     });
     return guards;
   };
-  if (depthEnabled || possessionDepth)
+  if (depthEnabled || possessionDepth || courtEnabled)
     result.insights = {
       version: 1,
       coordinateSystem: "schematic-half-court",
@@ -430,6 +436,8 @@ export function simulateMatch(
         emptyPossessionPlayer(p.box.teamId, p.box.playerId),
       ),
     };
+  if (courtEnabled) result.insights!.court = [];
+  let activeCourt: CourtSequence | undefined;
   const playerDetail = new Map(
     result.insights?.possession?.players.map((p) => [p.playerId, p]),
   );
@@ -513,15 +521,20 @@ export function simulateMatch(
     gameMinute = 0,
     tickInPeriod = 0,
     periodTicks = 96;
+  let courtSecondsInPeriod = 0;
   let completedPossessions = 0;
   const elapsedSeconds = () =>
     Math.min(period, 4) * 720 +
     Math.max(0, period - 4) * 300 +
-    tickInPeriod * 7.5;
+    (courtEnabled ? courtSecondsInPeriod : tickInPeriod * 7.5);
   const recordShot = (
     event: Omit<ShotEvent, "index" | "period" | "elapsedSeconds" | "x" | "y">,
   ) => {
     if (!result.insights) return;
+    if (activeCourt) {
+      event = { ...event, courtSequence: result.insights!.court!.length - 1 };
+      activeCourt.outcome = event.foul ? "foul" : event.blocked ? "blocked" : event.made ? "made" : "missed";
+    }
     if (activeMatchup) event = { ...event, matchup: activeMatchup };
     if (possessionDepth) {
       event = {
@@ -554,8 +567,8 @@ export function simulateMatch(
       index,
       period: period + 1,
       elapsedSeconds: elapsedSeconds(),
-      x: clamp(50 + Math.cos(angle) * radius, 3, 97),
-      y: clamp(10 + Math.sin(angle) * radius, 3, 97),
+      x: activeCourt ? (activeCourt.positions.find(p => p.playerId === event.shooterId)!.x + 25) * 2 : clamp(50 + Math.cos(angle) * radius, 3, 97),
+      y: activeCourt ? activeCourt.positions.find(p => p.playerId === event.shooterId)!.y / 47 * 100 : clamp(10 + Math.sin(angle) * radius, 3, 97),
     });
     const defender = defenseMap.get(event.defenderId)!;
     defender.matchups++;
@@ -665,6 +678,7 @@ export function simulateMatch(
         if (phase.clutch) row.clutchPoints += points;
       }
     }
+    if (activeCourt?.offenseTeamId === offense.config.id) activeCourt.points += points;
     player.box.points += points;
     if (offense.side === "home") result.homeScore += points;
     else result.awayScore += points;
@@ -824,6 +838,27 @@ export function simulateMatch(
     } else if (passer && passer !== shooter && random() < assistChance)
       passer.box.assists++;
   };
+  const advanceCourtClock = (duration: number) => {
+    const seconds = Math.min(duration, periodTicks * 7.5 - courtSecondsInPeriod);
+    for (const team of [h, a]) {
+      if (result.insights) lineup(team).seconds += seconds;
+      for (const player of team.players) {
+        if (team.floor.includes(player)) {
+          player.box.minutes += seconds / 60;
+          player.consecutive += seconds / 60;
+          const drain = 1.55 + (100-player.profile.attributes.stamina)*.025 +
+            (team.config.tactic === "pace" ? .36 : 0) + (team.config.defense === "press" ? .4 : 0) +
+            (player.body?.workload ?? 0) * (team.config.tactic === "pace" || team.config.defense === "press" ? 1.8 : 1);
+          player.energy = Math.max(25, player.energy-drain*seconds/60);
+        } else {
+          player.consecutive = 0;
+          player.energy = Math.min(100, player.energy+(4.7+player.profile.attributes.stamina*.012)*seconds/60);
+        }
+      }
+    }
+    courtSecondsInPeriod += seconds;
+    tickInPeriod = courtSecondsInPeriod / 7.5;
+  };
   const possession = (offense: Team, defense: Team) => {
     if (result.insights) lineup(offense).possessions++;
     let secondChance = false;
@@ -846,8 +881,11 @@ export function simulateMatch(
       row.possessions++;
       if (clutch) row.clutchPossessions++;
     }
+    let shotClock = 24;
     let firstAction = true;
     for (;;) {
+      if (courtEnabled && periodTicks * 7.5 - courtSecondsInPeriod < 0.000001) return;
+      activeCourt = undefined;
       createdBy = undefined;
       screenBy = undefined;
       activeMatchup = undefined;
@@ -959,8 +997,43 @@ export function simulateMatch(
       firstAction = false;
       result.plays[play][offense.side]++;
       offense.transition = 0;
+      let court: ReturnType<typeof resolveCourtPossession> | undefined;
+      if (courtEnabled) {
+        court = resolveCourtPossession({
+          offense: offense.floor, defense: defense.floor,
+          guards: guards ?? new Map(offense.floor.map((p, i) => [p, defense.floor[i]])),
+          handler, screener, play, tactic, scheme: defense.config.defense,
+          shotClock, periodRemaining: periodTicks * 7.5 - courtSecondsInPeriod,
+          ...(secondChance && lastRebounder ? { putback: lastRebounder } : {}),
+        }, random);
+        guards = court.guards;
+        activeCourt = court.sequence;
+        activeCourt.possession = completedPossessions;
+        activeCourt.period = period + 1;
+        activeCourt.elapsedSeconds = elapsedSeconds();
+        result.insights!.court!.push(activeCourt);
+        advanceCourtClock(activeCourt.seconds);
+        shotClock = activeCourt.shotClock;
+        switched = court.coverage === "switch";
+        if (court.coverage && result.typeTactics) {
+          result.typeTactics[offense.side].screens++;
+          result.typeTactics[defense.side][switched ? "switches" : "stays"]++;
+        }
+        if (activeCourt.outcome === "turnover" || activeCourt.outcome === "violation") {
+          court.shooter.box.turnovers++;
+          const live = activeCourt.outcome === "turnover" && random() < .64;
+          if (live) {
+            court.defender.box.steals++;
+            const row = defenseMap.get(court.defender.box.playerId);
+            if (row) { row.steals++; row.deflections++; }
+          }
+          origins.set(defense, { edge: live ? .95 : 0, turnover: true });
+          return;
+        }
+      }
       let shooter: Player;
-      if (play === "pickRoll" && guards) {
+      if (court) shooter = court.shooter;
+      else if (play === "pickRoll" && guards) {
         switched = shouldSwitchScreen(
           handler,
           screener,
@@ -1028,7 +1101,7 @@ export function simulateMatch(
           );
         });
       let putback =
-        possessionDepth &&
+        !courtEnabled && possessionDepth &&
         secondChance &&
         lastRebounder &&
         offense.floor.includes(lastRebounder) &&
@@ -1040,7 +1113,7 @@ export function simulateMatch(
           );
       if (putback) shooter = lastRebounder!;
       let shooterRole = offense.floor.indexOf(shooter);
-      let defender = guards?.get(shooter) ?? defense.floor[shooterRole];
+      let defender = court?.defender ?? guards?.get(shooter) ?? defense.floor[shooterRole];
       if (
         !advanced &&
         defense.config.defense === "switch" &&
@@ -1091,7 +1164,7 @@ export function simulateMatch(
         shotWeights[2] *= matchupPreference(shooter, defender, "spotUp");
       }
       if (chaseThree) shotWeights[2] *= 3;
-      let zone = pick<Zone>(
+      let zone = court?.zone ?? pick<Zone>(
         ["rim", "mid", "three"],
         (_zone, i) => shotWeights[i],
       );
@@ -1099,7 +1172,7 @@ export function simulateMatch(
       if (!advanced && defense.config.defense === "zone" && zone === "rim")
         defender = pick(defense.floor, (p) => skill(p, "interiorDefense") ** 3);
       const coverageScheme =
-        advanced && play === "pickRoll"
+        court ? (switched ? "switch" : "man") : advanced && play === "pickRoll"
           ? screenCoverage(defense.config.defense, switched)
           : defense.config.defense;
       const bodyRoll = bodyEnabled ? random() : 0;
@@ -1111,7 +1184,7 @@ export function simulateMatch(
             bodyRoll,
           )
         : undefined;
-      if (guards && zone === "rim") {
+      if (!court && guards && zone === "rim") {
         help = chooseTypeHelp(
           shooter,
           defender,
@@ -1140,6 +1213,15 @@ export function simulateMatch(
             result.typeTactics![offense.side].kickouts++;
           }
         }
+      }
+      if (court) {
+        kickoutPasser = court.kickout ? court.passer : undefined;
+        if (court.helper) {
+          const abandoned = offense.floor.find(p => court!.guards.get(p) === court!.helper)!;
+          help = { helper: court.helper, abandoned };
+          if (result.typeTactics) result.typeTactics[defense.side].helpRotations++;
+        }
+        if (kickoutPasser && result.typeTactics) result.typeTactics[offense.side].kickouts++;
       }
       const bodyMatch = bodyEnabled
         ? resolveBodyMatchup(
@@ -1186,12 +1268,12 @@ export function simulateMatch(
         defense.floor,
         (p) => skill(p, "steal") * 0.5 + skill(p, "perimeterDefense") * 0.5,
       );
-      const carrier =
+      const carrier = court?.shooter ?? (
         bodyEnabled && kickoutPasser
           ? kickoutPasser
           : play === "post"
             ? shooter
-            : handler;
+            : handler);
       const carrierDefender =
         guards?.get(carrier) ?? defense.floor[offense.floor.indexOf(carrier)];
       const typePressure = typed
@@ -1223,7 +1305,7 @@ export function simulateMatch(
         0.28,
       );
       const pressureRoll = random();
-      if (pressureRoll < turnoverRate) {
+      if (!court && pressureRoll < turnoverRate) {
         carrier.box.turnovers++;
         let liveBall = false;
         if (random() < 0.64) {
@@ -1249,7 +1331,7 @@ export function simulateMatch(
       // A live tipped pass retains possession but disrupts the upcoming shot.
       let disrupted = false;
       if (
-        defense.config.engineRules &&
+        !court && defense.config.engineRules &&
         pressureRoll <
           turnoverRate + clamp(0.025 + (pressure - 60) * 0.0003, 0.01, 0.04)
       ) {
@@ -1295,22 +1377,30 @@ export function simulateMatch(
         if (defense.fouls >= (period < 4 ? 5 : 4)) {
           if (!freeThrows(offense, defense, carrier, 2)) return;
           secondChance = true;
-        }
+          shotClock = 14;
+        } else if (courtEnabled) shotClock = Math.max(14, shotClock);
         continue;
       }
-      const spacing = average(
+      const spacing = court?.spacing ?? average(
         offense.floor.filter((p) => p !== shooter),
         (p) => skill(p, "threePoint"),
       );
-      const protection = average(
-        defense.floor,
+      const courtDistance = (p: Player) => {
+        if (!court) return 0;
+        const point = court.sequence.positions.find(p => p.playerId === shooter.box.playerId)!;
+        const other = court.sequence.positions.find(q => q.playerId === p.box.playerId)!;
+        return Math.hypot(point.x-other.x,point.y-other.y);
+      };
+      const nearby = court ? defense.floor.filter(p => courtDistance(p) <= 14) : defense.floor;
+      const protection = nearby.length ? average(
+        nearby,
         (p) => skill(p, "interiorDefense") * 0.6 + skill(p, "block") * 0.4,
-      );
+      ) : 35;
       const matchup =
         zone === "rim"
           ? (skill(shooter, "strength") - skill(defender, "strength")) * 0.0006
           : (skill(shooter, "speed") - skill(defender, "speed")) * 0.00045;
-      const passer = putback
+      const passer = court ? court.passer : putback
         ? undefined
         : (kickoutPasser ??
           (shooter !== handler
@@ -1402,7 +1492,9 @@ export function simulateMatch(
           defenseFirst: defense.config.tactic === "defense",
         }).probability;
       // This coverage event explicitly alters resolution; it is not inferred from the outcome.
-      const contested = bodyMatch
+      const contested = court
+        ? random() < clamp(.92 - court.sequence.defenderDistance * .085, .12, .94)
+        : bodyMatch
         ? random() < bodyMatch.contestChance
         : depthEnabled
           ? random() <
@@ -1471,6 +1563,7 @@ export function simulateMatch(
           0.1,
           0.88,
         );
+      if (court) accuracy = clamp(applyTypeShotEffect(accuracy, court.sequence.shotLogOdds), .1, .88);
       const beforePhysical = accuracy;
       if (bodyMatch)
         accuracy = clamp(
@@ -1581,12 +1674,14 @@ export function simulateMatch(
         )
           return;
         secondChance = true;
+        shotClock = 14;
         continue;
       }
+      const blockers = court ? defense.floor.filter(p => courtDistance(p) <= 10) : defense.floor;
       const blocker =
-        zone === "rim"
+        zone === "rim" && blockers.length > 0
           ? pick(
-              defense.floor,
+              blockers,
               (p) =>
                 skill(p, "block") ** 3 *
                 (advanced
@@ -1604,7 +1699,7 @@ export function simulateMatch(
             bodyRoll,
           )
         : undefined;
-      const blockRate = clamp(
+      const blockRate = (court ? clamp((10-courtDistance(blocker))/8,0,1) : 1) * clamp(
         (zone === "rim" ? 0.052 : zone === "mid" ? 0.021 : 0.009) +
           (blockBody?.blockDelta ?? 0) +
           (typed
@@ -1652,6 +1747,7 @@ export function simulateMatch(
       fieldGoal(offense, defense, shooter, zone, made, passer, assistChance);
       if (made || !rebound(offense, defense, false, zone)) return;
       secondChance = true;
+      shotClock = 14;
     }
   };
   const tempo = (team: Team) =>
@@ -1670,6 +1766,7 @@ export function simulateMatch(
     if (period >= 4) result.overtimePeriods++;
     periodTicks = period < 4 ? 96 : 40;
     tickInPeriod = 0;
+    courtSecondsInPeriod = 0;
     const previousHomeCoverage = h.config.defense,
       previousAwayCoverage = a.config.defense;
     adapt(h, a, previousAwayCoverage);
@@ -1691,7 +1788,22 @@ export function simulateMatch(
           : openingTip === h
             ? a
             : h;
-    for (tickInPeriod = 0; tickInPeriod < periodTicks; tickInPeriod++) {
+    if (courtEnabled) {
+      while (courtSecondsInPeriod < periodTicks * 7.5 - .000001) {
+        const minute = Math.floor(elapsedSeconds() / 60);
+        if (minute !== gameMinute) {
+          const close = minute >= 44 && Math.abs(result.homeScore-result.awayScore) <= 12;
+          const homeFloor = h.floor, awayFloor = a.floor;
+          chooseLineup(h, minute, close, awayFloor);
+          chooseLineup(a, minute, close, homeFloor);
+          gameMinute = minute;
+        }
+        const defense = offense === h ? a : h;
+        possession(offense, defense);
+        completedPossessions++;
+        offense = defense;
+      }
+    } else for (tickInPeriod = 0; tickInPeriod < periodTicks; tickInPeriod++) {
       if (tickInPeriod % 8 === 0) {
         const close =
           gameMinute >= 44 &&
@@ -1759,6 +1871,13 @@ export function simulateMatch(
       for (const p of team.players)
         p.energy = Math.min(100, p.energy + (period === 1 ? 12 : 5));
     period++;
+  }
+  if (courtEnabled) for (const team of [h, a]) {
+    // Stable fractional minute totals for reports and archival validation.
+    const total = 240 + 25 * result.overtimePeriods;
+    const played = team.players.filter(p => p.box.minutes > 0);
+    for (const p of played) p.box.minutes = Math.round(p.box.minutes * 1e6) / 1e6;
+    played.at(-1)!.box.minutes = total - played.slice(0, -1).reduce((n,p) => n+p.box.minutes,0);
   }
   result.possessions = Math.round(completedPossessions / 2);
   if (result.typeMatchups) {

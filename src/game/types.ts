@@ -189,6 +189,8 @@ export interface Run {
   possessionVersion?: 1;
   /** Physical/type possession contests. Absent on historical seeds. */
   matchupVersion?: 1;
+  /** Court geometry, action sequences and screen coverage rules. */
+  courtVersion?: 1;
   id: string;
   mode: Mode;
   includeLegends: boolean;
@@ -243,6 +245,8 @@ export interface LeagueTeam {
   possessionVersion?: 1;
   /** Physical/type possession contests. Absent on historical seeds. */
   matchupVersion?: 1;
+  /** Court geometry, action sequences and screen coverage rules. */
+  courtVersion?: 1;
   id: number;
   name: string;
   roster: Roster;

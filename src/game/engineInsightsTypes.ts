@@ -9,6 +9,7 @@ export interface EngineRules {
   familiarity: number;
 }
 export interface ShotEvent {
+  courtSequence?: number;
   matchup?: import("./bodyMatchups").MatchupEvidence;
   creatorId?: string;
   putback?: boolean;
@@ -77,6 +78,7 @@ export interface CoachingAdjustment {
   evidence: string;
 }
 export interface MatchInsights {
+  court?: import("./courtTypes").CourtSequence[];
   possession?: PossessionInsights;
   version: 1;
   coordinateSystem: "schematic-half-court";
