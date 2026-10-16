@@ -1,3 +1,4 @@
+import type { CoachAssignment } from "./trainerCoaches";
 import type {
   MatchScouting,
   ScoutingMemory,
@@ -181,6 +182,8 @@ export interface SeasonResult {
   awards?: SeasonAward[];
 }
 export interface Run {
+  coach?: CoachAssignment;
+  coachDraftRequired?: true;
   simulationVersion?: 2;
   /** Omitted on historical seasons to preserve their deterministic replay. */
   typeMatchupsVersion?: 1;
@@ -236,6 +239,7 @@ export const DEFENSE_LABELS: Record<DefenseScheme, string> = {
 export type PlayType =
   "transition" | "pickRoll" | "isolation" | "post" | "spotUp";
 export interface LeagueTeam {
+  coach?: CoachAssignment;
   engineRules?: EngineRules;
   simulationVersion?: 2;
   /** Omitted on historical seasons to preserve their deterministic replay. */
