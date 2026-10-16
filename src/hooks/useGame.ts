@@ -6,6 +6,8 @@ import {
   type StorageLike,
 } from "../game/persistence";
 import { simulateSeasonAsync } from "../game/season";
+import { simulatePlayoffsAsync } from "../game/playoffs";
+import type { PlayoffMode } from "../game/playoffTypes";
 import type { GameState } from "../game/types";
 import { parseLineup } from "../game/lineup";
 const browserStorage: StorageLike = {
@@ -77,7 +79,7 @@ export function useGame(
         if (controller.signal.aborted) return;
         rawDispatch({ type: "RESTORE_SAVED", state: restored.state });
         setStorageNotice(restored.notice);
-        setCanSave(restored.notice === null);
+        setCanSave(!restored.preserveSource && restored.notice === null);
         busy.current = false;
         setRestoring(false);
       })
@@ -90,6 +92,13 @@ export function useGame(
   const [simulating, setSimulating] = useState(false);
   const [progress, setProgress] = useState({ completed: 0, total: 1230 });
   const [simulationError, setSimulationError] = useState<string | null>(null);
+  const [playoffSimulating, setPlayoffSimulating] = useState(false);
+  const [playoffProgress, setPlayoffProgress] = useState({
+    completed: 0,
+    total: 105,
+  });
+  const playoffController = useRef<AbortController | null>(null);
+  useEffect(() => () => playoffController.current?.abort(), []);
   const dispatch = (action: GameAction) => {
     if (!busy.current) {
       setCanSave(true);
@@ -116,6 +125,53 @@ export function useGame(
     } finally {
       busy.current = false;
       setSimulating(false);
+    }
+  };
+  const advancePlayoffs = async (mode: PlayoffMode) => {
+    const source = state.run;
+    const league = source.result?.league;
+    if (
+      busy.current ||
+      source.result?.modelVersion !== 3 ||
+      !league ||
+      source.playoffs?.championId != null
+    )
+      return;
+    const controller = new AbortController();
+    playoffController.current = controller;
+    busy.current = true;
+    setPlayoffSimulating(true);
+    setSimulationError(null);
+    try {
+      const playoffs = await simulatePlayoffsAsync(
+        league,
+        source.seasonSeed,
+        source.playoffs,
+        mode,
+        (completed, total) => {
+          if (!controller.signal.aborted)
+            setPlayoffProgress({ completed, total });
+        },
+        controller.signal,
+      );
+      controller.signal.throwIfAborted();
+      // Persist only a completed user action, including an explicit restart
+      // after recovering a damaged playoff extension.
+      setCanSave(true);
+      rawDispatch({ type: "APPLY_PLAYOFFS", source, playoffs });
+    } catch (error) {
+      if (!controller.signal.aborted)
+        setSimulationError(
+          error instanceof Error
+            ? error.message
+            : "The playoffs could not finish. Please try again.",
+        );
+    } finally {
+      if (!controller.signal.aborted) {
+        playoffController.current = null;
+        busy.current = false;
+        setPlayoffSimulating(false);
+      }
     }
   };
   const [importPending, setImportPending] = useState(loaded.confirmImport);
@@ -153,6 +209,9 @@ export function useGame(
     simulate,
     simulating,
     progress,
+    advancePlayoffs,
+    playoffSimulating,
+    playoffProgress,
     simulationError,
     restoring,
     restorationProgress,

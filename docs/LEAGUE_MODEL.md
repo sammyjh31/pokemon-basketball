@@ -34,6 +34,14 @@ All six season awards require at least 58 games. Sixth Player additionally requi
 
 The leader table can show all players or qualified leaders. Qualification requires 58 games; percentage columns additionally require 300 field-goal attempts (FG% and TS%), 82 three-point attempts (3P%), or 125 free-throw attempts (FT%). Zero-denominator percentages and ratios display a dash. TS% uses `PTS / [2 × (FGA + 0.44 FTA)]`; per-36 figures use actual minutes. These thresholds are game rules, not claims about an external league's rules.
 
+## Playoffs (postseason model 1)
+
+The top 16 teams qualify by wins, then point differential, then team ID. This matches the default standings order. The first-round bracket is 1–16, 8–9, 4–13, 5–12, 2–15, 7–10, 3–14, 6–11. Adjacent winners advance without reseeding through quarterfinals, semifinals and Finals: 15 series total. Every series ends as soon as a team wins four games. The higher original seed hosts games 1, 2, 5 and 7; the lower seed hosts 3, 4 and 6.
+
+Each action advances the next slate (one game per unfinished series in the current round), the rest of the current round, or the entire postseason. Later rounds wait until the active round finishes. All progression modes use the same per-series/game seeds and produce identical results. The original eight-player rosters and coaching settings carry into the playoffs. The existing match engine produces every score and box; no series winner is chosen separately.
+
+Postseason totals start at zero for the 128 qualified players. They accumulate only playoff boxes; the regular-season league and challenge counters remain unchanged. Finals totals start fresh for the two finalists. Finals MVP is the champion's player with the highest total impact across Finals games: `PTS + 1.2 REB + 1.5 AST + 3 STL + 3 BLK − 1.5 TOV − 0.4 missed FG − 0.4 missed FT`, ties by Pokédex ID. Only players who appeared are eligible. The displayed PPG/RPG/APG are Finals-only averages. Postseason leader tables have no 58-game qualification rule; game counts remain visible for comparing sample sizes.
+
 ## Saving and compatibility
 
 New seasons are model 3, saved at `pokemon-basketball:v3`. Saves include all team rosters, all game summaries, all player aggregates and both boxes for the user's 82 games. Other boxes are replayed on demand, keeping the save compact. Loading validates model-3 results by replaying the deterministic league. There is no server or anti-cheat claim.
@@ -45,3 +53,5 @@ Simulation yields between 15-game rounds and reports progress. Roster and coachi
 Restoration also yields between rounds, so the app renders a progress indicator before validating a completed league. Original saved bytes remain untouched until validation succeeds or the user explicitly replaces the state. A valid shared-lineup import can replace a damaged save and subsequently persist normally.
 
 Any future change to event probabilities, roster draft, schedule, aggregation, rating inputs or award formulas can change deterministic output. Preserve model 3 and introduce a new model version before shipping such a change to users with saved model-3 results.
+
+Playoffs are an optional `run.playoffs` extension with their own `modelVersion: 1`; the regular-season payload remains unchanged. Saves retain seeds, the 15-series bracket, game summaries, postseason aggregates and Finals aggregates. Loading checks the extension against a deterministic replay bounded at 105 games. Valid completed model-3 seasons without an extension can start playoffs immediately. A damaged playoff extension recovers the valid regular season with a notice while retaining original saved bytes until explicit replacement. Older model-1/2 recaps cannot invent a league bracket. Preserve both the regular-season and playoff models before future match-engine changes.
