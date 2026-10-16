@@ -1,3 +1,6 @@
+import { CoachDraft } from "./components/CoachDraft";
+import { CoachSummary } from "./components/CoachSummary";
+import { canSelectTrainer } from "./game/coachSelection";
 import { RotationEditor } from "./components/RotationEditor";
 import { FranchiseSchedule } from "./components/FranchiseSchedule";
 import { nextFranchiseFixture } from "./game/interactiveSeason";
@@ -55,6 +58,26 @@ export default function App({
       restorationProgress,
     } = useGame(initial, storage),
     { run, records } = state;
+  const choosingCoach =
+    canSelectTrainer(state) &&
+    (run.coachDraftRequired || !initial) &&
+    state.franchise?.phase !== "offseason";
+  const coachTeam = {
+    ...(state.franchise?.phase === "offseason"
+      ? state.franchise.teams[0]
+      : run.leagueTeams?.[0]),
+    id: 0,
+    name: "Kanto Basketball Club",
+    roster:
+      state.franchise?.phase === "offseason"
+        ? state.franchise.teams[0].roster
+        : run.roster,
+    tactic: run.tactic,
+    rotation: run.rotation,
+    defense: run.defense ?? "man",
+    ratings: teamRatings(run.roster),
+    coach: state.franchise?.pendingCoach ?? run.coach,
+  };
   const [arcadeOpen, setArcadeOpen] = useState(false);
   const [localLeagueOpen, setLocalLeagueOpen] = useState(
     () => window.location.hash === "#local-league",
@@ -84,12 +107,18 @@ export default function App({
   const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("pixel");
   const start = (mode: Mode, includeLegends: boolean) => {
     if (simulating || playoffSimulating || restoring) return;
-    dispatch({ type: "NEW_RUN", mode, includeLegends, seed: newSeed() });
+    dispatch({
+      type: "NEW_RUN",
+      mode,
+      includeLegends,
+      seed: newSeed(),
+      coachDraftRequired: true,
+    });
     setPending(null);
     setSwap(null);
     setReset(null);
     setAnimatedRun(null);
-    setAnnouncement("New draft started. Pick your first Pokémon.");
+    setAnnouncement("New draft started. Choose your trainer coach.");
   };
   const requestReset = (mode: Mode, includeLegends: boolean) => {
     if (simulating || playoffSimulating || restoring) return;
@@ -345,7 +374,25 @@ export default function App({
                   </button>
                 </p>
               )}
-              {state.franchise?.phase !== "offseason" && (
+              {(choosingCoach ||
+                (state.franchise?.phase === "offseason" &&
+                  canSelectTrainer(state))) && (
+                <CoachDraft
+                  key={run.id}
+                  seed={run.seasonSeed}
+                  offered={!state.franchise && run.mode === "spin"}
+                  nextSeason={state.franchise?.phase === "offseason"}
+                  disabled={simulating || playoffSimulating}
+                  onChoose={(id) => dispatch({ type: "SELECT_COACH", id })}
+                />
+              )}
+              {coachTeam.coach && (
+                <CoachSummary
+                  team={coachTeam}
+                  nextSeason={!!state.franchise?.pendingCoach}
+                />
+              )}
+              {state.franchise?.phase !== "offseason" && !choosingCoach && (
                 <fieldset
                   className={`draft-layout draft-fieldset${state.franchise ? " franchise-roster-layout" : ""}`}
                   id="draft"
@@ -385,7 +432,7 @@ export default function App({
                         }
                       />
                     )}
-                    {state.franchise && (
+                    {state.franchise && !run.coach && (
                       <RotationEditor
                         run={run}
                         disabled={
@@ -498,37 +545,40 @@ export default function App({
                   )}
                 </div>
               </section>
-              {state.franchise?.phase === "season" && !run.result ? (
-                <FranchiseSchedule
-                  run={run}
-                  year={state.franchise.year}
-                  busy={simulating || playoffSimulating}
-                  progress={progress}
-                  onPlay={openOfficialGame}
-                  onAdvance={(rounds) => void advanceSeason(rounds)}
-                />
-              ) : (
-                <SeasonPanel
-                  key={run.id}
-                  run={run}
-                  ratings={ratings}
-                  animate={animatedRun === run.id}
-                  simulating={simulating}
-                  progress={progress}
-                  onPlayoffs={(mode) => void advancePlayoffs(mode)}
-                  playoffSimulating={playoffSimulating}
-                  playoffProgress={playoffProgress}
-                  onPlayGame={playoffFixture ? openOfficialGame : undefined}
-                  franchiseYear={state.franchise?.year}
-                  franchiseEntry={!state.franchise ? franchisePanel : undefined}
-                  onSimulate={() => {
-                    setAnimatedRun(run.id);
-                    setPending(null);
-                    setSwap(null);
-                    void simulate();
-                  }}
-                />
-              )}
+              {!choosingCoach &&
+                (state.franchise?.phase === "season" && !run.result ? (
+                  <FranchiseSchedule
+                    run={run}
+                    year={state.franchise.year}
+                    busy={simulating || playoffSimulating}
+                    progress={progress}
+                    onPlay={openOfficialGame}
+                    onAdvance={(rounds) => void advanceSeason(rounds)}
+                  />
+                ) : (
+                  <SeasonPanel
+                    key={run.id}
+                    run={run}
+                    ratings={ratings}
+                    animate={animatedRun === run.id}
+                    simulating={simulating}
+                    progress={progress}
+                    onPlayoffs={(mode) => void advancePlayoffs(mode)}
+                    playoffSimulating={playoffSimulating}
+                    playoffProgress={playoffProgress}
+                    onPlayGame={playoffFixture ? openOfficialGame : undefined}
+                    franchiseYear={state.franchise?.year}
+                    franchiseEntry={
+                      !state.franchise ? franchisePanel : undefined
+                    }
+                    onSimulate={() => {
+                      setAnimatedRun(run.id);
+                      setPending(null);
+                      setSwap(null);
+                      void simulate();
+                    }}
+                  />
+                ))}
               {simulationError && (
                 <p className="notice" role="alert">
                   {simulationError}

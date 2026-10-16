@@ -1,3 +1,4 @@
+import { CoachSummary } from "./CoachSummary";
 import { useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import type { Franchise } from "../game/franchiseTypes";
@@ -106,76 +107,82 @@ export function OffseasonRoster({
             );
           })}
         </div>
-        <div className="league-controls">
-          <label className="league-field">
-            Offseason offense
-            <select
-              value={team.tactic}
-              onChange={(e) =>
-                save({
-                  ...settings,
-                  tactic: e.target.value as typeof team.tactic,
-                })
-              }
-            >
-              {TACTICS.map((t) => (
-                <option key={t} value={t}>
-                  {TACTIC_LABELS[t]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="league-field">
-            Offseason defense
-            <select
-              value={team.defense}
-              onChange={(e) =>
-                save({
-                  ...settings,
-                  defense: e.target.value as typeof team.defense,
-                })
-              }
-            >
-              {DEFENSE_SCHEMES.map((d) => (
-                <option key={d} value={d}>
-                  {DEFENSE_LABELS[d]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="league-field">
-            Offseason rotation
-            <select
-              value={team.rotation}
-              onChange={(e) =>
-                save({
-                  ...settings,
-                  rotation: e.target.value as typeof team.rotation,
-                  rotationPlan: undefined,
-                })
-              }
-            >
-              {ROTATIONS.map((r) => (
-                <option key={r} value={r}>
-                  {
+        {team.coach ? (
+          <CoachSummary team={team} />
+        ) : (
+          <div className="league-controls">
+            <label className="league-field">
+              Offseason offense
+              <select
+                value={team.tactic}
+                onChange={(e) =>
+                  save({
+                    ...settings,
+                    tactic: e.target.value as typeof team.tactic,
+                  })
+                }
+              >
+                {TACTICS.map((t) => (
+                  <option key={t} value={t}>
+                    {TACTIC_LABELS[t]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="league-field">
+              Offseason defense
+              <select
+                value={team.defense}
+                onChange={(e) =>
+                  save({
+                    ...settings,
+                    defense: e.target.value as typeof team.defense,
+                  })
+                }
+              >
+                {DEFENSE_SCHEMES.map((d) => (
+                  <option key={d} value={d}>
+                    {DEFENSE_LABELS[d]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="league-field">
+              Offseason rotation
+              <select
+                value={team.rotation}
+                onChange={(e) =>
+                  save({
+                    ...settings,
+                    rotation: e.target.value as typeof team.rotation,
+                    rotationPlan: undefined,
+                  })
+                }
+              >
+                {ROTATIONS.map((r) => (
+                  <option key={r} value={r}>
                     {
-                      balanced: "Balanced minutes",
-                      starters: "Lean on starters",
-                      bench: "Trust the bench",
-                    }[r]
-                  }
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+                      {
+                        balanced: "Balanced minutes",
+                        starters: "Lean on starters",
+                        bench: "Trust the bench",
+                      }[r]
+                    }
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
       </fieldset>
       <p role="status">{message}</p>
-      <RotationEditor
-        run={run}
-        disabled={disabled}
-        onChange={(rotationPlan) => save({ ...settings, rotationPlan })}
-      />
+      {!team.coach && (
+        <RotationEditor
+          run={run}
+          disabled={disabled}
+          onChange={(rotationPlan) => save({ ...settings, rotationPlan })}
+        />
+      )}
     </section>
   );
 }

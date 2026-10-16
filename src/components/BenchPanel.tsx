@@ -1,3 +1,4 @@
+import { coachRotationMinutes } from "../game/coachPolicy";
 import type { PlayerDevelopment } from "../game/developmentTypes";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
@@ -52,12 +53,22 @@ export function BenchPanel({
   onRotation: (rotation: RotationStyle) => void;
   onDefense: (defense: DefenseScheme) => void;
 }) {
-  const minutes = rotationMinutes(
-      run.roster,
-      run.rotation,
-      development,
-      run.rotationPlan,
-    ),
+  const minutes =
+      run.coach && ratings.complete
+        ? coachRotationMinutes({
+            ...run,
+            id: 0,
+            name: "Kanto Basketball Club",
+            defense: run.defense ?? "man",
+            ratings,
+            development,
+          })
+        : rotationMinutes(
+            run.roster,
+            run.rotation,
+            development,
+            run.rotationPlan,
+          ),
     locked = !!run.result || (run.seasonProgress?.completedRounds ?? 0) > 0;
   return (
     <section className="bench-panel" aria-label="Bench and coaching">
@@ -114,53 +125,57 @@ export function BenchPanel({
           );
         })}
       </div>
-      <div className="coaching-controls">
-        <label>
-          Offensive identity
-          <select
-            aria-label="Coaching style"
-            value={run.tactic}
-            disabled={locked}
-            onChange={(e) => onTactic(e.target.value as Tactic)}
-          >
-            {TACTICS.map((t) => (
-              <option key={t} value={t}>
-                {TACTIC_LABELS[t]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Defensive scheme
-          <select
-            aria-label="Defensive scheme"
-            value={run.defense ?? "man"}
-            disabled={locked}
-            onChange={(e) => onDefense(e.target.value as DefenseScheme)}
-          >
-            {DEFENSE_SCHEMES.map((d) => (
-              <option key={d} value={d}>
-                {DEFENSE_LABELS[d]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Rotation emphasis
-          <select
-            aria-label="Rotation emphasis"
-            value={run.rotation}
-            disabled={locked}
-            onChange={(e) => onRotation(e.target.value as RotationStyle)}
-          >
-            <option value="balanced">Balanced minutes</option>
-            <option value="starters">Lean on starters</option>
-            <option value="bench">Trust the bench</option>
-          </select>
-        </label>
-      </div>
+      {!run.coach && (
+        <div className="coaching-controls">
+          <label>
+            Offensive identity
+            <select
+              aria-label="Coaching style"
+              value={run.tactic}
+              disabled={locked}
+              onChange={(e) => onTactic(e.target.value as Tactic)}
+            >
+              {TACTICS.map((t) => (
+                <option key={t} value={t}>
+                  {TACTIC_LABELS[t]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Defensive scheme
+            <select
+              aria-label="Defensive scheme"
+              value={run.defense ?? "man"}
+              disabled={locked}
+              onChange={(e) => onDefense(e.target.value as DefenseScheme)}
+            >
+              {DEFENSE_SCHEMES.map((d) => (
+                <option key={d} value={d}>
+                  {DEFENSE_LABELS[d]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Rotation emphasis
+            <select
+              aria-label="Rotation emphasis"
+              value={run.rotation}
+              disabled={locked}
+              onChange={(e) => onRotation(e.target.value as RotationStyle)}
+            >
+              <option value="balanced">Balanced minutes</option>
+              <option value="starters">Lean on starters</option>
+              <option value="bench">Trust the bench</option>
+            </select>
+          </label>
+        </div>
+      )}
       <p className="coaching-note">
-        {tacticNotes[run.tactic]}{" "}
+        {run.coach
+          ? "Your trainer automatically manages tactics and rotation."
+          : tacticNotes[run.tactic]}{" "}
         {ratings.complete
           ? "Projected minutes guide substitutions; fatigue, matchups and foul trouble change the rotation."
           : "Fill all eight slots to complete your rotation."}

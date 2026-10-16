@@ -1,0 +1,224 @@
+.coach-draft,
+.coach-summary {
+  padding: 28px;
+  border: 1px solid var(--line);
+  background: linear-gradient(125deg, #151a20, #0e1217);
+  margin: 22px 0;
+  border-radius: 12px;
+}
+.coach-draft-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.coach-draft h2 {
+  font-size: 34px;
+  margin: 8px 0 12px;
+}
+.coach-draft-heading p {
+  color: var(--muted);
+  max-width: 700px;
+  line-height: 1.65;
+}
+.coach-draft-count {
+  border: 1px solid var(--gold);
+  padding: 12px 16px;
+  border-radius: 6px;
+  color: var(--gold);
+  white-space: nowrap;
+  font-weight: 700;
+}
+.coach-search {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 22px;
+  max-width: 440px;
+  color: var(--muted);
+}
+.coach-search input {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+  color: inherit;
+  width: 100%;
+}
+.coach-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  max-height: 760px;
+  overflow: auto;
+  padding: 3px;
+}
+.coach-card {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #10171d;
+  border: 1px solid #35404b;
+  border-radius: 9px;
+  min-width: 0;
+}
+.coach-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.coach-monogram {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid #a68c3b;
+  background: #282719;
+  color: var(--gold);
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 18px;
+}
+.coach-card h3 {
+  font-size: 26px;
+}
+.coach-style {
+  color: var(--gold);
+}
+.coach-card p,
+.coach-summary p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.coach-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 5px 0;
+}
+.coach-tags span {
+  background: #1d2933;
+  color: #bcd0df;
+  border: 1px solid #304350;
+  border-radius: 4px;
+  font-size: 12px;
+  padding: 5px 8px;
+}
+.coach-tradeoff {
+  font-size: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.coach-tradeoff b {
+  color: #d9bca0;
+}
+.coach-card button {
+  margin-top: auto;
+  width: 100%;
+  min-height: 44px;
+  white-space: normal;
+}
+.coach-taken {
+  opacity: 0.6;
+}
+.coach-footnote {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-top: 16px;
+}
+.coach-summary h2 {
+  margin: 8px 0 12px;
+}
+.coach-summary small {
+  display: inline-block;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--gold);
+  margin-left: 8px;
+}
+.coach-summary details {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.coach-summary summary {
+  cursor: pointer;
+  color: var(--gold);
+}
+.coach-minutes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.coach-minutes span {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px;
+  background: #1b232b;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.coach-minutes b {
+  white-space: nowrap;
+}
+.coach-game-plans {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.coach-game-plans article {
+  border: 1px solid var(--line);
+  padding: 16px;
+  border-radius: 8px;
+}
+.coach-game-plans h3 {
+  margin: 8px 0;
+}
+.coach-game-plans p {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+@media (max-width: 1000px) {
+  .coach-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .coach-minutes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .coach-draft,
+  .coach-summary {
+    padding: 18px;
+  }
+  .coach-draft-heading {
+    display: block;
+  }
+  .coach-draft-count {
+    display: inline-block;
+    margin-top: 16px;
+  }
+  .coach-draft h2 {
+    font-size: 28px;
+  }
+  .coach-cards,
+  .coach-game-plans {
+    grid-template-columns: 1fr;
+  }
+  .coach-summary small {
+    display: block;
+    margin: 6px 0;
+  }
+  .coach-minutes {
+    grid-template-columns: 1fr 1fr;
+  }
+  .coach-cards {
+    max-height: none;
+  }
+}

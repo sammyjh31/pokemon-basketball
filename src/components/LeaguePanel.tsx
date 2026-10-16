@@ -1,3 +1,5 @@
+import { getCoach } from "../game/trainerCoaches";
+import { coachGamePlan } from "../game/coachPolicy";
 import type { OfficialGame } from "../game/franchiseFeatures";
 import { useCallback, useId, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -662,10 +664,15 @@ function Rosters({
           <span className="eyebrow">COACHING IDENTITY</span>
           <h4>{team.name}</h4>
           <p>
-            {TACTIC_LABELS[team.tactic]} · {DEFENSE_LABELS[team.defense]} ·{" "}
-            {team.rotation === "starters"
+            {team.coach
+              ? `${getCoach(team.coach.id)!.name} · ${getCoach(team.coach.id)!.style} · Automatic coaching`
+              : `${TACTIC_LABELS[team.tactic]} · ${DEFENSE_LABELS[team.defense]}`}{" "}
+            ·{" "}
+            {(team.coach ? coachGamePlan(team).rotation : team.rotation) ===
+            "starters"
               ? "Starter-heavy"
-              : team.rotation === "bench"
+              : (team.coach ? coachGamePlan(team).rotation : team.rotation) ===
+                  "bench"
                 ? "Deep bench"
                 : "Balanced"}{" "}
             rotation

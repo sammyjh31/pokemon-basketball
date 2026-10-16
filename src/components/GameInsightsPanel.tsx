@@ -1,3 +1,4 @@
+import { TrainerCoachInsights } from "./TrainerCoachInsights";
 import { CourtInsights } from "./CourtInsights";
 import { BodyMatchupInsights } from "./BodyMatchupInsights";
 import { PossessionInsightsPanel } from "./PossessionInsightsPanel";
@@ -561,6 +562,10 @@ export function GameInsightsPanel({
         </p>
       ) : (
         <>
+          <TrainerCoachInsights
+            insights={match.insights}
+            teams={[home, away]}
+          />
           <CourtInsights
             sequences={match.insights.court}
             teams={[home, away]}

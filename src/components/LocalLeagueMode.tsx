@@ -1,3 +1,6 @@
+import { CoachDraft } from "./CoachDraft";
+import { CoachSummary } from "./CoachSummary";
+import { localCoachTurn, selectLocalCoach } from "../game/coachSelection";
 import { useMemo, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { useLocalLeague } from "../hooks/useLocalLeague";
@@ -58,7 +61,9 @@ function ReviewTeams({
           </span>
           <h2>Set your lineup. Settle the debate.</h2>
           <p>
-            Every friend can adjust their lineup and coaching before the season.
+            {team.coach
+              ? "Your trainer manages the rotation and game plan automatically."
+              : "Every friend can adjust their lineup and coaching before the season."}
           </p>
         </div>
         <label>
@@ -131,72 +136,76 @@ function ReviewTeams({
             continuity. Keeping teammates together builds familiarity each year.
           </p>
         )}
-        <div className="local-coaching">
-          <label>
-            Offense
-            <select
-              value={team.tactic}
-              onChange={(e) =>
-                change((current) =>
-                  updateLocalCoaching(current, teamId, {
-                    ...current.coaching[teamId],
-                    tactic: e.target.value as typeof team.tactic,
-                  }),
-                )
-              }
-            >
-              {TACTICS.map((t) => (
-                <option key={t} value={t}>
-                  {TACTIC_LABELS[t]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Defense
-            <select
-              value={team.defense}
-              onChange={(e) =>
-                change((current) =>
-                  updateLocalCoaching(current, teamId, {
-                    ...current.coaching[teamId],
-                    defense: e.target.value as typeof team.defense,
-                  }),
-                )
-              }
-            >
-              {DEFENSE_SCHEMES.map((d) => (
-                <option key={d} value={d}>
-                  {DEFENSE_LABELS[d]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Rotation
-            <select
-              value={team.rotation}
-              onChange={(e) =>
-                change((current) =>
-                  updateLocalCoaching(current, teamId, {
-                    ...current.coaching[teamId],
-                    rotation: e.target.value as typeof team.rotation,
-                  }),
-                )
-              }
-            >
-              {ROTATIONS.map((r) => (
-                <option key={r} value={r}>
-                  {r === "balanced"
-                    ? "Balanced minutes"
-                    : r === "starters"
-                      ? "Lean on starters"
-                      : "Use the bench"}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+        {team.coach ? (
+          <CoachSummary team={team} />
+        ) : (
+          <div className="local-coaching">
+            <label>
+              Offense
+              <select
+                value={team.tactic}
+                onChange={(e) =>
+                  change((current) =>
+                    updateLocalCoaching(current, teamId, {
+                      ...current.coaching[teamId],
+                      tactic: e.target.value as typeof team.tactic,
+                    }),
+                  )
+                }
+              >
+                {TACTICS.map((t) => (
+                  <option key={t} value={t}>
+                    {TACTIC_LABELS[t]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Defense
+              <select
+                value={team.defense}
+                onChange={(e) =>
+                  change((current) =>
+                    updateLocalCoaching(current, teamId, {
+                      ...current.coaching[teamId],
+                      defense: e.target.value as typeof team.defense,
+                    }),
+                  )
+                }
+              >
+                {DEFENSE_SCHEMES.map((d) => (
+                  <option key={d} value={d}>
+                    {DEFENSE_LABELS[d]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Rotation
+              <select
+                value={team.rotation}
+                onChange={(e) =>
+                  change((current) =>
+                    updateLocalCoaching(current, teamId, {
+                      ...current.coaching[teamId],
+                      rotation: e.target.value as typeof team.rotation,
+                    }),
+                  )
+                }
+              >
+                {ROTATIONS.map((r) => (
+                  <option key={r} value={r}>
+                    {r === "balanced"
+                      ? "Balanced minutes"
+                      : r === "starters"
+                        ? "Lean on starters"
+                        : "Use the bench"}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
       </fieldset>
     </section>
   );
@@ -270,6 +279,23 @@ export function LocalLeagueMode({
           {(!draft || draft.version === 2) && <MatchupLab />}
           {!draft ? (
             <LocalLeagueSetup onStart={change} />
+          ) : draft.coachDraftRequired ? (
+            <CoachDraft
+              seed={draft.seed}
+              manager={localCoachTurn(draft)?.name}
+              taken={draft.coaching.flatMap((c) =>
+                c.coach ? [c.coach.id] : [],
+              )}
+              onChoose={(id) =>
+                change((current) =>
+                  selectLocalCoach(
+                    current,
+                    localCoachTurn(current)!.teamId,
+                    id,
+                  ),
+                )
+              }
+            />
           ) : !ready ? (
             <LocalLeagueDraft
               key={draft.picks.length}

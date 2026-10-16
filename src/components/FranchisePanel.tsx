@@ -338,8 +338,9 @@ function Offseason({
             </div>
           )}
           <p className="stat-legend">
-            You can reorder your lineup and adjust coaching after starting the
-            next season.
+            {franchise.teams[0].coach
+              ? "Your trainer will manage next season’s rotation and game plans automatically."
+              : "You can reorder your lineup and choose a trainer before next season."}
           </p>
         </>
       )}

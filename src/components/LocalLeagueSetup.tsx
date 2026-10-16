@@ -68,8 +68,8 @@ export function LocalLeagueSetup({
         onSubmit={(event) => {
           event.preventDefault();
           try {
-            onStart(
-              createLocalLeague(managers, legends, newSeed(), 2, {
+            onStart({
+              ...createLocalLeague(managers, legends, newSeed(), 2, {
                 mode,
                 format: { teamCount, gamesPerTeam, playoffTeams, bestOf },
                 engineRules: {
@@ -79,7 +79,8 @@ export function LocalLeagueSetup({
                   familiarity: 0,
                 },
               }),
-            );
+              coachDraftRequired: true,
+            });
           } catch (e) {
             setError(
               e instanceof Error ? e.message : "Check your league setup.",
