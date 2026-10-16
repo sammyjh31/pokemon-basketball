@@ -83,3 +83,41 @@ Other recorded results:
 - Pace versus defensive style: **106.89 versus 93.90 possessions**. Perimeter versus interior style: **62.23 versus 17.71 three-point attempts** for the tested reference roster.
 
 The script exits nonzero if its documented score/tempo/efficiency, probability residual, ability swing, physical win-rate or style-direction guardrails fail. These broad regression ranges are tuning checks, not a promise for every roster or every seed. Changing coefficients requires rerunning the audit and updating this evidence.
+
+## Court version 3 balance pass
+
+Court version 3 (`COURT_VERSION` in `courtTypes.ts`) is the default for new runs, new local leagues and the next franchise season. Versions 1 and 2 replay byte-identically; `courtVersion3.test.ts` pins version-2 match, development and honors fingerprints that were verified against the unmodified version-2 commit. Raw evidence is in [balance-v3-audit.json](balance-v3-audit.json); formulas are in [the league model](LEAGUE_MODEL.md#court-version-3-balance-rules).
+
+600 league games, same clubs and seeds (`node scripts/court-metrics.mjs --court=N --games=600`):
+
+| Measurement            | Version 2 | Version 3 |
+| ---------------------- | --------: | --------: |
+| Average margin         |      15.9 |      12.1 |
+| Games decided by 20+   |     31.5% |     17.8% |
+| Games within 5         |     20.7% |     25.0% |
+| Overtime               |      2.3% |      4.0% |
+| Points per team        |     111.6 |     110.5 |
+| Pace                   |     101.4 |     101.3 |
+| Offensive rebound rate |     22.6% |     22.5% |
+
+Full seasons and eight-season careers (`node scripts/balance-metrics.mjs --court=N --legends=L --seasons=8`). The career loop develops every player each offseason but has no trades, free agency or rookie drafts, so it isolates the development formula.
+
+| Measurement                              | v2, no legends | v3, no legends |    v2, legends |    v3, legends |
+| ---------------------------------------- | -------------: | -------------: | -------------: | -------------: |
+| Year-1 top rebounder (RPG)               |           21.1 |           14.5 |           20.4 |           14.3 |
+| Year-1 top scorer (PPG)                  |           33.7 |           28.1 |           32.7 |           30.9 |
+| Year-1 height/RPG correlation            |           0.61 |           0.54 |           0.65 |           0.59 |
+| Year-1 height/PPG correlation            |           0.39 |           0.33 |           0.37 |           0.30 |
+| Year-1 MVP line                          |  33.7/16.6/4.3 |   26.7/9.3/7.6 | 32.7/17.3/10.4 | 29.6/13.5/11.1 |
+| Year-8 top scorer (PPG)                  |           74.6 |           31.0 |           78.9 |           33.9 |
+| Year-8 top rebounder (RPG)               |           27.9 |           16.5 |           27.8 |           17.8 |
+| Rating SD, year 1 → year 8               |    11.1 → 20.9 |    11.1 → 11.4 |    10.3 → 20.5 |    10.3 → 11.1 |
+| Cumulative change, 28+ / 15–28 / <15 MPG | +5.1/−8.0/−7.0 | −3.1/−0.1/+7.9 | +3.8/−8.4/−8.9 | −4.2/−1.2/+6.4 |
+| Year-8 average margin / 20+ games        |   20.5 / 44.6% |   13.2 / 21.9% |   20.2 / 43.1% |   13.2 / 22.0% |
+
+Notes and limits:
+
+- The season samples have more lopsided rosters than the 600-game set, so margins sit slightly above the 12-point target (12.1–13.7 by season, 19–24% decided by 20+).
+- Rebound leaders still play about 41–42 minutes; garbage time trims decided games but rotation targets are unchanged.
+- The <15 MPG group gains under version 3 because the parity term lifts weak species toward the league mean while regression pulls strong ones back. Breakouts and slumps still occur (`balancedDevelopment.test.ts`).
+- Defensive Player of the Year uses club points allowed per game. Individual points-allowed-versus-expected is recorded in game insights but not aggregated into season player rows; adding it would change saved row shapes.
