@@ -224,7 +224,7 @@ export function chooseLineup(
  * five-foul player off the floor until the closing minutes. */
 function foulTroublePenalty(team: Team, p: Player, minute: number) {
   const threshold = minute < 12 ? 2 : minute < 24 ? 3 : minute < 36 ? 4 : 5;
-  if (team.config.courtVersion === 2)
+  if ((team.config.courtVersion ?? 0) >= 2)
     return (
       (minute < 43 && p.box.fouls >= threshold
         ? 60 + (p.box.fouls - threshold) * 30
@@ -235,7 +235,7 @@ function foulTroublePenalty(team: Team, p: Player, minute: number) {
     : 0;
 }
 const closingFoulWeight = (team: Team) =>
-  team.config.courtVersion === 2 ? 0.6 : 0.2;
+  (team.config.courtVersion ?? 0) >= 2 ? 0.6 : 0.2;
 
 /** Score each player/role once, then compare at most C(8, 5) complete units. */
 function chooseChemistryLineup(

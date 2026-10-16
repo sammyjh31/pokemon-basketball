@@ -171,7 +171,10 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
       types: POKEMON_BY_ID.get(pokemonId)!.types,
       body:
         config.matchupVersion === 1
-          ? bodyProfile(POKEMON_BY_ID.get(pokemonId)!)
+          ? bodyProfile(
+              POKEMON_BY_ID.get(pokemonId)!,
+              config.courtVersion === 3,
+            )
           : undefined,
       typeEdges: new Map(),
       profile: moraleProfile(
@@ -399,7 +402,9 @@ export function simulateMatch(
     throw new Error("Both teams must use valid, matching chemistry rules.");
   const courtEnabled = home.courtVersion !== undefined;
   // Version 2 adds ball pressure, shot-zone intent, catch assists and foul spreading.
-  const courtV2 = home.courtVersion === 2;
+  const courtV2 = home.courtVersion === 2 || home.courtVersion === 3;
+  // Version 3 keeps v2 rules and adds the size/rebound and blowout balance pass.
+  const courtV3 = home.courtVersion === 3;
   const bodyEnabled = home.matchupVersion === 1;
   const possessionDepth = home.possessionVersion === 1;
   const advanced = home.typeTacticsVersion === 1;
@@ -1020,6 +1025,7 @@ export function simulateMatch(
           tactic: offense.config.tactic,
           defenseTactic: defense.config.tactic,
           freeThrow: freeThrowMiss,
+          ...(courtV3 ? { balanced: true } : {}),
         },
         random,
       );

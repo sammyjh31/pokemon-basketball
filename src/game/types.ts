@@ -202,7 +202,7 @@ export interface Run {
   /** Physical/type possession contests. Absent on historical seeds. */
   matchupVersion?: 1;
   /** Court geometry, action sequences and screen coverage rules. */
-  courtVersion?: 1 | 2;
+  courtVersion?: import("./courtTypes").CourtVersion;
   /** Species abilities. Absent on historical seasons for exact replay. */
   abilityVersion?: 1;
   /** Physical species abilities; absent on historical seasons for exact replay. */
@@ -275,7 +275,7 @@ export interface LeagueTeam {
   /** Physical/type possession contests. Absent on historical seeds. */
   matchupVersion?: 1;
   /** Court geometry, action sequences and screen coverage rules. */
-  courtVersion?: 1 | 2;
+  courtVersion?: import("./courtTypes").CourtVersion;
   /** Species abilities. Absent on historical seasons for exact replay. */
   abilityVersion?: 1;
   /** Physical species abilities; absent on historical seasons for exact replay. */

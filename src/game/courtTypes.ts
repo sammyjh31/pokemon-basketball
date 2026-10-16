@@ -44,8 +44,10 @@ export interface CourtSequence {
   points: number;
 }
 
-/** Court rules for newly created seasons. Version 1 stays frozen for saved replays. */
-export const COURT_VERSION = 2 as const;
-export type CourtVersion = 1 | 2;
+/** Court rules for newly created seasons. Older versions stay frozen for saved replays.
+ * Version 3 adds the balance pass: softer size/rebound scaling, development that keeps
+ * the league's spread stable, closer games, fair tiebreaks and Game Score awards. */
+export const COURT_VERSION = 3 as const;
+export type CourtVersion = 1 | 2 | 3;
 export const isCourtVersion = (value: unknown): value is CourtVersion =>
-  value === 1 || value === 2;
+  value === 1 || value === 2 || value === 3;

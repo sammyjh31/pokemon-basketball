@@ -48,6 +48,10 @@ export interface BodyMatchup {
 }
 const bounded = (n: number) => clamp(n, -1, 1);
 const cache = new WeakMap<Pokemon, BodyProfile>();
+const balancedCache = new WeakMap<Pokemon, BodyProfile>();
+/** Diminishing returns around a centre: small gaps keep their value, extremes saturate. */
+const soften = (value: number, centre: number, scale: number) =>
+  centre + scale * Math.tanh((value - centre) / scale);
 const neutral: BodyProfile = {
   heightM: 1.5,
   weightKg: 80,
@@ -56,7 +60,28 @@ const neutral: BodyProfile = {
   inertia: 0.4925,
   workload: 0.05,
 };
-export function bodyProfile(mon: Pokemon): BodyProfile {
+/**
+ * Court version 3 (`balanced`) saturates reach and mass a second time. Size is already
+ * part of a species' skills, so the full catalog spread let giants win twice.
+ */
+export function bodyProfile(mon: Pokemon, balanced = false): BodyProfile {
+  if (balanced) {
+    const prior = balancedCache.get(mon);
+    if (prior) return prior;
+    const raw = bodyProfile(mon),
+      reach = soften(raw.reach, neutral.reach, 0.22),
+      mass = soften(raw.mass, 0, 0.45);
+    const body = {
+      heightM: raw.heightM,
+      weightKg: raw.weightKg,
+      reach,
+      mass,
+      inertia: clamp(0.375 * (mass + 1) + 0.25 * reach, 0, 1),
+      workload: 0.35 * Math.max(0, mass) + 0.1 * reach,
+    };
+    balancedCache.set(mon, body);
+    return body;
+  }
   const prior = cache.get(mon);
   if (prior) return prior;
   const heightM = Number.isFinite(mon.heightM)
@@ -274,7 +299,13 @@ export function resolveBodyMatchup(
   };
 }
 /** Short rebounds reward reach; long rebounds involve turning and chasing, not extra mass. */
-export function reboundBody(body: BodyProfile, long: boolean): number {
+export function reboundBody(
+  body: BodyProfile,
+  long: boolean,
+  balanced = false,
+): number {
+  // Version 3: the pursuit bonus saturates near ±4 instead of growing with size.
+  if (balanced) return 4 * Math.tanh(reboundBody(body, long) / 4);
   return long
     ? (body.reach - 0.47) * 5 - body.inertia * 9
     : (body.reach - 0.47) * 18 + body.mass * 7;
