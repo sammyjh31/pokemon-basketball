@@ -718,6 +718,7 @@ function parseTeams(
       row.simulationVersion !== 2 ||
       row.typeMatchupsVersion !== draft.typeMatchupsVersion ||
       row.typeTacticsVersion !== draft.typeTacticsVersion ||
+      row.courtVersion !== draft.courtVersion ||
       row.matchupVersion !== draft.matchupVersion ||
       row.possessionVersion !== draft.possessionVersion ||
       !TACTICS.includes(row.tactic) ||
@@ -774,6 +775,7 @@ function parseTeams(
       ...(draft.typeMatchupsVersion === 1
         ? { typeMatchupsVersion: 1 as const }
         : {}),
+      ...(draft.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
       ...(draft.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
       ...(draft.possessionVersion === 1
         ? { possessionVersion: 1 as const }

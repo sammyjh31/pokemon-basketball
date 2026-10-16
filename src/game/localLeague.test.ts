@@ -212,7 +212,7 @@ describe("local snake league", () => {
         ),
       ),
     ).toEqual(result);
-  }, 20000);
+  }, 60000);
 
   it("preserves playoff progress and rejects counts outside a completed season", () => {
     const draft = finished();

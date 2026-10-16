@@ -127,6 +127,7 @@ function validate(
     (raw.typeTacticsVersion === 1 && raw.typeMatchupsVersion !== 1)
   )
     return fail();
+  if (raw.courtVersion !== undefined && raw.courtVersion !== 1) return fail();
   if (raw.matchupVersion !== undefined && raw.matchupVersion !== 1)
     return fail();
   if (raw.possessionVersion !== undefined && raw.possessionVersion !== 1)
@@ -137,6 +138,7 @@ function validate(
   )
     return fail();
   const run: Run = {
+    ...(raw.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
     ...(raw.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
     ...(raw.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
     ...(raw.typeMatchupsVersion === 1
@@ -176,6 +178,7 @@ function validate(
       run.leagueTeams.some(
         (team) =>
           team.typeTacticsVersion !== run.typeTacticsVersion ||
+          team.courtVersion !== run.courtVersion ||
           team.matchupVersion !== run.matchupVersion ||
           team.possessionVersion !== run.possessionVersion,
       )

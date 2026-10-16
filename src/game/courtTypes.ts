@@ -1,7 +1,20 @@
-export type ScreenCoverage = 'drop' | 'switch' | 'hedge' | 'trap' | 'under';
-export interface CourtPoint { x: number; y: number }
+export type ScreenCoverage = "drop" | "switch" | "hedge" | "trap" | "under";
+export interface CourtPoint {
+  x: number;
+  y: number;
+}
 export interface CourtAction {
-  kind: 'advance' | 'screen' | 'drive' | 'pass' | 'kickout' | 'reset' | 'shoot' | 'turnover' | 'violation';
+  kind:
+    | "advance"
+    | "screen"
+    | "drive"
+    | "pass"
+    | "kickout"
+    | "reset"
+    | "shoot"
+    | "turnover"
+    | "violation"
+    | "foul";
   playerId: string;
   targetId?: string;
   clock: number;
@@ -21,10 +34,11 @@ export interface CourtSequence {
   positions: (CourtPoint & { playerId: string; offense: boolean })[];
   shooterId: string;
   defenderId: string;
-  zone: 'rim' | 'mid' | 'three';
+  zone: "rim" | "mid" | "three";
   defenderDistance: number;
   paintCrowding: number;
   shotLogOdds: number;
-  outcome: 'shot' | 'turnover' | 'violation' | 'made' | 'missed' | 'blocked' | 'foul';
+  outcome:
+    "shot" | "turnover" | "violation" | "made" | "missed" | "blocked" | "foul";
   points: number;
 }

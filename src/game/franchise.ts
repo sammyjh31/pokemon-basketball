@@ -308,6 +308,7 @@ export function startFranchiseSeason(
     ...team,
     typeMatchupsVersion: 1 as const,
     typeTacticsVersion: 1 as const,
+    courtVersion: 1 as const,
     matchupVersion: 1 as const,
     possessionVersion: 1 as const,
   }));
