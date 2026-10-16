@@ -516,16 +516,36 @@ function standings(value: unknown): Standing[] {
     return fail();
   return rows;
 }
-function qualifiers(rows: Standing[]): number[] {
-  return [...rows]
-    .sort(
-      (a, b) =>
-        b.wins - a.wins ||
-        b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst) ||
-        a.teamId - b.teamId,
-    )
-    .slice(0, 16)
-    .map((row) => row.teamId);
+/**
+ * Playoff qualifiers from an archived summary. `certain` qualified under every seeding
+ * model; `possible` adds clubs tied with the 16th-place record, because court version 3
+ * breaks those ties by head-to-head and a seeded coin flip that a summary cannot replay.
+ * A replay archive records its exact seeds.
+ */
+function qualifiers(
+  rows: Standing[],
+  seeds?: readonly { teamId: number }[],
+): { certain: number[]; possible: number[] } {
+  if (seeds) {
+    const exact = seeds.map((s) => s.teamId);
+    return { certain: exact, possible: exact };
+  }
+  const ranked = [...rows].sort(
+    (a, b) =>
+      b.wins - a.wins ||
+      b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst) ||
+      a.teamId - b.teamId,
+  );
+  const cut = ranked[15].wins,
+    tied = ranked.filter((row) => row.wins === cut).length;
+  const above = ranked.filter((row) => row.wins > cut);
+  return {
+    // Every tied club qualifies only when the whole tie fits inside the field.
+    certain: (above.length + tied <= 16 ? ranked.slice(0, 16) : above).map(
+      (row) => row.teamId,
+    ),
+    possible: ranked.filter((row) => row.wins >= cut).map((row) => row.teamId),
+  };
 }
 function archivedSeason(
   value: unknown,
@@ -575,7 +595,7 @@ function archivedSeason(
     mvp = object(row.finalsMvp),
     identity = honor(mvp, rosters);
   const rows = standings(row.standings),
-    qualified = qualifiers(rows);
+    qualified = qualifiers(rows).possible;
   if (
     championId === runnerUpId ||
     !qualified.includes(championId) ||
@@ -829,7 +849,9 @@ function careers(
   leagueIds: number[],
 ): CareerPlayer[] {
   const seen = new Set<number>();
-  const playoffTeams = history.map((year) => qualifiers(year.standings));
+  const playoffTeams = history.map((year) =>
+    qualifiers(year.standings, year.replay?.playoffs.seeds),
+  );
   const rows = array(value, leagueIds.length).map((value) => {
     const row = object(value),
       pokemonId = integer(row.pokemonId, 1, 1025);
@@ -884,13 +906,18 @@ function careers(
         (player) => player.pokemonId === pokemonId,
       );
       if (postseason) detailedPlayoffs.push(postseason);
-      if (playoffTeams[index].includes(teamId)) {
+      if (playoffTeams[index].certain.includes(teamId)) {
         qualifiedYears++;
         minimumPlayoffGames += year.replay
           ? (postseason?.gamesPlayed ?? 0)
           : teamId === year.championId || teamId === year.runnerUpId
             ? 16
             : 4;
+      } else if (playoffTeams[index].possible.includes(teamId)) {
+        // A tied club may have qualified: allow its games without requiring them.
+        qualifiedYears++;
+        if (teamId === year.championId || teamId === year.runnerUpId)
+          minimumPlayoffGames += 16;
       }
     }
     const regular = totals(row.regular, appearances.length * 82),
