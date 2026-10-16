@@ -77,7 +77,15 @@ export interface CoachingAdjustment {
   reason: string;
   evidence: string;
 }
+export interface CoachGameReport extends importCoachPlan {
+  teamId: number;
+  coachId: string;
+  starters: number[];
+  minutes: Record<import("./types").RosterSlot, number>;
+}
+import type { CoachPlan as importCoachPlan } from "./coachPolicy";
 export interface MatchInsights {
+  coaches?: CoachGameReport[];
   court?: import("./courtTypes").CourtSequence[];
   possession?: PossessionInsights;
   version: 1;

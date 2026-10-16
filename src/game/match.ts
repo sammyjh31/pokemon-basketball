@@ -1,3 +1,9 @@
+import {
+  coachGamePlan,
+  coachRotationMinutes,
+  coachAdjustment,
+} from "./coachPolicy";
+import { getCoach, validateCoach } from "./trainerCoaches";
 import { resolveCourtPossession } from "./courtPossession";
 import type { CourtSequence } from "./courtTypes";
 import {
@@ -95,15 +101,17 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   const planKey = config.rotationPlan
     ? `:${ROSTER_SLOTS.map((slot) => config.rotationPlan!.minutes[slot]).join(",")}:${config.rotationPlan.closing.join(",")}`
     : "";
-  const key = `${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
+  const key = `${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
   let targets = targetCache.get(key);
   if (!targets) {
-    targets = rotationMinutes(
-      config.roster,
-      config.rotation,
-      config.development,
-      config.rotationPlan,
-    );
+    targets = config.coach
+      ? coachRotationMinutes(config)
+      : rotationMinutes(
+          config.roster,
+          config.rotation,
+          config.development,
+          config.rotationPlan,
+        );
     // A bounded cache covers many seasons without retaining every custom roster.
     if (targetCache.size > 240) targetCache.clear();
     targetCache.set(key, targets);
@@ -270,8 +278,15 @@ export function simulateMatch(
   const typed = home.typeMatchupsVersion === 1;
   const modern = home.simulationVersion === 2;
   const depthEnabled = Boolean(home.engineRules || away.engineRules);
-  const h = buildTeam(home, "home"),
-    a = buildTeam(away, "away");
+  for (const team of [home, away])
+    if (team.coach !== undefined && !validateCoach(team.coach))
+      throw new Error("Unsupported trainer coach.");
+  const prepared = (team: LeagueTeam, opponent: LeagueTeam) =>
+    team.coach
+      ? { ...team, ...coachGamePlan(team, opponent), rotationPlan: undefined }
+      : team;
+  const h = buildTeam(prepared(home, away), "home"),
+    a = buildTeam(prepared(away, home), "away");
   // A fixed roster has only 128 directed matchups. Resolve these once rather
   // than allocating chart lookup keys during thousands of possession checks.
   if (typed) {
@@ -296,6 +311,14 @@ export function simulateMatch(
       for (const player of team.players)
         player.box.started = team.floor.includes(player);
     }
+  }
+  if (!typed && (home.coach || away.coach)) {
+    const hf = h.floor,
+      af = a.floor;
+    if (home.coach) chooseLineup(h, 0, false, af);
+    if (away.coach) chooseLineup(a, 0, false, hf);
+    for (const t of [h, a])
+      for (const p of t.players) p.box.started = t.floor.includes(p);
   }
   const result: LeagueMatch = {
     ...(typed
@@ -409,7 +432,13 @@ export function simulateMatch(
     });
     return guards;
   };
-  if (depthEnabled || possessionDepth || courtEnabled)
+  if (
+    depthEnabled ||
+    possessionDepth ||
+    courtEnabled ||
+    home.coach ||
+    away.coach
+  )
     result.insights = {
       version: 1,
       coordinateSystem: courtEnabled
@@ -440,6 +469,26 @@ export function simulateMatch(
         emptyPossessionPlayer(p.box.teamId, p.box.playerId),
       ),
     };
+  if (home.coach || away.coach)
+    result.insights!.coaches = [h, a]
+      .filter((t) => t.config.coach)
+      .map((t) => ({
+        teamId: t.config.id,
+        coachId: t.config.coach!.id,
+        ...coachGamePlan(
+          t.side === "home" ? home : away,
+          t.side === "home" ? away : home,
+        ),
+        starters: t.players
+          .filter((p) => p.box.started)
+          .map((p) => p.box.pokemonId),
+        minutes: Object.fromEntries(
+          t.players.map((p) => [p.box.slot, p.target]),
+        ) as Record<import("./types").RosterSlot, number>,
+      }));
+  const coachObservations = new Map(
+    [h, a].map((t) => [t.config.id, { attempts: 0, threes: 0, rim: 0 }]),
+  );
   if (courtEnabled) result.insights!.court = [];
   let activeCourt: CourtSequence | undefined;
   const playerDetail = new Map(
@@ -534,6 +583,12 @@ export function simulateMatch(
   const recordShot = (
     event: Omit<ShotEvent, "index" | "period" | "elapsedSeconds" | "x" | "y">,
   ) => {
+    if (event.countsAsAttempt) {
+      const observed = coachObservations.get(event.offenseTeamId)!;
+      observed.attempts++;
+      observed.threes += Number(event.zone === "three");
+      observed.rim += Number(event.zone === "rim");
+    }
     if (!result.insights) return;
     if (activeCourt) {
       event = { ...event, courtSequence: result.insights!.court!.length - 1 };
@@ -600,11 +655,48 @@ export function simulateMatch(
     if (event.blocked && event.blockerId)
       defenseMap.get(event.blockerId)!.blocks++;
   };
+  const trainerAdapt = (team: Team, opponent: Team) => {
+    const coach = getCoach(team.config.coach?.id ?? "");
+    if (!coach || elapsedSeconds() < 60) return;
+    const seen = coachObservations.get(opponent.config.id)!;
+    const observation = {
+      minute: Math.floor(elapsedSeconds() / 60),
+      margin:
+        team.side === "home"
+          ? result.homeScore - result.awayScore
+          : result.awayScore - result.homeScore,
+      energy: team.floor.reduce((n, p) => n + p.energy, 0) / 5,
+      opponentAttempts: seen.attempts,
+      opponentThrees: seen.threes,
+      opponentRim: seen.rim,
+    };
+    const change = coachAdjustment(coach, observation);
+    for (const kind of ["tactic", "defense"] as const) {
+      const next = change[kind];
+      if (!next || next === team.config[kind]) continue;
+      result.insights?.adjustments.push({
+        teamId: team.config.id,
+        period: period + 1,
+        elapsedSeconds: elapsedSeconds(),
+        kind,
+        from: team.config[kind],
+        to: next,
+        reason: `${coach.name}: ${change.reason}`,
+        evidence: `${observation.minute} minutes; margin ${observation.margin}; floor energy ${Math.round(observation.energy)}; ${seen.attempts} opponent attempts observed.`,
+      });
+      if (kind === "tactic") team.config.tactic = change.tactic!;
+      else team.config.defense = change.defense!;
+    }
+  };
   const adapt = (
     team: Team,
     opponent: Team,
     observedCoverage: DefenseScheme,
   ) => {
+    if (team.config.coach) {
+      trainerAdapt(team, opponent);
+      return;
+    }
     if (
       !team.config.engineRules?.adaptiveCoaching ||
       !result.insights ||
@@ -1047,6 +1139,7 @@ export function simulateMatch(
             play,
             tactic,
             scheme: defense.config.defense,
+            coach: defense.config.coach,
             shotClock,
             periodRemaining: periodTicks * 7.5 - courtSecondsInPeriod,
             ...(secondChance && lastRebounder
@@ -1916,6 +2009,10 @@ export function simulateMatch(
       while (courtSecondsInPeriod < periodTicks * 7.5 - 0.000001) {
         const minute = Math.floor(elapsedSeconds() / 60);
         if (minute !== gameMinute) {
+          if (minute % 3 === 0 || minute >= 43) {
+            trainerAdapt(h, a);
+            trainerAdapt(a, h);
+          }
           const close =
             minute >= 44 && Math.abs(result.homeScore - result.awayScore) <= 12;
           const homeFloor = h.floor,
@@ -1932,6 +2029,10 @@ export function simulateMatch(
     } else
       for (tickInPeriod = 0; tickInPeriod < periodTicks; tickInPeriod++) {
         if (tickInPeriod % 8 === 0) {
+          if (gameMinute % 3 === 0 || gameMinute >= 43) {
+            trainerAdapt(h, a);
+            trainerAdapt(a, h);
+          }
           const close =
             gameMinute >= 44 &&
             Math.abs(result.homeScore - result.awayScore) <= 12;

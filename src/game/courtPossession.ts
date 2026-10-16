@@ -1,3 +1,4 @@
+import { getCoach, type CoachAssignment } from "./trainerCoaches";
 import { matchupEdges, screenLeverage } from "./bodyMatchups";
 import type { Player } from "./matchLineups";
 import { clamp } from "./ratings";
@@ -11,6 +12,7 @@ import type {
 
 export type Court = Map<Player, CourtPoint>;
 export interface CourtContext {
+  coach?: CoachAssignment;
   offense: Player[];
   defense: Player[];
   guards: Map<Player, Player>;
@@ -183,6 +185,8 @@ export function chooseScreenCoverage(c: CourtContext): {
       (60 - decision) * 0.045 -
       (skill(c.screener, "passing") - 60) * 0.045,
   };
+  const coach = getCoach(c.coach?.id ?? "");
+  if (coach) scores[coach.coverage] += 2.8 - coach.adaptability;
   const coverage = (Object.keys(scores) as ScreenCoverage[]).sort(
     (a, b) => scores[b] - scores[a],
   )[0];
@@ -194,7 +198,14 @@ export function chooseScreenCoverage(c: CourtContext): {
     hedge: "Show at the ball, then recover to the roller.",
     trap: "Commit two defenders to pressure the handler; the roll and weak side can open.",
   };
-  return { coverage, reason: reasons[coverage] };
+  return {
+    coverage,
+    reason:
+      reasons[coverage] +
+      (coach?.coverage === coverage
+        ? ` ${coach.name} favors this coverage when the matchup allows it.`
+        : ""),
+  };
 }
 export function applyScreenCoverage(
   court: Court,

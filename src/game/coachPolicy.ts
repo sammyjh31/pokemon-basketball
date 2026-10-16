@@ -123,3 +123,41 @@ export function coachPlayerPreference(
   };
   return (fit[coach.tactic] - 60) * 0.14;
 }
+
+/** Allocate 240 minutes by ability, stamina and style, independent of roster-slot labels. */
+export function coachRotationMinutes(team: LeagueTeam) {
+  const coach = getCoach(team.coach!.id)!;
+  const candidates = ROSTER_SLOTS.map((slot) => {
+    const mon = POKEMON_BY_ID.get(team.roster[slot]!)!;
+    const p = playerProfile(mon, team.development?.[mon.id]);
+    return {
+      slot,
+      score:
+        Math.max(...Object.values(p.positions)) +
+        coachPlayerPreference(coach, p) +
+        p.attributes.stamina * 0.08,
+    };
+  }).sort((a, b) => b.score - a.score);
+  const minutes = Object.fromEntries(ROSTER_SLOTS.map((s) => [s, 0])) as Record<
+    import("./types").RosterSlot,
+    number
+  >;
+  const weights = candidates.map(
+    (p, i) =>
+      (p.score / 75) ** (2.6 - coach.rest * 1.6) *
+      (i < 5 ? 1.3 - coach.rest * 0.15 : 0.75 + coach.rest * 0.35),
+  );
+  for (let n = 0; n < 240; n++) {
+    let best = -1,
+      value = -Infinity;
+    candidates.forEach((p, i) => {
+      const priority = weights[i] / (minutes[p.slot] + 1);
+      if (minutes[p.slot] < 40 && priority > value) {
+        best = i;
+        value = priority;
+      }
+    });
+    minutes[candidates[best].slot]++;
+  }
+  return minutes;
+}

@@ -1,3 +1,5 @@
+import { getCoach } from "./trainerCoaches";
+import { coachPlayerPreference } from "./coachPolicy";
 import { matchupPreference, type BodyProfile } from "./bodyMatchups";
 import type { EngineProfile } from "./engineDepth";
 import type { PlayerProfile } from "./playerProfile";
@@ -115,6 +117,7 @@ export function chooseLineup(
   close: boolean,
   opponents: readonly Player[] = [],
 ): void {
+  const coach = getCoach(team.config.coach?.id ?? "");
   const pool = eligiblePlayers(team),
     chosen: Player[] = [];
   const bonuses = scoutLineup(team, opponents);
@@ -156,6 +159,11 @@ export function chooseLineup(
           Math.max(0, p.consecutive - 7) * 1.2;
       const score =
         basketballScore +
+        (coach
+          ? coachPlayerPreference(coach, p.profile) -
+            (1 - p.energy / 100) * coach.rest * 8 -
+            foulPenalty * coach.rest * 0.35
+          : 0) +
         (bonuses.get(p)?.[role] ?? 0) +
         (bonuses.size && team.floor[role] === p ? 1.5 : 0);
       if (score > bestScore) {
