@@ -11,7 +11,7 @@ Confirmed selection rules:
 - **82–0 Challenge:** choose one of three seeded trainer offers, with each style explained before selection. Pokémon rerolls do not reroll coaches.
 - **Local friend drafts:** choose freely from the available coach roster. Human managers choose in the league's established draft order; selected coaches leave the pool.
 - **Lineup builder and franchise coach selection:** choose freely from the available coach roster.
-- One head coach per team. Coaches stay with their team across seasons and Pokémon trades. Franchise owners may replace a coach in the offseason; active-season coaches are locked.
+- One head coach per team. Coaches stay with their team across seasons and Pokémon trades. This release adds the initial coach draft, not a recurring hiring or firing market. Human managers select before CPU coaches are assigned, so CPU selection cannot consume their initial choices.
 
 New drafts include a coach-selection step before their first simulation. Existing franchises can select a coach before their first game of an unstarted season, or during the offseason for the following season. Completed and partially played seasons retain their frozen rules and history.
 
@@ -54,14 +54,14 @@ Integrate with `match.ts`, `matchLineups.ts` and `courtPossession.ts`. The coach
 
 **Critical existing limitation:** the old quarter-adjustment path depends on `result.insights`. New coach decisions must instead use independent game accumulators so compact and detailed simulations consume the same randomness and produce identical boxes. Preserve the old path for older rule versions.
 
-Propagate and validate assignments through league construction, franchise transitions, local draft/career snapshots, archive reconstruction and persistence. CPU coaches are seeded and unique within each league. A coach replacement changes future input only; historical coaches and plans remain reproducible. Reject unknown coach identities/versions, duplicate league assignments, invalid draft choices and forged midseason changes without overwriting the source save.
+Propagate and validate assignments through league construction, franchise transitions, local draft/career snapshots, archive reconstruction and persistence. CPU coaches are seeded and unique within each league. Initial hiring in an existing franchise changes future input only; historical coaches and plans remain reproducible. Reject unknown coach identities/versions, duplicate league assignments, invalid draft choices and forged midseason changes without overwriting the source save.
 
 ## Verification and delivery
 
 - Controlled scenarios prove style changes to lineup, minutes, tactics, coverage and adjustments; roster fit and fatigue can override preferences.
 - Same seed and inputs reproduce identical results. Compact/full runs match exactly, and inspecting a report cannot change a result.
 - Regular/playoff/CPU/local paths all use the coach policy. Score, minute, roster and clock accounting remain conserved.
-- New and old saves, partial seasons, archives, coach retention, offseason replacement and local availability round-trip correctly. Prior uncoached fixtures remain byte-identical.
+- New and old saves, partial seasons, archives, coach retention, existing-franchise hiring and local availability round-trip correctly. Prior uncoached fixtures remain byte-identical.
 - UI tests cover three-offer challenge selection, unrestricted eligible selection elsewhere, uniqueness, keyboard access and automatic management. Browser inspection covers desktop/mobile and leaves the user's current save intact.
 - Run focused regressions, a varied-coach balance audit and production build; obtain an independent review before delivery. Commit incrementally and push to GitHub, retaining the active local preview.
 
