@@ -1,4 +1,5 @@
 import type { ArcadeInput } from "../game/arcade/types";
+import { isNeutralGamepad, neutralGamepad, type GamepadInput } from "./gamepad";
 export type TouchAction = "shoot" | "pass" | "switch" | "turbo";
 const KEYS = new Set([
   "KeyW",
@@ -18,8 +19,28 @@ const KEYS = new Set([
   "KeyP",
 ]);
 
-/** Keyboard and multiple independent touch pointers share held state and one-shot edges. */
+/** Keyboard, gamepad and multiple independent touch pointers share held state and one-shot edges. */
 export class ArcadeInputController {
+  private gamepad = neutralGamepad();
+  private gamepadArmed = false;
+
+  updateGamepad(next: GamepadInput | null) {
+    if (!next) {
+      if (this.gamepad.shoot) this.cancelledShot = true;
+      this.gamepad = neutralGamepad();
+      this.gamepadArmed = false;
+      return;
+    }
+    if (!this.gamepadArmed) {
+      this.gamepadArmed = isNeutralGamepad(next);
+      return;
+    }
+    if (next.pass && !this.gamepad.pass) this.pass = true;
+    if (next.switch && !this.gamepad.switch) this.switch = true;
+    if (next.pause && !this.gamepad.pause) this.pause = true;
+    this.gamepad = next;
+  }
+
   private keys = new Set<string>();
   private pointers = new Map<number, TouchAction | { x: number; y: number }>();
   private pass = false;
@@ -54,6 +75,8 @@ export class ArcadeInputController {
     this.pointers.delete(id);
   }
   clear() {
+    this.gamepad = neutralGamepad();
+    this.gamepadArmed = false;
     this.keys.clear();
     this.pointers.clear();
     this.pass = this.switch = this.pause = this.cancelledShot = false;
@@ -84,6 +107,10 @@ export class ArcadeInputController {
       } else if (value === "shoot") shoot = true;
       else if (value === "turbo") turbo = true;
     }
+    moveX += this.gamepad.moveX;
+    moveY += this.gamepad.moveY;
+    shoot ||= this.gamepad.shoot;
+    turbo ||= this.gamepad.turbo;
     const length = Math.max(1, Math.hypot(moveX, moveY));
     const result = {
       moveX: moveX / length,

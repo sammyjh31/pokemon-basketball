@@ -102,7 +102,11 @@ export function ArcadePause({
       onClose={onResume}
     >
       <div className="arcade-modal-actions">
-        <button className="arcade-button arcade-primary" onClick={onResume}>
+        <button
+          data-gamepad-resume
+          className="arcade-button arcade-primary"
+          onClick={onResume}
+        >
           {inBreak ? "Continue" : "Resume game"}
         </button>
         <button className="arcade-button arcade-quiet" onClick={onLeave}>

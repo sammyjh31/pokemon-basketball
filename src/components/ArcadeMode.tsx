@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { ArcadeInputController } from "../arcade/input";
+import { useArcadeGamepad } from "../hooks/useArcadeGamepad";
 import { ArcadeAudio } from "../arcade/audio";
 import { loadArcadeAssets } from "../arcade/renderer";
 import {
@@ -40,6 +42,7 @@ function ArcadeGame({
   onChangeOpponent,
   onExit,
   official,
+  input,
 }: {
   state: ArcadeState;
   assets: Map<number, HTMLImageElement>;
@@ -50,8 +53,9 @@ function ArcadeGame({
   onChangeOpponent: () => void;
   onExit: () => void;
   official?: OfficialArcadeProps;
+  input: ArcadeInputController;
 }) {
-  const runtime = useArcade(state, assets, settings, audio),
+  const runtime = useArcade(state, assets, settings, audio, input),
     s = runtime.snapshot;
   const [leaving, setLeaving] = useState(false);
   const controlled = s.players.find((player) => player.id === s.controlled)!;
@@ -101,6 +105,7 @@ function ArcadeGame({
           <button
             className="arcade-button arcade-quiet arcade-pause-button"
             aria-label="Pause game"
+            data-gamepad-pause
             onClick={runtime.pause}
           >
             Ⅱ <span>Pause</span>
@@ -142,6 +147,7 @@ function ArcadeGame({
         </div>
       </div>
       <div
+        data-gamepad-play
         ref={runtime.gameplayRef}
         className="arcade-gameplay"
         inert={isPaused || leaving}
@@ -150,7 +156,7 @@ function ArcadeGame({
           <canvas
             ref={runtime.canvasRef}
             className="arcade-canvas"
-            aria-label="Five-on-five basketball court. Move with WASD or arrows. Hold and release J to shoot, K to pass, L to switch, Shift for turbo, Escape to pause."
+            aria-label="Five-on-five basketball court. Move with WASD or arrows. Hold and release J to shoot, K to pass, L to switch, Shift for turbo, Escape to pause. Controller: left stick to move, X to shoot, A to pass, B to switch, RT for turbo, Menu to pause."
             tabIndex={0}
             onPointerDown={() =>
               runtime.canvasRef.current?.focus({ preventScroll: true })
@@ -250,6 +256,9 @@ export function ArcadeMode({
   onExit: () => void;
   official?: OfficialArcadeProps;
 }) {
+  const shellRef = useRef<HTMLElement>(null);
+  const [input] = useState(() => new ArcadeInputController());
+  const controllerStatus = useArcadeGamepad(shellRef, input);
   const [official] = useState(() =>
     requestedOfficial
       ? {
@@ -368,10 +377,14 @@ export function ArcadeMode({
     }
   };
   return (
-    <main className="arcade-shell">
+    <main className="arcade-shell" ref={shellRef}>
+      <p className="arcade-controller-status" role="status">
+        {controllerStatus}
+      </p>
       {match ? (
         <ArcadeGame
           key={match.key}
+          input={input}
           state={match.state}
           assets={assets}
           settings={settings}

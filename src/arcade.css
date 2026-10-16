@@ -1687,3 +1687,11 @@
 .arcade-away .arcade-team-label {
   color: #ff896b;
 }
+
+.arcade-controller-status {
+  margin: 0 0 1rem;
+  color: #bdcbd9;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}

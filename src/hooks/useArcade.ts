@@ -33,10 +33,11 @@ export function useArcade(
   assets: Map<number, HTMLImageElement>,
   settings: ArcadeSettings,
   audio: ArcadeAudio,
+  sharedInput?: ArcadeInputController,
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null),
     gameplayRef = useRef<HTMLDivElement>(null);
-  const [input] = useState(() => new ArcadeInputController()),
+  const [input] = useState(() => sharedInput ?? new ArcadeInputController()),
     [snapshot, setSnapshot] = useState(() => snapshotOf(state)),
     [error, setError] = useState<string | null>(null);
   const options = useRef({ settings, audio }),
@@ -182,6 +183,7 @@ export function useArcade(
             : Math.min(Math.max(0, (now - previous) / 1000), STEP * 5);
         previous = now;
         const previousPhase = state.phase;
+        if (canPlay() && input.consumePause()) pause();
         if (canPlay()) {
           accumulator = Math.min(accumulator + elapsed, STEP * 5);
           if (input.consumeShotCancellation()) {

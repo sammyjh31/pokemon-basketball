@@ -89,28 +89,35 @@ export function ArcadeControlsGuide() {
   return (
     <div className="arcade-guide">
       <div>
-        <kbd>WASD</kbd>
-        <span>Move · Arrow keys also work</span>
+        <kbd>WASD / LS</kbd>
+        <span>Move · Left stick, D-pad or arrow keys</span>
       </div>
       <div>
-        <kbd>J</kbd>
+        <kbd>J / X</kbd>
         <span>Hold + release to shoot · Jump / block</span>
       </div>
       <div>
-        <kbd>K</kbd>
+        <kbd>K / A</kbd>
         <span>Pass toward movement · Steal on defense</span>
       </div>
       <div>
-        <kbd>L</kbd>
+        <kbd>L / B</kbd>
         <span>Choose receiver · Switch defender</span>
       </div>
       <div>
-        <kbd>SHIFT</kbd>
-        <span>Turbo · At the rim, hold + release J to dunk</span>
+        <kbd>SHIFT / RT</kbd>
+        <span>Turbo · At the rim, hold + release Shoot to dunk</span>
       </div>
       <div>
-        <kbd>ESC / P</kbd>
+        <kbd>ESC / Menu</kbd>
         <span>Pause · Manage your bench</span>
+      </div>
+      <div>
+        <kbd>PAD MENUS</kbd>
+        <span>
+          Stick/D-pad to navigate · A select · B back in dialogs · Left/right to
+          change options
+        </span>
       </div>
     </div>
   );
