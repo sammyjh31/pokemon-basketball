@@ -51,6 +51,8 @@ describe("solo and franchise save safety", () => {
     const { result } = renderHook(() => useGame(undefined, storage));
     expect(result.current.storageNotice).toBeNull();
     expect(data.get(backupKey(STORAGE_KEY))).toBe(source);
+    // Not rewritten unchanged, which would pause other open tabs.
+    expect(data.get(STORAGE_KEY)).toBe(source);
   });
 
   it("sets a rejected save aside before any later save replaces it", () => {
@@ -150,6 +152,28 @@ describe("local league save safety", () => {
     expect(result.current.draft?.managers).toEqual(managers);
     expect(data.get(backupKey(LOCAL_LEAGUE_KEY))).toBe(source);
     expect(data.get(quarantineKey(LOCAL_LEAGUE_KEY))).toBe("[1,2]");
+  });
+
+  it("backs up a loaded league without rewriting it", async () => {
+    const { createLocalLeague } = await import("../game/localLeague");
+    const league = createLocalLeague(
+      [
+        { name: "Sam", teamId: 0 },
+        { name: "Alex", teamId: 1 },
+      ],
+      false,
+      3,
+      2,
+    );
+    // Stored with a different key order than the parser produces.
+    const source = JSON.stringify(
+      Object.fromEntries(Object.entries(league).reverse()),
+    );
+    const { data, storage } = slots({ [LOCAL_LEAGUE_KEY]: source });
+    const { result } = renderHook(() => useLocalLeague(storage));
+    expect(result.current.draft?.seed).toBe(3);
+    expect(data.get(LOCAL_LEAGUE_KEY)).toBe(source);
+    expect(data.get(backupKey(LOCAL_LEAGUE_KEY))).toBe(source);
   });
 
   it("pauses local league saving after another tab writes it", () => {
