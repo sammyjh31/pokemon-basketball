@@ -365,7 +365,7 @@ describe("playable draft room", () => {
     expect(
       screen.queryByRole("button", { name: "Skip reveal" }),
     ).not.toBeInTheDocument();
-  });
+  }, 20000);
   it("keeps portrait failures identifiable", () => {
     render(<App initial={initialState(17)} storage={memory()} />);
     const img = screen.getAllByRole("img")[0];

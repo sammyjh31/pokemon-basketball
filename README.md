@@ -146,3 +146,14 @@ Complete all eight roster slots, then select **Play arcade**. Choose a CPU oppon
 Arcade uses a separate spatial game engine with live movement, passing lanes, shot timing, AI spacing/cuts/screens, and man-to-man defense. Season coaching choices remain season settings. Exhibitions do not change your saved roster, regular-season results, or playoff bracket. Match progress ends on exit or refresh; audio/effects preferences are stored separately. Focus loss pauses play. Audio is optional, and reduced effects respect system reduced-motion preferences.
 
 The initial mode is single-player versus CPU with procedural pixel-sprite animation. Xbox-style gamepads are supported; see [controller controls](docs/CONTROLLER.md). Multiplayer and signature combat abilities are future work. Scheduled franchise games use the same arcade controls through the season’s **Play next game** buttons.
+
+### Possession depth and creation stats
+
+New solo/franchise seasons and new local leagues use versioned possession mechanics. Historical seasons keep their frozen inputs and original replays; existing local careers retain their saved rules.
+
+- Rebound pursuit weighs shot location, individual rebounding, strength, vertical, movement and fatigue. Box-outs reduce an opponent's recovery chances. Inside-out teams commit more players to the glass; run-and-gun and defense-first lineups keep more players back, reducing exposure to the break.
+- Defensive rebounds use the rebounder's outlet passing and both teams' speed to shape fast breaks. Live-ball steals create stronger opportunities than dead-ball turnovers. Rebounders can attempt a putback or pass out against help.
+- Passing creates a shot opportunity before the make/miss roll. Potential assists, assists, created field-goal points, expected created points, screen assists, rebound chances and box-outs are reported for individual players.
+- Open a game or playoff box score's **Inside this result**, or **Season insights → Build season insights**, for possession totals, points per 100 possessions, fast-break points, second-chance points, points off turnovers, paint points and clutch performance. Scoring categories overlap; free throws are included except in paint points. Missing historical or manually played telemetry is never estimated.
+
+Reproduce the seeded tuning audit with `node scripts/possession-audit.mjs --samples=100`; results are saved to `docs/possession-balance-audit.json`. The coefficients are game-design tuning, not a fit to real basketball data.

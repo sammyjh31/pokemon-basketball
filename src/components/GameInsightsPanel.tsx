@@ -1,3 +1,4 @@
+import { PossessionInsightsPanel } from "./PossessionInsightsPanel";
 import { useMemo, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
@@ -562,6 +563,10 @@ export function GameInsightsPanel({
         </p>
       ) : (
         <>
+          <PossessionInsightsPanel
+            detail={match.insights.possession}
+            teams={[home, away]}
+          />
           <ShotChart shots={match.insights.shots} home={home} away={away} />
           <LineupInsightsTable
             rows={match.insights.lineups}

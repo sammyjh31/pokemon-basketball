@@ -45,6 +45,7 @@ export interface LocalLeague {
   career?: LocalCareer;
   typeMatchupsVersion?: 1;
   typeTacticsVersion?: 1;
+  possessionVersion?: 1;
   seed: number;
   includeLegends: boolean;
   managers: LocalManager[];
@@ -125,7 +126,11 @@ export function createLocalLeague(
   }
   return {
     ...(version === 2
-      ? { typeMatchupsVersion: 1 as const, typeTacticsVersion: 1 as const }
+      ? {
+          typeMatchupsVersion: 1 as const,
+          typeTacticsVersion: 1 as const,
+          possessionVersion: 1 as const,
+        }
       : {}),
     version,
     ...(configured ? { options: configured } : {}),
@@ -279,6 +284,9 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
       ...(draft.typeMatchupsVersion === 1
         ? { typeMatchupsVersion: 1 as const }
         : {}),
+      ...(draft.possessionVersion === 1
+        ? { possessionVersion: 1 as const }
+        : {}),
       ...(draft.typeTacticsVersion === 1
         ? { typeTacticsVersion: 1 as const }
         : {}),
@@ -307,11 +315,13 @@ export function localLeagueRun(draft: LocalLeague): Run {
   const run = createRun("free", draft.includeLegends, draft.seed);
   delete run.typeMatchupsVersion;
   delete run.typeTacticsVersion;
+  delete run.possessionVersion;
   return {
     ...run,
     ...(draft.typeMatchupsVersion === 1
       ? { typeMatchupsVersion: 1 as const }
       : {}),
+    ...(draft.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
     ...(draft.typeTacticsVersion === 1
       ? { typeTacticsVersion: 1 as const }
       : {}),
@@ -411,6 +421,7 @@ export function parseLocalLeague(raw: string): LocalLeague {
   const value = JSON.parse(raw);
   if (
     !value ||
+    (value.possessionVersion !== undefined && value.possessionVersion !== 1) ||
     ![1, 2].includes(value.version) ||
     typeof value.completed !== "boolean" ||
     (value.typeMatchupsVersion !== undefined &&
@@ -431,6 +442,8 @@ export function parseLocalLeague(raw: string): LocalLeague {
   // Creation opts in; loading must retain the saved season rules.
   delete draft.typeMatchupsVersion;
   delete draft.typeTacticsVersion;
+  delete draft.possessionVersion;
+  if (value.possessionVersion === 1) draft.possessionVersion = 1;
   if (value.typeMatchupsVersion === 1) draft.typeMatchupsVersion = 1;
   if (value.typeTacticsVersion === 1) draft.typeTacticsVersion = 1;
   if (

@@ -24,7 +24,11 @@ import { simulateLocalSeason } from "./localSeason";
 import { playoffGameCount, simulatePlayoffs } from "./playoffs";
 import { ROSTER_SLOTS } from "./types";
 
-function drafted(mode: "generational" | "full-pool", seed = 42): LocalLeague {
+function drafted(
+  mode: "generational" | "full-pool",
+  seed = 42,
+  originalRules = false,
+): LocalLeague {
   let draft = createLocalLeague(
     [
       { name: "Sam", teamId: 1 },
@@ -44,6 +48,8 @@ function drafted(mode: "generational" | "full-pool", seed = 42): LocalLeague {
       },
     },
   );
+  // Exact counterexample choices below belong to the original frozen season rules.
+  if (originalRules) delete draft.possessionVersion;
   while (currentLocalTurn(draft)) {
     draft = advanceLocalCpu(draft);
     const turn = currentLocalTurn(draft);
@@ -80,12 +86,12 @@ let full: ReturnType<typeof finish>;
 let generational: ReturnType<typeof finish>;
 beforeAll(() => {
   full = finish(drafted("full-pool"));
-  generational = finish(drafted("generational"));
+  generational = finish(drafted("generational", 42, true));
 });
 
 describe("local rival roster learning", () => {
   it("uses learned matchups to retain a counter in a close CPU rookie decision", () => {
-    const completed = finish(drafted("generational", 13));
+    const completed = finish(drafted("generational", 13, true));
     const source = beginLocalOffseason(
       completed.draft,
       completed.result,
@@ -116,7 +122,7 @@ describe("local rival roster learning", () => {
     expect(source.career!.history[0].rookiePicks).toEqual([]);
   });
   it("accepts a marginal CPU trade for its own learned need and replays that decision on reload", () => {
-    const completed = finish(drafted("full-pool", 5));
+    const completed = finish(drafted("full-pool", 5, true));
     const source = beginLocalOffseason(
       completed.draft,
       completed.result,

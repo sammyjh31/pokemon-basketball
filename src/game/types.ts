@@ -185,6 +185,8 @@ export interface Run {
   /** Omitted on historical seasons to preserve their deterministic replay. */
   typeMatchupsVersion?: 1;
   typeTacticsVersion?: 1;
+  /** Omitted on historical inputs for exact replay. */
+  possessionVersion?: 1;
   id: string;
   mode: Mode;
   includeLegends: boolean;
@@ -235,6 +237,8 @@ export interface LeagueTeam {
   /** Omitted on historical seasons to preserve their deterministic replay. */
   typeMatchupsVersion?: 1;
   typeTacticsVersion?: 1;
+  /** Omitted on historical inputs for exact replay. */
+  possessionVersion?: 1;
   id: number;
   name: string;
   roster: Roster;

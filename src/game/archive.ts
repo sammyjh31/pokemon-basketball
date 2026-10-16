@@ -49,6 +49,7 @@ export function archivedSeasonRun(season: FranchiseSeason): Run {
     rotation: user.rotation,
     defense: user.defense,
     leagueTeams: replay.teams,
+    ...(user.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
     ...(user.typeTacticsVersion === 1
       ? { typeTacticsVersion: 1 as const }
       : {}),

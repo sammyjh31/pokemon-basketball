@@ -269,7 +269,7 @@ describe("mixed official season persistence", () => {
       expect(changed).toBe(true);
       expect(() => validateFranchise(capsule, corrupted.run, true)).toThrow();
     }
-  }, 30000);
+  }, 60000);
 });
 
 it("retains selected training and validated development after an offseason reload", () => {

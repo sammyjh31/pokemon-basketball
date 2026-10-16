@@ -289,6 +289,8 @@ export function validateLeagueTeams(
   if (developed !== 0 && developed !== 30) return fail();
   const typeVersion = object(rows[0]).typeMatchupsVersion;
   if (typeVersion !== undefined && typeVersion !== 1) return fail();
+  const possessionVersion = object(rows[0]).possessionVersion;
+  if (possessionVersion !== undefined && possessionVersion !== 1) return fail();
   const tacticsVersion = object(rows[0]).typeTacticsVersion;
   if (
     (tacticsVersion !== undefined && tacticsVersion !== 1) ||
@@ -310,6 +312,7 @@ export function validateLeagueTeams(
       !DEFENSE_SCHEMES.includes(row.defense as never) ||
       row.simulationVersion !== simulationVersion ||
       row.typeMatchupsVersion !== typeVersion ||
+      row.possessionVersion !== possessionVersion ||
       row.typeTacticsVersion !== tacticsVersion
     )
       return fail();
@@ -344,6 +347,7 @@ export function validateLeagueTeams(
       ...(simulationVersion === 2 ? { simulationVersion } : {}),
       ...(typeVersion === 1 ? { typeMatchupsVersion: 1 as const } : {}),
       ...(tacticsVersion === 1 ? { typeTacticsVersion: 1 as const } : {}),
+      ...(possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
     };
   });
 }
@@ -977,7 +981,13 @@ export function validateFranchise(
     return fail();
   const teams = validateLeagueTeams(row.teams, run.includeLegends),
     leagueIds = teams.flatMap((team) => Object.values(team.roster) as number[]);
-  if (teams.some((team) => team.typeTacticsVersion !== run.typeTacticsVersion))
+  if (
+    teams.some(
+      (team) =>
+        team.typeTacticsVersion !== run.typeTacticsVersion ||
+        team.possessionVersion !== run.possessionVersion,
+    )
+  )
     return fail();
   const historyCount = row.phase === "offseason" ? year : year - 1;
   const history = array(row.history, historyCount).map((entry, index) =>

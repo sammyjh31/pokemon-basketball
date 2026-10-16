@@ -1,3 +1,5 @@
+import { resolveRebound, creationChance } from "./possessionModel";
+import { emptyPossessionPlayer, emptyPossessionTeam } from "./possessionTypes";
 import {
   assignTypeDefenders,
   chooseTypeHelp,
@@ -217,6 +219,12 @@ export function simulateMatch(
     (home.typeTacticsVersion === 1 && home.typeMatchupsVersion !== 1)
   )
     throw new Error("Both teams must use valid, matching type tactics rules.");
+  if (
+    home.possessionVersion !== away.possessionVersion ||
+    (home.possessionVersion !== undefined && home.possessionVersion !== 1)
+  )
+    throw new Error("Both teams must use valid, matching possession rules.");
+  const possessionDepth = home.possessionVersion === 1;
   const advanced = home.typeTacticsVersion === 1;
   if (!advanced && options.scouting !== undefined)
     throw new Error("Opponent scouting requires type tactics rules.");
@@ -369,7 +377,7 @@ export function simulateMatch(
     });
     return guards;
   };
-  if (depthEnabled)
+  if (depthEnabled || possessionDepth)
     result.insights = {
       version: 1,
       coordinateSystem: "schematic-half-court",
@@ -390,6 +398,34 @@ export function simulateMatch(
       })),
       adjustments: [],
     };
+  if (possessionDepth)
+    result.insights!.possession = {
+      version: 1,
+      teams: [h, a].map((t) => emptyPossessionTeam(t.config.id)),
+      players: [...h.players, ...a.players].map((p) =>
+        emptyPossessionPlayer(p.box.teamId, p.box.playerId),
+      ),
+    };
+  const playerDetail = new Map(
+    result.insights?.possession?.players.map((p) => [p.playerId, p]),
+  );
+  const teamDetail = new Map(
+    result.insights?.possession?.teams.map((t) => [t.teamId, t]),
+  );
+  type Origin = { edge: number; turnover: boolean };
+  const origins = new Map<Team, Origin>();
+  let phase:
+    | {
+        team: Team;
+        transition: boolean;
+        secondChance: boolean;
+        turnover: boolean;
+        clutch: boolean;
+      }
+    | undefined;
+  let lastRebounder: Player | undefined;
+  let createdBy: Player | undefined;
+  let screenBy: Player | undefined;
   const chemistryMap = new Map<string, number>();
   const chemistry = (team: Team) => {
     if (!team.config.engineRules) return 0;
@@ -461,6 +497,21 @@ export function simulateMatch(
     event: Omit<ShotEvent, "index" | "period" | "elapsedSeconds" | "x" | "y">,
   ) => {
     if (!result.insights) return;
+    if (possessionDepth) {
+      event = {
+        ...event,
+        secondChance: phase?.secondChance ?? false,
+        transition: phase?.transition ?? false,
+        ...(createdBy && event.countsAsAttempt
+          ? { creatorId: createdBy.box.playerId }
+          : {}),
+      };
+      if (createdBy && event.countsAsAttempt) {
+        const row = playerDetail.get(createdBy.box.playerId)!;
+        row.potentialAssists++;
+        row.expectedAssistPoints += event.expectedProbability * event.value;
+      }
+    }
     const index = result.insights.shots.length;
     // Independent display hash: never reads or advances the simulation RNG.
     let hash = (seed ^ Math.imul(index + 1, 2654435761)) >>> 0;
@@ -578,6 +629,16 @@ export function simulateMatch(
       lineup(offense).pointsFor += points;
       lineup(defense).pointsAgainst += points;
     }
+    if (possessionDepth) {
+      const row = teamDetail.get(offense.config.id)!;
+      row.points += points;
+      if (phase?.team === offense) {
+        if (phase.transition) row.transitionPoints += points;
+        if (phase.secondChance) row.secondChancePoints += points;
+        if (phase.turnover) row.pointsOffTurnovers += points;
+        if (phase.clutch) row.clutchPoints += points;
+      }
+    }
     player.box.points += points;
     if (offense.side === "home") result.homeScore += points;
     else result.awayScore += points;
@@ -626,7 +687,50 @@ export function simulateMatch(
     offense: Team,
     defense: Team,
     freeThrowMiss = false,
+    zone: Zone = "rim",
   ): boolean => {
+    if (possessionDepth) {
+      const profile = (p: Player) => ({
+        id: p.box.playerId,
+        offense: skill(p, "offensiveRebound"),
+        defense: skill(p, "defensiveRebound"),
+        strength: skill(p, "strength"),
+        vertical: skill(p, "vertical"),
+        speed: skill(p, "speed"),
+        passing: skill(p, "passing"),
+        discipline: p.profile.traits.discipline,
+      });
+      const battle = resolveRebound(
+        offense.floor.map(profile),
+        defense.floor.map(profile),
+        {
+          zone,
+          tactic: offense.config.tactic,
+          defenseTactic: defense.config.tactic,
+          freeThrow: freeThrowMiss,
+        },
+        random,
+      );
+      offense.floor.forEach((p, i) => {
+        if (battle.attackWeights[i] > 0)
+          playerDetail.get(p.box.playerId)!.reboundChances++;
+      });
+      defense.floor.forEach((p, i) => {
+        const row = playerDetail.get(p.box.playerId)!;
+        row.reboundChances++;
+        if (battle.boxOuts[i]) row.boxOuts++;
+      });
+      const winner = (battle.offensive ? offense : defense).floor[
+        battle.winner
+      ];
+      const key = battle.offensive ? "offensiveRebounds" : "defensiveRebounds";
+      winner.box[key]++;
+      playerDetail.get(winner.box.playerId)![key]++;
+      lastRebounder = battle.offensive ? winner : undefined;
+      if (!battle.offensive)
+        origins.set(defense, { edge: battle.transitionEdge, turnover: false });
+      return battle.offensive;
+    }
     const attack = average(offense.floor, (p) => skill(p, "offensiveRebound"));
     const defend = average(defense.floor, (p) => skill(p, "defensiveRebound"));
     const probability = clamp(
@@ -680,13 +784,46 @@ export function simulateMatch(
     else if (zone === "mid") shooter.box.midFgm++;
     else shooter.box.threePM++;
     score(offense, defense, shooter, zone === "three" ? 3 : 2);
-    if (passer && passer !== shooter && random() < assistChance)
+    if (possessionDepth) {
+      if (zone === "rim") teamDetail.get(offense.config.id)!.paintPoints += 2;
+      if (createdBy && createdBy !== shooter) {
+        createdBy.box.assists++;
+        const row = playerDetail.get(createdBy.box.playerId)!;
+        row.assists++;
+        row.assistPoints += zone === "three" ? 3 : 2;
+      }
+      if (screenBy && screenBy !== shooter)
+        playerDetail.get(screenBy.box.playerId)!.screenAssists++;
+    } else if (passer && passer !== shooter && random() < assistChance)
       passer.box.assists++;
   };
   const possession = (offense: Team, defense: Team) => {
     if (result.insights) lineup(offense).possessions++;
     let secondChance = false;
+    const origin = origins.get(offense);
+    origins.delete(offense);
+    lastRebounder = undefined;
+    if (possessionDepth) {
+      const clutch =
+        period >= 3 &&
+        periodTicks - tickInPeriod <= 40 &&
+        Math.abs(margin(offense)) <= 5;
+      phase = {
+        team: offense,
+        transition: false,
+        secondChance: false,
+        turnover: origin?.turnover ?? false,
+        clutch,
+      };
+      const row = teamDetail.get(offense.config.id)!;
+      row.possessions++;
+      if (clutch) row.clutchPossessions++;
+    }
+    let firstAction = true;
     for (;;) {
+      createdBy = undefined;
+      screenBy = undefined;
+      if (phase) phase.secondChance = secondChance;
       let guards = advanced ? assignments(offense, defense) : undefined;
       let switched = false;
       let kickoutPasser: Player | undefined;
@@ -724,9 +861,19 @@ export function simulateMatch(
         Math.abs(margin(offense)) <= 10;
       const chaseThree =
         isClutch && margin(offense) < -2 && periodTicks - tickInPeriod <= 8;
-      const weights = [9 + offense.transition * 25, 30, 17, 17, 27];
+      const breakEdge =
+        possessionDepth && firstAction && !secondChance
+          ? (origin?.edge ?? 0)
+          : 0;
+      const weights = [
+        possessionDepth ? breakEdge * 65 : 9 + offense.transition * 25,
+        30,
+        17,
+        17,
+        27,
+      ];
       if (tactic === "pace") {
-        weights[0] += 23;
+        if (!possessionDepth || breakEdge > 0) weights[0] += 23;
         weights[3] *= 0.5;
       }
       if (tactic === "perimeter") {
@@ -752,7 +899,18 @@ export function simulateMatch(
         weights[1] += 12 * observed.switches;
       }
       if (chaseThree) weights[4] += 45;
-      const play = pick(PLAY_TYPES, (_p, i) => weights[i]);
+      const play = pick(
+        possessionDepth
+          ? PLAY_TYPES.filter((_, i) => weights[i] > 0)
+          : PLAY_TYPES,
+        (p) => weights[PLAY_TYPES.indexOf(p)],
+      );
+      if (possessionDepth && phase) {
+        phase.transition = play === "transition" && !secondChance;
+        if (phase.transition && firstAction)
+          teamDetail.get(offense.config.id)!.transitionPossessions++;
+      }
+      firstAction = false;
       result.plays[play][offense.side]++;
       offense.transition = 0;
       let shooter: Player;
@@ -815,6 +973,18 @@ export function simulateMatch(
               : 1)
           );
         });
+      let putback =
+        possessionDepth &&
+        secondChance &&
+        lastRebounder &&
+        offense.floor.includes(lastRebounder) &&
+        random() <
+          clamp(
+            0.34 + (skill(lastRebounder, "finishing") - 60) * 0.004,
+            0.18,
+            0.65,
+          );
+      if (putback) shooter = lastRebounder!;
       let shooterRole = offense.floor.indexOf(shooter);
       let defender = guards?.get(shooter) ?? defense.floor[shooterRole];
       if (
@@ -863,6 +1033,7 @@ export function simulateMatch(
         ["rim", "mid", "three"],
         (_zone, i) => shotWeights[i],
       );
+      if (putback) zone = "rim";
       if (!advanced && defense.config.defense === "zone" && zone === "rim")
         defender = pick(defense.floor, (p) => skill(p, "interiorDefense") ** 3);
       if (guards && zone === "rim") {
@@ -885,6 +1056,7 @@ export function simulateMatch(
           );
           if (random() < read) {
             kickoutPasser = shooter;
+            if (possessionDepth) putback = false;
             shooter = help.abandoned;
             shooterRole = offense.floor.indexOf(shooter);
             defender = help.helper;
@@ -939,6 +1111,7 @@ export function simulateMatch(
       const pressureRoll = random();
       if (pressureRoll < turnoverRate) {
         carrier.box.turnovers++;
+        let liveBall = false;
         if (random() < 0.64) {
           const thief = pick(
             defense.floor,
@@ -947,6 +1120,7 @@ export function simulateMatch(
               (typed ? 1 + 0.1 * p.typeEdges.get(carrier)! : 1),
           );
           thief.box.steals++;
+          liveBall = true;
           const record = defenseMap.get(thief.box.playerId);
           if (record) {
             record.steals++;
@@ -954,6 +1128,8 @@ export function simulateMatch(
           }
         }
         defense.transition = 1;
+        if (possessionDepth)
+          origins.set(defense, { edge: liveBall ? 0.95 : 0, turnover: true });
         return;
       }
       // A live tipped pass retains possession but disrupts the upcoming shot.
@@ -975,6 +1151,7 @@ export function simulateMatch(
       ) {
         const offender = play === "pickRoll" ? screener : carrier;
         offender.box.turnovers++;
+        if (possessionDepth) origins.set(defense, { edge: 0, turnover: true });
         offender.box.fouls++;
         const technical = offender.box.fouls > 6;
         replaceFoulOut(offense, defense.floor);
@@ -1019,16 +1196,17 @@ export function simulateMatch(
         zone === "rim"
           ? (skill(shooter, "strength") - skill(defender, "strength")) * 0.0006
           : (skill(shooter, "speed") - skill(defender, "speed")) * 0.00045;
-      const passer =
-        kickoutPasser ??
-        (shooter !== handler
-          ? handler
-          : play === "spotUp" || play === "pickRoll"
-            ? pick(
-                offense.floor.filter((p) => p !== shooter),
-                (p) => skill(p, "passing") ** 2,
-              )
-            : undefined);
+      const passer = putback
+        ? undefined
+        : (kickoutPasser ??
+          (shooter !== handler
+            ? handler
+            : play === "spotUp" || play === "pickRoll"
+              ? pick(
+                  offense.floor.filter((p) => p !== shooter),
+                  (p) => skill(p, "passing") ** 2,
+                )
+              : undefined));
       const passingBonus = passer
         ? (skill(passer, "passing") - 40) *
           (play === "spotUp" ? 0.0009 : 0.00055)
@@ -1181,7 +1359,7 @@ export function simulateMatch(
           0.88,
         );
       // Measure type impact against the completed basketball/depth probability.
-      const untypedAccuracy = accuracy;
+      let untypedAccuracy = accuracy;
       if (typeEffect)
         accuracy = clamp(
           applyTypeShotEffect(accuracy, typeEffect.logOdds),
@@ -1201,6 +1379,23 @@ export function simulateMatch(
         0,
         0.94,
       );
+      if (possessionDepth) {
+        if (
+          passer &&
+          random() < creationChance(play, skill(passer, "passing"), disrupted)
+        )
+          createdBy = passer;
+        if (play === "pickRoll" && screener !== shooter && !putback)
+          screenBy = screener;
+        const boost =
+          (createdBy
+            ? clamp((skill(createdBy, "passing") - 35) * 0.00035, 0, 0.022)
+            : 0) +
+          (phase?.transition ? breakEdge * 0.025 : 0) +
+          (putback ? 0.012 : 0);
+        accuracy = clamp(accuracy + boost, 0.1, 0.88);
+        untypedAccuracy = clamp(untypedAccuracy + boost, 0.1, 0.88);
+      }
       const shootingFoulRate = clamp(
         (zone === "rim" ? 0.16 : zone === "mid" ? 0.075 : 0.035) +
           (shooter.profile.traits.drawFoul -
@@ -1226,6 +1421,9 @@ export function simulateMatch(
           blocked: false,
           foul: true,
           countsAsAttempt: andOne,
+          ...(possessionDepth
+            ? { putback: !!putback, kickout: !!kickoutPasser }
+            : {}),
           contested,
         });
         if (andOne)
@@ -1302,11 +1500,14 @@ export function simulateMatch(
         blocked,
         foul: false,
         countsAsAttempt: true,
+        ...(possessionDepth
+          ? { putback: !!putback, kickout: !!kickoutPasser }
+          : {}),
         contested,
       });
       if (blocked) blocker.box.blocks++;
       fieldGoal(offense, defense, shooter, zone, made, passer, assistChance);
-      if (made || !rebound(offense, defense)) return;
+      if (made || !rebound(offense, defense, false, zone)) return;
       secondChance = true;
     }
   };
@@ -1332,6 +1533,11 @@ export function simulateMatch(
     adapt(a, h, previousHomeCoverage);
     result.periods.push({ home: 0, away: 0 });
     h.fouls = a.fouls = 0;
+    if (possessionDepth) {
+      origins.clear();
+      phase = undefined;
+      h.transition = a.transition = 0;
+    }
     let offense =
       period >= 4
         ? random() < 0.5
@@ -1424,6 +1630,9 @@ export function simulateMatch(
   });
   result.playerOfGameId = best.playerId;
   // Quarter evidence is retained internally for coaching even when callers only need a compact result.
+  if (possessionDepth)
+    for (const p of [...h.players, ...a.players])
+      playerDetail.get(p.box.playerId)!.games = Number(p.box.minutes > 0);
   if (options.collectInsights === false) delete result.insights;
   if (result.typeTactics)
     for (const side of ["home", "away"] as const) {

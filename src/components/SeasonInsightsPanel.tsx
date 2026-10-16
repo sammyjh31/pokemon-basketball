@@ -1,3 +1,4 @@
+import { PossessionInsightsPanel } from "./PossessionInsightsPanel";
 import { useEffect, useRef, useState } from "react";
 import {
   buildSeasonInsights,
@@ -334,6 +335,22 @@ export function SeasonInsightsPanel({
               <PlayerTrend
                 rows={playerId ? (data.players[playerId] ?? []) : []}
                 league={league}
+              />
+              <PossessionInsightsPanel
+                detail={
+                  data.possession
+                    ? {
+                        ...data.possession,
+                        teams: data.possession.teams.filter(
+                          (r) => r.teamId === team.id,
+                        ),
+                        players: data.possession.players.filter(
+                          (r) => r.teamId === team.id,
+                        ),
+                      }
+                    : undefined
+                }
+                teams={league.teams}
               />
               <LineupInsightsTable
                 rows={data.lineups.filter((row) => row.teamId === team.id)}

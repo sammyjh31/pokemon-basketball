@@ -1,3 +1,5 @@
+import { mergePossessionInsights } from "./possessionAnalysis";
+import type { PossessionInsights } from "./possessionTypes";
 import { simulateMatch } from "./match";
 import type {
   DefenseSummary,
@@ -80,6 +82,7 @@ export interface PlayerGameTrend {
 export type SeasonLineup = LineupSummary & { games: number };
 export type SeasonDefense = DefenseSummary & { games: number };
 export interface SeasonInsights {
+  possession?: PossessionInsights;
   games: number;
   detailGames: number;
   missingTelemetryGames: number;
@@ -195,6 +198,11 @@ export async function buildSeasonInsights(
         });
       }
     }
+    if (match?.insights?.possession)
+      data.possession = mergePossessionInsights(
+        data.possession ?? { version: 1, teams: [], players: [] },
+        match.insights.possession,
+      );
     const seenLineups = new Set<string>(),
       seenDefense = new Set<string>();
     for (const row of match?.insights?.lineups ?? []) {

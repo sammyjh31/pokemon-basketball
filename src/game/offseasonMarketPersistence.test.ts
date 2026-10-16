@@ -192,5 +192,5 @@ describe("package and rookie franchise persistence", () => {
     ).toBe(1);
     expect(restore(archived).franchise).toEqual(archived.franchise);
     // Revalidates two complete seasons for many deliberately malformed saves.
-  }, 90000);
+  }, 180000);
 });

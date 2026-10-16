@@ -718,6 +718,7 @@ function parseTeams(
       row.simulationVersion !== 2 ||
       row.typeMatchupsVersion !== draft.typeMatchupsVersion ||
       row.typeTacticsVersion !== draft.typeTacticsVersion ||
+      row.possessionVersion !== draft.possessionVersion ||
       !TACTICS.includes(row.tactic) ||
       !ROTATIONS.includes(row.rotation) ||
       !DEFENSE_SCHEMES.includes(row.defense) ||
@@ -771,6 +772,9 @@ function parseTeams(
       simulationVersion: 2,
       ...(draft.typeMatchupsVersion === 1
         ? { typeMatchupsVersion: 1 as const }
+        : {}),
+      ...(draft.possessionVersion === 1
+        ? { possessionVersion: 1 as const }
         : {}),
       ...(draft.typeTacticsVersion === 1
         ? { typeTacticsVersion: 1 as const }

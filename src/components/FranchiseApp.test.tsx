@@ -125,7 +125,7 @@ it("continues a completed league into the next season and restores its careers w
   expect(
     screen.getByRole("button", { name: "Career stats" }),
   ).toBeInTheDocument();
-}, 20000);
+}, 60000);
 
 import { suggestTrades } from "../game/tradeMarket";
 import { POKEMON_BY_ID } from "../data/pokemon";

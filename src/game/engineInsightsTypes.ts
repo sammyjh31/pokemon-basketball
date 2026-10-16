@@ -1,3 +1,4 @@
+import type { PossessionInsights } from "./possessionTypes";
 import type { PlayType } from "./types";
 
 export interface EngineRules {
@@ -8,6 +9,11 @@ export interface EngineRules {
   familiarity: number;
 }
 export interface ShotEvent {
+  creatorId?: string;
+  putback?: boolean;
+  kickout?: boolean;
+  secondChance?: boolean;
+  transition?: boolean;
   index: number;
   period: number;
   elapsedSeconds: number;
@@ -70,6 +76,7 @@ export interface CoachingAdjustment {
   evidence: string;
 }
 export interface MatchInsights {
+  possession?: PossessionInsights;
   version: 1;
   coordinateSystem: "schematic-half-court";
   shots: ShotEvent[];
