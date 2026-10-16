@@ -1,0 +1,173 @@
+{
+  "model": "Engine rules v1 / shot model 2",
+  "seedStart": 424200,
+  "samplesPerScenario": 200,
+  "simulations": 3600,
+  "caveat": "Seeded design-tuning evidence, not empirical basketball calibration. Physical experiment retains individual preferences; win rates are descriptive, not causal estimates.",
+  "baseline": {
+    "points": {
+      "mean": 124.985,
+      "min": 77,
+      "p10": 108,
+      "median": 126,
+      "p90": 143,
+      "max": 176
+    },
+    "possessions": {
+      "mean": 99.145,
+      "min": 84,
+      "p10": 93,
+      "median": 99,
+      "p90": 106,
+      "max": 115
+    },
+    "homeWinRate": 0.575,
+    "effectiveFieldGoal": 0.5954,
+    "turnoversPerTeam": 10,
+    "overtimeRate": 0.04,
+    "ordinaryShotExpected": 0.4999,
+    "ordinaryShotActual": 0.4995
+  },
+  "model2Baseline": {
+    "points": {
+      "mean": 120.2575,
+      "min": 86,
+      "p10": 103,
+      "median": 120,
+      "p90": 139,
+      "max": 164
+    },
+    "possessions": {
+      "mean": 98.32,
+      "min": 86,
+      "p10": 92,
+      "median": 98,
+      "p90": 106,
+      "max": 110
+    },
+    "homeWinRate": 0.505
+  },
+  "addedLayerDelta": {
+    "meanPoints": 4.7275,
+    "meanPossessions": 0.825
+  },
+  "catalogSample": {
+    "label": "Independent random eight-player rosters across the bundled catalog; slots are not optimized",
+    "speciesAvailable": 1025,
+    "rosterSeedStart": 714200,
+    "points": {
+      "mean": 115.3925,
+      "min": 74,
+      "p10": 96,
+      "median": 116,
+      "p90": 134,
+      "max": 159
+    },
+    "absoluteMargin": {
+      "mean": 17.145,
+      "min": 1,
+      "p10": 3,
+      "median": 14,
+      "p90": 37,
+      "max": 54
+    }
+  },
+  "styles": [
+    {
+      "tactic": "balanced",
+      "homeWinRate": 0.575,
+      "points": 125.715,
+      "possessions": 99.145,
+      "threeAttempts": 36.76,
+      "rimAttempts": 39.825
+    },
+    {
+      "tactic": "pace",
+      "homeWinRate": 0.545,
+      "points": 136.315,
+      "possessions": 106.885,
+      "threeAttempts": 40.72,
+      "rimAttempts": 42.105
+    },
+    {
+      "tactic": "perimeter",
+      "homeWinRate": 0.62,
+      "points": 128.905,
+      "possessions": 99.135,
+      "threeAttempts": 62.225,
+      "rimAttempts": 22.235
+    },
+    {
+      "tactic": "interior",
+      "homeWinRate": 0.565,
+      "points": 122.535,
+      "possessions": 97.19,
+      "threeAttempts": 17.71,
+      "rimAttempts": 55.045
+    },
+    {
+      "tactic": "defense",
+      "homeWinRate": 0.635,
+      "points": 118.95,
+      "possessions": 93.895,
+      "threeAttempts": 34.42,
+      "rimAttempts": 36.82
+    }
+  ],
+  "abilities": {
+    "label": "Abilities on versus off",
+    "pairedMeanMargin": 0.675,
+    "treatmentWinRate": 0.5275,
+    "meanOffensiveReboundDifference": 0.0125,
+    "treatmentPoints": 125.0775
+  },
+  "continuity": {
+    "label": "Familiarity 1 versus 0",
+    "pairedMeanMargin": 1.9925,
+    "treatmentWinRate": 0.54,
+    "meanOffensiveReboundDifference": 0.015,
+    "treatmentPoints": 126.4825
+  },
+  "adaptive": {
+    "label": "Adaptive versus fixed coaching",
+    "pairedMeanMargin": -0.42,
+    "treatmentWinRate": 0.5,
+    "meanOffensiveReboundDifference": -0.3225,
+    "treatmentPoints": 126.085
+  },
+  "physical": {
+    "label": "3m/300kg versus 0.5m/15kg; equal source stats/types, individual preferences retained",
+    "pairedMeanMargin": 12.165,
+    "treatmentWinRate": 0.74,
+    "meanOffensiveReboundDifference": 4.5275,
+    "treatmentPoints": 137.675
+  },
+  "physicalModel2": {
+    "label": "Same physical cohorts with model2 and no depth rules",
+    "pairedMeanMargin": 7.2925,
+    "treatmentWinRate": 0.6825,
+    "meanOffensiveReboundDifference": 3.56,
+    "treatmentPoints": 131.93
+  },
+  "physicalAddedLayer": {
+    "pairedMarginDifference": 4.8725,
+    "winRateDifference": 0.0575,
+    "offensiveReboundDifference": 0.9675,
+    "caveat": "Difference-in-differences compares the entire added engine layer, including individual preferences, chemistry, contests and signatures; it is not an isolated causal physical coefficient."
+  },
+  "profileBounds": {
+    "minAgility": -4.638338184029233,
+    "maxRebounding": 5.35572685657121,
+    "maxFatigue": 0.23158401774088327
+  },
+  "guardrails": {
+    "scoreMean": [65, 150],
+    "possessionMean": [80, 130],
+    "effectiveFieldGoal": [0.35, 0.75],
+    "ordinaryProbabilityResidualMax": 0.03,
+    "abilityPairedMarginMax": 3,
+    "physicalWinRate": [0.2, 0.8]
+  },
+  "status": "PASS",
+  "failures": []
+}

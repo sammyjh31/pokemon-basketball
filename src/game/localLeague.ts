@@ -1,4 +1,9 @@
-import { ALL_POKEMON, POKEMON, POKEMON_BY_ID } from "../data/pokemon";
+import {
+  ALL_POKEMON,
+  FRANCHISE_POKEMON,
+  POKEMON,
+  POKEMON_BY_ID,
+} from "../data/pokemon";
 import { OPPONENTS } from "../data/opponents";
 import { attributes, positionRating, teamRatings } from "./ratings";
 import { nextRandom } from "./random";
@@ -15,6 +20,9 @@ import {
   type RosterSlot,
   type Run,
 } from "./types";
+
+import { validateLocalOptions, type LocalLeagueOptions } from "./localFormat";
+import { parseLocalCareer, type LocalCareer } from "./localCareer";
 
 export const LOCAL_LEAGUE_KEY = "pokemon-basketball:local-league:v1";
 export const LOCAL_TEAMS = [
@@ -33,6 +41,8 @@ export interface LocalPick {
 }
 export interface LocalLeague {
   version: 1 | 2;
+  options?: LocalLeagueOptions;
+  career?: LocalCareer;
   seed: number;
   includeLegends: boolean;
   managers: LocalManager[];
@@ -44,7 +54,7 @@ export interface LocalLeague {
   playoffGames?: number;
 }
 const profiles = new Map(
-  ALL_POKEMON.map((mon) => [
+  FRANCHISE_POKEMON.map((mon) => [
     mon.id,
     {
       skills: attributes(mon),
@@ -64,6 +74,7 @@ export function createLocalLeague(
   includeLegends: boolean,
   seed: number,
   version: 1 | 2 = 2,
+  options?: LocalLeagueOptions,
 ): LocalLeague {
   if (
     !Number.isInteger(seed) ||
@@ -73,7 +84,18 @@ export function createLocalLeague(
     ![1, 2].includes(version)
   )
     error();
-  if (!Array.isArray(managers) || managers.length < 2 || managers.length > 30)
+  const configured =
+    options === undefined
+      ? undefined
+      : validateLocalOptions(options, includeLegends);
+  if (configured && version !== 2)
+    error("Custom leagues require the current simulation model.");
+  const count = configured?.format.teamCount ?? 30;
+  if (
+    !Array.isArray(managers) ||
+    managers.length < 2 ||
+    managers.length > count
+  )
     error("Choose between 2 and 30 friends.");
   const cleaned = managers.map((m) => {
     if (
@@ -81,7 +103,8 @@ export function createLocalLeague(
       typeof m.name !== "string" ||
       !m.name.trim() ||
       m.name.trim().length > 24 ||
-      !validTeam(m.teamId)
+      !validTeam(m.teamId) ||
+      m.teamId >= count
     )
       error("Give every friend a name and a team.");
     return { name: m.name.trim(), teamId: m.teamId };
@@ -90,7 +113,7 @@ export function createLocalLeague(
     error("Each friend needs a different team.");
   if (new Set(cleaned.map((m) => m.name.toLowerCase())).size !== cleaned.length)
     error("Use a different name for each friend.");
-  const order = LOCAL_TEAMS.map((t) => t.id);
+  const order = LOCAL_TEAMS.slice(0, count).map((t) => t.id);
   let random = seed;
   for (let i = order.length - 1; i > 0; i--) {
     const roll = nextRandom(random);
@@ -100,13 +123,14 @@ export function createLocalLeague(
   }
   return {
     version,
+    ...(configured ? { options: configured } : {}),
     seed,
     includeLegends,
     managers: cleaned,
     order,
     picks: [],
     completed: false,
-    coaching: LOCAL_TEAMS.map((t) =>
+    coaching: LOCAL_TEAMS.slice(0, count).map((t) =>
       cleaned.some((m) => m.teamId === t.id)
         ? { tactic: "balanced", rotation: "balanced", defense: "man" }
         : {
@@ -119,13 +143,25 @@ export function createLocalLeague(
 }
 
 export const localLeaguePool = (draft: LocalLeague) =>
-  draft.version === 1 ? POKEMON : ALL_POKEMON;
+  draft.options
+    ? FRANCHISE_POKEMON.filter(
+        (p) => draft.options!.mode === "full-pool" || p.id <= 151,
+      )
+    : draft.version === 1
+      ? POKEMON
+      : ALL_POKEMON;
+
+export const localTeamCount = (draft: LocalLeague) =>
+  draft.options?.format.teamCount ?? 30;
+export const localDraftSize = (draft: LocalLeague) => localTeamCount(draft) * 8;
 
 export function currentLocalTurn(draft: LocalLeague) {
   const index = draft.picks.length;
-  if (index >= 240) return null;
-  const round = Math.floor(index / 30);
-  const teamId = draft.order[round % 2 ? 29 - (index % 30) : index % 30];
+  const count = localTeamCount(draft);
+  if (index >= count * 8) return null;
+  const round = Math.floor(index / count);
+  const teamId =
+    draft.order[round % 2 ? count - 1 - (index % count) : index % count];
   return {
     teamId,
     round: round + 1,
@@ -144,7 +180,9 @@ function appendPick(
   if (!turn || draft.completed) return error("The draft is already complete.");
   if (
     !mon ||
-    (draft.version === 1 && pokemonId > 251) ||
+    (draft.options
+      ? !localLeaguePool(draft).some((p) => p.id === pokemonId)
+      : draft.version === 1 && pokemonId > 251) ||
     (!draft.includeLegends && mon.legendary) ||
     draft.picks.some((p) => p.pokemonId === pokemonId)
   )
@@ -222,7 +260,8 @@ export function advanceLocalCpu(source: LocalLeague): LocalLeague {
 }
 
 export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
-  return LOCAL_TEAMS.map((team) => {
+  if (draft.career) return structuredClone(draft.career.teams);
+  return LOCAL_TEAMS.slice(0, localTeamCount(draft)).map((team) => {
     const roster = emptyRoster();
     draft.picks
       .filter((p) => p.teamId === team.id)
@@ -235,13 +274,24 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
       roster,
       ...coaching,
       ...(draft.version === 2 ? { simulationVersion: 2 as const } : {}),
+      ...(draft.options
+        ? {
+            engineRules: {
+              ...draft.options.engineRules,
+              adaptiveCoaching:
+                draft.options.engineRules.adaptiveCoaching &&
+                !draft.managers.some((m) => m.teamId === team.id),
+            },
+          }
+        : {}),
       ratings: teamRatings(roster, coaching.tactic, coaching.rotation),
     };
   });
 }
 
 export function localLeagueRun(draft: LocalLeague): Run {
-  if (draft.picks.length !== 240) error("Finish drafting all 30 teams first.");
+  if (draft.picks.length !== localDraftSize(draft))
+    error("Finish drafting every club first.");
   const teams = localLeagueTeams(draft);
   return {
     ...createRun("free", draft.includeLegends, draft.seed),
@@ -253,7 +303,10 @@ export function localLeagueRun(draft: LocalLeague): Run {
 }
 
 function requireEditableTeam(draft: LocalLeague, teamId: number) {
-  if (draft.completed || !draft.managers.some((m) => m.teamId === teamId))
+  if (
+    (draft.completed && draft.career?.phase !== "offseason") ||
+    !draft.managers.some((m) => m.teamId === teamId)
+  )
     error("Only a friend's unfinished team can be edited.");
 }
 export function swapLocalSlots(
@@ -264,6 +317,21 @@ export function swapLocalSlots(
 ): LocalLeague {
   requireEditableTeam(draft, teamId);
   if (!ROSTER_SLOTS.includes(first) || !ROSTER_SLOTS.includes(second)) error();
+  if (draft.career) {
+    const teams = structuredClone(draft.career.teams);
+    const team = teams[teamId];
+    [team.roster[first], team.roster[second]] = [
+      team.roster[second],
+      team.roster[first],
+    ];
+    team.ratings = teamRatings(
+      team.roster,
+      team.tactic,
+      team.rotation,
+      team.development,
+    );
+    return { ...draft, career: { ...draft.career, teams } };
+  }
   return {
     ...draft,
     picks: draft.picks.map((p) =>
@@ -289,8 +357,28 @@ export function updateLocalCoaching(
     !DEFENSE_SCHEMES.includes(coaching.defense)
   )
     error();
+  const career = draft.career
+    ? {
+        ...draft.career,
+        teams: draft.career.teams.map((team) =>
+          team.id === teamId
+            ? {
+                ...team,
+                ...coaching,
+                ratings: teamRatings(
+                  team.roster,
+                  coaching.tactic,
+                  coaching.rotation,
+                  team.development,
+                ),
+              }
+            : team,
+        ),
+      }
+    : undefined;
   return {
     ...draft,
+    ...(career ? { career } : {}),
     coaching: draft.coaching.map((c, i) =>
       i === teamId ? { ...coaching } : c,
     ),
@@ -299,7 +387,7 @@ export function updateLocalCoaching(
 
 /** Compact inputs are saved; results replay with the same seed and simulation model. */
 export function parseLocalLeague(raw: string): LocalLeague {
-  if (raw.length > 100000) error();
+  if (raw.length > 5000000) error();
   const value = JSON.parse(raw);
   if (
     !value ||
@@ -312,14 +400,17 @@ export function parseLocalLeague(raw: string): LocalLeague {
     value.includeLegends,
     value.seed,
     value.version,
+    value.options,
   );
+  const count = localTeamCount(draft);
   if (
     !Array.isArray(value.order) ||
-    value.order.length !== 30 ||
+    value.order.length !== count ||
     value.order.some((id: number, i: number) => id !== draft.order[i])
   )
     error();
-  if (!Array.isArray(value.coaching) || value.coaching.length !== 30) error();
+  if (!Array.isArray(value.coaching) || value.coaching.length !== count)
+    error();
   draft.coaching = value.coaching.map((c: LocalCoaching) => {
     if (
       !c ||
@@ -330,22 +421,36 @@ export function parseLocalLeague(raw: string): LocalLeague {
       error();
     return { tactic: c.tactic, rotation: c.rotation, defense: c.defense };
   });
-  if (!Array.isArray(value.picks) || value.picks.length > 240) error();
+  if (!Array.isArray(value.picks) || value.picks.length > count * 8) error();
   for (const pick of value.picks) {
     if (!pick || currentLocalTurn(draft)?.teamId !== pick.teamId) error();
     draft = appendPick(draft, pick.pokemonId, pick.slot);
   }
-  if (value.completed && draft.picks.length !== 240) error();
+  if (value.completed && draft.picks.length !== localDraftSize(draft)) error();
   if (
     value.playoffGames !== undefined &&
     (!value.completed ||
       !Number.isInteger(value.playoffGames) ||
       value.playoffGames < 0 ||
-      value.playoffGames > 105)
+      value.playoffGames >
+        (draft.options
+          ? (draft.options.format.playoffTeams - 1) *
+            draft.options.format.bestOf
+          : 105))
   )
     error();
+  const career =
+    value.career === undefined
+      ? undefined
+      : parseLocalCareer(
+          value.career,
+          draft,
+          value.completed,
+          value.playoffGames,
+        );
   return {
     ...draft,
+    ...(career ? { career } : {}),
     completed: value.completed,
     ...(value.playoffGames !== undefined
       ? { playoffGames: value.playoffGames }

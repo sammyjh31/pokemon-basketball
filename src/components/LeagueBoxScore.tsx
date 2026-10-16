@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
+import { GameInsightsPanel } from "./GameInsightsPanel";
 import { GameAnalytics } from "./LeagueAnalytics";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { simulateMatch } from "../game/match";
@@ -198,7 +199,7 @@ export function LeagueBoxScore({
           }
           if (event.key === "Tab") {
             const focusable = dialog.current?.querySelectorAll<HTMLElement>(
-              'button:not([disabled]), [tabindex="0"]',
+              'button:not([disabled]), select:not([disabled]), input:not([disabled]), summary, [tabindex="0"]',
             );
             if (!focusable?.length) return;
             const first = focusable[0],
@@ -299,6 +300,7 @@ export function LeagueBoxScore({
           </table>
         </div>
         <GameAnalytics match={match} home={home} away={away} />
+        <GameInsightsPanel match={match} home={home} away={away} />
         <TeamBox team={away} players={match.awayBox} />
         <TeamBox team={home} players={match.homeBox} />
         <div

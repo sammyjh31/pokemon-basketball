@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import {
   LOCAL_LEAGUE_KEY,
   advanceLocalCpu,
-  localLeagueRun,
   parseLocalLeague,
   type LocalLeague,
 } from "../game/localLeague";
-import { simulateSeasonAsync } from "../game/season";
+import { simulateLocalSeasonAsync } from "../game/localSeason";
+import { localSeasonSeed } from "../game/localCareer";
 import {
   playoffGameCount,
   replayPlayoffs,
@@ -70,6 +70,13 @@ export function useLocalLeague(storage: StorageLike = browserStorage) {
     try {
       const updated =
         typeof next === "function" ? (draft ? next(draft) : null) : next;
+      if (
+        updated &&
+        (updated.career?.year ?? 1) !== (draft?.career?.year ?? 1)
+      ) {
+        setResult(null);
+        setPlayoffs(undefined);
+      }
       setDraft(updated ? advanceLocalCpu(updated) : null);
       setError("");
     } catch (e) {
@@ -86,9 +93,8 @@ export function useLocalLeague(storage: StorageLike = browserStorage) {
     setBusy(true);
     setError("");
     try {
-      const run = localLeagueRun(source);
-      const played = await simulateSeasonAsync(
-        run,
+      const played = await simulateLocalSeasonAsync(
+        source,
         (completed, total) => {
           if (!active.signal.aborted) setProgress({ completed, total });
         },
@@ -97,7 +103,11 @@ export function useLocalLeague(storage: StorageLike = browserStorage) {
       active.signal.throwIfAborted();
       const restored =
         source.playoffGames !== undefined
-          ? replayPlayoffs(played.league!, run.seasonSeed, source.playoffGames)
+          ? replayPlayoffs(
+              played.league!,
+              localSeasonSeed(source),
+              source.playoffGames,
+            )
           : undefined;
       setResult(played);
       setPlayoffs(restored);
@@ -120,7 +130,7 @@ export function useLocalLeague(storage: StorageLike = browserStorage) {
   };
   useEffect(() => {
     if (draft?.completed && !result && !controller.current) void simulate();
-  }, [draft?.completed]);
+  }, [draft?.completed, draft?.career?.year]);
   const advancePlayoffs = async (mode: PlayoffMode) => {
     if (
       !draft?.completed ||
@@ -137,7 +147,7 @@ export function useLocalLeague(storage: StorageLike = browserStorage) {
     try {
       const played = await simulatePlayoffsAsync(
         result.league,
-        localLeagueRun(source).seasonSeed,
+        localSeasonSeed(source),
         playoffs,
         mode,
         (completed, total) => {

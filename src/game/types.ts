@@ -1,3 +1,4 @@
+import type { EngineRules, MatchInsights } from "./engineInsightsTypes";
 import type { RotationPlan, SeasonProgress } from "./franchiseFeatures";
 import type { Playoffs } from "./playoffTypes";
 import type { Franchise } from "./franchiseTypes";
@@ -221,6 +222,7 @@ export const DEFENSE_LABELS: Record<DefenseScheme, string> = {
 export type PlayType =
   "transition" | "pickRoll" | "isolation" | "post" | "spotUp";
 export interface LeagueTeam {
+  engineRules?: EngineRules;
   simulationVersion?: 2;
   id: number;
   name: string;
@@ -257,6 +259,7 @@ export interface LeagueGameSummary extends LeagueFixture {
   overtimePeriods: number;
 }
 export interface LeagueMatch {
+  insights?: MatchInsights;
   shotQuality?: Record<
     "home" | "away",
     { attempts: number; expectedPoints: number; points: number }
@@ -308,6 +311,7 @@ export interface LeagueAward extends SeasonAward {
   }[];
 }
 export interface LeagueResult {
+  format?: import("./localFormat").LocalFormat;
   teams: LeagueTeam[];
   games: LeagueGameSummary[];
   players: LeaguePlayer[];

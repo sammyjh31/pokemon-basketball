@@ -47,8 +47,9 @@ export function MatchupLab() {
           <span className="eyebrow">LEARN BEFORE YOU DRAFT</span>
           <h3>Matchup explorer</h3>
           <p>
-            Change one variable and see how the same shot formula used in new
-            local leagues responds.
+            Change one variable to explore the base shot formula. Live games
+            also add physical effects, chemistry, signatures, and resolved
+            contests.
           </p>
         </div>
         <button

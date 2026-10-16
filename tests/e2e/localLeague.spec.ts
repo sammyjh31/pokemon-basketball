@@ -18,7 +18,12 @@ test("friends draft a complete local league, compare results, and restore withou
     JSON.parse(localStorage.getItem("pokemon-basketball:v3")!),
   );
   await page.getByRole("button", { name: "Local league", exact: true }).click();
-  await expect(page.getByText(/Generations I–VII/)).toBeVisible();
+  await page.getByLabel("Franchise progression").selectOption("full-pool");
+  await page.getByLabel("League size").selectOption("30");
+  await page.getByLabel("Games per team").selectOption("82");
+  await page.getByLabel("Playoff qualifiers").selectOption("16");
+  await page.getByLabel("Playoff series").selectOption("7");
+  await expect(page.getByText(/Generations I–IX are available/)).toBeVisible();
   await page.getByRole("button", { name: "Open matchup explorer" }).click();
   await page
     .getByRole("combobox", { name: "Shooter", exact: true })

@@ -1,3 +1,4 @@
+import { validateLocalFormat } from "./localFormat";
 import { addBox, leaguePlayers, playerImpact } from "./leagueStats";
 import { simulateMatch } from "./match";
 import { nextRandom } from "./random";
@@ -39,11 +40,15 @@ export function createPlayoffs(
   league: LeagueResult,
   _seasonSeed: number,
 ): Playoffs {
+  const format = league.format ? validateLocalFormat(league.format) : undefined;
+  const count = format?.teamCount ?? 30;
+  const qualifiers = format?.playoffTeams ?? 16;
+  const gamesPerTeam = format?.gamesPerTeam ?? 82;
   if (
-    league.teams.length !== 30 ||
-    league.standings.length !== 30 ||
-    new Set(league.teams.map((t) => t.id)).size !== 30 ||
-    new Set(league.standings.map((s) => s.teamId)).size !== 30 ||
+    league.teams.length !== count ||
+    league.standings.length !== count ||
+    new Set(league.teams.map((t) => t.id)).size !== count ||
+    new Set(league.standings.map((s) => s.teamId)).size !== count ||
     league.standings.some(
       (s) =>
         !league.teams.some((t) => t.id === s.teamId) ||
@@ -51,7 +56,7 @@ export function createPlayoffs(
         !Number.isInteger(s.losses) ||
         s.wins < 0 ||
         s.losses < 0 ||
-        s.wins + s.losses !== 82,
+        s.wins + s.losses !== gamesPerTeam,
     )
   )
     throw new Error("Finish the full regular season before starting playoffs.");
@@ -62,7 +67,7 @@ export function createPlayoffs(
         b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst) ||
         a.teamId - b.teamId,
     )
-    .slice(0, 16)
+    .slice(0, qualifiers)
     .map((s, i) => ({
       seed: i + 1,
       teamId: s.teamId,
@@ -70,9 +75,24 @@ export function createPlayoffs(
       losses: s.losses,
     }));
   const series: PlayoffSeries[] = [];
-  for (let round = 0; round < 4; round++)
+  const firstRound = 4 - Math.log2(qualifiers);
+  const firstPairs =
+    qualifiers === 16
+      ? FIRST_ROUND
+      : qualifiers === 8
+        ? [
+            [1, 8],
+            [4, 5],
+            [2, 7],
+            [3, 6],
+          ]
+        : [
+            [1, 4],
+            [2, 3],
+          ];
+  for (let round = firstRound; round < 4; round++)
     for (let index = 0; index < 8 / 2 ** round; index++) {
-      const pair = round === 0 ? FIRST_ROUND[index] : null;
+      const pair = round === firstRound ? firstPairs[index] : null;
       series.push({
         id: `p1-r${round + 1}-s${index + 1}`,
         round: round as PlayoffRound,
@@ -87,6 +107,7 @@ export function createPlayoffs(
     }
   return {
     modelVersion: 1,
+    ...(format ? { format } : {}),
     seeds,
     series,
     players: leaguePlayers(
@@ -166,13 +187,15 @@ function nextPlayoffFixture(playoffs: Playoffs, seasonSeed: number) {
   if (
     series.higherSeedId === null ||
     series.lowerSeedId === null ||
-    gameIndex >= 7
+    gameIndex >= (playoffs.format?.bestOf ?? 7)
   )
     throw new Error("The playoff bracket cannot advance.");
-  const homeId = HOME_PATTERN[gameIndex]
+  const homePattern =
+    playoffs.format?.bestOf === 3 ? [true, false, true] : HOME_PATTERN;
+  const homeId = homePattern[gameIndex]
     ? series.higherSeedId
     : series.lowerSeedId;
-  const awayId = HOME_PATTERN[gameIndex]
+  const awayId = homePattern[gameIndex]
     ? series.lowerSeedId
     : series.higherSeedId;
   const gameSeed = nextRandom(
@@ -225,7 +248,10 @@ function playOne(playoffs: Playoffs, league: LeagueResult, seasonSeed: number) {
   const winnerId = match.homeScore > match.awayScore ? homeId : awayId;
   if (winnerId === series.higherSeedId) series.higherSeedWins++;
   else series.lowerSeedWins++;
-  if (series.higherSeedWins === 4 || series.lowerSeedWins === 4)
+  if (
+    series.higherSeedWins === Math.ceil((playoffs.format?.bestOf ?? 7) / 2) ||
+    series.lowerSeedWins === Math.ceil((playoffs.format?.bestOf ?? 7) / 2)
+  )
     series.winnerId = winnerId;
   for (const box of [...match.homeBox, ...match.awayBox]) {
     addBox(
@@ -290,7 +316,10 @@ function progression(
           .filter(
             (s) => s.winnerId === null && (mode === "all" || s.round === round),
           )
-          .reduce((n, s) => n + 7 - s.games.length, 0);
+          .reduce(
+            (n, s) => n + (playoffs.format?.bestOf ?? 7) - s.games.length,
+            0,
+          );
   const more = () =>
     playoffs.championId === null &&
     (mode === "all" ||
@@ -353,7 +382,14 @@ export function replayPlayoffs(
   gameCount: number,
   playedGames: Record<string, OfficialGame> = {},
 ): Playoffs {
-  if (!Number.isInteger(gameCount) || gameCount < 0 || gameCount > 105)
+  if (
+    !Number.isInteger(gameCount) ||
+    gameCount < 0 ||
+    gameCount >
+      (league.format
+        ? (league.format.playoffTeams - 1) * league.format.bestOf
+        : 105)
+  )
     throw new Error("Invalid playoff game count.");
   if (
     !playedGames ||

@@ -29,6 +29,7 @@ export interface FinalsMvp {
 }
 export interface Playoffs {
   modelVersion: 1 | 2;
+  format?: import("./localFormat").LocalFormat;
   playedGames?: Record<string, OfficialGame>;
   seeds: PlayoffSeed[];
   series: PlayoffSeries[];

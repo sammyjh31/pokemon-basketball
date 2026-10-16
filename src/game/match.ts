@@ -5,9 +5,21 @@ import { DEVELOPMENT_SKILLS } from "./developmentTypes";
 import { playerProfile, type PlayerProfile } from "./playerProfile";
 import { evaluateShot } from "./shotModel";
 import {
+  engineProfile,
+  lineupChemistry,
+  signatureImpact,
+  type EngineProfile,
+} from "./engineDepth";
+import type {
+  DefenseSummary,
+  LineupSummary,
+  ShotEvent,
+} from "./engineInsightsTypes";
+import {
   POSITIONS,
   ROSTER_SLOTS,
   type Attributes,
+  type DefenseScheme,
   type LeagueBox,
   type LeagueMatch,
   type LeagueTeam,
@@ -17,6 +29,7 @@ import {
 type Side = "home" | "away";
 type Zone = "rim" | "mid" | "three";
 interface Player {
+  depth?: EngineProfile;
   profile: PlayerProfile;
   box: LeagueBox;
   target: number;
@@ -88,6 +101,9 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
         POKEMON_BY_ID.get(pokemonId)!,
         config.development?.[pokemonId],
       ),
+      depth: config.engineRules
+        ? engineProfile(POKEMON_BY_ID.get(pokemonId)!)
+        : undefined,
       target: targets![slot],
       energy: 100,
       consecutive: 0,
@@ -137,7 +153,7 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
     for (const player of players) player.box.started = floor.includes(player);
   }
   return {
-    config,
+    config: config.engineRules ? { ...config } : config,
     side,
     players,
     floor,
@@ -146,8 +162,24 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   };
 }
 
-const skill = (p: Player, key: keyof Attributes) =>
-  p.profile.attributes[key] * (0.72 + p.energy * 0.0028);
+const skill = (p: Player, key: keyof Attributes) => {
+  if (!p.depth) return p.profile.attributes[key] * (0.72 + p.energy * 0.0028);
+  const physical = p.depth.physical;
+  const addition =
+    key === "speed"
+      ? physical.agility
+      : key === "strength"
+        ? physical.postContact
+        : key === "offensiveRebound" || key === "defensiveRebound"
+          ? physical.rebounding
+          : key === "block"
+            ? physical.reach * 3
+            : 0;
+  return (
+    clamp(p.profile.attributes[key] + addition, 1, 100) *
+    (0.72 + p.energy * 0.0028)
+  );
+};
 const average = (players: Player[], get: (p: Player) => number) =>
   players.reduce((sum, p) => sum + get(p), 0) / players.length;
 
@@ -247,10 +279,25 @@ export function simulateMatch(
   home: LeagueTeam,
   away: LeagueTeam,
   seed: number,
+  options: { collectInsights?: boolean } = {},
 ): LeagueMatch {
+  for (const team of [home, away]) {
+    const rules = team.engineRules;
+    if (
+      rules &&
+      (rules.version !== 1 ||
+        typeof rules.abilities !== "boolean" ||
+        typeof rules.adaptiveCoaching !== "boolean" ||
+        !Number.isFinite(rules.familiarity) ||
+        rules.familiarity < 0 ||
+        rules.familiarity > 1)
+    )
+      throw new Error("Invalid engine rules or familiarity.");
+  }
   if (home.simulationVersion !== away.simulationVersion)
     throw new Error("Both teams must use the same simulation model.");
   const modern = home.simulationVersion === 2;
+  const depthEnabled = Boolean(home.engineRules || away.engineRules);
   const h = buildTeam(home, "home"),
     a = buildTeam(away, "away");
   const result: LeagueMatch = {
@@ -280,6 +327,66 @@ export function simulateMatch(
         }
       : {}),
   };
+  if (depthEnabled)
+    result.insights = {
+      version: 1,
+      coordinateSystem: "schematic-half-court",
+      shots: [],
+      lineups: [],
+      defense: [...h.players, ...a.players].map((p) => ({
+        teamId: p.box.teamId,
+        playerId: p.box.playerId,
+        matchups: 0,
+        attempts: 0,
+        contests: 0,
+        pointsAllowed: 0,
+        expectedPointsAllowed: 0,
+        blocks: 0,
+        steals: 0,
+        deflections: 0,
+        shootingFouls: 0,
+      })),
+      adjustments: [],
+    };
+  const chemistryMap = new Map<string, number>();
+  const chemistry = (team: Team) => {
+    if (!team.config.engineRules) return 0;
+    const key = `${team.config.id}:${team.floor
+      .map((p) => p.box.pokemonId)
+      .sort()
+      .join(",")}`;
+    let bonus = chemistryMap.get(key);
+    if (bonus === undefined) {
+      bonus = lineupChemistry(
+        team.floor.map((p) => p.profile),
+        team.config.engineRules.familiarity,
+      );
+      chemistryMap.set(key, bonus);
+    }
+    return bonus;
+  };
+  const lineupMap = new Map<string, LineupSummary>();
+  const defenseMap = new Map<string, DefenseSummary>(
+    result.insights?.defense.map((d) => [d.playerId, d]),
+  );
+  const lineup = (team: Team) => {
+    const playerIds = team.floor.map((p) => p.box.playerId).sort(),
+      key = playerIds.join("|");
+    let entry = lineupMap.get(key);
+    if (!entry) {
+      entry = {
+        teamId: team.config.id,
+        playerIds,
+        seconds: 0,
+        possessions: 0,
+        pointsFor: 0,
+        pointsAgainst: 0,
+      };
+      lineupMap.set(key, entry);
+      result.insights!.lineups.push(entry);
+    }
+    return entry;
+  };
   let randomSeed = seed >>> 0;
   const random = () => {
     const next = nextRandom(randomSeed);
@@ -304,6 +411,117 @@ export function simulateMatch(
     tickInPeriod = 0,
     periodTicks = 96;
   let completedPossessions = 0;
+  const elapsedSeconds = () =>
+    Math.min(period, 4) * 720 +
+    Math.max(0, period - 4) * 300 +
+    tickInPeriod * 7.5;
+  const recordShot = (
+    event: Omit<ShotEvent, "index" | "period" | "elapsedSeconds" | "x" | "y">,
+  ) => {
+    if (!result.insights) return;
+    const index = result.insights.shots.length;
+    // Independent display hash: never reads or advances the simulation RNG.
+    let hash = (seed ^ Math.imul(index + 1, 2654435761)) >>> 0;
+    hash = Math.imul(hash ^ (hash >>> 16), 2246822507) >>> 0;
+    const angle = ((hash % 1000) / 1000) * Math.PI;
+    const radius =
+      event.zone === "rim"
+        ? 5 + (hash % 6)
+        : event.zone === "mid"
+          ? 25 + (hash % 14)
+          : 49 + (hash % 13);
+    result.insights.shots.push({
+      ...event,
+      index,
+      period: period + 1,
+      elapsedSeconds: elapsedSeconds(),
+      x: clamp(50 + Math.cos(angle) * radius, 3, 97),
+      y: clamp(10 + Math.sin(angle) * radius, 3, 97),
+    });
+    const defender = defenseMap.get(event.defenderId)!;
+    defender.matchups++;
+    defender.attempts += Number(event.countsAsAttempt);
+    defender.contests += Number(event.contested);
+    defender.shootingFouls += Number(event.foul);
+    defender.pointsAllowed += event.made ? event.value : 0;
+    defender.expectedPointsAllowed += event.expectedProbability * event.value;
+    if (event.blocked && event.blockerId)
+      defenseMap.get(event.blockerId)!.blocks++;
+  };
+  const adapt = (
+    team: Team,
+    opponent: Team,
+    observedCoverage: DefenseScheme,
+  ) => {
+    if (
+      !team.config.engineRules?.adaptiveCoaching ||
+      !result.insights ||
+      period === 0
+    )
+      return;
+    const shots = result.insights.shots.filter(
+      (s) => s.period === period && s.offenseTeamId === opponent.config.id,
+    );
+    if (shots.length < 8) return;
+    const threes = shots.filter((s) => s.zone === "three").length,
+      rim = shots.filter((s) => s.zone === "rim").length;
+    const coverage =
+      threes / shots.length >= 0.4
+        ? "switch"
+        : rim / shots.length >= 0.48
+          ? "zone"
+          : "man";
+    if (coverage !== team.config.defense) {
+      result.insights.adjustments.push({
+        teamId: team.config.id,
+        period: period + 1,
+        elapsedSeconds: elapsedSeconds(),
+        kind: "defense",
+        from: team.config.defense,
+        to: coverage,
+        reason:
+          coverage === "switch"
+            ? "Stay connected to perimeter scorers"
+            : coverage === "zone"
+              ? "Put help around the rim"
+              : "Return to individual matchups",
+        evidence: `Previous period: ${threes}/${shots.length} perimeter attempts; ${rim}/${shots.length} at the rim.`,
+      });
+      team.config.defense = coverage;
+    }
+    const ownShots = result.insights.shots.filter(
+      (s) => s.period === period && s.offenseTeamId === team.config.id,
+    );
+    if (ownShots.length < 8) return;
+    const rimShots = ownShots.filter((s) => s.zone === "rim"),
+      rimMakes = rimShots.filter((s) => s.made).length;
+    const perimeterShots = ownShots.filter((s) => s.zone === "three"),
+      perimeterMakes = perimeterShots.filter((s) => s.made).length;
+    const nextTactic =
+      observedCoverage === "zone" ||
+      (rimShots.length >= 6 && rimMakes / rimShots.length < 0.4)
+        ? "perimeter"
+        : perimeterShots.length >= 6 &&
+            perimeterMakes / perimeterShots.length < 0.28
+          ? "interior"
+          : team.config.tactic;
+    if (nextTactic !== team.config.tactic) {
+      result.insights.adjustments.push({
+        teamId: team.config.id,
+        period: period + 1,
+        elapsedSeconds: elapsedSeconds(),
+        kind: "tactic",
+        from: team.config.tactic,
+        to: nextTactic,
+        reason:
+          nextTactic === "perimeter"
+            ? "Create space against paint resistance"
+            : "Move inside after poor perimeter finishing",
+        evidence: `Previous period: ${rimMakes}/${rimShots.length} rim finishes; ${perimeterMakes}/${perimeterShots.length} three-point finishes; opponent coverage ${observedCoverage}.`,
+      });
+      team.config.tactic = nextTactic;
+    }
+  };
   const margin = (team: Team) =>
     team.side === "home"
       ? result.homeScore - result.awayScore
@@ -314,6 +532,10 @@ export function simulateMatch(
     player: Player,
     points: number,
   ) => {
+    if (result.insights) {
+      lineup(offense).pointsFor += points;
+      lineup(defense).pointsAgainst += points;
+    }
     player.box.points += points;
     if (offense.side === "home") result.homeScore += points;
     else result.awayScore += points;
@@ -420,6 +642,7 @@ export function simulateMatch(
       passer.box.assists++;
   };
   const possession = (offense: Team, defense: Team) => {
+    if (result.insights) lineup(offense).possessions++;
     let secondChance = false;
     for (;;) {
       const handler = pick(
@@ -430,11 +653,17 @@ export function simulateMatch(
               skill(p, "passing") * 0.35 +
               p.profile.traits.usage * 0.2,
             3,
-          ) * (role === 0 ? 1.6 : 1),
+          ) *
+          (role === 0 ? 1.6 : 1) *
+          (p.depth?.tendencies.passing ?? 1),
       );
       const screener = pick(
         offense.floor.filter((p) => p !== handler),
-        (p) => Math.pow(p.profile.traits.screening, 3),
+        (p) =>
+          Math.pow(
+            p.profile.traits.screening + (p.depth?.physical.screening ?? 0),
+            3,
+          ),
       );
       const tactic = offense.config.tactic;
       const isClutch =
@@ -488,7 +717,7 @@ export function simulateMatch(
                     p.profile.traits.offBall * 0.4
                   : p.profile.traits.usage * 0.6 +
                     skill(p, "ballHandling") * 0.4;
-          return rating ** 3;
+          return rating ** 3 * (p.depth?.tendencies.usage ?? 1);
         });
       const shooterRole = offense.floor.indexOf(shooter);
       let defender = defense.floor[shooterRole];
@@ -499,6 +728,11 @@ export function simulateMatch(
           ];
       }
       const shotWeights = [...baseShotMix[play]];
+      if (shooter.depth) {
+        shotWeights[0] *= shooter.depth.tendencies.rim;
+        shotWeights[1] *= shooter.depth.tendencies.mid;
+        shotWeights[2] *= shooter.depth.tendencies.three;
+      }
       shotWeights[0] *= clamp(
         1 +
           (skill(shooter, "finishing") - skill(shooter, "threePoint")) * 0.015,
@@ -542,16 +776,36 @@ export function simulateMatch(
           (65 - carrier.profile.traits.decisionMaking) * 0.0005 +
           (defense.config.defense === "press" ? 0.035 : 0) +
           (play === "transition" ? 0.013 : 0) -
-          (offense.side === "home" ? 0.004 : 0),
+          (offense.side === "home" ? 0.004 : 0) -
+          chemistry(offense) * 0.6,
         0.045,
         0.28,
       );
-      if (random() < turnoverRate) {
+      const pressureRoll = random();
+      if (pressureRoll < turnoverRate) {
         carrier.box.turnovers++;
-        if (random() < 0.64)
-          pick(defense.floor, (p) => skill(p, "steal") ** 2).box.steals++;
+        if (random() < 0.64) {
+          const thief = pick(defense.floor, (p) => skill(p, "steal") ** 2);
+          thief.box.steals++;
+          const record = defenseMap.get(thief.box.playerId);
+          if (record) {
+            record.steals++;
+            record.deflections++;
+          }
+        }
         defense.transition = 1;
         return;
+      }
+      // A live tipped pass retains possession but disrupts the upcoming shot.
+      let disrupted = false;
+      if (
+        defense.config.engineRules &&
+        pressureRoll <
+          turnoverRate + clamp(0.025 + (pressure - 60) * 0.0003, 0.01, 0.04)
+      ) {
+        const deflector = pick(defense.floor, (p) => skill(p, "steal") ** 2);
+        defenseMap.get(deflector.box.playerId)!.deflections++;
+        disrupted = true;
       }
       // Illegal screens and charges are personal fouls, without defensive bonus FTs.
       if (
@@ -681,7 +935,9 @@ export function simulateMatch(
           spacing,
           protection,
           passing: passer ? skill(passer, "passing") : undefined,
-          screening: screener.profile.traits.screening,
+          screening:
+            screener.profile.traits.screening +
+            (screener.depth?.physical.screening ?? 0),
           roleFitPenalty:
             Math.max(...Object.values(shooter.profile.positions)) -
             shooter.profile.positions[POSITIONS[shooterRole]],
@@ -689,6 +945,67 @@ export function simulateMatch(
           clutch: isClutch,
           defenseFirst: defense.config.tactic === "defense",
         }).probability;
+      // This coverage event explicitly alters resolution; it is not inferred from the outcome.
+      const contested = depthEnabled
+        ? random() <
+          clamp(
+            0.7 +
+              (defender.profile.traits.closeout - skill(shooter, "speed")) *
+                0.003,
+            0.4,
+            0.9,
+          )
+        : true;
+      if (depthEnabled) {
+        const attack = shooter.depth?.physical,
+          guard = defender.depth?.physical;
+        const physical =
+          zone === "rim"
+            ? ((attack?.postContact ?? 0) - (guard?.postContact ?? 0)) * 0.002 +
+              ((attack?.reach ?? 0) - (guard?.reach ?? 0)) * 0.012
+            : ((attack?.agility ?? 0) - (guard?.agility ?? 0)) * 0.001;
+        const context = {
+          zone,
+          play,
+          clutch: isClutch,
+          secondChance,
+          contested,
+          energy: shooter.energy,
+        };
+        accuracy = clamp(
+          accuracy +
+            clamp(physical, -0.025, 0.025) +
+            chemistry(offense) +
+            (contested ? -0.008 : 0.012) -
+            (disrupted ? 0.012 : 0) +
+            (shooter.depth
+              ? signatureImpact(
+                  shooter.depth,
+                  "shooter",
+                  context,
+                  !!offense.config.engineRules?.abilities,
+                )
+              : 0) +
+            (passer?.depth
+              ? signatureImpact(
+                  passer.depth,
+                  "passer",
+                  context,
+                  !!offense.config.engineRules?.abilities,
+                )
+              : 0) +
+            (defender.depth
+              ? signatureImpact(
+                  defender.depth,
+                  "defender",
+                  { ...context, energy: defender.energy },
+                  !!defense.config.engineRules?.abilities,
+                )
+              : 0),
+          0.1,
+          0.88,
+        );
+      }
       const assistChance = clamp(
         (play === "spotUp"
           ? 0.88
@@ -712,7 +1029,23 @@ export function simulateMatch(
         0.25,
       );
       if (random() < shootingFoulRate) {
-        const andOne = random() < accuracy * (zone === "rim" ? 0.4 : 0.25);
+        const foulProbability = accuracy * (zone === "rim" ? 0.4 : 0.25);
+        const andOne = random() < foulProbability;
+        recordShot({
+          offenseTeamId: offense.config.id,
+          defenseTeamId: defense.config.id,
+          shooterId: shooter.box.playerId,
+          defenderId: defender.box.playerId,
+          zone,
+          play,
+          value: zone === "three" ? 3 : 2,
+          expectedProbability: foulProbability,
+          made: andOne,
+          blocked: false,
+          foul: true,
+          countsAsAttempt: andOne,
+          contested,
+        });
         if (andOne)
           fieldGoal(
             offense,
@@ -756,6 +1089,22 @@ export function simulateMatch(
         quality.expectedPoints += accuracy * (1 - blockRate) * value;
         quality.points += made ? value : 0;
       }
+      recordShot({
+        offenseTeamId: offense.config.id,
+        defenseTeamId: defense.config.id,
+        shooterId: shooter.box.playerId,
+        defenderId: defender.box.playerId,
+        blockerId: blocked ? blocker.box.playerId : undefined,
+        zone,
+        play,
+        value: zone === "three" ? 3 : 2,
+        expectedProbability: accuracy * (1 - blockRate),
+        made,
+        blocked,
+        foul: false,
+        countsAsAttempt: true,
+        contested,
+      });
       if (blocked) blocker.box.blocks++;
       fieldGoal(offense, defense, shooter, zone, made, passer, assistChance);
       if (made || !rebound(offense, defense)) return;
@@ -777,6 +1126,11 @@ export function simulateMatch(
   while (period < 4 || result.homeScore === result.awayScore) {
     if (period >= 4) result.overtimePeriods++;
     periodTicks = period < 4 ? 96 : 40;
+    tickInPeriod = 0;
+    const previousHomeCoverage = h.config.defense,
+      previousAwayCoverage = a.config.defense;
+    adapt(h, a, previousAwayCoverage);
+    adapt(a, h, previousHomeCoverage);
     result.periods.push({ home: 0, away: 0 });
     h.fouls = a.fouls = 0;
     let offense =
@@ -805,6 +1159,10 @@ export function simulateMatch(
           }
         gameMinute++;
       }
+      if (result.insights) {
+        lineup(h).seconds += 7.5;
+        lineup(a).seconds += 7.5;
+      }
       for (const team of [h, a])
         for (const player of team.players) {
           if (team.floor.includes(player)) {
@@ -813,7 +1171,8 @@ export function simulateMatch(
               1.55 +
               (100 - player.profile.attributes.stamina) * 0.025 +
               (team.config.tactic === "pace" ? 0.36 : 0) +
-              (team.config.defense === "press" ? 0.4 : 0);
+              (team.config.defense === "press" ? 0.4 : 0) +
+              (player.depth?.physical.fatigue ?? 0);
             player.energy = Math.max(25, player.energy - drain * 0.125);
           } else
             player.energy = Math.min(
@@ -830,7 +1189,11 @@ export function simulateMatch(
         margin(offense) > -12
           ? 0.17
           : 0;
-      if (random() < possessionRate + rush) {
+      if (
+        random() <
+        (depthEnabled ? 0.51 + (tempo(h) + tempo(a)) / 2 : possessionRate) +
+          rush
+      ) {
         possession(offense, defense);
         completedPossessions++;
         offense = defense;
@@ -855,5 +1218,7 @@ export function simulateMatch(
     return value(p) > value(best) ? p : best;
   });
   result.playerOfGameId = best.playerId;
+  // Quarter evidence is retained internally for coaching even when callers only need a compact result.
+  if (options.collectInsights === false) delete result.insights;
   return result;
 }

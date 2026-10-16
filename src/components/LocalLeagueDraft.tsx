@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { POKEMON_BY_ID, generationOf } from "../data/pokemon";
+import { POKEMON_BY_ID } from "../data/pokemon";
 import {
   currentLocalTurn,
+  localDraftSize,
   localLeaguePool,
   LOCAL_TEAMS,
   type LocalLeague,
 } from "../game/localLeague";
 import { bestPosition, positionRating } from "../game/ratings";
 import {
+  emptyRoster,
   POSITIONS,
   ROSTER_SLOTS,
   SLOT_NAMES,
@@ -16,6 +18,9 @@ import {
 } from "../game/types";
 import { PokemonCard } from "./PokemonCard";
 import { ScoutReport } from "./ScoutReport";
+import { localGeneration } from "../game/localFormat";
+import { recommendRosterPicks } from "../game/draftAdvice";
+import { DepthScouting } from "./DepthScouting";
 
 export function LocalLeagueDraft({
   draft,
@@ -45,15 +50,29 @@ export function LocalLeagueDraft({
       (p) => !taken.has(p.id) && (draft.includeLegends || !p.legendary),
     );
   }, [draft]);
+  const generations = [
+    ...new Set(localLeaguePool(draft).map((p) => localGeneration(p.id))),
+  ];
+  const tactic = draft.coaching[turn.teamId].tactic;
+  const advice = useMemo(() => {
+    const roster = emptyRoster();
+    draft.picks
+      .filter((p) => p.teamId === turn.teamId)
+      .forEach((p) => {
+        roster[p.slot] = p.pokemonId;
+      });
+    return recommendRosterPicks(pool, roster, tactic);
+  }, [pool, draft.picks, turn.teamId, tactic]);
   const candidates = useMemo(
     () =>
       pool
         .filter(
           (p) =>
-            generation === "all" || generationOf(p.id) === Number(generation),
+            generation === "all" ||
+            localGeneration(p.id) === Number(generation),
         )
         .filter((p) =>
-          `${p.name} ${p.id} ${p.types.join(" ")} gen ${generationOf(p.id)}`
+          `${p.name} ${p.id} ${p.types.join(" ")} gen ${localGeneration(p.id)}`
             .toLowerCase()
             .includes(query.toLowerCase().trim()),
         )
@@ -87,7 +106,8 @@ export function LocalLeagueDraft({
       <section className="local-clock" aria-labelledby="local-clock-title">
         <div>
           <span className="eyebrow">
-            ROUND {turn.round} OF 8 · PICK {turn.pick} OF 240
+            ROUND {turn.round} OF 8 · PICK {turn.pick} OF{" "}
+            {localDraftSize(draft)}
           </span>
           <h2
             id="local-clock-title"
@@ -111,13 +131,50 @@ export function LocalLeagueDraft({
           className="local-panel local-pool"
           aria-label="Available Pokémon"
         >
+          <details className="local-draft-advice">
+            <summary>
+              Draft recommendations for {LOCAL_TEAMS[turn.teamId].name}
+            </summary>
+            <p>
+              Based on open roles, coaching fit, and complementary skills.
+              Alternatives count players available now, not who will survive
+              until your next pick.
+            </p>
+            {advice.map((pick) => (
+              <article key={pick.pokemonId}>
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => choose(pick.pokemonId)}
+                >
+                  Scout {POKEMON_BY_ID.get(pick.pokemonId)!.name} · {pick.slot}{" "}
+                  fit {pick.fit.toFixed(0)}
+                </button>
+                <ul>
+                  {pick.reasons.map((reason) => (
+                    <li key={reason}>{reason}</li>
+                  ))}
+                </ul>
+                <p>{pick.physical}</p>
+                {!!pick.alternatives.length && (
+                  <p>
+                    Other options:{" "}
+                    {pick.alternatives
+                      .map((id) => POKEMON_BY_ID.get(id)!.name)
+                      .join(", ")}
+                    .
+                  </p>
+                )}
+              </article>
+            ))}
+          </details>
           <div className="local-pool-controls">
             <label>
               Search available Pokémon
               <input
                 type="search"
                 value={query}
-                placeholder="Name, number, type, or gen 7"
+                placeholder="Name, number, type, or generation"
                 onChange={(e) => {
                   setQuery(e.target.value);
                   setLimit(24);
@@ -134,9 +191,9 @@ export function LocalLeagueDraft({
                 }}
               >
                 <option value="all">All generations</option>
-                {Array.from({ length: draft.version === 1 ? 2 : 7 }, (_, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    Generation {i + 1}
+                {generations.map((generation) => (
+                  <option key={generation} value={generation}>
+                    Generation {generation}
                   </option>
                 ))}
               </select>
@@ -195,6 +252,12 @@ export function LocalLeagueDraft({
             <details className="local-scout">
               <summary>Scout {mon.name}</summary>
               <ScoutReport mon={mon} />
+              {draft.options && (
+                <DepthScouting
+                  mon={mon}
+                  abilities={draft.options.engineRules.abilities}
+                />
+              )}
             </details>
           )}
           <p className="local-pool-count">

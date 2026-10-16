@@ -82,11 +82,18 @@ export const playerImpact = (p: LeaguePlayer) =>
     0.4 * (p.fga - p.fgm) -
     0.4 * (p.fta - p.ftm)) /
   Math.max(1, p.gamesPlayed);
-export function leagueHonors(players: LeaguePlayer[], standings: Standing[]) {
-  const qualified = players.filter((p) => p.gamesPlayed >= 58);
+export function leagueHonors(
+  players: LeaguePlayer[],
+  standings: Standing[],
+  gamesPerTeam = 82,
+) {
+  const minimumGames = Math.ceil((gamesPerTeam * 58) / 82);
+  const qualified = players.filter((p) => p.gamesPlayed >= minimumGames);
   const winFactor = (p: LeaguePlayer) =>
-    0.9 + 0.2 * (standings.find((s) => s.teamId === p.teamId)!.wins / 82);
-  const availability = (p: LeaguePlayer) => 0.9 + (0.1 * p.gamesPlayed) / 82;
+    0.9 +
+    0.2 * (standings.find((s) => s.teamId === p.teamId)!.wins / gamesPerTeam);
+  const availability = (p: LeaguePlayer) =>
+    0.9 + (0.1 * p.gamesPlayed) / gamesPerTeam;
   const mvp = (p: LeaguePlayer) =>
     playerImpact(p) * winFactor(p) * availability(p);
   const defense = (p: LeaguePlayer) =>
@@ -143,7 +150,7 @@ export function leagueHonors(players: LeaguePlayer[], standings: Standing[]) {
     {
       id: "scoring",
       title: "Scoring Champion",
-      description: "Most points per game; minimum 58 games.",
+      description: `Most points per game; minimum ${minimumGames} games.`,
       pool: qualified,
       score: (p) => p.points / p.gamesPlayed,
       value: (p) => `${pg(p.points, p)} PPG`,
@@ -151,7 +158,7 @@ export function leagueHonors(players: LeaguePlayer[], standings: Standing[]) {
     {
       id: "playmaking",
       title: "Assist Champion",
-      description: "Most assists per game; minimum 58 games.",
+      description: `Most assists per game; minimum ${minimumGames} games.`,
       pool: qualified,
       score: (p) => p.assists / p.gamesPlayed,
       value: (p) => `${pg(p.assists, p)} APG`,
@@ -159,7 +166,7 @@ export function leagueHonors(players: LeaguePlayer[], standings: Standing[]) {
     {
       id: "rebounding",
       title: "Rebounding Champion",
-      description: "Most rebounds per game; minimum 58 games.",
+      description: `Most rebounds per game; minimum ${minimumGames} games.`,
       pool: qualified,
       score: (p) => rebounds(p) / p.gamesPlayed,
       value: (p) => `${pg(rebounds(p), p)} RPG`,

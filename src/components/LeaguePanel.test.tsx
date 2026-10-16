@@ -167,9 +167,7 @@ const setup = (animate = false) =>
 describe("league results", () => {
   it("shows sortable team efficiency and explains estimated denominators", () => {
     setup();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Team analysis" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Team analysis" }));
     const table = screen.getByRole("table", {
       name: "Team efficiency comparison",
     });
@@ -542,5 +540,44 @@ describe("defensive player leaders", () => {
         name: "Sort playoffs by blocks per 36 minutes",
       }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("short local season leaders", () => {
+  it("scales appearance and shot-attempt qualifications to the configured season", () => {
+    render(
+      <Leaders
+        league={{
+          teams,
+          format: {
+            teamCount: 4,
+            gamesPerTeam: 14,
+            playoffTeams: 4,
+            bestOf: 1,
+          },
+          players: [
+            { ...players[0], gamesPlayed: 10, fga: 52, fgm: 26 },
+            { ...players[1], gamesPlayed: 9, fga: 100, fgm: 90 },
+            { ...players[2], gamesPlayed: 14, fga: 51, fgm: 50 },
+          ],
+        }}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText("Qualified leaders only"));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Sort league by field goal percentage",
+      }),
+    );
+    const table = screen.getByRole("table", {
+      name: /League player statistics/,
+    });
+    expect(within(table).getAllByRole("row")).toHaveLength(2);
+    expect(
+      within(table).getByRole("rowheader", { name: /Bulbasaur/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Qualified leaders require 10 games/),
+    ).toHaveTextContent("52 FGA");
   });
 });

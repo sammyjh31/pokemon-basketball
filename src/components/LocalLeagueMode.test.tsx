@@ -68,6 +68,9 @@ describe("local league pass-and-play", () => {
     fireEvent.change(screen.getByLabelText("Friend 2 name"), {
       target: { value: "Alex" },
     });
+    fireEvent.change(screen.getByLabelText("Franchise progression"), {
+      target: { value: "full-pool" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Start snake draft" }));
     expect(
       screen.getByRole("heading", { name: /On the clock/ }),

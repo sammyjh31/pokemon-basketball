@@ -39,6 +39,20 @@ export function PlayoffPanel({
     () => playoffs ?? createPlayoffs(league, seasonSeed),
     [playoffs, league, seasonSeed],
   );
+  const qualifiers = bracket.format?.playoffTeams ?? 16;
+  const bestOf = bracket.format?.bestOf ?? 7;
+  const rounds = Math.log2(qualifiers);
+  const firstRound = 4 - rounds;
+  const bracketWidth = rounds * 276 - 44;
+  const bracketHeight = (qualifiers / 2) * 120;
+  const homeGames =
+    bestOf === 1
+      ? "1"
+      : bestOf === 3
+        ? "1 and 3"
+        : bestOf === 5
+          ? "1, 2 and 5"
+          : "1, 2, 5 and 7";
   const [view, setView] = useState<"bracket" | "players">("bracket");
   const [selection, setSelection] = useState<{ id: string } | null>(null);
   const detailHeading = useRef<HTMLHeadingElement>(null);
@@ -91,7 +105,7 @@ export function PlayoffPanel({
     return bracket.championId === teamId
       ? `Champion · Seed ${teamSeed}`
       : !teamSeed
-        ? "Did not qualify · Top 16 advance"
+        ? `Did not qualify · Top ${qualifiers} advance`
         : eliminated
           ? `Eliminated · ${PLAYOFF_ROUND_LABELS[eliminated.round]} · Seed ${teamSeed}`
           : `Qualified · Seed ${teamSeed} · ${PLAYOFF_ROUND_LABELS[activeRound]}`;
@@ -110,7 +124,8 @@ export function PlayoffPanel({
       return `${teamName(series.winnerId)} wins ${Math.max(series.higherSeedWins, series.lowerSeedWins)}–${Math.min(series.higherSeedWins, series.lowerSeedWins)}`;
     if (series.higherSeedId === null || series.lowerSeedId === null)
       return "Awaiting previous round";
-    if (!series.games.length) return "Best of 7 · First to 4";
+    if (!series.games.length)
+      return `Best of ${bestOf} · First to ${Math.ceil(bestOf / 2)}`;
     if (series.higherSeedWins === series.lowerSeedWins)
       return `Series tied ${series.higherSeedWins}–${series.lowerSeedWins}`;
     return `${teamName(series.higherSeedWins > series.lowerSeedWins ? series.higherSeedId : series.lowerSeedId)} leads ${Math.max(series.higherSeedWins, series.lowerSeedWins)}–${Math.min(series.higherSeedWins, series.lowerSeedWins)}`;
@@ -122,7 +137,9 @@ export function PlayoffPanel({
         <div>
           <span className="eyebrow">THE ROAD TO A CHAMPIONSHIP</span>
           <h3 id={`${id}-title`}>Playoffs</h3>
-          <p>16 teams. Four rounds. Every series best of seven.</p>
+          <p>
+            {qualifiers} teams. {rounds} rounds. Every series best of {bestOf}.
+          </p>
         </div>
         {!managers && (
           <span
@@ -150,8 +167,9 @@ export function PlayoffPanel({
         </div>
       )}
       <p className="stat-legend">
-        Top 16 by regular-season wins, then point differential, then team ID.
-        Fixed bracket; no reseeding. Higher seed hosts games 1, 2, 5 and 7.
+        Top {qualifiers} by regular-season wins, then point differential, then
+        team ID. Fixed bracket; no reseeding. Higher seed hosts games{" "}
+        {homeGames}.
       </p>
       {completed && (
         <div className="playoff-honors">
@@ -295,83 +313,102 @@ export function PlayoffPanel({
               aria-describedby={`${id}-scroll`}
               tabIndex={0}
             >
-              <div className="playoff-bracket">
+              <div
+                className="playoff-bracket"
+                style={{
+                  width: bracketWidth,
+                  gridTemplateColumns: `repeat(${rounds}, 232px)`,
+                }}
+              >
                 <svg
                   className="playoff-connections"
-                  width="1060"
-                  height="960"
+                  width={bracketWidth}
+                  height={bracketHeight}
                   aria-hidden="true"
                 >
-                  {[0, 1, 2].flatMap((round) =>
-                    Array.from({ length: 8 / 2 ** round }, (_, index) => (
-                      <path
-                        key={`${round}-${index}`}
-                        d={`M ${round * 276 + 232} ${nodeCenter(round, index)} H ${round * 276 + 254} V ${nodeCenter(round + 1, Math.floor(index / 2))} H ${(round + 1) * 276}`}
-                      />
-                    )),
+                  {Array.from(
+                    { length: rounds - 1 },
+                    (_, round) => round,
+                  ).flatMap((round) =>
+                    Array.from(
+                      { length: qualifiers / 2 / 2 ** round },
+                      (_, index) => (
+                        <path
+                          key={`${round}-${index}`}
+                          d={`M ${round * 276 + 232} ${nodeCenter(round, index)} H ${round * 276 + 254} V ${nodeCenter(round + 1, Math.floor(index / 2))} H ${(round + 1) * 276}`}
+                        />
+                      ),
+                    ),
                   )}
                 </svg>
-                {PLAYOFF_ROUND_LABELS.map((roundLabel, round) => (
-                  <section
-                    className="playoff-round"
-                    aria-label={roundLabel}
-                    key={roundLabel}
-                  >
-                    <h4>{roundLabel}</h4>
-                    <div className="playoff-round-games">
-                      {bracket.series
-                        .filter((series) => series.round === round)
-                        .map((series) => (
-                          <button
-                            type="button"
-                            className={`playoff-series-node${series.winnerId !== null ? " is-decided" : ""}`}
-                            id={`${id}-node-${series.id}`}
-                            key={series.id}
-                            style={{
-                              top: nodeCenter(round, series.index) - 54,
-                            }}
-                            aria-label={`View ${roundLabel} series ${series.index + 1}: ${teamLabel(series.higherSeedId)} versus ${teamLabel(series.lowerSeedId)}`}
-                            aria-pressed={selected.id === series.id}
-                            aria-controls={`${id}-series`}
-                            onClick={() => setSelection({ id: series.id })}
-                          >
-                            <span className="playoff-series-label">
-                              Series {series.index + 1}
-                              {series.winnerId !== null ? " · Final" : ""}
-                            </span>
-                            {[series.higherSeedId, series.lowerSeedId].map(
-                              (teamId, index) => (
-                                <span
-                                  key={index}
-                                  className={`playoff-team${series.winnerId !== null && teamId === series.winnerId ? " is-winner" : ""}${isFollowed(teamId) ? " is-user" : ""}`}
-                                >
-                                  <span className="playoff-seed">
-                                    {seed(teamId) ?? "—"}
+                {PLAYOFF_ROUND_LABELS.map((roundLabel, round) =>
+                  round < firstRound ? null : (
+                    <section
+                      className="playoff-round"
+                      aria-label={roundLabel}
+                      key={roundLabel}
+                    >
+                      <h4>{roundLabel}</h4>
+                      <div
+                        className="playoff-round-games"
+                        style={{ height: bracketHeight }}
+                      >
+                        {bracket.series
+                          .filter((series) => series.round === round)
+                          .map((series) => (
+                            <button
+                              type="button"
+                              className={`playoff-series-node${series.winnerId !== null ? " is-decided" : ""}`}
+                              id={`${id}-node-${series.id}`}
+                              key={series.id}
+                              style={{
+                                top:
+                                  nodeCenter(round - firstRound, series.index) -
+                                  54,
+                              }}
+                              aria-label={`View ${roundLabel} series ${series.index + 1}: ${teamLabel(series.higherSeedId)} versus ${teamLabel(series.lowerSeedId)}`}
+                              aria-pressed={selected.id === series.id}
+                              aria-controls={`${id}-series`}
+                              onClick={() => setSelection({ id: series.id })}
+                            >
+                              <span className="playoff-series-label">
+                                Series {series.index + 1}
+                                {series.winnerId !== null ? " · Final" : ""}
+                              </span>
+                              {[series.higherSeedId, series.lowerSeedId].map(
+                                (teamId, index) => (
+                                  <span
+                                    key={index}
+                                    className={`playoff-team${series.winnerId !== null && teamId === series.winnerId ? " is-winner" : ""}${isFollowed(teamId) ? " is-user" : ""}`}
+                                  >
+                                    <span className="playoff-seed">
+                                      {seed(teamId) ?? "—"}
+                                    </span>
+                                    <span>{teamName(teamId)}</span>
+                                    <b>
+                                      {teamId === null
+                                        ? "—"
+                                        : index === 0
+                                          ? series.higherSeedWins
+                                          : series.lowerSeedWins}
+                                    </b>
                                   </span>
-                                  <span>{teamName(teamId)}</span>
-                                  <b>
-                                    {teamId === null
-                                      ? "—"
-                                      : index === 0
-                                        ? series.higherSeedWins
-                                        : series.lowerSeedWins}
-                                  </b>
-                                </span>
-                              ),
-                            )}
-                            <span className="playoff-series-footer">
-                              {series.higherSeedId === null ||
-                              series.lowerSeedId === null
-                                ? `Winners of ${PLAYOFF_ROUND_LABELS[round - 1]} ${series.index * 2 + 1} & ${series.index * 2 + 2}`
-                                : series.winnerId !== null
-                                  ? "View series results"
-                                  : `Game ${series.games.length + 1} next`}
-                            </span>
-                          </button>
-                        ))}
-                    </div>
-                  </section>
-                ))}
+                                ),
+                              )}
+                              <span className="playoff-series-footer">
+                                {series.higherSeedId === null ||
+                                series.lowerSeedId === null
+                                  ? `Winners of ${PLAYOFF_ROUND_LABELS[round - 1]} ${series.index * 2 + 1} & ${series.index * 2 + 2}`
+                                  : series.winnerId !== null
+                                    ? "View series results"
+                                    : `Game ${series.games.length + 1} next`}
+                              </span>
+                            </button>
+                          ))}
+                      </div>
+                    </section>
+                  ),
+                )}
               </div>
             </div>
             <section
@@ -411,8 +448,8 @@ export function PlayoffPanel({
               </div>
               {selected.higherSeedId !== null && (
                 <p className="stat-legend">
-                  Home court: {teamName(selected.higherSeedId)} · Games 1, 2, 5
-                  &amp; 7
+                  Home court: {teamName(selected.higherSeedId)} · Games{" "}
+                  {homeGames}
                 </p>
               )}
               {selected.games.length ? (
@@ -469,8 +506,8 @@ export function PlayoffPanel({
           <>
             {!gamesPlayed && (
               <p className="playoff-stats-note">
-                No playoff games played yet. All 128 qualified players start
-                fresh here.
+                No playoff games played yet. All {qualifiers * 8} qualified
+                players start fresh here.
               </p>
             )}
             <Leaders

@@ -1,5 +1,5 @@
 import type { OfficialGame } from "../game/franchiseFeatures";
-import { useId, useState } from "react";
+import { useCallback, useId, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { bestPosition, positionRating } from "../game/ratings";
 import {
@@ -16,6 +16,8 @@ import {
 } from "../game/types";
 import { LeagueBoxScore } from "./LeagueBoxScore";
 import { Portrait } from "./Portrait";
+import { SeasonInsightsPanel } from "./SeasonInsightsPanel";
+import { simulateMatch } from "../game/match";
 import { LeagueAnalytics } from "./LeagueAnalytics";
 import "../league.css";
 
@@ -29,7 +31,6 @@ type Column = {
   title: string;
   value: (p: LeaguePlayer) => number | null;
   kind?: "count" | "percentage" | "ratio";
-  qualified?: (p: LeaguePlayer) => boolean;
 };
 const columns: Column[] = [
   { key: "points", label: "PTS", title: "points", value: (p) => p.points },
@@ -64,7 +65,6 @@ const columns: Column[] = [
     title: "field goal percentage",
     value: (p) => ratio(p.fgm * 100, p.fga),
     kind: "percentage",
-    qualified: (p) => p.fga >= 300,
   },
   {
     key: "three",
@@ -72,7 +72,6 @@ const columns: Column[] = [
     title: "three point percentage",
     value: (p) => ratio(p.threePM * 100, p.threePA),
     kind: "percentage",
-    qualified: (p) => p.threePA >= 82,
   },
   {
     key: "ft",
@@ -80,7 +79,6 @@ const columns: Column[] = [
     title: "free throw percentage",
     value: (p) => ratio(p.ftm * 100, p.fta),
     kind: "percentage",
-    qualified: (p) => p.fta >= 125,
   },
   {
     key: "ts",
@@ -88,7 +86,6 @@ const columns: Column[] = [
     title: "true shooting percentage",
     value: (p) => ratio(p.points * 100, 2 * (p.fga + 0.44 * p.fta)),
     kind: "percentage",
-    qualified: (p) => p.fga >= 300,
   },
   {
     key: "pts36",
@@ -228,10 +225,25 @@ export function Leaders({
   league,
   postseason = false,
 }: {
-  league: Pick<LeagueResult, "players" | "teams">;
+  league: Pick<LeagueResult, "players" | "teams" | "format">;
   postseason?: boolean;
 }) {
   const scope = postseason ? "Playoff" : "League";
+  const seasonGames = league.format?.gamesPerTeam ?? 82;
+  const minimumGames = Math.ceil((seasonGames * 58) / 82);
+  const minimumFga = Math.ceil((seasonGames * 300) / 82);
+  const minimumThrees = seasonGames;
+  const minimumFta = Math.ceil((seasonGames * 125) / 82);
+  const qualifies = (p: LeaguePlayer) => {
+    if (p.gamesPlayed < minimumGames) return false;
+    return column.key === "fg" || column.key === "ts"
+      ? p.fga >= minimumFga
+      : column.key === "three"
+        ? p.threePA >= minimumThrees
+        : column.key === "ft"
+          ? p.fta >= minimumFta
+          : true;
+  };
   const [team, setTeam] = useState("all"),
     [query, setQuery] = useState(""),
     [totals, setTotals] = useState(false),
@@ -249,9 +261,7 @@ export function Leaders({
       (p) =>
         (team === "all" || p.teamId === Number(team)) &&
         playerLabel(p).toLowerCase().includes(query.toLowerCase()) &&
-        (postseason ||
-          !qualified ||
-          (p.gamesPlayed >= 58 && (!column.qualified || column.qualified(p)))),
+        (postseason || !qualified || qualifies(p)),
     )
     .sort((a, b) => {
       const av = value(a, column),
@@ -447,7 +457,7 @@ export function Leaders({
             display modes.{" "}
             {postseason
               ? "Playoff games only, with no minimum sample."
-              : "Qualified leaders require 58 games."}{" "}
+              : `Qualified leaders require ${minimumGames} games.`}{" "}
             — means no denominator.
           </>
         ) : (
@@ -455,7 +465,7 @@ export function Leaders({
             Per-game points, rebounds and assists are PPG, RPG and APG.{" "}
             {postseason
               ? "Playoff games only; every qualified team's players are included, with no minimum sample. "
-              : "Qualified leaders require 58 games. When sorting percentages, also require 300 FGA for FG% / TS%, 82 three-point attempts for 3P%, or 125 FTA for FT%. "}
+              : `Qualified leaders require ${minimumGames} games. When sorting percentages, also require ${minimumFga} FGA for FG% / TS%, ${minimumThrees} three-point attempts for 3P%, or ${minimumFta} FTA for FT%. `}
             TS% = PTS ÷ [2 × (FGA + 0.44 × FTA)]. Per-36 and AST/TOV are ratios
             in both modes. — means no denominator.
           </>
@@ -765,9 +775,10 @@ function Awards({ league }: { league: LeagueResult }) {
     <section aria-label="League awards">
       <h4>League awards</h4>
       <p className="stat-legend">
-        Honors across every roster. All awards require 58 games; Sixth Player
-        also requires more games off the bench than starts. All-League and
-        All-Defense are positionless selections.
+        Honors across every roster. All awards require{" "}
+        {Math.ceil(((league.format?.gamesPerTeam ?? 82) * 58) / 82)} games;
+        Sixth Player also requires more games off the bench than starts.
+        All-League and All-Defense are positionless selections.
       </p>
       <div className="team-award-grid league-award-grid">
         {league.awards.map((award) => {
@@ -1054,6 +1065,7 @@ function Games({
 const sections = [
   "Standings",
   "Team analysis",
+  "Season insights",
   "Player leaders",
   "Team rosters",
   "League games",
@@ -1062,7 +1074,7 @@ const sections = [
 ] as const;
 export function LeaguePanel({
   league,
-  playedGames = {},
+  playedGames,
 }: {
   league: LeagueResult;
   playedGames?: Record<string, OfficialGame>;
@@ -1072,6 +1084,16 @@ export function LeaguePanel({
     [teamId, setTeamId] = useState("0"),
     [game, setGame] = useState<LeagueGameSummary | null>(null);
   const id = useId();
+  const resolveMatch = useCallback(
+    (game: LeagueGameSummary) =>
+      playedGames?.[game.id]?.match ??
+      simulateMatch(
+        league.teams.find((t) => t.id === game.homeTeamId)!,
+        league.teams.find((t) => t.id === game.awayTeamId)!,
+        game.seed,
+      ),
+    [league, playedGames],
+  );
   return (
     <section className="league-panel" aria-labelledby={`${id}-title`}>
       <div className="results-section-heading">
@@ -1114,6 +1136,9 @@ export function LeaguePanel({
         )}
         {section === "Player leaders" && <Leaders league={league} />}
         {section === "Team analysis" && <LeagueAnalytics league={league} />}
+        {section === "Season insights" && (
+          <SeasonInsightsPanel league={league} resolveMatch={resolveMatch} />
+        )}
         {section === "Team rosters" && (
           <Rosters league={league} teamId={teamId} setTeamId={setTeamId} />
         )}
@@ -1126,7 +1151,7 @@ export function LeaguePanel({
       {game && (
         <LeagueBoxScore
           game={game}
-          match={playedGames[game.id]?.match}
+          match={playedGames?.[game.id]?.match}
           teams={league.teams}
           onClose={() => setGame(null)}
         />

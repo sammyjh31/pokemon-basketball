@@ -3,7 +3,7 @@ import { POKEMON_BY_ID } from "../data/pokemon";
 import { useLocalLeague } from "../hooks/useLocalLeague";
 import {
   localLeagueTeams,
-  localLeagueRun,
+  localDraftSize,
   pickLocalPlayer,
   rankLocalManagers,
   swapLocalSlots,
@@ -11,6 +11,7 @@ import {
   type LocalLeague,
 } from "../game/localLeague";
 import {
+  POSITIONS,
   DEFENSE_LABELS,
   DEFENSE_SCHEMES,
   ROTATIONS,
@@ -20,6 +21,10 @@ import {
   TACTIC_LABELS,
 } from "../game/types";
 import type { StorageLike } from "../game/persistence";
+import { beginLocalOffseason, localSeasonSeed } from "../game/localCareer";
+import { lineupChemistry } from "../game/engineDepth";
+import { playerProfile } from "../game/playerProfile";
+import { LocalCareerPanel, LocalCareerHistory } from "./LocalCareerPanel";
 import { LocalLeagueSetup } from "./LocalLeagueSetup";
 import { LocalLeagueDraft } from "./LocalLeagueDraft";
 import { LeaguePanel } from "./LeaguePanel";
@@ -46,7 +51,9 @@ function ReviewTeams({
     <section className="local-panel" aria-label="Review friends' teams">
       <div className="local-review-heading">
         <div>
-          <span className="eyebrow">DRAFT COMPLETE</span>
+          <span className="eyebrow">
+            YEAR {draft.career?.year ?? 1} · TEAM MANAGEMENT
+          </span>
           <h2>Set your lineup. Settle the debate.</h2>
           <p>
             Every friend can adjust their lineup and coaching before the season.
@@ -102,6 +109,26 @@ function ReviewTeams({
             );
           })}
         </div>
+        {team.engineRules && (
+          <p className="stat-legend">
+            Starting lineup chemistry: up to{" "}
+            {(
+              lineupChemistry(
+                POSITIONS.map((slot) =>
+                  playerProfile(
+                    POKEMON_BY_ID.get(team.roster[slot]!)!,
+                    team.development?.[team.roster[slot]!],
+                  ),
+                ),
+                team.engineRules.familiarity,
+              ) * 100
+            ).toFixed(2)}{" "}
+            percentage points on passing plays. Separate creators, spacers, and
+            finishers combine with{" "}
+            {(team.engineRules.familiarity * 100).toFixed(0)}% roster
+            continuity. Keeping teammates together builds familiarity each year.
+          </p>
+        )}
         <div className="local-coaching">
           <label>
             Offense
@@ -196,14 +223,16 @@ export function LocalLeagueMode({
   const [confirm, setConfirm] = useState(false);
   const league = result?.league;
   const rankings = draft && league ? rankLocalManagers(draft, league) : [];
-  const ready = draft?.picks.length === 240;
+  const ready = draft ? draft.picks.length === localDraftSize(draft) : false;
+  const year = draft?.career?.year ?? 1;
+  const offseason = draft?.career?.phase === "offseason";
   return (
     <SpriteContext.Provider value="pixel">
       <div className="app-shell local-league">
         <header className="local-header">
           <div>
             <span className="eyebrow">POKÉMON BASKETBALL</span>
-            <h1>Local league</h1>
+            <h1>Local league{draft?.options ? ` · Year ${year}` : ""}</h1>
             <p>Draft with friends. Chase the championship.</p>
           </div>
           <div className="local-header-actions">
@@ -259,11 +288,11 @@ export function LocalLeagueMode({
                   <h3>
                     {draft.completed
                       ? "Restoring your season"
-                      : "82 games for every team"}
+                      : `${draft.options?.format.gamesPerTeam ?? 82} games for every team`}
                   </h3>
                   <p>
-                    One shared schedule. The same basketball simulation as the
-                    original game.
+                    One shared schedule, using the basketball simulation with
+                    your league’s rules.
                   </p>
                 </div>
                 {busy ? (
@@ -293,6 +322,40 @@ export function LocalLeagueMode({
             </>
           ) : (
             <>
+              {offseason && (
+                <>
+                  <LocalCareerPanel draft={draft} change={change} />
+                  <ReviewTeams draft={draft} change={change} disabled={busy} />
+                </>
+              )}
+              {!offseason &&
+                draft.options &&
+                playoffs?.championId != null &&
+                year < 50 && (
+                  <section className="local-panel">
+                    <h2>Keep the franchise going.</h2>
+                    <p>
+                      The championship is decided. Begin the offseason to
+                      develop players
+                      {draft.options.mode === "generational" && year < 9
+                        ? ` and draft Generation ${year + 1}`
+                        : ""}
+                      .
+                    </p>
+                    <button
+                      type="button"
+                      className="button primary"
+                      disabled={busy}
+                      onClick={() =>
+                        change((current) =>
+                          beginLocalOffseason(current, result!, playoffs),
+                        )
+                      }
+                    >
+                      Begin offseason
+                    </button>
+                  </section>
+                )}
               <section
                 className="local-panel local-results"
                 aria-label="Friends season results"
@@ -339,7 +402,7 @@ export function LocalLeagueMode({
                             <td>
                               {(
                                 (standing.pointsFor - standing.pointsAgainst) /
-                                82
+                                (standing.wins + standing.losses || 1)
                               ).toFixed(1)}
                             </td>
                           </tr>
@@ -350,13 +413,14 @@ export function LocalLeagueMode({
                 </div>
                 <p className="stat-legend">
                   Ranked by wins, then point differential, then team ID,
-                  matching the league standings. The top 16 teams advance to the
-                  playoffs below.
+                  matching the league standings. The top{" "}
+                  {draft.options?.format.playoffTeams ?? 16} teams advance to
+                  the playoffs below.
                 </p>
               </section>
               <PlayoffPanel
                 league={league}
-                seasonSeed={localLeagueRun(draft).seasonSeed}
+                seasonSeed={localSeasonSeed(draft)}
                 playoffs={playoffs}
                 managers={draft.managers}
                 onAdvance={(mode) => void advancePlayoffs(mode)}
@@ -366,6 +430,7 @@ export function LocalLeagueMode({
               <LeaguePanel league={league} />
             </>
           )}
+          {draft?.career && <LocalCareerHistory draft={draft} />}
         </main>
         <footer className="local-footer">
           Saved in this browser separately from your solo game. Share the
@@ -374,7 +439,7 @@ export function LocalLeagueMode({
         {confirm && (
           <ConfirmDialog
             title="Start a new local league?"
-            description="This replaces this local draft, season results and playoff bracket. Your solo game and franchise stay saved."
+            description="This replaces this local draft, every career season, and playoff history. Your solo game and franchise stay saved."
             confirmLabel="Replace local league"
             onCancel={() => setConfirm(false)}
             onConfirm={() => {
