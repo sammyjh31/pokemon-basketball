@@ -17,6 +17,9 @@ test("scout, compare across filters, and confirm a local pick", async ({
   await expect(
     page.getByRole("combobox", { name: "Rank players by" }),
   ).toHaveValue("impact");
+  await expect(
+    page.getByRole("combobox", { name: "Rank for position" }),
+  ).toHaveValue("best-lineup");
   const rankedCards = page.getByRole("article", { name: /draft prospect$/ });
   await expect(rankedCards).toHaveCount(24);
   await expect(rankedCards.first()).toContainText("Rank 1");
@@ -35,6 +38,8 @@ test("scout, compare across filters, and confirm a local pick", async ({
     await page.getByRole("button", { name: /^View scouting for / }).all()
   ).slice(0, 3);
   const chosen: string[] = [];
+  const positions = new Map<string, string>();
+  const projections = new Map<string, string>();
   for (const button of names)
     chosen.push(
       (await button.getAttribute("aria-label"))!.replace(
@@ -44,6 +49,22 @@ test("scout, compare across filters, and confirm a local pick", async ({
     );
   for (const name of chosen) {
     await page.getByRole("searchbox").fill(name);
+    const card = page.getByRole("article", {
+      name: `${name} draft prospect`,
+      exact: true,
+    });
+    positions.set(
+      name,
+      (await card.getByText(/^Best lineup found:/).textContent())!.split(
+        ": ",
+      )[1],
+    );
+    projections.set(
+      name,
+      (await card.locator(".draft-impact-projected").textContent())!.split(
+        " ",
+      )[0],
+    );
     await page
       .getByRole("button", { name: `Compare ${name}`, exact: true })
       .click();
@@ -58,6 +79,25 @@ test("scout, compare across filters, and confirm a local pick", async ({
   const firstPickTable = page.getByRole("table", {
     name: "Team impact by candidate",
   });
+  await expect(
+    page.getByRole("combobox", { name: "Preview draft position" }),
+  ).toHaveValue("best-lineup");
+  for (const [index, name] of chosen.entries()) {
+    await expect(
+      firstPickTable.getByRole("columnheader", { name: new RegExp(name) }),
+    ).toContainText(`With ${name} at ${positions.get(name)}`);
+    await expect(
+      firstPickTable
+        .getByRole("row", { name: /^Balanced offense/ })
+        .getByRole("cell")
+        .nth(index + 1),
+    ).toContainText(projections.get(name)!);
+  }
+  await page
+    .getByRole("region", { name: "Compare team impact", exact: true })
+    .screenshot({
+      path: `test-results/draft-best-lineup-comparison-${info.project.name}.png`,
+    });
   await expect(firstPickTable).toContainText("First pick");
   await expect(firstPickTable).not.toContainText("vs now");
   await page
@@ -101,7 +141,7 @@ test("scout, compare across filters, and confirm a local pick", async ({
       path: `test-results/draft-compare-${info.project.name}.png`,
     });
   await page
-    .getByRole("button", { name: `Scout ${chosen[0]}`, exact: true })
+    .getByRole("button", { name: `Review ${chosen[0]} pick`, exact: true })
     .click();
   const inspector = page.getByRole("region", {
     name: "Selected prospect",
@@ -113,21 +153,27 @@ test("scout, compare across filters, and confirm a local pick", async ({
   await inspector.screenshot({
     path: `test-results/draft-scout-${info.project.name}.png`,
   });
+  await expect(
+    page.getByRole("combobox", { name: "Draft position", exact: true }),
+  ).toHaveValue("best-lineup");
   await page
-    .getByRole("combobox", { name: "Draft position", exact: true })
-    .selectOption("C");
-  await page
-    .getByRole("button", { name: `Confirm pick: ${chosen[0]}`, exact: true })
+    .getByRole("button", {
+      name: `Confirm pick & lineup: ${chosen[0]}`,
+      exact: true,
+    })
     .click();
   const after = await save();
   expect(after.picks.length).toBeGreaterThan(before.picks.length);
-  expect(after.picks[before.picks.length].slot).toBe("C");
+  expect(after.picks[before.picks.length].slot).toBe(positions.get(chosen[0]));
   await expect(
     page.getByRole("heading", { name: /On the clock/ }),
   ).toBeFocused();
   await expect(
     page.getByRole("button", { name: "Compare shortlist", exact: true }),
   ).toBeDisabled();
+  await expect(
+    page.getByRole("combobox", { name: "Rank for position" }),
+  ).toHaveValue("best-lineup");
   await page.reload();
   expect((await save()).picks).toEqual(after.picks);
   await page
@@ -323,4 +369,270 @@ test("compare team impacts and review a pick without changing the saved draft", 
   await expect(
     page.getByRole("heading", { name: "On the clock: Sam" }),
   ).toBeVisible();
+});
+
+test("reviews lineup moves and saves exactly the proposed positions", async ({
+  page,
+}, info) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/#local-league");
+  await page.evaluate(async () => {
+    const leaguePath = "/src/game/localLeague.ts",
+      formatPath = "/src/game/localFormat.ts";
+    const { createLocalLeague, pickLocalPlayer, LOCAL_LEAGUE_KEY } =
+      await import(leaguePath);
+    const { LOCAL_DEFAULT_OPTIONS } = await import(formatPath);
+    let draft = createLocalLeague(
+      Array.from({ length: 8 }, (_, teamId) => ({
+        name: `Friend ${teamId}`,
+        teamId,
+      })),
+      false,
+      42,
+      2,
+      { ...LOCAL_DEFAULT_OPTIONS, mode: "full-pool" },
+    );
+    // Last manager in round one picks again first in round two; Onix is at PG.
+    for (const id of [1, 2, 3, 4, 5, 6, 7, 95])
+      draft = pickLocalPlayer(draft, id, "PG");
+    localStorage.setItem(LOCAL_LEAGUE_KEY, JSON.stringify(draft));
+  });
+  await page.reload();
+  const readSave = () =>
+    page.evaluate(() =>
+      JSON.parse(localStorage.getItem("pokemon-basketball:local-league:v1")!),
+    );
+  const before = await readSave();
+  await page.getByRole("searchbox").fill("Alakazam");
+  const card = page.getByRole("article", {
+    name: "Alakazam draft prospect",
+    exact: true,
+  });
+  await expect(card).toContainText("Best lineup found: PG", { timeout: 15000 });
+  const score = (await card
+    .locator(".draft-impact-projected")
+    .textContent())!.split(" ")[0];
+  await page
+    .getByRole("button", { name: "Compare Alakazam", exact: true })
+    .click();
+  await page.getByRole("searchbox").fill("Rhydon");
+  await page
+    .getByRole("button", { name: "Compare Rhydon", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Compare shortlist", exact: true })
+    .click();
+  const comparison = page.getByRole("region", {
+    name: "Compare team impact",
+    exact: true,
+  });
+  const table = comparison.getByRole("table");
+  await expect(
+    table
+      .getByRole("row", { name: /^Balanced offense/ })
+      .getByRole("cell")
+      .nth(1),
+  ).toContainText(score);
+  await expect(
+    table.getByRole("row", { name: /^Lineup & moves/ }),
+  ).toContainText("PG →");
+  await comparison.screenshot({
+    path: `test-results/draft-lineup-moves-comparison-${info.project.name}.png`,
+  });
+  await page
+    .getByRole("button", { name: "Review Alakazam pick", exact: true })
+    .click();
+  const proposal = page.getByRole("region", {
+    name: "Suggested lineup changes",
+    exact: true,
+  });
+  await expect(proposal).toContainText("Onix");
+  const moves = await proposal
+    .getByRole("list", { name: "Proposed lineup" })
+    .getByRole("listitem")
+    .allTextContents();
+  const onixSlot = moves
+    .find((text) => text.includes("Onix"))!
+    .match(/^(PG|SG|SF|PF|C|B1|B2|B3)/)![1];
+  expect(onixSlot).not.toBe("PG");
+  expect(await readSave()).toEqual(before);
+  await proposal.screenshot({
+    path: `test-results/draft-lineup-moves-preview-${info.project.name}.png`,
+  });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page
+    .getByRole("button", {
+      name: "Confirm pick & lineup: Alakazam",
+      exact: true,
+    })
+    .click();
+  const after = await readSave();
+  const teamId = before.order[7];
+  expect(
+    after.picks.filter((p: { teamId: number }) => p.teamId === teamId),
+  ).toEqual([
+    { teamId, pokemonId: 95, slot: onixSlot },
+    { teamId, pokemonId: 65, slot: "PG" },
+  ]);
+  expect(
+    after.picks.filter((p: { teamId: number }) => p.teamId !== teamId),
+  ).toEqual(
+    before.picks.filter((p: { teamId: number }) => p.teamId !== teamId),
+  );
+  await page.reload();
+  expect((await readSave()).picks).toEqual(after.picks);
+  expect(errors).toEqual([]);
+});
+
+test("locks positions across ranking, comparison, confirmation and reload", async ({
+  page,
+}, info) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/#local-league");
+  await page.evaluate(async () => {
+    const leaguePath = "/src/game/localLeague.ts",
+      formatPath = "/src/game/localFormat.ts";
+    const { createLocalLeague, pickLocalPlayer, LOCAL_LEAGUE_KEY } =
+      await import(leaguePath);
+    const { LOCAL_DEFAULT_OPTIONS } = await import(formatPath);
+    let draft = createLocalLeague(
+      Array.from({ length: 8 }, (_, teamId) => ({
+        name: `Friend ${teamId}`,
+        teamId,
+      })),
+      false,
+      42,
+      2,
+      { ...LOCAL_DEFAULT_OPTIONS, mode: "full-pool" },
+    );
+    for (const id of [1, 2, 3, 4, 5, 6, 7, 95])
+      draft = pickLocalPlayer(draft, id, "PG");
+    localStorage.setItem(LOCAL_LEAGUE_KEY, JSON.stringify(draft));
+  });
+  await page.reload();
+  const save = () =>
+    page.evaluate(() =>
+      JSON.parse(localStorage.getItem("pokemon-basketball:local-league:v1")!),
+    );
+  const original = await save();
+  await page.getByRole("searchbox").fill("Alakazam");
+  const card = page.getByRole("article", {
+    name: "Alakazam draft prospect",
+    exact: true,
+  });
+  await expect(card).toContainText("Best lineup found: PG", { timeout: 15000 });
+  await page
+    .getByRole("button", { name: "View scouting for Alakazam", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Lock Onix at PG", exact: true })
+    .click();
+  await expect(
+    page.getByRole("region", { name: "Selected prospect", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Unlock Onix at PG", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(card).toBeVisible({ timeout: 15000 });
+  await expect(card).not.toContainText("Best lineup found: PG");
+  await page
+    .getByRole("region", { name: "Position locks", exact: true })
+    .screenshot({
+      path: `test-results/draft-position-locks-${info.project.name}.png`,
+    });
+  const lockedSave = await save();
+  expect(lockedSave.picks).toEqual(original.picks);
+  expect(lockedSave.positionLocks).toEqual([
+    { teamId: original.order[7], pokemonId: 95, slot: "PG" },
+  ]);
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Unlock Onix at PG", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  for (const name of ["Alakazam", "Rhydon"]) {
+    await page.getByRole("searchbox").fill(name);
+    await page
+      .getByRole("button", { name: `Compare ${name}`, exact: true })
+      .click();
+  }
+  await page
+    .getByRole("button", { name: "Compare shortlist", exact: true })
+    .click();
+  const comparison = page.getByRole("region", {
+    name: "Compare team impact",
+    exact: true,
+  });
+  await expect(
+    comparison.getByText("Locked at PG", { exact: true }),
+  ).toHaveCount(3);
+  await comparison.screenshot({
+    path: `test-results/draft-locked-comparison-${info.project.name}.png`,
+  });
+  await page
+    .getByRole("button", { name: "Review Alakazam pick", exact: true })
+    .click();
+  const proposed = page.getByRole("region", {
+    name: "Suggested lineup changes",
+    exact: true,
+  });
+  await expect(
+    proposed.getByRole("list", { name: "Proposed lineup" }),
+  ).toContainText("Locked at PG");
+  expect(await save()).toEqual(lockedSave);
+  await page
+    .getByRole("button", { name: "Unlock Onix at PG", exact: true })
+    .click();
+  await page.getByRole("searchbox").fill("Alakazam");
+  await expect(card).toContainText("Best lineup found: PG", { timeout: 15000 });
+  // Rapid updates must discard the older unlocked search.
+  await page
+    .getByRole("button", { name: "Lock Onix at PG", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Unlock Onix at PG", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Lock Onix at PG", exact: true })
+    .click();
+  await expect(card).toBeVisible({ timeout: 15000 });
+  await expect(card).not.toContainText("Best lineup found: PG");
+  await page
+    .getByRole("button", { name: "View scouting for Alakazam", exact: true })
+    .click();
+  await expect(
+    proposed.getByRole("list", { name: "Proposed lineup" }),
+  ).toContainText("Locked at PG");
+  await page
+    .getByRole("button", {
+      name: "Confirm pick & lineup: Alakazam",
+      exact: true,
+    })
+    .click();
+  const after = await save();
+  expect(
+    after.picks.find((p: { pokemonId: number }) => p.pokemonId === 95).slot,
+  ).toBe("PG");
+  expect(after.picks.at(-1).pokemonId).toBe(65);
+  expect(after.picks.at(-1).slot).not.toBe("PG");
+  expect(after.positionLocks).toEqual(lockedSave.positionLocks);
+  await expect(
+    page.getByRole("button", { name: "Unlock Onix at PG", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Lock Squirtle at PG", exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  expect((await save()).positionLocks).toEqual(lockedSave.positionLocks);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  expect(errors).toEqual([]);
 });

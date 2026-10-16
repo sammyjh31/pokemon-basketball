@@ -14,10 +14,12 @@ export function DraftTeamImpact({
   impact,
   name,
   slot,
+  optimized = false,
 }: {
   impact: DraftImpact;
   name: string;
   slot: RosterSlot;
+  optimized?: boolean;
 }) {
   const strengths = impact.metrics
     .filter((metric) => metric.tool)
@@ -35,6 +37,12 @@ export function DraftTeamImpact({
         With {name} at {slot} · {impact.beforeCount} → {impact.afterCount}{" "}
         players
       </p>
+      {optimized && (
+        <p>
+          Changes are measured against your current roster after lineup search,
+          using the same priority.
+        </p>
+      )}
       <div className="draft-impact-summary" aria-live="polite">
         {!impact.beforeCount ? (
           <p>First pick: this sets your team's starting profile.</p>
@@ -59,7 +67,7 @@ export function DraftTeamImpact({
         <thead>
           <tr>
             <th scope="col">Team area</th>
-            <th scope="col">Now</th>
+            <th scope="col">{optimized ? "Rearranged baseline" : "Now"}</th>
             <th scope="col">After</th>
             <th scope="col">Change</th>
           </tr>

@@ -1,6 +1,17 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { useState } from "react";
+import {
+  fireEvent,
+  render,
+  screen,
+  within,
+  waitFor,
+} from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { createLocalLeague, type LocalLeague } from "../game/localLeague";
+import {
+  createLocalLeague,
+  updateLocalDraftLocks,
+  type LocalLeague,
+} from "../game/localLeague";
 import { LOCAL_DEFAULT_OPTIONS } from "../game/localFormat";
 import { LocalLeagueDraft } from "./LocalLeagueDraft";
 
@@ -23,7 +34,60 @@ function search(value: string) {
   fireEvent.change(screen.getByRole("searchbox"), { target: { value } });
 }
 
+function useBestOpen() {
+  fireEvent.change(
+    screen.getByRole("combobox", { name: "Rank for position" }),
+    { target: { value: "best-open" } },
+  );
+}
+
 describe("local draft scouting board", () => {
+  it("supports each prospect's best open position and preserves it through comparison and confirmation", () => {
+    const state = draft();
+    const before = JSON.stringify(state);
+    const onPick = vi.fn();
+    render(<LocalLeagueDraft draft={state} onPick={onPick} />);
+    useBestOpen();
+    expect(
+      screen.getByRole("combobox", { name: "Rank for position" }),
+    ).toHaveValue("best-open");
+    for (const [name, position] of [
+      ["Alakazam", "PG"],
+      ["Onix", "C"],
+    ]) {
+      search(name);
+      expect(
+        screen.getByRole("article", { name: `${name} draft prospect` }),
+      ).toHaveTextContent(`Best open position: ${position}`);
+      fireEvent.click(screen.getByRole("button", { name: `Compare ${name}` }));
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Compare shortlist" }));
+    const comparison = screen.getByRole("region", {
+      name: "Compare team impact",
+    });
+    expect(
+      within(comparison).getByRole("combobox", {
+        name: "Preview draft position",
+      }),
+    ).toHaveValue("best-open");
+    expect(
+      within(comparison).getByRole("columnheader", { name: /Alakazam/ }),
+    ).toHaveTextContent("With Alakazam at PG");
+    expect(
+      within(comparison).getByRole("columnheader", { name: /Onix/ }),
+    ).toHaveTextContent("With Onix at C");
+    fireEvent.click(
+      within(comparison).getByRole("button", { name: "Review Onix pick" }),
+    );
+    expect(
+      screen.getByRole("combobox", { name: "Draft position" }),
+    ).toHaveValue("C");
+    expect(JSON.stringify(state)).toBe(before);
+    expect(onPick).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm pick: Onix" }));
+    expect(onPick).toHaveBeenCalledExactlyOnceWith(95, "C");
+  });
+
   it("ranks the whole pool by team impact and shares the criteria with comparison and scouting", () => {
     const state = draft();
     state.picks = [
@@ -35,6 +99,7 @@ describe("local draft scouting board", () => {
     const before = JSON.stringify(state);
     const onPick = vi.fn();
     render(<LocalLeagueDraft draft={state} onPick={onPick} />);
+    useBestOpen();
     expect(
       screen.getByRole("combobox", { name: "Rank players by" }),
     ).toHaveValue("impact");
@@ -126,6 +191,7 @@ describe("local draft scouting board", () => {
     const saved = JSON.stringify(state);
     const onPick = vi.fn();
     render(<LocalLeagueDraft draft={state} onPick={onPick} />);
+    useBestOpen();
     for (const name of ["Onix", "Rhydon", "Pikachu"]) {
       search(name);
       fireEvent.click(screen.getByRole("button", { name: `Compare ${name}` }));
@@ -144,6 +210,10 @@ describe("local draft scouting board", () => {
       name: "Team impact by candidate",
     });
     expect(within(table).getAllByRole("columnheader")).toHaveLength(5);
+    const headers = within(table).getAllByRole("columnheader");
+    ["Onix", "Rhydon", "Pikachu"].forEach((name, i) =>
+      expect(headers[i + 2]).toHaveTextContent(name),
+    );
     const offense = within(table).getByRole("row", {
       name: /Overall offense/,
     }).textContent;
@@ -199,6 +269,7 @@ describe("local draft scouting board", () => {
     state.order = [2, 3, 1, 0, 4, 5, 6, 7];
     const onPick = vi.fn();
     render(<LocalLeagueDraft draft={state} onPick={onPick} />);
+    useBestOpen();
     search("Onix");
     fireEvent.click(
       screen.getByRole("button", { name: "View scouting for Onix" }),
@@ -230,6 +301,7 @@ describe("local draft scouting board", () => {
   it("keeps a comparison shortlist through searches without drafting anyone", () => {
     const onPick = vi.fn();
     render(<LocalLeagueDraft draft={draft()} onPick={onPick} />);
+    useBestOpen();
     for (const name of ["Pikachu", "Snorlax", "Charizard"]) {
       search(name);
       fireEvent.click(screen.getByRole("button", { name: `Compare ${name}` }));
@@ -292,6 +364,7 @@ describe("local draft scouting board", () => {
     // Pick five in the first round belongs to Sam in this controlled fixture.
     state.order = [4, 1, 2, 3, 0, 5, 6, 7];
     render(<LocalLeagueDraft draft={state} onPick={() => {}} />);
+    useBestOpen();
     fireEvent.change(
       screen.getByRole("combobox", { name: "Rank players by" }),
       {
@@ -326,3 +399,129 @@ describe("local draft scouting board", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+it("defaults to lineup moves and carries the same proposal from rank through comparison to confirmation", async () => {
+  const state = draft();
+  state.picks = [{ teamId: 0, pokemonId: 95, slot: "PG" }];
+  state.order = [1, 0, 2, 3, 4, 5, 6, 7];
+  const saved = JSON.stringify(state);
+  const onPick = vi.fn();
+  render(<LocalLeagueDraft draft={state} onPick={onPick} />);
+  expect(
+    screen.getByRole("combobox", { name: "Rank for position" }),
+  ).toHaveValue("best-lineup");
+  search("Alakazam");
+  const card = await screen.findByRole(
+    "article",
+    { name: "Alakazam draft prospect" },
+    { timeout: 10000 },
+  );
+  expect(card).toHaveTextContent("Best lineup found: PG");
+  fireEvent.click(screen.getByRole("button", { name: "Compare Alakazam" }));
+  search("Rhydon");
+  fireEvent.click(screen.getByRole("button", { name: "Compare Rhydon" }));
+  fireEvent.click(screen.getByRole("button", { name: "Compare shortlist" }));
+  const table = screen.getByRole("table", { name: "Team impact by candidate" });
+  expect(
+    within(table).getByRole("columnheader", { name: /Alakazam/ }),
+  ).toHaveTextContent("With Alakazam at PG");
+  expect(
+    within(table).getByRole("row", { name: /Lineup & moves/ }),
+  ).toHaveTextContent("PG →");
+  fireEvent.click(screen.getByRole("button", { name: "Review Alakazam pick" }));
+  expect(
+    screen.getByRole("region", { name: "Suggested lineup changes" }),
+  ).toHaveTextContent("Onix");
+  expect(JSON.stringify(state)).toBe(saved);
+  expect(onPick).not.toHaveBeenCalled();
+  fireEvent.click(
+    screen.getByRole("button", { name: "Confirm pick & lineup: Alakazam" }),
+  );
+  expect(onPick).toHaveBeenCalledOnce();
+  const [id, slot, lineup] = onPick.mock.calls[0];
+  expect(id).toBe(65);
+  expect(slot).toBe("PG");
+  expect(lineup.PG).toBe(65);
+  expect(
+    Object.values(lineup)
+      .filter((id) => id !== null)
+      .sort(),
+  ).toEqual([65, 95]);
+  // A priority change invalidates the old confirmation immediately.
+  fireEvent.change(screen.getByRole("combobox", { name: "Ranking priority" }), {
+    target: { value: "rebounding" },
+  });
+  expect(
+    screen.queryByRole("button", { name: "Confirm pick & lineup: Alakazam" }),
+  ).toBeNull();
+  await waitFor(
+    () =>
+      expect(
+        screen.getByRole("article", { name: "Rhydon draft prospect" }),
+      ).toHaveTextContent("Rebounding"),
+    { timeout: 10000 },
+  );
+}, 20000);
+
+it("recalculates locked lineups and clears stale previews without losing the shortlist", async () => {
+  const initial = draft();
+  initial.picks = [{ teamId: 0, pokemonId: 95, slot: "PG" }];
+  initial.order = [1, 0, 2, 3, 4, 5, 6, 7];
+  const onPick = vi.fn();
+  function Host() {
+    const [state, setState] = useState(initial);
+    return (
+      <LocalLeagueDraft
+        draft={state}
+        onPick={onPick}
+        onLocksChange={(slots) =>
+          setState((current) => updateLocalDraftLocks(current, slots))
+        }
+      />
+    );
+  }
+  render(<Host />);
+  search("Alakazam");
+  await screen.findByRole(
+    "article",
+    { name: "Alakazam draft prospect" },
+    { timeout: 10000 },
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Compare Alakazam" }));
+  search("Rhydon");
+  fireEvent.click(screen.getByRole("button", { name: "Compare Rhydon" }));
+  fireEvent.click(screen.getByRole("button", { name: "Compare shortlist" }));
+  fireEvent.click(screen.getByRole("button", { name: "Review Alakazam pick" }));
+  expect(
+    screen.getByRole("region", { name: "Suggested lineup changes" }),
+  ).toHaveTextContent("PG →");
+  fireEvent.click(screen.getByRole("button", { name: "Lock Onix at PG" }));
+  expect(
+    screen.queryByRole("button", { name: "Confirm pick & lineup: Alakazam" }),
+  ).toBeNull();
+  expect(
+    screen.getByRole("button", { name: "Unlock Onix at PG" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  fireEvent.click(screen.getByRole("button", { name: "Compare shortlist" }));
+  const table = await screen.findByRole(
+    "table",
+    { name: "Team impact by candidate" },
+    { timeout: 10000 },
+  );
+  const lineups = within(table).getByRole("row", { name: /Lineup & moves/ });
+  expect(within(lineups).getAllByText("Locked at PG")).toHaveLength(3);
+  fireEvent.click(screen.getByRole("button", { name: "Review Alakazam pick" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Confirm pick & lineup: Alakazam" }),
+  );
+  expect(onPick.mock.calls[0][2].PG).toBe(95);
+  expect(onPick.mock.calls[0][1]).not.toBe("PG");
+  fireEvent.click(screen.getByRole("button", { name: "Unlock Onix at PG" }));
+  search("Alakazam");
+  const card = await screen.findByRole(
+    "article",
+    { name: "Alakazam draft prospect" },
+    { timeout: 10000 },
+  );
+  expect(card).toHaveTextContent("Best lineup found: PG");
+}, 20000);

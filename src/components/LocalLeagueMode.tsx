@@ -8,6 +8,7 @@ import {
   rankLocalManagers,
   swapLocalSlots,
   updateLocalCoaching,
+  updateLocalDraftLocks,
   type LocalLeague,
 } from "../game/localLeague";
 import {
@@ -273,8 +274,11 @@ export function LocalLeagueMode({
             <LocalLeagueDraft
               key={draft.picks.length}
               draft={draft}
-              onPick={(id, slot) =>
-                change((current) => pickLocalPlayer(current, id, slot))
+              onLocksChange={(slots) =>
+                change((current) => updateLocalDraftLocks(current, slots))
+              }
+              onPick={(id, slot, lineup) =>
+                change((current) => pickLocalPlayer(current, id, slot, lineup))
               }
             />
           ) : !league ? (

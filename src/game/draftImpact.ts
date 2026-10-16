@@ -1,5 +1,5 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
-import { attributes, rotationMinutes, teamRatings } from "./ratings";
+import { teamRatingProfile } from "./ratings";
 import {
   ROSTER_SLOTS,
   type Roster,
@@ -30,6 +30,7 @@ export interface DraftImpact {
   metrics: DraftImpactMetric[];
 }
 export type DraftImpactFocus = "balance" | DraftImpactMetric["key"];
+export type DraftImpactPosition = RosterSlot | "best-open" | "best-lineup";
 export const DRAFT_IMPACT_PRIORITIES = [
   { key: "balance", label: "Balanced offense + defense" },
   ...IMPACT_AREAS,
@@ -39,11 +40,14 @@ export interface DraftComparisonMetric extends Omit<DraftImpactMetric, "key"> {
 }
 export interface DraftImpactProjection {
   pokemonId: number;
+  slot: RosterSlot;
   impact: DraftImpact;
   metrics: DraftComparisonMetric[];
+  lineup?: { before: Roster; after: Roster };
 }
 export interface RankedDraftImpact {
   pokemonId: number;
+  slot: RosterSlot;
   metric: DraftComparisonMetric;
   rank: number;
   tied: boolean;
@@ -89,21 +93,12 @@ export function draftImpactLeaders(
     .map((score) => score.id);
 }
 
-function rosterProfile(
+export function draftRosterProfile(
   roster: Roster,
   tactic: Tactic,
   rotation: RotationStyle,
 ) {
-  const ratings = teamRatings(roster, tactic, rotation);
-  const minutes = rotationMinutes(roster, rotation);
-  const total = Object.values(minutes).reduce((sum, value) => sum + value, 0);
-  // Rebounding uses the same attributes and expected minutes as team defense.
-  const rebounding = total
-    ? ROSTER_SLOTS.reduce((sum, slot) => {
-        const mon = POKEMON_BY_ID.get(roster[slot] ?? -1);
-        return sum + (mon ? attributes(mon).rebounding * minutes[slot] : 0);
-      }, 0) / total
-    : 0;
+  const { ratings, rebounding } = teamRatingProfile(roster, tactic, rotation);
   return {
     offense: ratings.offense,
     defense: ratings.defense,
@@ -111,6 +106,27 @@ function rosterProfile(
     creation: ratings.creation!,
     rimProtection: ratings.rimProtection!,
     rebounding,
+  };
+}
+
+export function draftImpactFromProfiles(
+  before: ReturnType<typeof draftRosterProfile>,
+  after: ReturnType<typeof draftRosterProfile>,
+  beforeCount: number,
+): DraftImpact {
+  return {
+    beforeCount,
+    afterCount: beforeCount + 1,
+    metrics: IMPACT_AREAS.map((area) => {
+      const previous = beforeCount ? rounded(before[area.key]) : null;
+      const next = rounded(after[area.key]);
+      return {
+        ...area,
+        before: previous,
+        after: next,
+        delta: previous === null ? null : rounded(next - previous),
+      };
+    }),
   };
 }
 
@@ -126,28 +142,15 @@ function draftImpactProjector(
   const beforeCount = Object.values(roster).filter(
     (id) => id !== null && POKEMON_BY_ID.has(id),
   ).length;
-  const before = rosterProfile(roster, tactic, rotation);
+  const before = draftRosterProfile(roster, tactic, rotation);
   return (pokemonId) => {
     if (owned.has(pokemonId) || !POKEMON_BY_ID.has(pokemonId)) return null;
-    const after = rosterProfile(
+    const after = draftRosterProfile(
       { ...roster, [slot]: pokemonId },
       tactic,
       rotation,
     );
-    return {
-      beforeCount,
-      afterCount: beforeCount + 1,
-      metrics: IMPACT_AREAS.map((area) => {
-        const previous = beforeCount ? rounded(before[area.key]) : null;
-        const next = rounded(after[area.key]);
-        return {
-          ...area,
-          before: previous,
-          after: next,
-          delta: previous === null ? null : rounded(next - previous),
-        };
-      }),
-    };
+    return draftImpactFromProfiles(before, after, beforeCount);
   };
 }
 
@@ -165,17 +168,52 @@ export function projectDraftImpact(
 export function projectDraftPool(
   pokemonIds: number[],
   roster: Roster,
-  slot: RosterSlot,
+  position: Exclude<DraftImpactPosition, "best-lineup">,
   tactic: Tactic,
   rotation: RotationStyle,
 ): DraftImpactProjection[] {
-  const project = draftImpactProjector(roster, slot, tactic, rotation);
+  const slots =
+    position === "best-open"
+      ? ROSTER_SLOTS.filter((slot) => roster[slot] === null)
+      : [position];
+  const projectors = slots.map((slot) => ({
+    slot,
+    project: draftImpactProjector(roster, slot, tactic, rotation),
+  }));
   return [...new Set(pokemonIds)].flatMap((pokemonId) => {
-    const impact = project(pokemonId);
-    return impact
-      ? [{ pokemonId, impact, metrics: draftComparisonMetrics(impact) }]
-      : [];
+    return projectors.flatMap(({ slot, project }) => {
+      const impact = project(pokemonId);
+      return impact
+        ? [{ pokemonId, slot, impact, metrics: draftComparisonMetrics(impact) }]
+        : [];
+    });
   });
+}
+
+/** One option per species, optimized for the chosen team priority. */
+export function bestDraftImpacts(
+  projections: DraftImpactProjection[],
+  focus: DraftImpactFocus,
+): DraftImpactProjection[] {
+  const best = new Map<number, DraftImpactProjection>();
+  const value = (p: DraftImpactProjection, key: DraftImpactFocus) =>
+    p.metrics.find((m) => m.key === key)!.after;
+  for (const candidate of projections) {
+    const previous = best.get(candidate.pokemonId);
+    // A displayed tie favors balanced team strength, then starters/roster order.
+    if (
+      !previous ||
+      value(candidate, focus) > value(previous, focus) ||
+      (value(candidate, focus) === value(previous, focus) &&
+        (value(candidate, "balance") > value(previous, "balance") ||
+          (value(candidate, "balance") === value(previous, "balance") &&
+            ROSTER_SLOTS.indexOf(candidate.slot) <
+              ROSTER_SLOTS.indexOf(previous.slot))))
+    ) {
+      best.set(candidate.pokemonId, candidate);
+    }
+  }
+  return [...best.values()];
 }
 
 /** The common baseline makes projected-rating order equal improvement order. */
@@ -183,9 +221,10 @@ export function rankDraftImpacts(
   projections: DraftImpactProjection[],
   focus: DraftImpactFocus,
 ): RankedDraftImpact[] {
-  const scores = projections
+  const scores = bestDraftImpacts(projections, focus)
     .map((p) => ({
       pokemonId: p.pokemonId,
+      slot: p.slot,
       metric: p.metrics.find((metric) => metric.key === focus)!,
     }))
     .sort(

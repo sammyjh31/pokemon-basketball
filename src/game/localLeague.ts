@@ -17,6 +17,7 @@ import {
   emptyRoster,
   type LeagueResult,
   type LeagueTeam,
+  type Roster,
   type RosterSlot,
   type Run,
 } from "./types";
@@ -53,6 +54,8 @@ export interface LocalLeague {
   managers: LocalManager[];
   order: number[];
   picks: LocalPick[];
+  /** Team-specific position constraints for the initial draft's lineup search. */
+  positionLocks?: LocalPick[];
   coaching: LocalCoaching[];
   completed: boolean;
   /** Deterministic postseason prefix; omitted by saves made before playoffs. */
@@ -216,9 +219,71 @@ export function pickLocalPlayer(
   draft: LocalLeague,
   pokemonId: number,
   slot: RosterSlot,
+  lineup?: Roster,
 ): LocalLeague {
-  if (!currentLocalTurn(draft)?.manager) error("Wait for a friend's turn.");
+  const turn = currentLocalTurn(draft);
+  if (!turn?.manager) error("Wait for a friend's turn.");
+  if (lineup) {
+    if (
+      draft.positionLocks?.some(
+        (p) => p.teamId === turn!.teamId && lineup[p.slot] !== p.pokemonId,
+      )
+    )
+      error("Unlock a player before moving them out of their locked position.");
+    const owned = draft.picks.filter((p) => p.teamId === turn!.teamId);
+    const expected = new Set([...owned.map((p) => p.pokemonId), pokemonId]);
+    const ids = Object.values(lineup).filter((id) => id !== null);
+    if (
+      Object.keys(lineup).length !== ROSTER_SLOTS.length ||
+      ROSTER_SLOTS.some((s) => !Object.hasOwn(lineup, s)) ||
+      lineup[slot] !== pokemonId ||
+      ids.length !== owned.length + 1 ||
+      new Set(ids).size !== ids.length ||
+      ids.some((id) => !expected.has(id))
+    )
+      error(
+        "The proposed lineup must contain exactly your current players and this pick.",
+      );
+    const rearranged = {
+      ...draft,
+      picks: draft.picks.map((p) =>
+        p.teamId === turn!.teamId
+          ? { ...p, slot: ROSTER_SLOTS.find((s) => lineup[s] === p.pokemonId)! }
+          : p,
+      ),
+    };
+    return appendPick(rearranged, pokemonId, slot);
+  }
   return appendPick(draft, pokemonId, slot);
+}
+
+function withDraftLocks(draft: LocalLeague, locks: LocalPick[]): LocalLeague {
+  const { positionLocks: _previous, ...rest } = draft;
+  return locks.length ? { ...rest, positionLocks: locks } : rest;
+}
+
+/** Update only the manager on the clock; the save carries locks between turns. */
+export function updateLocalDraftLocks(
+  draft: LocalLeague,
+  slots: readonly RosterSlot[],
+): LocalLeague {
+  const turn = currentLocalTurn(draft);
+  if (!turn?.manager || draft.completed || draft.career)
+    return error(
+      "Position locks can only be changed on a friend's draft turn.",
+    );
+  const picks = draft.picks.filter((p) => p.teamId === turn.teamId);
+  if (
+    slots.some(
+      (slot) =>
+        !ROSTER_SLOTS.includes(slot) || !picks.some((p) => p.slot === slot),
+    )
+  )
+    error("Only your drafted players can be locked in position.");
+  return withDraftLocks(draft, [
+    ...(draft.positionLocks ?? []).filter((p) => p.teamId !== turn.teamId),
+    ...picks.filter((p) => slots.includes(p.slot)).map((p) => ({ ...p })),
+  ]);
 }
 
 export function advanceLocalCpu(source: LocalLeague): LocalLeague {
@@ -372,6 +437,14 @@ export function swapLocalSlots(
     );
     return { ...draft, career: { ...draft.career, teams } };
   }
+  // Explicit manual moves in team management replace the old draft preference.
+  if (first !== second && draft.positionLocks)
+    draft = withDraftLocks(
+      draft,
+      draft.positionLocks.filter(
+        (p) => p.teamId !== teamId || (p.slot !== first && p.slot !== second),
+      ),
+    );
   return {
     ...draft,
     picks: draft.picks.map((p) =>
@@ -488,6 +561,35 @@ export function parseLocalLeague(raw: string): LocalLeague {
   for (const pick of value.picks) {
     if (!pick || currentLocalTurn(draft)?.teamId !== pick.teamId) error();
     draft = appendPick(draft, pick.pokemonId, pick.slot);
+  }
+  if (value.positionLocks !== undefined) {
+    if (
+      !Array.isArray(value.positionLocks) ||
+      value.positionLocks.length > draft.picks.length
+    )
+      error();
+    const seen = new Set<number>();
+    const locks = value.positionLocks.map((lock: LocalPick) => {
+      if (
+        !lock ||
+        seen.has(lock.pokemonId) ||
+        !draft.managers.some((m) => m.teamId === lock.teamId) ||
+        !draft.picks.some(
+          (p) =>
+            p.teamId === lock.teamId &&
+            p.pokemonId === lock.pokemonId &&
+            p.slot === lock.slot,
+        )
+      )
+        error();
+      seen.add(lock.pokemonId);
+      return {
+        teamId: lock.teamId,
+        pokemonId: lock.pokemonId,
+        slot: lock.slot,
+      };
+    });
+    draft = withDraftLocks(draft, locks);
   }
   if (value.completed && draft.picks.length !== localDraftSize(draft)) error();
   if (

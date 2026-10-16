@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import {
-  draftComparisonMetrics,
+  bestDraftImpacts,
   draftImpactLeaders,
-  projectDraftImpact,
+  type DraftImpactProjection,
   type DraftImpactFocus,
+  type DraftImpactPosition,
 } from "../game/draftImpact";
 import {
   ROSTER_SLOTS,
@@ -11,57 +12,45 @@ import {
   type Pokemon,
   type Roster,
   type RosterSlot,
-  type RotationStyle,
-  type Tactic,
 } from "../game/types";
+import { DraftLineupPreview } from "./DraftLineupPreview";
 import { Portrait } from "./Portrait";
 import { draftImpactChangeLabel as changeLabel } from "./draftImpactFormat";
 
 export function DraftImpactComparison({
   mons,
   roster,
-  tactic,
-  rotation,
+  projections,
+  pending,
   slot,
   focus,
   onSlot,
   onFocus,
   onReview,
+  lockedSlots = [],
 }: {
   mons: Pokemon[];
   roster: Roster;
-  tactic: Tactic;
-  rotation: RotationStyle;
-  slot: RosterSlot;
+  projections: DraftImpactProjection[];
+  pending: boolean;
+  slot: DraftImpactPosition;
   focus: DraftImpactFocus;
-  onSlot: (slot: RosterSlot) => void;
+  onSlot: (slot: DraftImpactPosition) => void;
   onFocus: (focus: DraftImpactFocus) => void;
   onReview: (id: number, slot: RosterSlot) => void;
+  lockedSlots?: readonly RosterSlot[];
 }) {
   const vacancies = ROSTER_SLOTS.filter((slot) => roster[slot] === null);
-  const prospects = useMemo(
-    () =>
-      mons.flatMap((mon) => {
-        const impact = projectDraftImpact(
-          roster,
-          mon.id,
-          slot,
-          tactic,
-          rotation,
-        );
-        return impact
-          ? [
-              {
-                mon,
-                pokemonId: mon.id,
-                impact,
-                metrics: draftComparisonMetrics(impact),
-              },
-            ]
-          : [];
-      }),
-    [mons, roster, slot, tactic, rotation],
-  );
+  const prospects = useMemo(() => {
+    const best = new Map(
+      bestDraftImpacts(projections, focus).map((p) => [p.pokemonId, p]),
+    );
+    return mons.flatMap((mon) => {
+      const projection = best.get(mon.id);
+      return projection ? [{ ...projection, mon }] : [];
+    });
+  }, [projections, focus, mons]);
+  if (pending) return <p role="status">Finding lineups for this priority…</p>;
   if (prospects.length < 2) return null;
   const rows = prospects[0].metrics;
   const leaders = draftImpactLeaders(prospects, focus);
@@ -75,21 +64,27 @@ export function DraftImpactComparison({
   const currentCount = prospects[0].impact.beforeCount;
   return (
     <section
-      className="draft-comparison draft-impact-comparison"
+      className={`draft-comparison draft-impact-comparison ${slot === "best-lineup" ? "has-lineup-moves" : ""}`}
       aria-label="Compare team impact"
     >
       <h4>Who helps your team most?</h4>
       <p>
         Each option adds one player to the same roster · {currentCount} drafted
         players · same coaching and rotation.
+        {slot === "best-lineup" &&
+          " Unlocked players can change positions, including starter/bench swaps. Changes compare against the same current-roster baseline with your locks applied."}
+        {slot === "best-open" &&
+          " Each player uses their own best open position for the selected priority."}
       </p>
       <div className="draft-impact-compare-controls">
         <label>
           Preview draft position
           <select
             value={slot}
-            onChange={(e) => onSlot(e.target.value as RosterSlot)}
+            onChange={(e) => onSlot(e.target.value as DraftImpactPosition)}
           >
+            <option value="best-lineup">Best lineup found · allow moves</option>
+            <option value="best-open">Best open position · automatic</option>
             {vacancies.map((s) => (
               <option key={s} value={s}>
                 {s} · {SLOT_NAMES[s]}
@@ -113,13 +108,18 @@ export function DraftImpactComparison({
       </div>
       <div className="draft-impact-leader" role="status">
         <span className="eyebrow">
-          {leaders.length > 1 ? "JOINT LEADERS" : "SHORTLIST LEADER"} · {slot}
+          {leaders.length > 1 ? "JOINT LEADERS" : "SHORTLIST LEADER"} ·{" "}
+          {slot === "best-lineup"
+            ? "BEST LINEUPS FOUND"
+            : slot === "best-open"
+              ? "BEST OPEN POSITIONS"
+              : slot}
         </span>
         <strong>{leaderNames}</strong>
         <p>
           {leadingMetric.label}: {leadingMetric.after.toFixed(1)} projected
           {leadingMetric.delta !== null
-            ? ` (${changeLabel(leadingMetric.delta)} vs now)`
+            ? ` (${changeLabel(leadingMetric.delta)} vs ${slot === "best-lineup" ? "rearranged baseline" : "now"})`
             : " · starting profile"}
           .
           {leadingMetric.delta !== null && leadingMetric.delta <= 0
@@ -141,18 +141,18 @@ export function DraftImpactComparison({
             <tr>
               <th scope="col">Team area</th>
               <th scope="col" className="draft-impact-now">
-                Now
+                {slot === "best-lineup" ? "Rearranged baseline" : "Now"}
               </th>
-              {prospects.map(({ mon }) => (
+              {prospects.map(({ mon, slot: chosenSlot }) => (
                 <th scope="col" key={mon.id}>
                   <Portrait mon={mon} />
                   <strong>{mon.name}</strong>
                   <small>
-                    With {mon.name} at {slot}
+                    With {mon.name} at {chosenSlot}
                   </small>
                   <button
                     className="text-button"
-                    onClick={() => onReview(mon.id, slot)}
+                    onClick={() => onReview(mon.id, chosenSlot)}
                   >
                     Review {mon.name} pick
                   </button>
@@ -161,6 +161,28 @@ export function DraftImpactComparison({
             </tr>
           </thead>
           <tbody>
+            {slot === "best-lineup" && (
+              <tr>
+                <th scope="row">Lineup & moves</th>
+                <td>
+                  <DraftLineupPreview
+                    current={roster}
+                    proposed={prospects[0].lineup!.before}
+                    lockedSlots={lockedSlots}
+                  />
+                </td>
+                {prospects.map((p) => (
+                  <td key={p.pokemonId}>
+                    <DraftLineupPreview
+                      current={roster}
+                      proposed={p.lineup!.after}
+                      lockedSlots={lockedSlots}
+                      pokemonId={p.pokemonId}
+                    />
+                  </td>
+                ))}
+              </tr>
+            )}
             {rows.map((row) => {
               const rowLeaders = draftImpactLeaders(prospects, row.key);
               return (
@@ -193,7 +215,10 @@ export function DraftImpactComparison({
                           className={`draft-impact-delta ${(metric.delta ?? 0) > 0 ? "gain" : (metric.delta ?? 0) < 0 ? "loss" : ""}`}
                         >
                           {changeLabel(metric.delta)}
-                          {metric.delta !== null && " vs now"}
+                          {metric.delta !== null &&
+                            (slot === "best-lineup"
+                              ? " vs baseline"
+                              : " vs now")}
                         </span>
                         {leading && (
                           <small className="draft-impact-best">
@@ -247,6 +272,10 @@ export function DraftImpactComparison({
           another priority to rank by that area alone. Gold marks the highest
           projected rating in each row; ties use the displayed one-decimal
           ratings. This compares your shortlist, not the full draft pool.
+          {slot === "best-lineup" &&
+            " Every column uses the exact lineup from the pool ranking. A bounded search checks multiple starting arrangements and swaps, using the actual engine ratings. It finds strong lineups without guaranteeing the global maximum."}
+          {slot === "best-open" &&
+            " Each player's position is selected for your chosen priority; all rows describe that one lineup. Position ties favor balanced offense and defense, then starter slots and roster order."}
         </p>
         <p>
           Ratings use your drafted roster, position, coaching and expected

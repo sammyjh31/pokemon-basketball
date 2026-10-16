@@ -13,6 +13,7 @@ import {
   POSITIONS,
   ROSTER_SLOTS,
   SLOT_NAMES,
+  type Roster,
   type RosterSlot,
   type Position,
   TACTIC_LABELS,
@@ -32,20 +33,28 @@ import { DepthScouting } from "./DepthScouting";
 import { DraftTeamImpact } from "./DraftTeamImpact";
 import {
   DRAFT_IMPACT_PRIORITIES,
+  bestDraftImpacts,
   projectDraftImpact,
   projectDraftPool,
   rankDraftImpacts,
   type DraftImpactFocus,
+  type DraftImpactPosition,
 } from "../game/draftImpact";
 import { DraftImpactComparison } from "./DraftImpactComparison";
 import { draftImpactChangeLabel } from "./draftImpactFormat";
 
+import { useDraftLineup } from "./useDraftLineup";
+import { DraftLineupPreview } from "./DraftLineupPreview";
+import { DraftPositionLocks } from "./DraftPositionLocks";
+
 export function LocalLeagueDraft({
   draft,
   onPick,
+  onLocksChange,
 }: {
   draft: LocalLeague;
-  onPick: (id: number, slot: RosterSlot) => void;
+  onPick: (id: number, slot: RosterSlot, lineup?: Roster) => void;
+  onLocksChange?: (slots: RosterSlot[]) => void;
 }) {
   const turn = currentLocalTurn(draft)!;
   const turnHeading = useRef<HTMLHeadingElement>(null);
@@ -57,10 +66,12 @@ export function LocalLeagueDraft({
   const [sort, setSort] = useState<"impact" | "fit" | "best" | Position>(
     "impact",
   );
-  const [rankingSlot, setRankingSlot] = useState<RosterSlot>("PG");
+  const [rankingSlot, setRankingSlot] =
+    useState<DraftImpactPosition>("best-lineup");
   const [impactFocus, setImpactFocus] = useState<DraftImpactFocus>("balance");
   const [selected, setSelected] = useState<number | null>(null);
-  const [slot, setSlot] = useState<RosterSlot>("PG");
+  const [manualSlot, setSlot] = useState<RosterSlot>("PG");
+  const [useLineup, setUseLineup] = useState(false);
   const [limit, setLimit] = useState(24);
   const [compared, setCompared] = useState<number[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
@@ -82,9 +93,18 @@ export function LocalLeagueDraft({
   const vacancies = ROSTER_SLOTS.filter(
     (s) => !picks.some((p) => p.slot === s),
   );
-  const impactSlot = vacancies.includes(rankingSlot)
-    ? rankingSlot
-    : vacancies[0];
+  const impactSlot =
+    rankingSlot === "best-lineup" ||
+    rankingSlot === "best-open" ||
+    vacancies.includes(rankingSlot)
+      ? rankingSlot
+      : "best-open";
+  const impactSlotLabel =
+    impactSlot === "best-lineup"
+      ? "the best lineup found"
+      : impactSlot === "best-open"
+        ? "each Pokémon's best open position"
+        : impactSlot;
   const pool = useMemo(() => {
     const taken = new Set(draft.picks.map((p) => p.pokemonId));
     return localLeaguePool(draft).filter(
@@ -104,6 +124,18 @@ export function LocalLeagueDraft({
       });
     return roster;
   }, [draft.picks, turn.teamId]);
+  const lockedSlots = useMemo(
+    () =>
+      ROSTER_SLOTS.filter((slot) =>
+        draft.positionLocks?.some(
+          (p) =>
+            p.teamId === turn.teamId &&
+            p.slot === slot &&
+            p.pokemonId === roster[slot],
+        ),
+      ),
+    [draft.positionLocks, roster, turn.teamId],
+  );
   const advice = useMemo(
     () => recommendRosterPicks(pool, roster, tactic, pool.length),
     [pool, roster, tactic],
@@ -113,17 +145,49 @@ export function LocalLeagueDraft({
     [advice],
   );
   const rotation = draft.coaching[turn.teamId].rotation;
-  const poolProjections = useMemo(
+  const lineupJob = useMemo(
     () =>
-      projectDraftPool(
-        pool.map((p) => p.id),
-        roster,
-        impactSlot,
-        tactic,
-        rotation,
-      ),
+      impactSlot === "best-lineup"
+        ? {
+            ids: pool.map((p) => p.id),
+            roster,
+            tactic,
+            rotation,
+            focus: impactFocus,
+            lockedSlots,
+          }
+        : null,
+    [pool, roster, impactSlot, tactic, rotation, impactFocus, lockedSlots],
+  );
+  const lineupSearch = useDraftLineup(lineupJob);
+  const fixedProjections = useMemo(
+    () =>
+      impactSlot === "best-lineup"
+        ? []
+        : projectDraftPool(
+            pool.map((p) => p.id),
+            roster,
+            impactSlot,
+            tactic,
+            rotation,
+          ),
     [pool, roster, impactSlot, tactic, rotation],
   );
+  const poolProjections =
+    impactSlot === "best-lineup" ? lineupSearch.projections : fixedProjections;
+  const projectionById = useMemo(
+    () =>
+      new Map(
+        bestDraftImpacts(poolProjections, impactFocus).map((p) => [
+          p.pokemonId,
+          p,
+        ]),
+      ),
+    [poolProjections, impactFocus],
+  );
+  useEffect(() => {
+    setSelected(null);
+  }, [impactSlot, impactFocus, lockedSlots]);
   const impactRanking = useMemo(
     () => rankDraftImpacts(poolProjections, impactFocus),
     [poolProjections, impactFocus],
@@ -151,8 +215,8 @@ export function LocalLeagueDraft({
         .sort(
           (a, b) =>
             (sort === "impact"
-              ? impactById.get(b.id)!.metric.after -
-                impactById.get(a.id)!.metric.after
+              ? (impactById.get(b.id)?.metric.after ?? 0) -
+                (impactById.get(a.id)?.metric.after ?? 0)
               : sort === "fit"
                 ? adviceById.get(b.id)!.score - adviceById.get(a.id)!.score
                 : positionRating(b, sort === "best" ? bestPosition(b) : sort) -
@@ -164,7 +228,14 @@ export function LocalLeagueDraft({
     [pool, query, sort, generation, adviceById, impactById],
   );
   const mon = selected === null ? null : POKEMON_BY_ID.get(selected)!;
-  const choose = (id: number, previewSlot?: RosterSlot) => {
+  const choose = (
+    id: number,
+    previewSlot?: RosterSlot,
+    optimized = sort === "impact" &&
+      impactSlot === "best-lineup" &&
+      !previewSlot,
+  ) => {
+    setUseLineup(optimized);
     setSelected(id);
     if (selected === id) {
       selectedHeading.current?.focus();
@@ -178,7 +249,7 @@ export function LocalLeagueDraft({
       previewSlot && vacancies.includes(previewSlot)
         ? previewSlot
         : sort === "impact"
-          ? impactSlot
+          ? (impactById.get(id)?.slot ?? vacancies[0])
           : POSITIONS.includes(sort as Position) &&
               vacancies.includes(sort as Position)
             ? (sort as Position)
@@ -202,7 +273,12 @@ export function LocalLeagueDraft({
           : current,
     );
   };
-  const impact = useMemo(
+  const proposed =
+    useLineup && selected !== null && impactSlot === "best-lineup"
+      ? projectionById.get(selected)
+      : undefined;
+  const slot = proposed?.slot ?? manualSlot;
+  const fixedImpact = useMemo(
     () =>
       selected === null
         ? null
@@ -215,6 +291,7 @@ export function LocalLeagueDraft({
           ),
     [roster, selected, slot, tactic, draft.coaching, turn.teamId],
   );
+  const impact = proposed?.impact ?? fixedImpact;
   const selectedAdvice = mon ? adviceById.get(mon.id)! : null;
   const selectedProfile = mon ? playerProfile(mon) : null;
   const selectedTools = mon ? prospectTools(mon) : [];
@@ -259,11 +336,33 @@ export function LocalLeagueDraft({
           </div>
           <p className="draft-board-intro">
             Team impact ranks every available Pokémon by their projected effect
-            on your roster at the chosen position. Pick a priority, scout the
-            tradeoffs, then compare up to three.
+            on your best lineup found, including moves for current players. Pick
+            a priority, scout the tradeoffs, then compare up to three.
           </p>
           <div className="draft-open-roles" aria-label="Open roster positions">
-            <span>Open roles</span>
+            <span>Lineup / open roles</span>
+            <button
+              aria-label="Rank with lineup moves"
+              aria-pressed={sort === "impact" && impactSlot === "best-lineup"}
+              onClick={() => {
+                setSort("impact");
+                setRankingSlot("best-lineup");
+                setLimit(24);
+              }}
+            >
+              Lineup moves
+            </button>
+            <button
+              aria-label="Rank for best open position"
+              aria-pressed={sort === "impact" && impactSlot === "best-open"}
+              onClick={() => {
+                setSort("impact");
+                setRankingSlot("best-open");
+                setLimit(24);
+              }}
+            >
+              Best open
+            </button>
             {vacancies.map((s) => (
               <button
                 key={s}
@@ -279,9 +378,14 @@ export function LocalLeagueDraft({
               </button>
             ))}
           </div>
+          <DraftPositionLocks
+            roster={roster}
+            lockedSlots={lockedSlots}
+            onChange={onLocksChange}
+          />
           {sort === "impact" && (
             <p className="draft-impact-leaders-label">
-              {impactPriority.label} at {impactSlot} · top choices from all{" "}
+              {impactPriority.label} at {impactSlotLabel} · top choices from all{" "}
               {pool.length} available
             </p>
           )}
@@ -304,7 +408,7 @@ export function LocalLeagueDraft({
                     <span>
                       <small>
                         IMPACT #{entry.rank}
-                        {entry.tied ? " (TIED)" : ""} · {impactSlot}
+                        {entry.tied ? " (TIED)" : ""} · {entry.slot}
                       </small>
                       <strong>
                         {POKEMON_BY_ID.get(entry.pokemonId)!.name}
@@ -312,7 +416,7 @@ export function LocalLeagueDraft({
                       <small>
                         {entry.metric.delta === null
                           ? `${entry.metric.after.toFixed(1)} starting profile`
-                          : `${draftImpactChangeLabel(entry.metric.delta)} vs now`}
+                          : `${draftImpactChangeLabel(entry.metric.delta)} vs ${impactSlot === "best-lineup" ? "rearranged baseline" : "now"}`}
                       </small>
                     </span>
                   </button>
@@ -419,10 +523,13 @@ export function LocalLeagueDraft({
               {compareOpen && compared.length >= 2 && (
                 <>
                   <DraftImpactComparison
+                    lockedSlots={lockedSlots}
+                    projections={poolProjections.filter((p) =>
+                      compared.includes(p.pokemonId),
+                    )}
+                    pending={lineupSearch.pending}
                     mons={compared.map((id) => POKEMON_BY_ID.get(id)!)}
                     roster={roster}
-                    tactic={tactic}
-                    rotation={draft.coaching[turn.teamId].rotation}
                     slot={impactSlot}
                     focus={impactFocus}
                     onSlot={(next) => {
@@ -435,7 +542,7 @@ export function LocalLeagueDraft({
                     }}
                     onReview={(id, previewSlot) => {
                       setCompareOpen(false);
-                      choose(id, previewSlot);
+                      choose(id, previewSlot, impactSlot === "best-lineup");
                     }}
                   />
                   <details className="draft-individual-comparison">
@@ -524,10 +631,16 @@ export function LocalLeagueDraft({
                   <select
                     value={impactSlot}
                     onChange={(e) => {
-                      setRankingSlot(e.target.value as RosterSlot);
+                      setRankingSlot(e.target.value as DraftImpactPosition);
                       setLimit(24);
                     }}
                   >
+                    <option value="best-lineup">
+                      Best lineup found · allow moves
+                    </option>
+                    <option value="best-open">
+                      Best open position · automatic
+                    </option>
                     {vacancies.map((s) => (
                       <option value={s} key={s}>
                         {s} · {SLOT_NAMES[s]}
@@ -553,7 +666,12 @@ export function LocalLeagueDraft({
                 </label>
               </div>
               <p role="status">
-                {impactPriority.label} at {impactSlot} ·{" "}
+                {lineupSearch.pending
+                  ? `Finding lineups… ${lineupSearch.done} of ${pool.length} players evaluated. `
+                  : ""}
+                {!!lockedSlots.length &&
+                  `${lockedSlots.length} ${lockedSlots.length === 1 ? "player locked" : "players locked"}. `}
+                {impactPriority.label} at {impactSlotLabel} ·{" "}
                 {picks.length
                   ? "largest change first"
                   : "first pick: strongest starting profile first"}
@@ -565,6 +683,10 @@ export function LocalLeagueDraft({
                 change lowers that average; a specialist may still fill a need.
                 Ratings are roster estimates, not predicted wins. Position and
                 priority carry into comparison.
+                {impactSlot === "best-lineup" &&
+                  " Both your current roster and each possible pick are searched for the selected priority, using actual team ratings and the same position locks. Only unlocked players can move. Several starting arrangements and position swaps find strong lineups; this is not an exhaustive guarantee. Ties favor balanced strength, fewer moves, then fewer bench players. No moves happen until you confirm."}
+                {impactSlot === "best-open" &&
+                  " Each Pokémon tries every vacant starter and bench slot. Its best slot maximizes your selected priority; ties favor balanced offense and defense, then starter slots and roster order."}
               </p>
             </section>
           )}
@@ -573,7 +695,10 @@ export function LocalLeagueDraft({
             between friends' turns.
           </p>
           <div className="candidate-grid free-pool local-candidates">
-            {candidates.slice(0, limit).map((p) => (
+            {(sort === "impact" && lineupSearch.pending
+              ? []
+              : candidates.slice(0, limit)
+            ).map((p) => (
               <DraftProspectCard
                 mon={p}
                 key={p.id}
@@ -586,7 +711,9 @@ export function LocalLeagueDraft({
                   sort === "impact"
                     ? {
                         entry: impactById.get(p.id)!,
-                        slot: impactSlot,
+                        slot: impactById.get(p.id)!.slot,
+                        bestOpen: impactSlot === "best-open",
+                        lineup: impactSlot === "best-lineup",
                         poolSize: pool.length,
                       }
                     : undefined
@@ -656,9 +783,18 @@ export function LocalLeagueDraft({
               <label>
                 Draft position
                 <select
-                  value={slot}
-                  onChange={(e) => setSlot(e.target.value as RosterSlot)}
+                  value={proposed ? "best-lineup" : slot}
+                  onChange={(e) => {
+                    setUseLineup(e.target.value === "best-lineup");
+                    if (e.target.value !== "best-lineup")
+                      setSlot(e.target.value as RosterSlot);
+                  }}
                 >
+                  {impactSlot === "best-lineup" && (
+                    <option value="best-lineup">
+                      Suggested lineup · {projectionById.get(mon.id)?.slot}
+                    </option>
+                  )}
                   {vacancies.map((s) => (
                     <option value={s} key={s}>
                       {s} · {SLOT_NAMES[s]}
@@ -666,14 +802,57 @@ export function LocalLeagueDraft({
                   ))}
                 </select>
               </label>
+              {proposed?.lineup && (
+                <section
+                  className="draft-lineup-plan"
+                  aria-label="Suggested lineup changes"
+                >
+                  <h4>Best lineup found</h4>
+                  <p>Confirming this pick also applies these positions.</p>
+                  <DraftLineupPreview
+                    current={roster}
+                    proposed={proposed.lineup.after}
+                    lockedSlots={lockedSlots}
+                    pokemonId={mon.id}
+                  />
+                  <details>
+                    <summary>Current roster after lineup search</summary>
+                    <p>
+                      The impact below compares against this baseline, so this
+                      pick does not get credit for fixing existing positions.
+                    </p>
+                    <DraftLineupPreview
+                      current={roster}
+                      proposed={proposed.lineup.before}
+                      lockedSlots={lockedSlots}
+                    />
+                  </details>
+                </section>
+              )}
               {impact && (
-                <DraftTeamImpact impact={impact} name={mon.name} slot={slot} />
+                <DraftTeamImpact
+                  impact={impact}
+                  name={mon.name}
+                  slot={slot}
+                  optimized={!!proposed?.lineup}
+                />
               )}
               <button
                 className="button primary"
-                onClick={() => onPick(mon.id, slot)}
+                disabled={
+                  !impact ||
+                  (useLineup && impactSlot === "best-lineup" && !proposed)
+                }
+                onClick={() =>
+                  proposed?.lineup
+                    ? onPick(mon.id, slot, proposed.lineup.after)
+                    : onPick(mon.id, slot)
+                }
               >
-                Confirm pick: {mon.name}
+                {proposed?.lineup
+                  ? "Confirm pick & lineup: "
+                  : "Confirm pick: "}
+                {mon.name}
               </button>
             </div>
             <div className="draft-verdict">
@@ -719,14 +898,17 @@ export function LocalLeagueDraft({
                     <b>{s}</b>
                     <span>
                       {pick ? POKEMON_BY_ID.get(pick.pokemonId)!.name : "Empty"}
+                      {lockedSlots.includes(s) && (
+                        <small className="draft-roster-lock">Locked</small>
+                      )}
                     </span>
                   </li>
                 );
               })}
             </ol>
             <p className="stat-legend">
-              Five starters and three reserves. You can rearrange positions
-              after the draft.
+              Five starters and three reserves. Lineup moves are previewed
+              before each pick and applied when you confirm.
             </p>
           </section>
           <section className="local-panel">

@@ -3,6 +3,7 @@ import { emptyRoster, type Roster } from "./types";
 import {
   draftComparisonMetrics,
   draftImpactLeaders,
+  bestDraftImpacts,
   projectDraftImpact,
   projectDraftPool,
   rankDraftImpacts,
@@ -16,6 +17,79 @@ const row = (
 ) => impact.metrics.find((metric) => metric.key === key)!;
 
 describe("draft team impact", () => {
+  it("finds each player's best vacant role and keeps only one ranked entry per Pokémon", () => {
+    const roster = emptyRoster();
+    const before = structuredClone(roster);
+    const projections = projectDraftPool(
+      [65, 95, 65],
+      roster,
+      "best-open",
+      "balanced",
+      "balanced",
+    );
+    expect(projections).toHaveLength(16);
+    const ranked = rankDraftImpacts(projections, "balance");
+    expect(ranked).toHaveLength(2);
+    expect(ranked.find((p) => p.pokemonId === 65)?.slot).toBe("PG");
+    expect(ranked.find((p) => p.pokemonId === 95)?.slot).toBe("C");
+    expect(ranked.every((p) => p.metric.delta === null)).toBe(true);
+    expect(roster).toEqual(before);
+
+    const starters = {
+      PG: 65,
+      SG: 135,
+      SF: 6,
+      PF: 68,
+      C: 143,
+      B1: null,
+      B2: null,
+      B3: null,
+    };
+    const bench = projectDraftPool(
+      [95, 65],
+      starters,
+      "best-open",
+      "balanced",
+      "balanced",
+    );
+    expect(bench.map((p) => p.slot)).toEqual(["B1", "B2", "B3"]);
+    expect(rankDraftImpacts(bench, "balance")[0].slot).toBe("B1");
+    expect(
+      projectDraftPool(
+        [95],
+        { ...starters, B1: 121, B2: 131, B3: 25 },
+        "best-open",
+        "balanced",
+        "balanced",
+      ),
+    ).toEqual([]);
+  });
+
+  it("reselects a player's slot by priority, with balance and roster order breaking slot ties", () => {
+    const projections = projectDraftPool(
+      [95],
+      emptyRoster(),
+      "best-open",
+      "balanced",
+      "balanced",
+    );
+    // Controlled scores expose accidentally using overall position fit for every priority.
+    for (const projection of projections) {
+      projection.metrics.find((m) => m.key === "balance")!.after =
+        projection.slot === "C" ? 80 : 60;
+      projection.metrics.find((m) => m.key === "spacing")!.after =
+        projection.slot === "SG" || projection.slot === "B1" ? 70 : 50;
+    }
+    expect(bestDraftImpacts(projections, "balance")[0].slot).toBe("C");
+    expect(
+      bestDraftImpacts([...projections].reverse(), "spacing")[0].slot,
+    ).toBe("SG");
+    projections
+      .find((p) => p.slot === "B1")!
+      .metrics.find((m) => m.key === "balance")!.after = 65;
+    expect(bestDraftImpacts(projections, "spacing")[0].slot).toBe("B1");
+  });
+
   it("ranks every eligible prospect by the selected team area without discarding negative changes", () => {
     const before = structuredClone(guards);
     const projections = projectDraftPool(

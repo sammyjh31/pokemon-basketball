@@ -281,20 +281,39 @@ export function bestPosition(
     "PG",
   );
 }
+// Draft lineup search scores many arrangements of the same immutable species.
+// Cache only undeveloped skills, privately; development still recomputes them.
+const baseSkills = new WeakMap<
+  Pokemon,
+  { a: Attributes; fits: Record<Position, number> }
+>();
+function skills(mon: Pokemon, offsets?: DevelopmentRatings) {
+  const cached = !offsets && baseSkills.get(mon);
+  if (cached) return cached;
+  const a = attributes(mon, offsets);
+  const result = {
+    a,
+    fits: Object.fromEntries(
+      POSITIONS.map((p) => [p, positionRatingFromAttributes(a, p)]),
+    ) as Record<Position, number>,
+  };
+  if (!offsets) baseSkills.set(mon, result);
+  return result;
+}
 function players(roster: Roster, development?: PlayerDevelopment) {
   return ROSTER_SLOTS.flatMap((slot) => {
     const mon = POKEMON_BY_ID.get(roster[slot] ?? -1);
     if (!mon) return [];
-    const offsets = development?.[mon.id];
+    const { a, fits } = skills(mon, development?.[mon.id]);
     const position = POSITIONS.includes(slot as Position)
       ? (slot as Position)
-      : bestPosition(mon, offsets);
+      : POSITIONS.reduce((best, p) => (fits[p] > fits[best] ? p : best), "PG");
     return [
       {
         slot,
         mon,
-        a: attributes(mon, offsets),
-        fit: positionRating(mon, position, offsets),
+        a,
+        fit: fits[position],
         starter: POSITIONS.includes(slot as Position),
       },
     ];
@@ -308,10 +327,16 @@ export function rotationMinutes(
   plan?: RotationPlan,
 ): Record<RosterSlot, number> {
   if (plan) return validateRotationPlan(plan).minutes;
+  return minutesForPlayers(players(roster, development), rotation);
+}
+
+function minutesForPlayers(
+  available: ReturnType<typeof players>,
+  rotation: RotationStyle,
+): Record<RosterSlot, number> {
   const minutes = Object.fromEntries(
     ROSTER_SLOTS.map((slot) => [slot, 0]),
   ) as Record<RosterSlot, number>;
-  const available = players(roster, development);
   if (!available.length) return minutes;
   const starterBase =
     rotation === "starters" ? 37 : rotation === "bench" ? 30 : 34;
@@ -323,21 +348,26 @@ export function rotationMinutes(
       (0.85 + p.a.stamina / 400),
   );
   const target = Math.min(240, available.length * 36);
-  // Highest-averages apportionment preserves exact integer totals and the cap.
+  // Numeric indices keep the exact apportionment and tie order while making
+  // the many repeated draft previews cheaper than per-minute object lookups.
+  const allocated = available.map(() => 0);
   for (let i = 0; i < target; i++) {
     let selected = -1,
       priority = -1;
-    available.forEach((p, index) => {
-      if (minutes[p.slot] >= 40) return;
-      const quotient = weights[index] / (minutes[p.slot] + 1);
+    for (let j = 0; j < available.length; j++) {
+      if (allocated[j] >= 40) continue;
+      const quotient = weights[j] / (allocated[j] + 1);
       if (quotient > priority) {
         priority = quotient;
-        selected = index;
+        selected = j;
       }
-    });
+    }
     if (selected < 0) break;
-    minutes[available[selected].slot]++;
+    allocated[selected]++;
   }
+  available.forEach((p, i) => {
+    minutes[p.slot] = allocated[i];
+  });
   return minutes;
 }
 
@@ -348,6 +378,17 @@ export function teamRatings(
   development?: PlayerDevelopment,
   plan?: RotationPlan,
 ): TeamRatings {
+  return teamRatingProfile(roster, tactic, rotation, development, plan).ratings;
+}
+
+/** Shared evaluation for team ratings and draft tools; keeps minutes identical. */
+export function teamRatingProfile(
+  roster: Roster,
+  tactic: Tactic = "balanced",
+  rotation: RotationStyle = "balanced",
+  development?: PlayerDevelopment,
+  plan?: RotationPlan,
+): { ratings: TeamRatings; rebounding: number } {
   const available = players(roster, development),
     filled = available.filter((p) => p.starter).length;
   const empty = {
@@ -363,8 +404,10 @@ export function teamRatings(
     bench: 0,
     chemistry: 0,
   };
-  if (!available.length) return empty;
-  const minutes = rotationMinutes(roster, rotation, development, plan),
+  if (!available.length) return { ratings: empty, rebounding: 0 };
+  const minutes = plan
+      ? validateRotationPlan(plan).minutes
+      : minutesForPlayers(available, rotation),
     total = Object.values(minutes).reduce((sum, n) => sum + n, 0) || 1;
   const avg = (pick: (p: (typeof available)[number]) => number) =>
     available.reduce((sum, p) => sum + pick(p) * minutes[p.slot], 0) / total;
@@ -462,16 +505,19 @@ export function teamRatings(
   offense = clamp(offense);
   defense = clamp(defense);
   return {
-    offense,
-    defense,
-    overall: (offense + defense) / 2,
-    filled,
-    rosterFilled: available.length,
-    complete: filled === 5 && available.length === 8,
-    spacing,
-    creation,
-    rimProtection,
-    bench,
-    chemistry,
+    rebounding: avg((p) => p.a.rebounding),
+    ratings: {
+      offense,
+      defense,
+      overall: (offense + defense) / 2,
+      filled,
+      rosterFilled: available.length,
+      complete: filled === 5 && available.length === 8,
+      spacing,
+      creation,
+      rimProtection,
+      bench,
+      chemistry,
+    },
   };
 }

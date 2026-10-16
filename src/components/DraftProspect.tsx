@@ -112,7 +112,13 @@ export function DraftProspectCard({
   compared: boolean;
   compareFull: boolean;
   rankPosition: Position | "best" | "fit";
-  teamImpact?: { entry: RankedDraftImpact; slot: RosterSlot; poolSize: number };
+  teamImpact?: {
+    entry: RankedDraftImpact;
+    slot: RosterSlot;
+    poolSize: number;
+    bestOpen?: boolean;
+    lineup?: boolean;
+  };
   onSelect: () => void;
   onCompare: () => void;
 }) {
@@ -180,8 +186,14 @@ export function DraftProspectCard({
             {teamImpact.entry.tied ? " (tied)" : ""} of {teamImpact.poolSize}
           </span>
           <p>
-            {teamImpact.entry.metric.label} · {teamImpact.slot}
+            {teamImpact.lineup
+              ? "Best lineup found: "
+              : teamImpact.bestOpen
+                ? "Best open position: "
+                : "Projected at "}
+            {teamImpact.slot}
           </p>
+          <p>{teamImpact.entry.metric.label}</p>
           <strong
             className={
               (teamImpact.entry.metric.delta ?? 0) > 0
@@ -192,7 +204,11 @@ export function DraftProspectCard({
             }
           >
             {draftImpactChangeLabel(teamImpact.entry.metric.delta)}
-            {teamImpact.entry.metric.delta !== null && <small> vs now</small>}
+            {teamImpact.entry.metric.delta !== null && (
+              <small>
+                {teamImpact.lineup ? " vs rearranged baseline" : " vs now"}
+              </small>
+            )}
           </strong>
           <span className="draft-impact-projected">
             {teamImpact.entry.metric.after.toFixed(1)} projected / 100

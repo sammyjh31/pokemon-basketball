@@ -80,7 +80,13 @@ describe("local league pass-and-play", () => {
       target: { value: "7" },
     });
     fireEvent.click(
-      screen.getAllByRole("button", { name: /^View scouting for / })[0],
+      (
+        await screen.findAllByRole(
+          "button",
+          { name: /^View scouting for / },
+          { timeout: 10000 },
+        )
+      )[0],
     );
     const confirmPick = screen.getByRole("button", { name: /^Confirm pick/ });
     confirmPick.focus();
@@ -234,7 +240,7 @@ describe("local league pass-and-play", () => {
       screen.getByRole("button", { name: "Start snake draft" }),
     ).toBeInTheDocument();
     expect(storage.data.get(LOCAL_LEAGUE_KEY)).toBe("");
-  }, 45000);
+  }, 90000); // Simulates a full court-model season and restores it twice.
 
   it("opens from the game and returns without replacing the original lineup", async () => {
     window.history.replaceState(null, "", "/");

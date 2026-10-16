@@ -741,6 +741,13 @@
   color: #aebdca;
   font-variant-numeric: tabular-nums;
 }
+.draft-impact-comparison.has-lineup-moves table {
+  min-width: 840px;
+}
+.draft-impact-comparison.has-lineup-moves .draft-impact-now {
+  width: 140px;
+  padding-inline: 12px;
+}
 .draft-impact-comparison .is-prioritized {
   background: #2d2b1c;
 }
@@ -861,4 +868,96 @@
   .draft-impact-compare-controls {
     grid-template-columns: 1fr;
   }
+}
+
+.draft-lineup-plan {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 10px 0;
+}
+.draft-lineup-plan h4 {
+  margin: 0 0 8px;
+}
+.draft-lineup-plan p {
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.draft-lineup-preview ul {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+}
+.draft-lineup-preview li {
+  display: flex;
+  gap: 10px;
+  padding: 5px 0;
+  text-align: left;
+  align-items: baseline;
+  font-size: 0.82rem;
+}
+.draft-lineup-preview li > b {
+  min-width: 24px;
+}
+.draft-lineup-preview li small {
+  display: block;
+  font-weight: 400;
+  opacity: 0.8;
+  font-size: 0.72rem;
+}
+
+.draft-position-locks {
+  border: 1px solid #354453;
+  background: #111e28;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+}
+.draft-position-locks-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.draft-position-locks h4 {
+  margin: 0;
+  font-size: 14px;
+}
+.local-panel .draft-position-locks p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #b8c7d4;
+}
+.draft-position-lock-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.draft-position-lock-buttons button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  border: 1px solid #465b6c;
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #1b2936;
+  color: #edf3f7;
+  font-size: 12px;
+}
+.draft-position-lock-buttons button[aria-pressed="true"] {
+  border-color: #e9c562;
+  background: #332f1e;
+}
+.draft-position-lock-buttons button b {
+  margin-right: 4px;
+}
+.draft-position-lock-buttons button small,
+.draft-roster-lock {
+  color: #f4d56e;
+  font-size: 11px;
+}
+.draft-roster-lock {
+  display: block;
+  margin-top: 3px;
 }
