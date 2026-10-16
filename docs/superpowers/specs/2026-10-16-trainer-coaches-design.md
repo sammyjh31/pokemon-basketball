@@ -1,6 +1,6 @@
 # Drafted trainer coaches and automatic team management
 
-Status: proposed design for user review. No gameplay implementation yet.
+Status: approved by the user on 2026-10-16; implementation authorized.
 
 ## Intended experience
 
