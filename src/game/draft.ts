@@ -36,6 +36,7 @@ export function createRun(
     roster: emptyRoster(),
     tactic: "balanced",
     rotation: "balanced",
+    defense: "man",
     offerIds: [],
     rerollsLeft: 2,
     draftSeed: (seed ^ 0xa341316c) >>> 0,

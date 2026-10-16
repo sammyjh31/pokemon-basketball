@@ -1,5 +1,20 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+  waitFor,
+} from "@testing-library/react";
+import {
+  beforeAll,
+  beforeEach,
+  afterEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import App from "../App";
 import { initialState, gameReducer } from "../game/state";
 import { ROSTER_SLOTS } from "../game/types";
@@ -103,7 +118,9 @@ describe("playable draft room", () => {
     expect(new Set(Object.values(saved.run.roster)).size).toBe(8);
     expect(
       Object.values(saved.run.roster).some((id) =>
-        [144, 145, 146, 150, 151].includes(id as number),
+        [144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251].includes(
+          id as number,
+        ),
       ),
     ).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
@@ -131,7 +148,7 @@ describe("playable draft room", () => {
   });
   it.each([false, true])(
     "asks before importing over a saved run (completed: %s)",
-    (completed) => {
+    async (completed) => {
       const state = completed
         ? gameReducer(fill(), { type: "SIMULATE" })
         : fill();
@@ -144,7 +161,11 @@ describe("playable draft room", () => {
         </StrictMode>,
       );
       expect(
-        screen.getByRole("dialog", { name: "Load shared lineup?" }),
+        await screen.findByRole(
+          "dialog",
+          { name: "Load shared lineup?" },
+          { timeout: 10000 },
+        ),
       ).toBeInTheDocument();
       expect(JSON.parse(storage.getItem(STORAGE_KEY)!).run).toEqual(state.run);
       fireEvent.click(screen.getByRole("button", { name: "Keep playing" }));
@@ -153,13 +174,20 @@ describe("playable draft room", () => {
       mounted.unmount();
       window.history.replaceState(null, "", "/?lineup=65,135,6,68,143");
       render(<App storage={storage} />);
-      fireEvent.click(screen.getByRole("button", { name: "Load lineup" }));
+      fireEvent.click(
+        await screen.findByRole(
+          "button",
+          { name: "Load lineup" },
+          { timeout: 10000 },
+        ),
+      );
       expect(slot("PG")).toHaveAccessibleName("PG slot: Alakazam");
       expect(JSON.parse(storage.getItem(STORAGE_KEY)!).records).toEqual(
         state.records,
       );
       expect(window.location.search).toBe("");
     },
+    20000, // StrictMode restores and validates complete 1,230-game saves.
   );
   it.each(["25", "#25", "025", "#025"])(
     "searches number %s and switches between local sprite styles",
@@ -226,7 +254,7 @@ describe("playable draft room", () => {
       screen.queryByRole("textbox", { name: "Lineup link" }),
     ).not.toBeInTheDocument();
   });
-  it("drafts eight players and simulates exactly one season", () => {
+  it("drafts eight players and simulates exactly one season", async () => {
     render(<App initial={initialState(17)} storage={memory()} />);
     expect(
       screen.getByRole("button", { name: "Simulate season" }),
@@ -236,7 +264,13 @@ describe("playable draft room", () => {
       fireEvent.click(slot(p));
     }
     fireEvent.click(screen.getByRole("button", { name: "Simulate season" }));
-    fireEvent.click(screen.getByRole("button", { name: "Skip reveal" }));
+    fireEvent.click(
+      await screen.findByRole(
+        "button",
+        { name: "Skip reveal" },
+        { timeout: 15000 },
+      ),
+    );
     expect(screen.getAllByTestId("game-result")).toHaveLength(82);
     expect(
       screen.queryByRole("button", { name: "Simulate season" }),
@@ -305,24 +339,29 @@ describe("playable draft room", () => {
       screen.getByRole("button", { name: "82–0 Challenge" }),
     ).toHaveAttribute("aria-pressed", "true");
   });
-  it("old result timers cannot update a new run", () => {
+  it("old result timers cannot update a new run", async () => {
     vi.useFakeTimers();
     render(<App initial={fill()} storage={memory()} />);
     fireEvent.click(screen.getByRole("button", { name: "Simulate season" }));
-    act(() => vi.advanceTimersByTime(200));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(200);
+    });
     fireEvent.click(screen.getByRole("button", { name: "New run" }));
     fireEvent.click(screen.getByRole("button", { name: "Start new run" }));
     act(() => vi.advanceTimersByTime(20000));
     expect(screen.queryAllByTestId("game-result")).toHaveLength(0);
     expect(slot("PG")).toHaveAccessibleName("PG slot: Empty");
   });
-  it("shows completed results immediately with reduced motion", () => {
+  it("shows completed results immediately with reduced motion", async () => {
     vi.mocked(window.matchMedia).mockReturnValue({
       matches: true,
     } as MediaQueryList);
     render(<App initial={fill()} storage={memory()} />);
     fireEvent.click(screen.getByRole("button", { name: "Simulate season" }));
-    expect(screen.getAllByTestId("game-result")).toHaveLength(82);
+    await waitFor(
+      () => expect(screen.getAllByTestId("game-result")).toHaveLength(82),
+      { timeout: 15000 },
+    );
     expect(
       screen.queryByRole("button", { name: "Skip reveal" }),
     ).not.toBeInTheDocument();
@@ -373,14 +412,156 @@ describe("playable draft room", () => {
     fireEvent.click(slot("PG"));
     expect(slot("PG")).not.toHaveAccessibleName("PG slot: Empty");
   });
-  it("restores a completed season and history on refresh", () => {
+  it("restores a completed season and history on refresh", async () => {
     const storage = memory(),
       state = gameReducer(fill(), { type: "SIMULATE" });
     storage.setItem(STORAGE_KEY, JSON.stringify(state));
     render(<App storage={storage} />);
-    expect(screen.getAllByTestId("game-result")).toHaveLength(82);
+    expect(
+      await screen.findAllByTestId("game-result", {}, { timeout: 10000 }),
+    ).toHaveLength(82);
     expect(screen.getByTestId("season-record")).toHaveTextContent(
       `${state.run.result!.wins}–${state.run.result!.losses}`,
     );
   });
 });
+
+describe("completed league restoration", () => {
+  let saved: ReturnType<typeof initialState>;
+  beforeAll(() => {
+    saved = gameReducer(fill(), { type: "SIMULATE" });
+  }, 20000);
+
+  it("paints restoration progress in Strict Mode and preserves original bytes until validation completes", async () => {
+    vi.useFakeTimers();
+    const storage = memory();
+    const source = JSON.stringify(saved, null, 2);
+    storage.setItem(STORAGE_KEY, source);
+    render(
+      <StrictMode>
+        <App storage={storage} />
+      </StrictMode>,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Restoring your league" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", {
+        name: "Saved league restoration progress",
+      }),
+    ).toHaveAttribute("value", "0");
+    expect(storage.getItem(STORAGE_KEY) === source).toBe(true);
+    expect(
+      screen.queryByRole("button", { name: "Simulate season" }),
+    ).not.toBeInTheDocument();
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+    expect(
+      screen.queryByRole("heading", { name: "Restoring your league" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("season-record")).toHaveTextContent(
+      `${saved.run.result!.wins}–${saved.run.result!.losses}`,
+    );
+    expect(JSON.parse(storage.getItem(STORAGE_KEY)!)).toEqual(saved);
+  }, 20000);
+
+  it("cancels an unmounted restoration so it cannot overwrite a newer draft", async () => {
+    vi.useFakeTimers();
+    const storage = memory();
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    const mounted = render(
+      <StrictMode>
+        <App storage={storage} />
+      </StrictMode>,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Restoring your league" }),
+    ).toBeInTheDocument();
+    mounted.unmount();
+    const next = initialState(918);
+    const source = JSON.stringify(next, null, 2);
+    storage.setItem(STORAGE_KEY, source);
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+    expect(storage.getItem(STORAGE_KEY) === source).toBe(true);
+    render(<App storage={storage} />);
+    expect(slot("PG")).toHaveAccessibleName("PG slot: Empty");
+    expect(JSON.parse(storage.getItem(STORAGE_KEY)!).run.id).toBe(next.run.id);
+  });
+
+  it("preserves a failed completed save until the user changes the fresh draft", async () => {
+    vi.useFakeTimers();
+    const storage = memory();
+    const invalid = structuredClone(saved);
+    invalid.run.result!.wins += 1;
+    const source = JSON.stringify(invalid, null, 2);
+    storage.setItem(STORAGE_KEY, source);
+    render(<App storage={storage} />);
+    expect(
+      screen.getByRole("heading", { name: "Restoring your league" }),
+    ).toBeInTheDocument();
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+    expect(
+      screen.getByText(/Your saved game could not be restored/),
+    ).toBeInTheDocument();
+    expect(storage.getItem(STORAGE_KEY) === source).toBe(true);
+    expect(slot("PG")).toHaveAccessibleName("PG slot: Empty");
+    pick();
+    fireEvent.click(slot("PG"));
+    expect(storage.getItem(STORAGE_KEY) === source).toBe(false);
+    expect(
+      screen.queryByText(/The original save is kept until you make a change/),
+    ).not.toBeInTheDocument();
+  }, 20000);
+  it("keeps the source bytes when the completed save fails validation before replay", () => {
+    const storage = memory();
+    const invalid = structuredClone(saved);
+    invalid.run.seasonSeed = -1;
+    const source = JSON.stringify(invalid, null, 2);
+    storage.setItem(STORAGE_KEY, source);
+    render(<App storage={storage} />);
+    expect(
+      screen.getByText(/Your saved game could not be restored/),
+    ).toBeInTheDocument();
+    expect(storage.getItem(STORAGE_KEY) === source).toBe(true);
+  });
+});
+
+it("persists a shared lineup replacing malformed storage through simulation and refresh", async () => {
+  vi.useFakeTimers();
+  const storage = memory();
+  storage.setItem(STORAGE_KEY, "{malformed");
+  window.history.replaceState(null, "", "/?lineup=65,135,6,68,143,121,131,149");
+  const mounted = render(
+    <StrictMode>
+      <App storage={storage} />
+    </StrictMode>,
+  );
+  expect(slot("PG")).toHaveAccessibleName("PG slot: Alakazam");
+  expect(window.location.search).toBe("");
+  expect(storage.getItem(STORAGE_KEY)).not.toBe("{malformed");
+  expect(
+    screen.queryByText(/The original save is kept until you make a change/),
+  ).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Simulate season" }));
+  await act(async () => {
+    await vi.runAllTimersAsync();
+  });
+  const saved = JSON.parse(storage.getItem(STORAGE_KEY)!);
+  expect(saved.run.result.modelVersion).toBe(3);
+  expect(saved.records.free.runs).toBe(1);
+  mounted.unmount();
+  render(<App storage={storage} />);
+  await act(async () => {
+    await vi.runAllTimersAsync();
+  });
+  expect(slot("PG")).toHaveAccessibleName("PG slot: Alakazam");
+  expect(screen.getByTestId("season-record")).toHaveTextContent(
+    `${saved.run.result.wins}–${saved.run.result.losses}`,
+  );
+  expect(JSON.parse(storage.getItem(STORAGE_KEY)!).records.free.runs).toBe(1);
+}, 20000);

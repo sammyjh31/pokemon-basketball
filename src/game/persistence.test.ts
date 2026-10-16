@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { initialState, gameReducer } from "./state";
 import { ROSTER_SLOTS, type GameState } from "./types";
-import { loadGame, saveGame, type StorageLike } from "./persistence";
+import {
+  loadGame,
+  prepareGameLoad,
+  saveGame,
+  STORAGE_KEY,
+  type StorageLike,
+} from "./persistence";
 const memory = (value: string | null = null): StorageLike => ({
   getItem: () => value,
   setItem: (_key, next) => {
@@ -30,7 +36,8 @@ describe("saved progress", () => {
     const s = finished(),
       loaded = loadGame(memory(JSON.stringify(s)), 1).state;
     expect(gameReducer(loaded, { type: "SIMULATE" }).records.spin.runs).toBe(1);
-  });
+  }, 20000); // Multiple full-league generations and validation replays.
+
   it("starts clean when there is no save", () => {
     expect(loadGame(memory(), 17)).toEqual({
       state: initialState(17),
@@ -123,3 +130,22 @@ describe("saved progress", () => {
     expect(saveGame(blocked, initialState(4))).toMatchObject({ saved: false });
   });
 });
+
+it("defers a completed league replay and stops before playing more games when cancelled", async () => {
+  const saved = finished();
+  const source = JSON.stringify(saved, null, 2);
+  const storage = memory(source);
+  const prepared = prepareGameLoad(storage, 18);
+  expect(prepared.state.run.result).toBeNull();
+  expect(prepared.state.records).toEqual(saved.records);
+  expect(storage.getItem(STORAGE_KEY) === source).toBe(true);
+  const controller = new AbortController();
+  const progress: number[] = [];
+  const pending = prepared.restore!((completed) => {
+    progress.push(completed);
+    if (completed === 15) controller.abort();
+  }, controller.signal);
+  await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+  expect(progress).toEqual([0, 15]);
+  expect(storage.getItem(STORAGE_KEY) === source).toBe(true);
+}, 20000);

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { initialState, gameReducer } from "./state";
 import { simulateSeason as legacySeason } from "./legacySeason";
 import { loadGame, saveGame, STORAGE_KEY } from "./persistence";
+import { simulateSeason as v2Season } from "./v2Season";
 import { ROSTER_SLOTS } from "./types";
 const storageMap = () => {
   const values = new Map<string, string>();
@@ -49,6 +50,7 @@ const legacy = () => {
 describe("save model migration", () => {
   it("preserves current choices and draft randomness in a partial v1 challenge", () => {
     const original = initialState(12);
+    original.run.offerIds = [25, 65, 68, 143];
     const old = {
       ...original,
       version: 1,
@@ -71,7 +73,7 @@ describe("save model migration", () => {
     storage.setItem("pokemon-basketball:v1", JSON.stringify(old));
     const loaded = loadGame(storage, 99);
     expect(loaded.notice).toBeNull();
-    expect(loaded.state.version).toBe(2);
+    expect(loaded.state.version).toBe(3);
     expect(loaded.state.run.result?.games).toEqual(old.run.result.games);
     expect(loaded.state.records).toEqual(old.records);
     expect(loaded.state.run.result?.modelVersion).toBe(1);
@@ -94,7 +96,7 @@ describe("save model migration", () => {
     expect(loaded.state.run.roster.PG).toBe(65);
     expect(loaded.state.run.roster.B1).toBeNull();
   });
-  it("detects tampered v2 player totals, minutes and awards", () => {
+  it("detects tampered v3 player totals, minutes and awards", () => {
     let state = initialState(11);
     for (const position of ROSTER_SLOTS)
       state = gameReducer(state, {
@@ -112,5 +114,39 @@ describe("save model migration", () => {
       storage.setItem(STORAGE_KEY, JSON.stringify(copy));
       expect(loadGame(storage, 1).notice).toBeTruthy();
     }
-  });
+  }, 20000); // Replays four complete 1,230-game leagues.
+
+});
+
+it("preserves completed v2 seasons and their awards through v3 saves", () => {
+  const state = initialState(71);
+  state.run.mode = "free";
+  state.run.offerIds = [];
+  state.run.roster = {
+    PG: 65,
+    SG: 135,
+    SF: 6,
+    PF: 68,
+    C: 143,
+    B1: 121,
+    B2: 9,
+    B3: 131,
+  };
+  state.run.result = v2Season(state.run);
+  state.records.free = {
+    runs: 1,
+    bestWins: state.run.result.wins,
+    perfectSeasons: Number(state.run.result.wins === 82),
+  };
+  const old = { ...state, version: 2 };
+  const storage = storageMap();
+  storage.setItem("pokemon-basketball:v2", JSON.stringify(old));
+  const loaded = loadGame(storage, 99);
+  expect(loaded.notice).toBeNull();
+  expect(loaded.state.version).toBe(3);
+  expect(loaded.state.run.result).toEqual(old.run.result);
+  expect(loaded.state.run.result?.league).toBeUndefined();
+  saveGame(storage, loaded.state);
+  expect(loadGame(storage, 11).state).toEqual(loaded.state);
+  expect(storage.getItem("pokemon-basketball:v2")).toBe(JSON.stringify(old));
 });

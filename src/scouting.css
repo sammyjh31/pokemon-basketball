@@ -85,6 +85,28 @@
 .scout-tools b {
   color: #e8edf3;
 }
+.scout-summary {
+  color: #c4cdd7;
+  font-size: 11px;
+  line-height: 1.7;
+  padding: 10px 12px;
+  border-left: 2px solid #8e7943;
+  background: #171912;
+  margin: 12px 0;
+}
+.scout-profile {
+  border-top: 1px solid var(--line);
+  margin-top: 16px;
+}
+.scout-advanced .scout-skill-track i {
+  background: #b2a46e;
+}
+.scout-profile-note {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.7;
+  margin: 10px 0 0;
+}
 .scout-details {
   border-top: 1px solid var(--line);
   margin-top: 13px;

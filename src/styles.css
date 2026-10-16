@@ -1787,3 +1787,16 @@ footer a {
   height: 16px;
   flex-shrink: 0;
 }
+
+.draft-fieldset {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+  margin-inline: 0;
+}
+.draft-fieldset:disabled {
+  opacity: 0.75;
+}
+.coaching-controls {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}

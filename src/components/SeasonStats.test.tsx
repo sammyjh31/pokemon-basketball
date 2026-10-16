@@ -324,3 +324,23 @@ describe("season player results", () => {
     expect(opener).toHaveFocus();
   });
 });
+
+it("explains the earlier team simulation while preserving its team awards", () => {
+  render(
+    <SeasonPanel
+      run={makeRun()}
+      ratings={ratings}
+      animate={false}
+      onSimulate={() => {}}
+    />,
+  );
+  expect(
+    screen.getByText(/This saved season uses the earlier team simulation/),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "Team awards" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Player leaders" }),
+  ).not.toBeInTheDocument();
+});

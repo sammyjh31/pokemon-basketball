@@ -2,8 +2,10 @@ import type { Mode } from "../game/types";
 export function Scoreboard({
   mode,
   onMode,
+  disabled = false,
 }: {
   mode: Mode;
+  disabled?: boolean;
   onMode: (mode: Mode) => void;
 }) {
   return (
@@ -14,6 +16,7 @@ export function Scoreboard({
       </a>
       <nav className="mode-tabs" aria-label="Game modes">
         <button
+          disabled={disabled}
           aria-label="Lineup builder"
           aria-pressed={mode === "free"}
           onClick={() => onMode("free")}
@@ -21,6 +24,7 @@ export function Scoreboard({
           LINEUP BUILDER
         </button>
         <button
+          disabled={disabled}
           className="challenge-tab"
           aria-label="82–0 Challenge"
           aria-pressed={mode === "spin"}

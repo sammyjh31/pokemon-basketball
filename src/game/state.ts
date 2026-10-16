@@ -10,6 +10,10 @@ import { simulateSeason } from "./season";
 import {
   TACTICS,
   ROTATIONS,
+  DEFENSE_SCHEMES,
+  type DefenseScheme,
+  type Run,
+  type SeasonResult,
   type Tactic,
   type RotationStyle,
   type GameState,
@@ -20,6 +24,8 @@ import {
 import { validRoster } from "./lineup";
 export type GameAction =
   | { type: "AUTO_BENCH" }
+  | { type: "DEFENSE"; defense: DefenseScheme }
+  | { type: "APPLY_SEASON"; source: Run; result: SeasonResult }
   | { type: "TACTIC"; tactic: Tactic }
   | { type: "ROTATION"; rotation: RotationStyle }
   | { type: "SET_LINEUP"; roster: Roster }
@@ -30,7 +36,7 @@ export type GameAction =
   | { type: "NEW_RUN"; mode: Mode; includeLegends: boolean; seed: number };
 export function initialState(seed: number): GameState {
   return {
-    version: 2,
+    version: 3,
     run: createRun("spin", true, seed),
     records: {
       spin: { runs: 0, bestWins: 0, perfectSeasons: 0 },
@@ -50,6 +56,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     const next = autoFillBench(run);
     return next === run ? state : { ...state, run: next };
   }
+  if (action.type === "DEFENSE")
+    return DEFENSE_SCHEMES.includes(action.defense)
+      ? { ...state, run: { ...run, defense: action.defense } }
+      : state;
   if (action.type === "TACTIC")
     return TACTICS.includes(action.tactic)
       ? { ...state, run: { ...run, tactic: action.tactic } }
@@ -63,10 +73,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return state;
     return { ...state, run: { ...run, roster: { ...action.roster } } };
   }
-  if (action.type === "SIMULATE") {
+  if (action.type === "SIMULATE" || action.type === "APPLY_SEASON") {
+    if (action.type === "APPLY_SEASON" && action.source !== run) return state;
     if (!teamRatings(run.roster, run.tactic, run.rotation).complete)
       return state;
-    const result = simulateSeason(run),
+    const result =
+        action.type === "APPLY_SEASON" ? action.result : simulateSeason(run),
       previous = state.records[run.mode];
     return {
       ...state,

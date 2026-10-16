@@ -1,19 +1,37 @@
-"""Bundle Gen V pixel sprites from PokeAPI's public artwork repository."""
+"""Complete the local Gen V pixel collection using PokeAPI's sprite repository."""
 import hashlib
 import json
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-folder = Path(__file__).resolve().parents[1] / 'public' / 'pokemon-pixel'
+root = Path(__file__).resolve().parents[1]
+folder = root / 'public/pokemon-pixel'
 folder.mkdir(parents=True, exist_ok=True)
-def download(number):
-    url = f'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/{number}.png'
+mons = json.loads((root / 'src/data/pokemon.json').read_text())
+manifest_path = folder / 'manifest.json'
+existing = {row['id']: row for row in json.loads(manifest_path.read_text())} if manifest_path.exists() else {}
+
+
+def download(mon):
+    number = mon['id']
+    source = f'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/{number}.png'
     path = folder / f'{number}.png'
-    subprocess.run(['curl', '-fsSL', '--retry', '2', '--max-time', '60', url, '-o', str(path)], check=True)
-    data = path.read_bytes()
+    if path.exists() and number in existing:
+        data = path.read_bytes()
+        assert hashlib.sha256(data).hexdigest() == existing[number]['sha256'], f'Pixel hash mismatch: {number}'
+        source = existing[number]['source']
+    else:
+        data = subprocess.run(
+            ['curl', '-fsSL', '--retry', '2', '--max-time', '60', source],
+            check=True, capture_output=True,
+        ).stdout
     assert data.startswith(b'\x89PNG\r\n\x1a\n'), f'Invalid PNG: {number}'
-    return {'id':number, 'source':url, 'sha256':hashlib.sha256(data).hexdigest()}
-manifest = list(ThreadPoolExecutor(max_workers=8).map(download, range(1, 152)))
-(folder / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
-print(f'Bundled {len(manifest)} pixel sprites')
+    if not path.exists() or number not in existing:
+        path.write_bytes(data)
+    return {'id': number, 'source': source, 'sha256': hashlib.sha256(data).hexdigest()}
+
+
+manifest = list(ThreadPoolExecutor(max_workers=8).map(download, mons))
+manifest_path.write_text(json.dumps(manifest, indent=2) + '\n')
+print(f'Bundled {len(manifest)} Gen V pixel sprites; retained verified local files.')

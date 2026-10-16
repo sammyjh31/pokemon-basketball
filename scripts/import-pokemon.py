@@ -1,5 +1,10 @@
-"""Import official public PokeAPI facts. HTTPS verification remains enabled."""
+"""Append Generation II PokeAPI facts without changing saved-season Generation I inputs.
+
+HTTPS certificate verification remains enabled. The committed source-manifest.json
+records the exact response hashes; this script leaves the human-written SOURCES.md alone.
+"""
 import csv
+import hashlib
 import io
 import json
 import subprocess
@@ -8,31 +13,59 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 BASE = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/'
-FILES = ['pokemon.csv', 'pokemon_stats.csv', 'pokemon_types.csv', 'types.csv', 'pokemon_species.csv']
+FILES = ['pokemon.csv', 'pokemon_stats.csv', 'pokemon_types.csv', 'types.csv',
+         'pokemon_species.csv', 'pokemon_species_names.csv']
+ROOT = Path(__file__).resolve().parents[1]
+TARGET = ROOT / 'src/data/pokemon.json'
+
+
 def read(name):
-    result = subprocess.run(['curl', '-fsSL', '--retry', '2', '--max-time', '60', BASE + name], check=True, capture_output=True, text=True)
-    return name, list(csv.DictReader(io.StringIO(result.stdout)))
-tables = dict(ThreadPoolExecutor(max_workers=5).map(read, FILES))
-stats = {}; types = {}
-type_names = {int(r['id']): r['identifier'] for r in tables['types.csv']}
+    raw = subprocess.run(
+        ['curl', '-fsSL', '--retry', '2', '--max-time', '60', BASE + name],
+        check=True, capture_output=True,
+    ).stdout
+    return name, list(csv.DictReader(io.StringIO(raw.decode()))), {
+        'source': BASE + name, 'sha256': hashlib.sha256(raw).hexdigest(),
+    }
+
+
+existing = json.loads(TARGET.read_text())
+# Generation I facts are a replay contract. A refresh only replaces IDs 152–251.
+mons = [mon for mon in existing if mon['id'] <= 151]
+assert [mon['id'] for mon in mons] == list(range(1, 152)), 'Keep the original Generation I snapshot before importing'
+responses = list(ThreadPoolExecutor(max_workers=6).map(read, FILES))
+tables = {name: rows for name, rows, _ in responses}
+stats = {}
+types = {}
+type_names = {int(row['id']): row['identifier'] for row in tables['types.csv']}
 for row in tables['pokemon_stats.csv']:
     stats.setdefault(int(row['pokemon_id']), {})[int(row['stat_id'])] = int(row['base_stat'])
 for row in tables['pokemon_types.csv']:
     types.setdefault(int(row['pokemon_id']), []).append((int(row['slot']), type_names[int(row['type_id'])]))
-species = {int(r['id']): r for r in tables['pokemon_species.csv']}
-names = {29:'Nidoran ♀', 32:'Nidoran ♂', 83:"Farfetch’d", 122:'Mr. Mime'}
-keys = ['hp','attack','defense','specialAttack','specialDefense','speed']
-mons=[]
+species = {int(row['id']): row for row in tables['pokemon_species.csv']}
+names = {int(row['pokemon_species_id']): row['name']
+         for row in tables['pokemon_species_names.csv'] if row['local_language_id'] == '9'}
+keys = ['hp', 'attack', 'defense', 'specialAttack', 'specialDefense', 'speed']
 for row in tables['pokemon.csv']:
-    n=int(row['id'])
-    if n > 151: continue
-    mons.append(dict(id=n, name=names.get(n, row['identifier'].capitalize()), types=[t for _,t in sorted(types[n])],
-        stats={key:stats[n][i+1] for i,key in enumerate(keys)}, heightM=int(row['height'])/10, weightKg=int(row['weight'])/10,
-        legendary=bool(int(species[n]['is_legendary']) or int(species[n]['is_mythical'])),
-        spriteUrl=f'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{n}.png'))
-mons.sort(key=lambda p:p['id'])
-assert len(mons)==151
-root=Path(__file__).resolve().parents[1]
-(root/'src/data/pokemon.json').write_text(json.dumps(mons,ensure_ascii=False,indent=2)+'\n')
-(root/'src/data/SOURCES.md').write_text('# Pokémon data sources\n\nRetrieved '+datetime.now(timezone.utc).strftime('%Y-%m-%d')+' from the public [PokeAPI dataset](https://github.com/PokeAPI/pokeapi/tree/master/data/v2/csv).\n\n'+''.join(f'- [{name}]({BASE}{name})\n' for name in FILES)+'\nNames, base stats, types, height, weight and species classification are factual source data. Basketball ratings and simulation rules are original to this project.\n\nPortraits: [PokeAPI sprites](https://github.com/PokeAPI/sprites), official-artwork collection. Pokémon and character artwork belong to their respective owners. This is an unofficial fan project, not affiliated with Nintendo, Game Freak, or The Pokémon Company.\n\nRegenerate with `npm run data:import`; gameplay uses the committed JSON and requires no live API.\n\nArtwork is bundled in `public/pokemon` to avoid third-party requests during play. Source URLs and SHA-256 digests are in `public/pokemon/manifest.json`. Refresh it with `python scripts/download-artwork.py`.\n')
-print('Imported',len(mons),'Pokémon')
+    number = int(row['id'])
+    if not 152 <= number <= 251:
+        continue
+    mons.append(dict(
+        id=number, name=names[number], types=[name for _, name in sorted(types[number])],
+        stats={key: stats[number][index + 1] for index, key in enumerate(keys)},
+        heightM=int(row['height']) / 10, weightKg=int(row['weight']) / 10,
+        legendary=bool(int(species[number]['is_legendary']) or int(species[number]['is_mythical'])),
+        spriteUrl=f'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{number}.png',
+    ))
+mons.sort(key=lambda mon: mon['id'])
+assert [mon['id'] for mon in mons] == list(range(1, 252))
+assert sum(not mon['legendary'] for mon in mons) == 240
+assert mons[:151] == existing[:151], 'Generation I replay facts changed'
+TARGET.write_text(json.dumps(mons, ensure_ascii=False, indent=2) + '\n')
+(ROOT / 'src/data/source-manifest.json').write_text(json.dumps({
+    'retrieved': datetime.now(timezone.utc).isoformat(),
+    'importedIds': [152, 251],
+    'preservedIds': [1, 151],
+    'files': {name: source for name, _, source in responses},
+}, indent=2) + '\n')
+print(f'Imported {len(mons)} Pokémon; preserved all 151 Generation I records.')

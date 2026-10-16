@@ -46,30 +46,37 @@ export function RulesPanel() {
               draft.
             </p>
             <p>
-              <b>Free Draft:</b> search the original 151, pick or replace any
-              player, swap occupied slots, and use auto-fill for an open bench.
+              <b>Free Draft:</b> search all 251 Generation I and II Pokémon,
+              pick or replace any player, swap occupied slots, and use auto-fill
+              for an open bench.
             </p>
             <p>
-              Each Pokémon can appear once. All eight slots must be filled
-              before you simulate. Changing modes or the legendary pool starts a
-              new run.
+              Each Pokémon can appear only once across the entire league. Your
+              eight picks are reserved before the other 29 teams draft their
+              rosters. Excluding legendary and mythical species leaves exactly
+              240 eligible players. All eight slots must be filled before you
+              simulate. Changing modes or the legendary pool starts a new run.
             </p>
           </div>
           <div>
-            <h3>Play 82 games</h3>
+            <h3>A full 30-team league</h3>
             <p>
-              Face 29 Kanto League opponents across 41 home and 41 away games.
-              Your roster, tactic and rotation lock when you simulate.
+              All 30 teams play 82 games: 41 home and 41 away, for 1,230 games
+              across the league. Every team has five starters and three
+              reserves. Your roster, tactic, defense and rotation lock when you
+              simulate.
             </p>
             <p>
-              Games are built from seeded basketball events: shots, free throws,
-              turnovers, rebounds, assists, steals and blocks. Scores come from
-              those possessions, and a tie triggers overtime.
+              Both teams use the same simulation. Shots, free throws, turnovers,
+              rebounds, assists, steals and blocks create each box score. Those
+              same games determine league standings and player totals. A tie
+              triggers overtime.
             </p>
             <p>
-              Open a completed game for all eight players’ box scores. Your run
-              and records save in this browser. The same roster, coaching and
-              season seed reproduce the same results.
+              Browse team rosters, compare players and open completed games for
+              both teams’ box scores. Your run and records save in this browser.
+              The same roster, coaching and season seed reproduce the same
+              results.
             </p>
           </div>
         </div>
@@ -107,12 +114,14 @@ export function RulesPanel() {
             </span>
           </div>
           <div>
-            <strong>20 skills tell the story</strong>
+            <strong>20 skills plus advanced tools</strong>
             <span>
               Six broad skills summarize 14 specialist tools, including shot
               ranges, handles, passing, athleticism, defensive events and
-              composure. Open a player’s full scouting report to see the source
-              stats and every rating.
+              composure. Advanced tools describe screening, off-ball movement,
+              post play, switching, discipline, usage, foul drawing, closeouts
+              and decisions. Open a player’s scouting report for every rating
+              and the Pokémon source stats.
             </span>
           </div>
           <div>
@@ -159,41 +168,106 @@ export function RulesPanel() {
           <div>
             <h3>Minutes and depth</h3>
             <p>
-              <b>Balanced</b> aims for roughly 170 starter minutes.{" "}
-              <b>Lean on starters</b> shifts toward 185; <b>Use the bench</b>{" "}
-              shifts toward 150. Role quality and stamina adjust each share.
+              <b>Balanced</b> spreads the workload. <b>Lean on starters</b>{" "}
+              prioritizes the starting five; <b>Use the bench</b> gives reserves
+              more opportunities. Coaches choose actual five-player lineups
+              throughout the game, accounting for role fit, stamina and foul
+              trouble.
             </p>
             <p>
-              Every regulation box score totals 240 player-minutes, with no
-              individual above 40 before overtime. Each extra period adds 25.
-              Heavy minutes above a player’s stamina allowance reduce
-              effectiveness, so reserves matter.
+              Regulation lasts 48 minutes and each team’s box score totals 240
+              player-minutes. Every five-minute overtime adds 25. Players tire
+              while playing and recover on the bench; effective reserves help
+              keep the closing lineup fresh.
             </p>
           </div>
         </div>
-        <h3>Follow production, earn team honors</h3>
+        <h3>Matchups shape every possession</h3>
+        <p>
+          Teams use transition attacks, pick-and-rolls, isolation, post play and
+          spot-up shots. Ball handling and decisions affect turnovers; screens,
+          passing and spacing help create shots. Each shooter faces an actual
+          defender, and scoring is tracked at the rim, in midrange and from
+          three.
+        </p>
+        <div className="formula-grid">
+          <div>
+            <strong>Man to man</strong>
+            <span>
+              Defenders cover their corresponding court roles. Perimeter skills
+              matter outside; strength and interior defense matter in the paint.
+            </span>
+          </div>
+          <div>
+            <strong>Switch everything</strong>
+            <span>
+              Defenders switch assignments against pick-and-rolls. Switching
+              reduces the screen advantage, but asks the new defender to handle
+              the matchup.
+            </span>
+          </div>
+          <div>
+            <strong>Protect the paint</strong>
+            <span>
+              Zone coverage makes rim shots harder and uses interior defenders
+              near the basket, while giving up more three-point opportunities.
+            </span>
+          </div>
+          <div>
+            <strong>Full-court pressure</strong>
+            <span>
+              Pressure creates more turnovers, at the cost of more fouls, faster
+              fatigue and easier shots when the offense gets through.
+            </span>
+          </div>
+        </div>
+        <h3>Fouls, closing lineups and overtime</h3>
+        <p>
+          Lineups can change each minute, with immediate replacements after a
+          player’s sixth foul. In a close game, the final four minutes favor
+          fit, energy and composure. Trailing teams may chase threes or foul
+          intentionally late. A tied game continues in five-minute overtimes
+          until a winner emerges.
+        </p>
+        <p>
+          The fifth defensive team foul in a quarter, or fourth in overtime,
+          puts the opponent in the bonus. Offensive fouls cause turnovers and do
+          not count toward that bonus. Missed final free throws can be
+          rebounded, and offensive rebounds keep the possession alive.
+        </p>
+        <p>
+          If fewer than five players remain below six fouls, the minimum number
+          of disqualified players return to keep the game five-on-five. Every
+          further personal foul by a returned player also gives the opponent a
+          technical free throw.
+        </p>
+        <h3>Follow production, earn league honors</h3>
         <p>
           When the season reveal finishes, compare per-game numbers, totals,
-          shooting percentages, true shooting and game highs. The season totals
-          are the sum of actual game box scores.
+          shooting percentages, true shooting and game highs across all 240
+          players. Season totals are the sum of the actual game box scores.
         </p>
         <p>
-          Six <b>team awards</b> recognize your roster’s MVP, Defensive Player,
-          Sixth Player, Scoring Leader, Playmaker and Rebounding Leader. They
-          are based on simulated production, with stable tie-breaks. These are
-          awards within your team, not league-wide or career honors.
+          Six <b>league awards</b> recognize MVP, Defensive Player of the Year,
+          Sixth Player of the Year and the scoring, assist and rebounding
+          champions, with finalists for each award. All-League and All-Defense
+          each select five players. A player must appear in at least 58 games to
+          qualify; the Sixth Player must start fewer than half of their games.
         </p>
         <p>
-          MVP and Sixth Player combine points, rebounds, assists, steals and
-          blocks, subtracting turnovers and missed shots. Defensive Player
-          rewards blocks, steals and defensive rebounds. The three leader awards
-          use total points, assists and rebounds; exact ties go to the lower
-          Pokédex number.
+          MVP and Sixth Player combine per-game production and efficiency with
+          availability and team wins. Defensive Player rewards steals, blocks
+          and defensive rebounds, with deductions for fouls and adjustments for
+          availability and wins. The three statistical champions lead in points,
+          assists or rebounds per game. Exact ties use team ID, then Pokédex
+          number.
         </p>
         <p>
-          Older five-player saves keep their starting five and records. A
-          previously completed season remains an archived recap; start a new
-          eight-player season to generate player statistics and box scores.
+          Older saves keep their original results and records. Five-player
+          seasons remain archived recaps. Earlier eight-player seasons retain
+          their personal statistics, box scores and team awards; those honors
+          remain awards within your roster. Start a new season to play the full
+          league and earn league honors.
         </p>
       </div>
     </details>

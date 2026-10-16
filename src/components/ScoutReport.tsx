@@ -13,6 +13,7 @@ import {
   type Pokemon,
 } from "../game/types";
 import { TypeBadges } from "./Portrait";
+import { playerProfile, PROFILE_LABELS } from "../game/playerProfile";
 
 const BASE_LABELS: Record<keyof Pokemon["stats"], string> = {
   hp: "HP",
@@ -50,23 +51,6 @@ const TRADEOFFS: Partial<Record<keyof Attributes, string>> = {
   offensiveRebound: "Fewer second-chance opportunities.",
   defensiveRebound: "Pair with a strong defensive rebounder.",
 };
-function archetype(a: Attributes) {
-  const profiles: [string, number][] = [
-    ["Floor general", 0.65 * a.playmaking + 0.2 * a.speed + 0.15 * a.composure],
-    [
-      "Perimeter scorer",
-      0.65 * a.shooting + 0.2 * a.ballHandling + 0.15 * a.speed,
-    ],
-    ["Slashing wing", 0.55 * a.finishing + 0.3 * a.speed + 0.15 * a.vertical],
-    [
-      "Defensive anchor",
-      0.6 * a.interiorDefense + 0.25 * a.block + 0.15 * a.rebounding,
-    ],
-    ["Glass cleaner", 0.7 * a.rebounding + 0.3 * a.strength],
-    ["Perimeter stopper", 0.7 * a.perimeterDefense + 0.3 * a.steal],
-  ];
-  return profiles.sort((x, y) => y[1] - x[1])[0][0];
-}
 function SkillRows({
   keys,
   a,
@@ -92,7 +76,8 @@ function SkillRows({
 }
 export function ScoutReport({ mon }: { mon: Pokemon }) {
   const a = attributes(mon),
-    best = bestPosition(mon);
+    best = bestPosition(mon),
+    profile = playerProfile(mon);
   const ranked = [...DETAILED_ATTRIBUTE_KEYS].sort((x, y) => a[y] - a[x]);
   const strengths = ranked.slice(0, 3),
     tradeoffs = ranked.slice(-2).reverse();
@@ -103,7 +88,7 @@ export function ScoutReport({ mon }: { mon: Pokemon }) {
     >
       <div className="scout-title">
         <span className="eyebrow">PLAYER SCOUTING</span>
-        <strong>{archetype(a)}</strong>
+        <strong>{profile.archetype}</strong>
       </div>
       <div className="scout-measurements">
         <TypeBadges types={mon.types} />
@@ -137,9 +122,11 @@ export function ScoutReport({ mon }: { mon: Pokemon }) {
           )
           .join(" · ")}
       </p>
+      <p className="scout-summary">{profile.scouting}</p>
       <details className="scout-details">
         <summary>
-          Full scouting report <span>20 skills + source stats</span>
+          Full scouting report{" "}
+          <span>20 skills + 9 advanced tools + source stats</span>
         </summary>
         <div className="scout-details-content">
           <h4>Overall skills</h4>
@@ -150,6 +137,30 @@ export function ScoutReport({ mon }: { mon: Pokemon }) {
               <SkillRows keys={group.keys} a={a} />
             </div>
           ))}
+          <section
+            className="scout-profile"
+            aria-label="Advanced tools and tendencies"
+          >
+            <h4>Advanced tools and tendencies</h4>
+            <dl className="scout-skills scout-advanced">
+              {Object.entries(profile.traits).map(([key, value]) => (
+                <div key={key}>
+                  <dt>{PROFILE_LABELS[key as keyof typeof profile.traits]}</dt>
+                  <dd>
+                    {Math.round(value)}
+                    <span className="scout-skill-track" aria-hidden="true">
+                      <i style={{ width: `${value}%` }} />
+                    </span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <p className="scout-profile-note">
+              All values use a 0–100 scale. Scoring initiative describes how
+              much offense this player seeks; it works best with teammates who
+              complement that role.
+            </p>
+          </section>
           <h4>Roster tradeoffs</h4>
           <ul className="scout-tradeoffs">
             {tradeoffs.map((key) => (

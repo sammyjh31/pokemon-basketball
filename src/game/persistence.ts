@@ -1,23 +1,23 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { initialState } from "./state";
-import { simulateSeason } from "./season";
+import { simulateSeason, simulateSeasonAsync } from "./season";
 import {
   ROSTER_SLOTS,
-  POSITIONS,
   TACTICS,
   ROTATIONS,
+  DEFENSE_SCHEMES,
   type GameState,
   type ModeRecords,
   type Roster,
   type Run,
+  type SeasonResult,
 } from "./types";
 export interface StorageLike {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
 }
-export const STORAGE_KEY = "pokemon-basketball:v2";
-import { validateLegacy } from "./legacyPersistence";
-import { refreshOffers } from "./draft";
+export const STORAGE_KEY = "pokemon-basketball:v3";
+import { validateV2 } from "./v2Persistence";
 const fail = (): never => {
   throw new Error("Invalid saved game");
 };
@@ -53,32 +53,16 @@ function records(value: unknown): ModeRecords {
     return fail();
   return { runs, bestWins, perfectSeasons };
 }
-function validate(value: unknown): GameState {
+function validate(value: unknown, replay?: SeasonResult): GameState {
   const root = object(value);
-  if (root.version === 1) {
-    const legacy = validateLegacy(root);
-    if (
-      !legacy.run.result &&
-      legacy.run.mode === "spin" &&
-      legacy.run.offerIds.length === 0
-    )
-      legacy.run = refreshOffers(legacy.run);
-    return legacy;
-  }
-  if (root.version !== 2) return fail();
+  if (root.version === 1 || root.version === 2) return validateV2(root);
+  if (root.version !== 3) return fail();
   const candidate = object(root.run);
-  if (candidate.result && object(candidate.result).modelVersion === 1) {
-    const source = object(candidate.roster);
-    if ([source.B1, source.B2, source.B3].some((id) => id !== null))
-      return fail();
-    return validateLegacy({
-      ...root,
-      version: 1,
-      run: {
-        ...candidate,
-        roster: Object.fromEntries(POSITIONS.map((p) => [p, source[p]])),
-      },
-    });
+  if (
+    candidate.result &&
+    [1, 2].includes(object(candidate.result).modelVersion as number)
+  ) {
+    return validateV2({ ...root, version: 2 });
   }
   const raw = object(root.run),
     source = object(raw.roster),
@@ -98,14 +82,14 @@ function validate(value: unknown): GameState {
       roster[position] = null;
       continue;
     }
-    const mon = POKEMON_BY_ID.get(integer(id, 1, 151));
+    const mon = POKEMON_BY_ID.get(integer(id, 1, 251));
     if (!mon || (!raw.includeLegends && mon.legendary)) return fail();
     roster[position] = mon.id;
   }
   const chosen = Object.values(roster).filter((id) => id !== null);
   if (new Set(chosen).size !== chosen.length || !Array.isArray(raw.offerIds))
     return fail();
-  const offerIds = raw.offerIds.map((id) => integer(id, 1, 151));
+  const offerIds = raw.offerIds.map((id) => integer(id, 1, 251));
   const expectedOffers = raw.mode === "spin" && chosen.length < 8 ? 4 : 0;
   if (
     offerIds.length !== expectedOffers ||
@@ -132,6 +116,12 @@ function validate(value: unknown): GameState {
     rotation: ROTATIONS.includes(raw.rotation as never)
       ? (raw.rotation as Run["rotation"])
       : fail(),
+    defense:
+      raw.defense === undefined
+        ? "man"
+        : DEFENSE_SCHEMES.includes(raw.defense as never)
+          ? (raw.defense as Run["defense"])
+          : fail(),
     result: null,
   };
   const parsedRecords = {
@@ -146,8 +136,8 @@ function validate(value: unknown): GameState {
       result.games.length !== 82
     )
       return fail();
-    // Replaying 82 deterministic results validates totals, scores, awards, and schedule together.
-    const expected = simulateSeason(run);
+    // Replay the shared league to validate every result, standing, player total and award.
+    const expected = replay ?? simulateSeason(run);
     if (
       result.wins !== expected.wins ||
       result.losses !== expected.losses ||
@@ -164,16 +154,30 @@ function validate(value: unknown): GameState {
       return fail();
     run.result = expected;
   }
-  return { version: 2, run, records: parsedRecords };
+  return { version: 3, run, records: parsedRecords };
 }
-export function loadGame(
+export interface LoadedGame {
+  state: GameState;
+  notice: string | null;
+}
+export interface PreparedGameLoad extends LoadedGame {
+  preserveSource?: boolean;
+  restore?: (
+    onProgress: (completed: number, total: number) => void,
+    signal: AbortSignal,
+  ) => Promise<LoadedGame>;
+}
+function readGame(
   storage: StorageLike,
   fallbackSeed: number,
-): { state: GameState; notice: string | null } {
+  deferLeague: boolean,
+): PreparedGameLoad {
   let source: string | null;
   try {
     source =
-      storage.getItem(STORAGE_KEY) ?? storage.getItem("pokemon-basketball:v1");
+      storage.getItem(STORAGE_KEY) ??
+      storage.getItem("pokemon-basketball:v2") ??
+      storage.getItem("pokemon-basketball:v1");
   } catch {
     return {
       state: initialState(fallbackSeed),
@@ -184,13 +188,65 @@ export function loadGame(
   if (source === null)
     return { state: initialState(fallbackSeed), notice: null };
   try {
-    return { state: validate(JSON.parse(source)), notice: null };
+    const parsed: unknown = JSON.parse(source);
+    const root = object(parsed),
+      raw = object(root.run);
+    if (
+      deferLeague &&
+      root.version === 3 &&
+      raw.result !== null &&
+      ![1, 2].includes(object(raw.result).modelVersion as number)
+    ) {
+      // Validate the inexpensive draft/history first; the app can paint before
+      // the full league replay. Retain the original object for the final check.
+      const state = validate({ ...root, run: { ...raw, result: null } });
+      return {
+        state,
+        notice: null,
+        restore: async (onProgress, signal) => {
+          try {
+            const replay = await simulateSeasonAsync(
+              state.run,
+              onProgress,
+              signal,
+            );
+            signal.throwIfAborted();
+            return { state: validate(parsed, replay), notice: null };
+          } catch (error) {
+            if (signal.aborted) throw error;
+            return {
+              state: initialState(fallbackSeed),
+              notice:
+                "Your saved game could not be restored. A fresh draft is ready. The original save is kept until you make a change.",
+            };
+          }
+        },
+      };
+    }
+    return { state: validate(parsed), notice: null };
   } catch {
     return {
       state: initialState(fallbackSeed),
-      notice: "Your saved game could not be restored. A fresh draft is ready.",
+      notice: deferLeague
+        ? "Your saved game could not be restored. A fresh draft is ready. The original save is kept until you make a change."
+        : "Your saved game could not be restored. A fresh draft is ready.",
+      ...(deferLeague ? { preserveSource: true } : {}),
     };
   }
+}
+/** Synchronous loader retained for non-UI callers and archived model validation. */
+export function loadGame(
+  storage: StorageLike,
+  fallbackSeed: number,
+): LoadedGame {
+  return readGame(storage, fallbackSeed, false);
+}
+/** Completed v3 leagues are validated in cancellable round batches after paint. */
+export function prepareGameLoad(
+  storage: StorageLike,
+  fallbackSeed: number,
+): PreparedGameLoad {
+  return readGame(storage, fallbackSeed, true);
 }
 export function saveGame(
   storage: StorageLike,

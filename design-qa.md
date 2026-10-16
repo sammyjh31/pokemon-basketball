@@ -70,3 +70,13 @@ PNG export's downloaded file could not be verified because browser security deni
 - [ ] Manually confirm a downloaded PNG in a browser with download permission.
 
 Final result: passed
+
+## Full league refinement — 2026-10-15
+
+Extended the existing basketball adaptation with 30 clubs, 240 unique Gen I–II players, eight-player rosters, one shared 1,230-game season, league leaders, player comparisons, full opponent boxes and global honors. The league navigation retains the existing dark panels, gold active states, condensed headings and local Pokémon sprites.
+
+Final evidence: `docs/design/league-awards-desktop.png` (1440×1000) and `docs/design/league-awards-mobile.png` (390×844). Desktop displays all six award winners with team attribution; mobile uses a readable single column. No page overflow at 1440, 390 or 320px. Wide statistics tables scroll within their panels.
+
+Verified searchable leaders and percentage qualification controls; eight-player team rosters; two-player comparisons across clubs; all-game round/team filtering; both-team boxes with eight rows, period scores, minutes, fouls, plus/minus and shot zones; Escape and focus restoration; six global awards and their three finalists. The final QA season was 21–61, with Dragonite of Littleroot winning MVP. Refresh displayed restoration progress and retained the same record and awards. The user's separate-origin 69–13 older season remained intact and clearly explains how to start a new league run.
+
+127 unit/component tests across 21 files and the TypeScript/production build passed. Independent review findings are resolved; checked browser logs contained no warnings or errors. PNG download and standalone Playwright CLI limitations above remain unchanged.

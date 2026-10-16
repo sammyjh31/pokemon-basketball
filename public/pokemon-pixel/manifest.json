@@ -753,5 +753,505 @@
     "id": 151,
     "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/151.png",
     "sha256": "dfbeeafd632403044da8f1a981425612d3fde80fb0bfcf6cc25de7d150b025ba"
+  },
+  {
+    "id": 152,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/152.png",
+    "sha256": "db82c8a887b4d2828e3e852f689cffebe2b1a6cfc1732fa5722feebdbbea79c8"
+  },
+  {
+    "id": 153,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/153.png",
+    "sha256": "1cc7c12660a3239c6b9145f18f597229e7238992c9a1bcce22910a3e6430cce1"
+  },
+  {
+    "id": 154,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/154.png",
+    "sha256": "9e6d0d23167b212d7595c46554c7660a550540a84bc2d4b732a78f50e0d14ba7"
+  },
+  {
+    "id": 155,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/155.png",
+    "sha256": "5ad985b1165ca236474bbe92a32c707fa139418a12c57bd397b2a7505e461ec4"
+  },
+  {
+    "id": 156,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/156.png",
+    "sha256": "fdd8d04e03cbac6e66b3cf664ab676c6ad6cb17fd1224cd8a283d54340ade4e5"
+  },
+  {
+    "id": 157,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/157.png",
+    "sha256": "7be01ad9ddd3cce31c242347af8d9d3bb683cab44ae5fc153a02421348257918"
+  },
+  {
+    "id": 158,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/158.png",
+    "sha256": "861a578a019380dc82799d4c39d283daeecf46ed8f441b02adb17d617903e4cd"
+  },
+  {
+    "id": 159,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/159.png",
+    "sha256": "ac69c44d86ee9c42a12bc6ced1754df380372bad70c0cd2a339d0ab280a3e063"
+  },
+  {
+    "id": 160,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/160.png",
+    "sha256": "2849e4e930dd4235afb97c9582f12c95b6cfa638b641d1ad9cccf528a8d805d7"
+  },
+  {
+    "id": 161,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/161.png",
+    "sha256": "9dd76edaddf233d9cb17720266a52d383c0fcb409e9cda5776d275124a8516df"
+  },
+  {
+    "id": 162,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/162.png",
+    "sha256": "c5f5a71e1046897eee227736ef9929d866dd9115ccc209e8fa3fdf9902b0bbe1"
+  },
+  {
+    "id": 163,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/163.png",
+    "sha256": "2f8f9b39faf220dfe0a703bfb9a4345e68d70d49fa525771e935689ff27c1bed"
+  },
+  {
+    "id": 164,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/164.png",
+    "sha256": "ba5cb282888d1ee6a9c4cd971deef905c1a80478d9ce3eabaa0d8811134cf98c"
+  },
+  {
+    "id": 165,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/165.png",
+    "sha256": "5253baa4bca13c4d839d5a4453bf4b39b42ebe0a34b605eddb40e9885030a3c3"
+  },
+  {
+    "id": 166,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/166.png",
+    "sha256": "009740e7cb98fdfb72925cbc5726c6b4847fe7267715cd2b845d05336404365f"
+  },
+  {
+    "id": 167,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/167.png",
+    "sha256": "658bca976a6a9edb0a064af1ea46e6f678d9bdb1044a6ab12059784cac3e5e64"
+  },
+  {
+    "id": 168,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/168.png",
+    "sha256": "c88765fb65246405c2bf0b0eefaba4aadaec9fa5dfb6e64af5a54c4f8667c2b0"
+  },
+  {
+    "id": 169,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/169.png",
+    "sha256": "1673ea011d86d22bb77a7515a8e7f615695a578fc8a50c61f6a8c0c81d155838"
+  },
+  {
+    "id": 170,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/170.png",
+    "sha256": "60bb1a3bae2c5c11d18996e4978f69b23c651fbd0e9319df066924871b761354"
+  },
+  {
+    "id": 171,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/171.png",
+    "sha256": "4a09f4e310a7d73b5b7ba27a1d5ea0251a1ed5a1942bd07f5318e2b3601c520f"
+  },
+  {
+    "id": 172,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/172.png",
+    "sha256": "d83111be4894156e208a271d454ac4319daacf3baa5e7b0536e597295c81b888"
+  },
+  {
+    "id": 173,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/173.png",
+    "sha256": "ebeedd3466465aaf874ef2385cca462c8ecc0ed68b154e2dfdd417789f36eac8"
+  },
+  {
+    "id": 174,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/174.png",
+    "sha256": "a5a6d04ca30bfb8d5a10db9b9104036f984961b6a7181768359c4e03825b678f"
+  },
+  {
+    "id": 175,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/175.png",
+    "sha256": "c6d6e296bc54d56fb30f5a1632a6b610e679ea468ef8cc9a94eb34ded904757e"
+  },
+  {
+    "id": 176,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/176.png",
+    "sha256": "1d06a19844953db338069a41ab9d45c38fe0e7b80e78e79383bbb9d56d804144"
+  },
+  {
+    "id": 177,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/177.png",
+    "sha256": "56c9f7bf6cb84b53b5db0cb07c96270fdf4e907e4187a5029a221ec58d1e7905"
+  },
+  {
+    "id": 178,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/178.png",
+    "sha256": "ef001b7d9277dacbb9a9f149b1ccb6f45f8504bc0529369467b82c80b86faae4"
+  },
+  {
+    "id": 179,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/179.png",
+    "sha256": "ba0305d83c6e697f62726272afa28b65129065bb798a14531c581f037d8ae463"
+  },
+  {
+    "id": 180,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/180.png",
+    "sha256": "caa131bdc76e4df1626a850c3d68605492366b62fd9d89ce8ccf9b81cff38c32"
+  },
+  {
+    "id": 181,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/181.png",
+    "sha256": "731acc5f1ad15a26a2dc851c8bfbbf5eb7c2d5ad53f3af1cf178e980f0723997"
+  },
+  {
+    "id": 182,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/182.png",
+    "sha256": "f73f9a92220bf040f81ac7046124110072b5065f7799ea1050606e7099ef8ff0"
+  },
+  {
+    "id": 183,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/183.png",
+    "sha256": "9e33771cca9e7ca75708718cdc4c88ccfdacc92c92f10cb320b3c653ec52ec8f"
+  },
+  {
+    "id": 184,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/184.png",
+    "sha256": "d7d092901d81370ff6d9ec903c0c26145152dd03c2dc1c78ae5520b1918b1d0a"
+  },
+  {
+    "id": 185,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/185.png",
+    "sha256": "ea66d544b7a18063b863811797fce6d47cfae0ce6ea44e0109b86bd7f2fcac92"
+  },
+  {
+    "id": 186,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/186.png",
+    "sha256": "f4eb8a5b73031203f25dbe9ed92b22c9f0132a6510478bfb40cd249f323460d6"
+  },
+  {
+    "id": 187,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/187.png",
+    "sha256": "d0d723c0f9f5db6c826bce0494ca7a0e47d3e215e10bb649bb5f409b740f2e8e"
+  },
+  {
+    "id": 188,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/188.png",
+    "sha256": "2c2c6460c4dee2e65f9d17d0a893aa608f0fb974054f5adc7c69aaf466e58495"
+  },
+  {
+    "id": 189,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/189.png",
+    "sha256": "cc08b2e906e536fcc3cf5c67cdb14d20f9081a1f70e3df4dbb306f26ca4dd650"
+  },
+  {
+    "id": 190,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/190.png",
+    "sha256": "c23d7d3d0ed81176e5c85a5e1561cc90197abd1370f5a2e00d58e601873cbbff"
+  },
+  {
+    "id": 191,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/191.png",
+    "sha256": "e61dbad62ea694d98bd50fd8aec8fc537bbb612515e064ff693ed929e758bad0"
+  },
+  {
+    "id": 192,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/192.png",
+    "sha256": "8d4fb2032a709ffc8000b0f914ed9b12f11ee1329ca4ff7bdc4340a4eb6c3317"
+  },
+  {
+    "id": 193,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/193.png",
+    "sha256": "ad08e2d8cdc428f40abc2a0a8c53e8307cd029704516d6cf42ee40e712e6f3f9"
+  },
+  {
+    "id": 194,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/194.png",
+    "sha256": "75fd4dbf556a5a7ccd97214d03fc7c554bc2b56270e62624883abca46d9fd562"
+  },
+  {
+    "id": 195,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/195.png",
+    "sha256": "f9312525ce857cf90d18c21a223c8bfd0493751f7505a0c2ef7c2d476d26e383"
+  },
+  {
+    "id": 196,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/196.png",
+    "sha256": "445986a03a7fd22b72d1d675317e3ec550ae2d4b24c1394c3ef3bbac4df31056"
+  },
+  {
+    "id": 197,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/197.png",
+    "sha256": "72df4ab24222b470e2d145c0c747b704a4abca4042d739e645a0e37ef7eeaf5c"
+  },
+  {
+    "id": 198,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/198.png",
+    "sha256": "cbd8eed863d84b2a73cb5095e8b89f55e49317dec4c26246511335d24fe12269"
+  },
+  {
+    "id": 199,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/199.png",
+    "sha256": "ffb59038b5a3e825fb05061e5d40ede1ccb6e6607d6a8c454622cde977165c65"
+  },
+  {
+    "id": 200,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/200.png",
+    "sha256": "79c0c494bc50bcd74780a366bcf0e425b4e48016b2545ecd3eb3f7ad96ad4030"
+  },
+  {
+    "id": 201,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/201.png",
+    "sha256": "f75c23d3c7717c325083edc902470d4007d8e491647320b75f9fdfc8d1f446ad"
+  },
+  {
+    "id": 202,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/202.png",
+    "sha256": "98d0c6efba8b2019f371f1a4a2469a2233868ee5705e89343dfae7ed826e5390"
+  },
+  {
+    "id": 203,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/203.png",
+    "sha256": "d71ff6f9e77135c1487b40c5817229ad7a71a93850fba5573ca526548705f505"
+  },
+  {
+    "id": 204,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/204.png",
+    "sha256": "40e0bdbaa232367c1f0ca76210918d1fa6663b7110ec13f0664b7e29da8af83d"
+  },
+  {
+    "id": 205,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/205.png",
+    "sha256": "551d7961c6aa78b6a0b4ac8a1116ccadfc106a3934346f460d6a743509f6c66a"
+  },
+  {
+    "id": 206,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/206.png",
+    "sha256": "04b95d3c7ba20e8bd944bebabd22e626747b77be8d18ecdf89ae751bf4ffe37b"
+  },
+  {
+    "id": 207,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/207.png",
+    "sha256": "fa7852ef66d16858b6587ee797c444b85ef0d78f895cc3a872480239174df7d1"
+  },
+  {
+    "id": 208,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/208.png",
+    "sha256": "61aa353c28ebfbffab36319e31d6825f36454dca7c715ec796b72f7d7102db51"
+  },
+  {
+    "id": 209,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/209.png",
+    "sha256": "7d5334f20c065a8ea9ce79957224f8c68c3305389aace9b1d885565a06554a30"
+  },
+  {
+    "id": 210,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/210.png",
+    "sha256": "d15f698b0e9e780becc122757c93b9cd83f315d1b4ac6167900dccd6e963e988"
+  },
+  {
+    "id": 211,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/211.png",
+    "sha256": "e12215e9998ee36a0098b147ce3d3795dca79d9483e619c223d2b17d98a4a13f"
+  },
+  {
+    "id": 212,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/212.png",
+    "sha256": "50dd851a200ed14de0d37342b391c4ee6a9e2a9f10d5fec3dc051534aeb4e86e"
+  },
+  {
+    "id": 213,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/213.png",
+    "sha256": "f98d67517bdd7304ee6a0768e7bc2c02d3415010a0c4a161ad00130a69735906"
+  },
+  {
+    "id": 214,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/214.png",
+    "sha256": "61064e7a06b3f3bb6793d32f96673b3759074cf865ae245a4454269c2d4ce4b0"
+  },
+  {
+    "id": 215,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/215.png",
+    "sha256": "df25baf9ea6f41a8125d1ea7099d581ba7bb9cf08816eb43111a108bd528fe20"
+  },
+  {
+    "id": 216,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/216.png",
+    "sha256": "6c1cccd5d7a91a50b579545802e9e2f33ab235362f026415787a845f8be671fd"
+  },
+  {
+    "id": 217,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/217.png",
+    "sha256": "9f2d4291a976258ae8d106ccef09f6f2225a48b17bc808154ba19484c350738e"
+  },
+  {
+    "id": 218,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/218.png",
+    "sha256": "c5d34d76be4bfc97942602d835ef51859c61821519f4fb9a0b4b54ed1a00587c"
+  },
+  {
+    "id": 219,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/219.png",
+    "sha256": "35db179bb94dd4fcba3d5a3140be2b033607189be36a75edc392ef16baeb64e5"
+  },
+  {
+    "id": 220,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/220.png",
+    "sha256": "a9bac7b3643501e53c77935d5abb2e83ded7eba968095710c65c051883f8f0b9"
+  },
+  {
+    "id": 221,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/221.png",
+    "sha256": "8772ab66d534564021bfc201699c30bd84b11fcc75ffc7fb7a1bb95a4e87ede8"
+  },
+  {
+    "id": 222,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/222.png",
+    "sha256": "0a343a429e66e1e18766dd97760f808dbf2f21ccaa5dd4519d668abe8e92ca82"
+  },
+  {
+    "id": 223,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/223.png",
+    "sha256": "d7e983a7990bc007a789e7361250b07ee711bc8abf3aad5b902ba039e570544c"
+  },
+  {
+    "id": 224,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/224.png",
+    "sha256": "4259655bb803ee470981d8274ad6d73abad7399b450313d251373a7d59d8a15e"
+  },
+  {
+    "id": 225,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/225.png",
+    "sha256": "8935e46983dcfceb165c64c666f53d8223c3ff718c36ccfb123225d6ec843312"
+  },
+  {
+    "id": 226,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/226.png",
+    "sha256": "4e4030c38ba4ebe740d8cd8f084d3710587947aa941d477643f33bd2e47de43e"
+  },
+  {
+    "id": 227,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/227.png",
+    "sha256": "6dd115778fcf5974b2d098c288be64bc91195a46149d00504bfc56032b6411c3"
+  },
+  {
+    "id": 228,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/228.png",
+    "sha256": "22c0f4d63c9a906c3153e5b9a0329023ad47b9bcb57b347561cf4cbec36f4130"
+  },
+  {
+    "id": 229,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/229.png",
+    "sha256": "bbbaa1e9b11a8ddd90198bcd4c27561f41e95659dbe2a50bd1fc3f6d6c0e5b59"
+  },
+  {
+    "id": 230,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/230.png",
+    "sha256": "f99605bd0b9617c2fcefeee6830c81ac5789f60129a7edd40dc2213b5fe2eff1"
+  },
+  {
+    "id": 231,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/231.png",
+    "sha256": "f84aa5cedc9f857f0d418de3815161376b45b3575f47041aed3fe79cd83ca900"
+  },
+  {
+    "id": 232,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/232.png",
+    "sha256": "8e0d50fdffd0559f9f07c17358266144fc027703945358f6cc59816c2ff02900"
+  },
+  {
+    "id": 233,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/233.png",
+    "sha256": "59a42bcc1b421c14fc843555d6af4e8c5f6c06198b5bb821617f69e8760aa3b3"
+  },
+  {
+    "id": 234,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/234.png",
+    "sha256": "a17abefc65f11fe9ed5f9f219ffd442335db0d7886e7fee3c93360c6203390d3"
+  },
+  {
+    "id": 235,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/235.png",
+    "sha256": "a5bf656a5958c30575680992beabb31227df24ac4fec7bfeb4efa6d99cd74c55"
+  },
+  {
+    "id": 236,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/236.png",
+    "sha256": "05a018017e6786f08dc8b4da40de4103544f3145d9be2dfed9cfe0a563c2617a"
+  },
+  {
+    "id": 237,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/237.png",
+    "sha256": "3e358ac65c23dfcdeea00ac7a421d76a7edcd45222fe73f5954544a83a70b8d0"
+  },
+  {
+    "id": 238,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/238.png",
+    "sha256": "b42c6e8530375877c865a0394e10ec7dae06c7deff5904253b4bbb47c859834e"
+  },
+  {
+    "id": 239,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/239.png",
+    "sha256": "7ad2543207fa80e974a6462740cfa5a12d4fab467cdbe69286c3b56a63f2bc77"
+  },
+  {
+    "id": 240,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/240.png",
+    "sha256": "ba020ddaa6ebe130ed96807ce8a3931e799639272b00348a75e6288514395c12"
+  },
+  {
+    "id": 241,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/241.png",
+    "sha256": "090bba4e313d608b12eec8ee2def8a2821565312e79c18936fd755988081c258"
+  },
+  {
+    "id": 242,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/242.png",
+    "sha256": "eebf2d67ebadab3d5e251fd41b500e3835829232af75ddde58dfd5fba79f8fbb"
+  },
+  {
+    "id": 243,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/243.png",
+    "sha256": "f0c64d337e0a035964c69a1db302f3ad9efcb93c4eb5e0cedfd1de700e811ca6"
+  },
+  {
+    "id": 244,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/244.png",
+    "sha256": "9c383d3d33ca389f45a7550e27e9d21a46af6dda64b0276750bee321665202d4"
+  },
+  {
+    "id": 245,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/245.png",
+    "sha256": "44bc616b649a3c5a57711c441523d3abddcaa14361574d38fa5d9cad8d4247d9"
+  },
+  {
+    "id": 246,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/246.png",
+    "sha256": "3db5dabe76ee64395dc52660e9ad9f3dd4e9ebc74b33757b13aa544e5a607f3c"
+  },
+  {
+    "id": 247,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/247.png",
+    "sha256": "a59e6df931d83525f01fb11caba12f5a0079cff425d49eab9e6cf8171f19000d"
+  },
+  {
+    "id": 248,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/248.png",
+    "sha256": "92f4a1aaf82fb405720db5c0826acbc626a450a171a2c5ef533b3c23a09981ea"
+  },
+  {
+    "id": 249,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/249.png",
+    "sha256": "9e4cf8a68e70df5f4894fcbe1a462d98fbf79bc6a9d6c9f5d58716056bd444af"
+  },
+  {
+    "id": 250,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/250.png",
+    "sha256": "820f7733f223f6f93279c48ca93116213ae94a0433f0721e584349b975d14f1b"
+  },
+  {
+    "id": 251,
+    "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/251.png",
+    "sha256": "004fce671894609bdbb92df123e9c3aa87b4a7f0e3e0eefddde264e1d7488202"
   }
 ]

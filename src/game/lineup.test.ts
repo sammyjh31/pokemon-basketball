@@ -27,7 +27,7 @@ describe("shareable basketball lineups", () => {
     for (const value of [
       "1,2",
       "1,2,3,4,4",
-      "1,2,3,4,152",
+      "1,2,3,4,252",
       "1,2,3,4,NaN",
       "1,2,3,4,1.5",
       "-1,2,3,4,5",

@@ -135,5 +135,5 @@ export function validateLegacy(value: unknown): GameState {
       return fail();
     run.result = { ...expected, modelVersion: 1 };
   }
-  return { version: 2, run, records: parsedRecords };
+  return { version: 3, run, records: parsedRecords };
 }

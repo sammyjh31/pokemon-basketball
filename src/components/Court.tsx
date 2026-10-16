@@ -28,7 +28,7 @@ export function Court({
     <section className="lineup-panel" aria-label="Your starting lineup">
       <div className="panel-heading">
         <div>
-          <span className="eyebrow">KANTO LEAGUE · ORIGINAL 151</span>
+          <span className="eyebrow">KANTO + JOHTO · 251 POKÉMON</span>
           <h2>
             The starting five
             <span className="count-chip">{ratings.filled} / 5</span>
@@ -97,7 +97,7 @@ export function Court({
           : swap
             ? "Choose another position to swap your players."
             : run.result
-              ? run.result.modelVersion === 2
+              ? (run.result.modelVersion ?? 1) >= 2
                 ? "Season complete. Your eight-player roster is in the books."
                 : "Your original five-player season is preserved."
               : run.mode === "spin"
@@ -122,7 +122,7 @@ export function Court({
       </div>
       <div className="rating-caption">
         {run.result
-          ? run.result.modelVersion === 2
+          ? (run.result.modelVersion ?? 1) >= 2
             ? "Season complete. View player statistics and awards below."
             : "Start a new eight-player season to generate player statistics."
           : ratings.complete

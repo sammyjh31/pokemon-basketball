@@ -7,6 +7,9 @@ import {
 } from "../game/ratings";
 import {
   BENCH_SLOTS,
+  DEFENSE_SCHEMES,
+  DEFENSE_LABELS,
+  type DefenseScheme,
   SLOT_NAMES,
   TACTICS,
   TACTIC_LABELS,
@@ -34,6 +37,7 @@ export function BenchPanel({
   onAutoFill,
   onTactic,
   onRotation,
+  onDefense,
 }: {
   run: Run;
   ratings: TeamRatings;
@@ -43,6 +47,7 @@ export function BenchPanel({
   onAutoFill: () => void;
   onTactic: (tactic: Tactic) => void;
   onRotation: (rotation: RotationStyle) => void;
+  onDefense: (defense: DefenseScheme) => void;
 }) {
   const minutes = rotationMinutes(run.roster, run.rotation),
     locked = !!run.result;
@@ -118,6 +123,21 @@ export function BenchPanel({
           </select>
         </label>
         <label>
+          Defensive scheme
+          <select
+            aria-label="Defensive scheme"
+            value={run.defense ?? "man"}
+            disabled={locked}
+            onChange={(e) => onDefense(e.target.value as DefenseScheme)}
+          >
+            {DEFENSE_SCHEMES.map((d) => (
+              <option key={d} value={d}>
+                {DEFENSE_LABELS[d]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
           Rotation emphasis
           <select
             aria-label="Rotation emphasis"
@@ -134,7 +154,7 @@ export function BenchPanel({
       <p className="coaching-note">
         {tacticNotes[run.tactic]}{" "}
         {ratings.complete
-          ? "240 regulation player-minutes, adjusted for role and stamina."
+          ? "Projected minutes guide substitutions; fatigue, matchups and foul trouble change the rotation."
           : "Fill all eight slots to complete your rotation."}
       </p>
       <div className="rotation-strip" aria-label="Projected minutes">

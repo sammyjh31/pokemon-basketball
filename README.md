@@ -1,6 +1,6 @@
 # 82–0 Pokémon Basketball
 
-Build an eight-player Pokémon rotation — five starters and three reserves — then chase an undefeated 82-game season. An [All-22](https://all22pokemon.com/)-inspired lineup builder and draft challenge with the original 151, 20 basketball skills, individual statistics, team awards, and browser-local records.
+Build an eight-player Pokémon rotation — five starters and three reserves — then chase an undefeated 82-game season. An [All-22](https://all22pokemon.com/)-inspired lineup builder and draft challenge with 251 Pokémon from Gen I–II, 20 basketball skills plus advanced player traits, a complete 30-team league, league awards, and browser-local records.
 
 ## Run
 
@@ -43,8 +43,8 @@ Playwright uses `/usr/bin/chromium` when available, or the `CHROMIUM_PATH` overr
 - `src/game/`: deterministic draft/simulation rules, rating formulas, state reducer, and save validation.
 - `src/components/`: court, draft cards, season schedule, rules, and confirmation dialog.
 - `src/data/`: bundled factual Pokémon records and original fictional opponents.
-- `public/pokemon/`: 151 locally served portraits, plus their source URLs and SHA-256 manifest.
-- `public/pokemon-pixel/`: the matching 151 Gen V pixel sprites and provenance manifest.
+- `public/pokemon/`: 251 locally served portraits, plus their source URLs and SHA-256 manifest.
+- `public/pokemon-pixel/`: the matching 251 Gen V pixel sprites and provenance manifest.
 - `tests/e2e/`: real-browser workflow checks.
 - `design-qa.md` and `docs/design/`: reference comparisons and desktop/mobile evidence.
 - `docs/LOCAL_HANDOFF.md`: current implementation and validation notes for local/cloud continuation.
@@ -55,18 +55,20 @@ GitHub's `main` branch at [sammyjh31/pokemon-basketball](https://github.com/samm
 
 Local checkout: `/Users/sam/Documents/PokeBBall`. Existing cloud checkout: `/workspace/pokemon-basketball`. Run `npm ci` after dependency changes. Browser saves stay in the current browser, so use Copy link to carry a lineup between environments.
 
-## Scouting, coaching, and season statistics
+## Scouting, coaching, and league statistics
 
-- **Scouting:** six summary ratings and 14 specialist skills derive from six Pokémon base stats, height, weight, and small averaged type tendencies. Diminishing returns, capped logarithmic size, mobility costs, weak role requirements, spacing, creation, defensive coverage, fatigue, and reserve quality affect the team. Open a full player scouting report for source stats, strengths, tradeoffs, and all five position fits.
-- **Coaching:** Balanced, Run & gun, Space & shoot, Inside out, or Defense first. Balanced minutes, Lean on starters, and Trust the bench redistribute 240 regulation player-minutes based on role quality and stamina, capped at 40 per player. Coaching locks when the season starts.
-- **Simulation:** deterministic possessions produce shots, free throws, turnovers, rebounds (including final-free-throw misses), assists, steals, and blocks. Scores and winners come from those events. Ties add overtime and 25 player-minutes per period. Each schedule has 41 home and 41 away games. Opponents use aggregate team ratings; explicit substitution sequences, injuries, and foul-outs are outside this model.
-- **Results:** every game has an eight-player box score. Season tables show per-game averages or totals, shooting percentages, true shooting, scoring highs, and double/triple doubles. Select any column to sort; mobile tables scroll while keeping player names visible.
-- **Awards:** Team MVP, Defensive Player, Sixth Player, Scoring Leader, Playmaker, and Rebounding Leader use simulated production. These are honors within your roster, not league-wide awards. No career comparisons are fabricated.
-- **Matchups:** Rating Edge is the difference between team overall ratings, not a win probability. The old forecast was removed because it did not describe the new possession model.
+- **Scouting:** 20 basketball skills derive from six Pokémon base stats, height, weight and averaged type tendencies. Advanced profiles add screening, off-ball movement, post play, switchability, discipline, usage, foul drawing, closeouts and decision-making. Reports explain archetypes, strengths, tradeoffs and five positional fits.
+- **Coaching:** five offensive identities, three rotation emphases and four defensive schemes (man, switching, zone and press). Actual five-player lineups change through substitutions, fatigue, foul trouble and late-game decisions. Projected minutes are a plan, not a guarantee.
+- **A complete league:** your eight picks are reserved first. The other 29 teams draft unique eight-player rosters from the remaining species. Every team plays 82 games, 41 at home, in one shared 1,230-game schedule.
+- **Match engine:** both teams generate possession events through transition, pick-and-roll, isolation, post and spot-up plays. Matchups, passing, screens, spacing, shot zones, shooting fouls, and-ones, offensive boards and fatigue affect outcomes. Tied games play overtime. Scores, player statistics and standings all come from the same events.
+- **League center:** sortable standings, every team's roster and coaching identity, searchable player leaders, per-game/totals views, percentage qualifications, per-36 production, TS%, AST/TOV and two-player comparisons. Every game has a replayable box score for both teams, period scores, shot zones, fouls, plus/minus and play-type counts.
+- **Awards:** League MVP, Defensive Player of the Year, Sixth Player of the Year, and scoring/assist/rebound champions. Each includes three finalists across the entire league. All-League and All-Defense select five players each. Your team's eight-player season table remains available separately.
 
-Saves now use `pokemon-basketball:v2`. Valid v1 saves migrate without deleting the original key. Unfinished drafts retain players and choices; completed old seasons keep their original scores, MVP, and records as archived recaps. Start a new season for individual statistics. Frozen `legacy*` modules validate those old results; preserve them when changing future models. Any future change to v2 simulation output needs an explicit model migration rather than silently invalidating existing saves.
+See [the league model](docs/LEAGUE_MODEL.md) for schedule construction, exact award formulas, leader qualifications and versioning rules. All player species are unique across the league, including when legendaries are disabled.
 
-Playoffs, careers, additional generations, multiplayer accounts, and public hosting are not included.
+Saves use `pokemon-basketball:v3`. Valid v1/v2 saves migrate without deleting their original keys. Completed earlier seasons retain their results and records; start a new run for a full league season. Frozen `legacy*` and `v2*` modules preserve old outcomes. Future simulation changes require explicit model migration.
+
+Playoffs, careers, injuries, generations beyond II, multiplayer accounts and public hosting are not included.
 
 ## Data and artwork
 

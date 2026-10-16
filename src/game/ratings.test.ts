@@ -41,13 +41,13 @@ const fixture: Pokemon = {
 };
 
 describe("Pokémon basketball ratings", () => {
-  it("bundles complete official data for the original 151", () => {
-    expect(POKEMON).toHaveLength(151);
+  it("bundles complete official data for the first two generations", () => {
+    expect(POKEMON).toHaveLength(251);
     expect(POKEMON.map((p) => p.id)).toEqual(
-      Array.from({ length: 151 }, (_, i) => i + 1),
+      Array.from({ length: 251 }, (_, i) => i + 1),
     );
     expect(POKEMON.filter((p) => p.legendary).map((p) => p.id)).toEqual([
-      144, 145, 146, 150, 151,
+      144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251,
     ]);
     for (const mon of POKEMON) {
       expect(Object.values(mon.stats)).toHaveLength(6);
@@ -58,7 +58,7 @@ describe("Pokémon basketball ratings", () => {
       expect(mon.weightKg).toBeGreaterThan(0);
     }
   });
-  it("gives all 151 players twenty bounded skills and finite position fits", () => {
+  it("gives all 251 players twenty bounded skills and finite position fits", () => {
     for (const mon of POKEMON) {
       expect(Object.values(attributes(mon))).toHaveLength(20);
       for (const value of [

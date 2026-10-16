@@ -18,7 +18,7 @@ describe("season simulation", () => {
     expect(SCHEDULE.filter((g) => g.home)).toHaveLength(41);
     expect(new Set(SCHEDULE.map((g) => g.opponentId)).size).toBe(29);
   });
-  it("produces repeatable results, coherent scores, and roster-only awards", () => {
+  it("produces repeatable results, coherent scores, and league-wide awards", () => {
     const run = full();
     const result = simulateSeason(run);
     expect(result).toEqual(simulateSeason(run));
@@ -32,9 +32,15 @@ describe("season simulation", () => {
         expect(Number.isInteger(score)).toBe(true);
         expect(score).toBeGreaterThanOrEqual(0);
       }
-      expect(Object.values(run.roster)).toContain(game.playerOfGameId);
+      expect(
+        result.league!.players.some(
+          (p) =>
+            p.pokemonId === game.playerOfGameId &&
+            p.teamId === game.playerOfGameTeamId,
+        ),
+      ).toBe(true);
     }
-    expect(Object.values(run.roster)).toContain(result.mvpId);
+    expect(result.league!.awards[0].pokemonId).toBe(result.mvpId);
   });
   it("improves odds monotonically with either offense or defense", () => {
     for (const opponent of OPPONENTS) {

@@ -23,8 +23,19 @@ export default function App({
   initial?: GameState;
   storage?: StorageLike;
 }) {
-  const { state, dispatch, storageNotice, importPending, resolveImport } =
-      useGame(initial, storage),
+  const {
+      state,
+      dispatch,
+      storageNotice,
+      importPending,
+      resolveImport,
+      simulate,
+      simulating,
+      progress,
+      simulationError,
+      restoring,
+      restorationProgress,
+    } = useGame(initial, storage),
     { run, records } = state;
   const [pending, setPending] = useState<number | null>(null),
     [swap, setSwap] = useState<RosterSlot | null>(null);
@@ -34,7 +45,7 @@ export default function App({
   } | null>(null);
   const [animatedRun, setAnimatedRun] = useState<string | null>(null),
     [announcement, setAnnouncement] = useState("");
-  const archived = !!run.result && run.result.modelVersion !== 2;
+  const archived = !!run.result && (run.result.modelVersion ?? 1) < 2;
   const ratings = archived
     ? legacyTeamRatings(run.roster)
     : teamRatings(run.roster, run.tactic, run.rotation);
@@ -48,6 +59,7 @@ export default function App({
     setAnnouncement("New draft started. Pick your first Pokémon.");
   };
   const requestReset = (mode: Mode, includeLegends: boolean) => {
+    if (simulating || restoring) return;
     if (
       Object.values(run.roster).some((id) => id != null) ||
       run.rerollsLeft < 2
@@ -56,7 +68,7 @@ export default function App({
     else start(mode, includeLegends);
   };
   const onSlot = (position: RosterSlot) => {
-    if (run.result) return;
+    if (run.result || simulating || restoring) return;
     if (pending !== null) {
       if (run.mode === "spin" && run.roster[position] !== null) return;
       dispatch({ type: "PLACE", pokemonId: pending, position });
@@ -83,113 +95,161 @@ export default function App({
       <div className="app-shell">
         <Scoreboard
           mode={run.mode}
+          disabled={simulating || restoring}
           onMode={(mode) => {
             if (mode !== run.mode) requestReset(mode, run.includeLegends);
           }}
         />
-        <main>
+        <main aria-busy={restoring}>
           {storageNotice && (
             <p className="notice" role="status">
               {storageNotice}
             </p>
           )}
-          <div className="mobile-title">
-            <h1>{run.mode === "free" ? "Lineup builder" : "82–0 Challenge"}</h1>
-            <p>Eight Pokémon. One complete team.</p>
-          </div>
-          <div className="draft-layout" id="draft">
-            <div className="court-column">
-              <Court
-                run={run}
-                ratings={ratings}
-                pending={pending}
-                swap={swap}
-                onSlot={onSlot}
-                onReset={() => requestReset(run.mode, run.includeLegends)}
-              />
-              {!archived && (
-                <BenchPanel
-                  run={run}
-                  ratings={ratings}
-                  pending={pending}
-                  swap={swap}
-                  onSlot={onSlot}
-                  onAutoFill={() => {
-                    dispatch({ type: "AUTO_BENCH" });
-                    setPending(null);
-                    setSwap(null);
-                  }}
-                  onTactic={(tactic) => dispatch({ type: "TACTIC", tactic })}
-                  onRotation={(rotation) =>
-                    dispatch({ type: "ROTATION", rotation })
-                  }
+          {restoring ? (
+            <section
+              className="season-panel"
+              id="draft"
+              aria-labelledby="restoration-title"
+            >
+              <span className="eyebrow">WELCOME BACK</span>
+              <h1 id="restoration-title">Restoring your league</h1>
+              <p>
+                Your saved season is being verified. Your original save stays in
+                place until it is ready.
+              </p>
+              <div className="league-simulation-progress" role="status">
+                <span>
+                  {restorationProgress.completed.toLocaleString("en-US")} /{" "}
+                  {restorationProgress.total.toLocaleString("en-US")} games
+                  restored
+                </span>
+                <progress
+                  aria-label="Saved league restoration progress"
+                  value={restorationProgress.completed}
+                  max={restorationProgress.total}
                 />
-              )}
-            </div>
-            <DraftPanel
-              key={run.id}
-              run={run}
-              pending={pending}
-              inspectId={swap ? run.roster[swap] : null}
-              onPick={(id) => {
-                setPending(pending === id ? null : id);
-                setSwap(null);
-                setAnnouncement(
-                  `${POKEMON_BY_ID.get(id)!.name} selected. Choose a position.`,
-                );
-              }}
-              onPlace={onSlot}
-              onReroll={() => {
-                dispatch({ type: "REROLL" });
-                setPending(null);
-                setAnnouncement("Four new draft choices are ready.");
-              }}
-              onLegends={(include) => requestReset(run.mode, include)}
-              records={records}
-              spriteStyle={spriteStyle}
-              onSpriteStyle={setSpriteStyle}
-              tools={
-                <LineupTools
+              </div>
+            </section>
+          ) : (
+            <>
+              <div className="mobile-title">
+                <h1>
+                  {run.mode === "free" ? "Lineup builder" : "82–0 Challenge"}
+                </h1>
+                <p>Eight Pokémon. One complete team.</p>
+              </div>
+              <fieldset
+                className="draft-layout draft-fieldset"
+                id="draft"
+                disabled={simulating || restoring}
+              >
+                <div className="court-column">
+                  <Court
+                    run={run}
+                    ratings={ratings}
+                    pending={pending}
+                    swap={swap}
+                    onSlot={onSlot}
+                    onReset={() => requestReset(run.mode, run.includeLegends)}
+                  />
+                  {!archived && (
+                    <BenchPanel
+                      run={run}
+                      ratings={ratings}
+                      pending={pending}
+                      swap={swap}
+                      onSlot={onSlot}
+                      onAutoFill={() => {
+                        dispatch({ type: "AUTO_BENCH" });
+                        setPending(null);
+                        setSwap(null);
+                      }}
+                      onDefense={(defense) =>
+                        dispatch({ type: "DEFENSE", defense })
+                      }
+                      onTactic={(tactic) =>
+                        dispatch({ type: "TACTIC", tactic })
+                      }
+                      onRotation={(rotation) =>
+                        dispatch({ type: "ROTATION", rotation })
+                      }
+                    />
+                  )}
+                </div>
+                <DraftPanel
                   key={run.id}
                   run={run}
-                  onRandomize={() => {
-                    dispatch({
-                      type: "SET_LINEUP",
-                      roster: randomLineup(run.includeLegends, newSeed()),
-                    });
-                    setPending(null);
+                  pending={pending}
+                  inspectId={swap ? run.roster[swap] : null}
+                  onPick={(id) => {
+                    setPending(pending === id ? null : id);
                     setSwap(null);
-                    setAnnouncement("A new eight-player roster is ready.");
+                    setAnnouncement(
+                      `${POKEMON_BY_ID.get(id)!.name} selected. Choose a position.`,
+                    );
                   }}
-                  onClear={() => {
-                    dispatch({
-                      type: "SET_LINEUP",
-                      roster: emptyRoster(),
-                    });
+                  onPlace={onSlot}
+                  onReroll={() => {
+                    dispatch({ type: "REROLL" });
                     setPending(null);
-                    setSwap(null);
-                    setAnnouncement("All eight roster slots are cleared.");
+                    setAnnouncement("Four new draft choices are ready.");
                   }}
+                  onLegends={(include) => requestReset(run.mode, include)}
+                  records={records}
+                  spriteStyle={spriteStyle}
+                  onSpriteStyle={setSpriteStyle}
+                  tools={
+                    <LineupTools
+                      key={run.id}
+                      run={run}
+                      onRandomize={() => {
+                        dispatch({
+                          type: "SET_LINEUP",
+                          roster: randomLineup(run.includeLegends, newSeed()),
+                        });
+                        setPending(null);
+                        setSwap(null);
+                        setAnnouncement("A new eight-player roster is ready.");
+                      }}
+                      onClear={() => {
+                        dispatch({
+                          type: "SET_LINEUP",
+                          roster: emptyRoster(),
+                        });
+                        setPending(null);
+                        setSwap(null);
+                        setAnnouncement("All eight roster slots are cleared.");
+                      }}
+                    />
+                  }
                 />
-              }
-            />
-          </div>
-          <p className="sr-only" role="status">
-            {announcement}
-          </p>
-          <SeasonPanel
-            key={run.id}
-            run={run}
-            ratings={ratings}
-            animate={animatedRun === run.id}
-            onSimulate={() => {
-              setAnimatedRun(run.id);
-              setPending(null);
-              setSwap(null);
-              dispatch({ type: "SIMULATE" });
-            }}
-          />
-          <RulesPanel />
+              </fieldset>
+              <p className="sr-only" role="status">
+                {announcement}
+              </p>
+              <SeasonPanel
+                key={run.id}
+                run={run}
+                ratings={ratings}
+                animate={animatedRun === run.id}
+                simulating={simulating}
+                progress={progress}
+                onSimulate={() => {
+                  setAnimatedRun(run.id);
+                  setPending(null);
+                  setSwap(null);
+                  void simulate();
+                }}
+              />
+              {simulationError && (
+                <p className="notice" role="alert">
+                  {simulationError}
+                </p>
+              )}
+              <RulesPanel />
+            </>
+          )}
         </main>
         <footer>
           <div className="footer-brand">
@@ -221,7 +281,7 @@ export default function App({
           onConfirm={() => start(reset.mode, reset.includeLegends)}
         />
       )}
-      {importPending && (
+      {importPending && !restoring && (
         <ConfirmDialog
           title="Load shared lineup?"
           confirmLabel="Load lineup"

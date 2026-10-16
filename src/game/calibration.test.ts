@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { createRun } from "./draft";
-import { simulateSeason } from "./season";
+import { simulateSeason } from "./v2Season";
 import { ROSTER_SLOTS, type Roster } from "./types";
 const season = (ids: number[], seed: number) =>
   simulateSeason({
@@ -9,7 +9,7 @@ const season = (ids: number[], seed: number) =>
       ROSTER_SLOTS.map((slot, i) => [slot, ids[i]]),
     ) as Roster,
   });
-describe("rotation performance", () => {
+describe("frozen v2 rotation performance", () => {
   it("rewards a strong roster across shared seeds while preserving upset risk", () => {
     let strongWins = 0,
       weakWins = 0,

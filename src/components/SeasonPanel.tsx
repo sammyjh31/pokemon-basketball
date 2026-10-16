@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { OPPONENTS, SCHEDULE } from "../data/opponents";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
   ROSTER_SLOTS,
+  TACTIC_LABELS,
   type GameResult,
   type Run,
   type TeamRatings,
@@ -10,16 +11,23 @@ import {
 import { Portrait } from "./Portrait";
 import { SeasonStats } from "./SeasonStats";
 import { BoxScore } from "./BoxScore";
+import { LeaguePanel } from "./LeaguePanel";
+import { LeagueBoxScore } from "./LeagueBoxScore";
+import { createLeague, leagueSchedule } from "../game/league";
 export function SeasonPanel({
   run,
   ratings,
   animate,
   onSimulate,
+  simulating = false,
+  progress,
 }: {
   run: Run;
   ratings: TeamRatings;
   animate: boolean;
   onSimulate: () => void;
+  simulating?: boolean;
+  progress?: { completed: number; total: number };
 }) {
   const result = run.result;
   const reduced =
@@ -60,13 +68,43 @@ export function SeasonPanel({
     wins = showing.filter((g) => g.won).length,
     losses = showing.length - wins;
   const done = !!result && visible === 82;
+  const league = result?.modelVersion === 3 ? result.league : undefined;
   const archived =
-    !!result && (result.modelVersion !== 2 || !result.playerStats?.length);
+    !!result &&
+    !league &&
+    (result.modelVersion !== 2 || !result.playerStats?.length);
   const rosterFilled = ROSTER_SLOTS.filter(
     (slot) => run.roster[slot] != null,
   ).length;
   const ready = ratings.complete && rosterFilled === ROSTER_SLOTS.length;
-  const mvp = result ? POKEMON_BY_ID.get(result.mvpId) : null;
+  const previewTeams = useMemo(
+    () => (!result && ready ? createLeague(run) : []),
+    [run, result, ready],
+  );
+  const leagueTeams = league?.teams ?? previewTeams;
+  const schedule = useMemo(
+    () =>
+      league
+        ? result!.games
+        : previewTeams.length
+          ? leagueSchedule(run.seasonSeed)
+              .filter((g) => g.homeTeamId === 0 || g.awayTeamId === 0)
+              .map((g, index) => ({
+                index,
+                opponentId: g.homeTeamId === 0 ? g.awayTeamId : g.homeTeamId,
+                home: g.homeTeamId === 0,
+              }))
+          : SCHEDULE,
+    [league, result, previewTeams, run.seasonSeed],
+  );
+  const mvpAward = league?.awards.find((award) => award.id === "mvp");
+  const mvp = result
+    ? POKEMON_BY_ID.get(mvpAward?.pokemonId ?? result.mvpId)
+    : null;
+  const mvpTeam = leagueTeams.find((team) => team.id === mvpAward?.teamId);
+  const selectedLeagueGame =
+    selectedGame &&
+    league?.games.find((game) => game.id === selectedGame.leagueGameId);
   const recap =
     done && result
       ? `82–0 Pokémon Basketball\n${result.wins}–${result.losses} · ${run.mode === "spin" ? "Spin & Pick" : "Free Draft"}\n${Object.entries(
@@ -76,7 +114,7 @@ export function SeasonPanel({
           .map(([p, id]) => `${p}: ${POKEMON_BY_ID.get(id!)!.name}`)
           .join(
             " · ",
-          )}\n${archived ? "MVP" : "Team MVP"}: ${mvp?.name}${!archived && result.awards?.length ? `\nTeam awards: ${result.awards.map((award) => `${award.title} — ${POKEMON_BY_ID.get(award.pokemonId)?.name}`).join(" · ")}` : ""}`
+          )}\n${league ? "League MVP" : archived ? "MVP" : "Team MVP"}: ${mvp?.name}${mvpTeam ? ` · ${mvpTeam.name}` : ""}${!league && !archived && result.awards?.length ? `\nTeam awards: ${result.awards.map((award) => `${award.title} — ${POKEMON_BY_ID.get(award.pokemonId)?.name}`).join(" · ")}` : ""}`
       : "";
   const copy = async () => {
     try {
@@ -103,7 +141,9 @@ export function SeasonPanel({
               ? done
                 ? archived
                   ? "Your original season, preserved."
-                  : "Eight players. Five on court. A season of contributions."
+                  : league
+                    ? "Thirty teams. Two hundred forty players. One shared season."
+                    : "Eight players. Five on court. A season of contributions."
                 : `Game ${visible} of 82. The story is unfolding…`
               : "Build an eight-player roster. Eighty-two games tell the story."}
           </p>
@@ -112,10 +152,10 @@ export function SeasonPanel({
           <button
             className="button primary simulate"
             onClick={onSimulate}
-            disabled={!ready}
+            disabled={!ready || simulating}
             aria-label="Simulate season"
           >
-            Simulate season{" "}
+            {simulating ? "Simulating league…" : "Simulate season"}{" "}
             <svg
               className="arrow-icon"
               viewBox="0 0 16 16"
@@ -151,6 +191,20 @@ export function SeasonPanel({
           </button>
         )}
       </div>
+      {simulating && (
+        <div className="league-simulation-progress" role="status">
+          <span>
+            Simulating the league ·{" "}
+            {(progress?.completed ?? 0).toLocaleString("en-US")} /{" "}
+            {(progress?.total ?? 1230).toLocaleString("en-US")} games
+          </span>
+          <progress
+            aria-label="League simulation progress"
+            value={progress?.completed ?? 0}
+            max={progress?.total ?? 1230}
+          />
+        </div>
+      )}
       {!result && !ready ? (
         <div className="season-empty">
           <div className="empty-season-icon" aria-hidden="true">
@@ -197,9 +251,11 @@ export function SeasonPanel({
             <div className="season-meta">
               <span className="eyebrow">
                 {done
-                  ? archived
-                    ? "SEASON MVP"
-                    : "TEAM MVP"
+                  ? league
+                    ? "LEAGUE MVP"
+                    : archived
+                      ? "SEASON MVP"
+                      : "TEAM MVP"
                   : "THE CHALLENGE"}
               </span>
               {done && mvp ? (
@@ -208,11 +264,9 @@ export function SeasonPanel({
                   <div>
                     <strong>{mvp.name}</strong>
                     <span>
-                      {
-                        result!.games.filter((g) => g.playerOfGameId === mvp.id)
-                          .length
-                      }{" "}
-                      player-of-the-game awards
+                      {league
+                        ? `${mvpTeam?.name ?? "League winner"} · ${mvpAward?.value ?? ""}`
+                        : `${result!.games.filter((g) => g.playerOfGameId === mvp.id).length} player-of-the-game awards`}
                     </span>
                   </div>
                 </div>
@@ -234,9 +288,22 @@ export function SeasonPanel({
               </p>
             </div>
           )}
-          {done && !archived && result?.playerStats && (
-            <SeasonStats players={result.playerStats} awards={result.awards} />
+          {done && result?.modelVersion === 2 && (
+            <div className="archived-season-note">
+              <strong>Earlier team simulation</strong>
+              <p>
+                This saved season uses the earlier team simulation. Start a new
+                run for league-wide rosters, leaders and awards.
+              </p>
+            </div>
           )}
+          {done && !archived && result?.playerStats && (
+            <SeasonStats
+              players={result.playerStats}
+              awards={league ? [] : result.awards}
+            />
+          )}
+          {done && league && <LeaguePanel league={league} />}
           {done && !archived && (
             <p className="schedule-hint">
               Select a game score to open the full box score.
@@ -263,9 +330,20 @@ export function SeasonPanel({
                 </tr>
               </thead>
               <tbody>
-                {SCHEDULE.map((match, index) => {
-                  const opponent = OPPONENTS[match.opponentId - 1],
-                    game = showing[index];
+                {schedule.map((match, index) => {
+                  const team = leagueTeams.find(
+                    (team) => team.id === match.opponentId,
+                  );
+                  const opponent = team
+                    ? {
+                        id: team.id,
+                        name: team.name,
+                        offense: team.ratings.offense,
+                        defense: team.ratings.defense,
+                        style: TACTIC_LABELS[team.tactic],
+                      }
+                    : OPPONENTS[match.opponentId - 1];
+                  const game = showing[index];
                   return (
                     <tr
                       key={index}
@@ -298,7 +376,9 @@ export function SeasonPanel({
                       </td>
                       <td>
                         {game ? (
-                          done && !archived && game.boxScore ? (
+                          done &&
+                          !archived &&
+                          (game.boxScore || game.leagueGameId) ? (
                             <button
                               type="button"
                               className="game-score game-score-button"
@@ -369,7 +449,14 @@ export function SeasonPanel({
           onFocus={(e) => e.target.select()}
         />
       )}
-      {done && selectedGame && (
+      {done && selectedLeagueGame && league && (
+        <LeagueBoxScore
+          game={selectedLeagueGame}
+          teams={league.teams}
+          onClose={() => setSelectedGame(null)}
+        />
+      )}
+      {done && selectedGame && !league && (
         <BoxScore
           game={selectedGame}
           opponent={OPPONENTS[selectedGame.opponentId - 1]}

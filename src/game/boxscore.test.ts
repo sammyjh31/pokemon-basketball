@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { createRun, placePokemon } from "./draft";
-import { simulateSeason } from "./season";
+import { simulateSeason } from "./v2Season";
 import { ROSTER_SLOTS } from "./types";
 const full = (seed = 31) => {
   let run = createRun("free", true, seed);
@@ -9,7 +9,7 @@ const full = (seed = 31) => {
   });
   return run;
 };
-describe("possession box scores and team awards", () => {
+describe("frozen v2 possession box scores and team awards", () => {
   it("conserves points, minutes and shot arithmetic across every game", () => {
     const result = simulateSeason(full());
     expect(result.modelVersion).toBe(2);

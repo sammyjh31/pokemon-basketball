@@ -178,7 +178,7 @@ export function DraftPanel({
             ✦
           </span>
           <h3>
-            {run.result?.modelVersion === 2
+            {(run.result?.modelVersion ?? 1) >= 2
               ? "Your eight. Your story."
               : "Your five. Your story."}
           </h3>
@@ -228,7 +228,7 @@ export function DraftPanel({
           <p className="draft-footnote">
             {run.mode === "spin"
               ? "Four choices. One spot on the team. Make it count."
-              : `${candidates.length} available Pokémon · Original 151`}
+              : `${candidates.length} available Pokémon · Gen 1 + 2`}
           </p>
         </>
       )}
@@ -301,7 +301,7 @@ export function DraftPanel({
         <p>
           {run.mode === "spin"
             ? "Choose one of four Pokémon each round. Place it in an open position. Each pick locks in, so make it count."
-            : "Choose from the original 151. Swap positions by selecting two players on the court. Randomize for a fresh team."}{" "}
+            : "Choose from 251 Pokémon across Gen 1 and 2. Swap positions by selecting two players on the court. Randomize for a fresh team."}{" "}
           Fill five starting positions and three bench slots, then play your
           season.
         </p>

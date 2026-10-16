@@ -1,0 +1,349 @@
+.league-panel {
+  min-width: 0;
+  max-width: 100%;
+  margin: 32px 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.league-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #0a0e13;
+  margin-bottom: 22px;
+}
+.league-navigation button {
+  min-height: 42px;
+  flex: 1 0 auto;
+  padding: 10px 14px;
+  background: transparent;
+  color: #aeb8c5;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.league-navigation button[aria-pressed="true"] {
+  background: var(--gold);
+  color: #161409;
+  font-weight: 700;
+}
+.league-view,
+.league-view section {
+  min-width: 0;
+  max-width: 100%;
+}
+.league-view h4 {
+  font: 700 23px var(--display);
+  margin: 0 0 10px;
+}
+.league-view .stat-legend {
+  margin-bottom: 16px;
+}
+.league-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  margin: 18px 0;
+}
+.league-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 180px;
+  max-width: 100%;
+  flex: 1;
+  font-size: 11px;
+  font-weight: 600;
+  color: #adb9c7;
+}
+.league-field select,
+.league-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid #3a4656;
+  border-radius: 4px;
+  background: #101720;
+  color: #e4eaf2;
+  font:
+    400 12px Inter,
+    sans-serif;
+}
+.league-field select {
+  text-overflow: ellipsis;
+}
+.league-field input::placeholder {
+  color: #8290a1;
+}
+.league-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  font-size: 12px;
+  color: #c1cbd8;
+}
+.league-checkbox input {
+  accent-color: var(--gold);
+  width: 16px;
+  height: 16px;
+}
+.league-leaders-table {
+  min-width: 1560px;
+}
+.league-leaders-table th:first-child {
+  min-width: 224px;
+}
+.league-standings {
+  min-width: 900px;
+}
+.league-standings th:first-child {
+  min-width: 224px;
+}
+.league-team-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  text-align: left;
+  color: inherit;
+  min-height: 32px;
+  padding: 0;
+  font-size: 12px;
+}
+.league-team-link:hover {
+  color: var(--gold);
+}
+.league-rank {
+  width: 20px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.league-user-team > * {
+  color: var(--gold);
+}
+.league-team-profile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+  background: #141c25;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.league-team-profile h4 {
+  margin: 7px 0;
+}
+.league-team-profile p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.league-team-ratings {
+  display: flex;
+  gap: 18px;
+}
+.league-team-ratings span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+  font: 700 10px var(--display);
+  color: #a0adbd;
+}
+.league-team-ratings b {
+  font-size: 28px;
+  color: var(--gold);
+}
+.league-roster-table {
+  min-width: 960px;
+}
+.league-award-grid {
+  margin-top: 18px;
+}
+.league-finalists {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+  color: #b5c0cf;
+}
+.league-finalists summary {
+  cursor: pointer;
+  min-height: 28px;
+  color: var(--gold);
+}
+.league-finalists ol {
+  padding-left: 18px;
+  margin: 4px 0 0;
+}
+.league-finalists li {
+  padding: 5px 0;
+}
+.league-finalists li span {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.league-honors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 20px;
+}
+.league-honors > section {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 18px;
+  background: var(--panel);
+}
+.league-honors h4 {
+  margin-top: 7px;
+}
+.league-honors ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.league-honors li {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.league-comparison {
+  min-width: 620px;
+}
+.league-comparison thead th:not(:first-child) {
+  white-space: normal;
+  min-width: 190px;
+}
+.league-comparison tbody th {
+  font-weight: 500;
+}
+.league-games {
+  min-width: 500px;
+}
+.league-games th:first-child {
+  min-width: 230px;
+}
+.league-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+.league-pagination > span {
+  margin-right: auto;
+  font-size: 12px;
+  color: var(--muted);
+}
+.league-pagination .button {
+  padding: 10px 13px;
+  font-size: 11px;
+}
+.league-empty {
+  padding: 22px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+.league-box-dialog {
+  width: min(100%, 1180px);
+}
+.league-box-team {
+  margin-top: 22px;
+}
+.league-box-team h3 {
+  font: 700 20px var(--display);
+  margin: 0 0 12px;
+}
+.league-box-table {
+  min-width: 1120px;
+}
+.league-box-table tfoot > tr > * {
+  font-weight: 700;
+  color: var(--gold);
+  border-top: 1px solid #45515f;
+  background: #1b2430;
+}
+.league-period-wrap,
+.league-plays-wrap {
+  margin-top: 20px;
+}
+.league-period-wrap table,
+.league-plays-wrap table {
+  min-width: 520px;
+}
+.league-simulation-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  padding: 16px;
+  margin: 18px 0;
+  border: 1px solid #665a37;
+  border-radius: 5px;
+  background: #1b1912;
+  font-size: 12px;
+  color: var(--gold);
+}
+.league-simulation-progress progress {
+  flex: 1;
+  min-width: 120px;
+  accent-color: var(--gold);
+}
+@media (max-width: 600px) {
+  .team-award-grid.league-award-grid {
+    grid-template-columns: 1fr;
+  }
+  .league-navigation button {
+    flex-basis: 30%;
+    font-size: 11px;
+    padding: 9px 6px;
+  }
+  .league-controls {
+    gap: 10px;
+  }
+  .league-field {
+    min-width: 100%;
+  }
+  .league-team-profile {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+  }
+  .league-team-ratings {
+    width: 100%;
+    justify-content: space-around;
+  }
+  .league-honors {
+    grid-template-columns: 1fr;
+  }
+  .league-leaders-table th:first-child,
+  .league-standings th:first-child {
+    min-width: 170px;
+  }
+  .league-games th:first-child {
+    min-width: 190px;
+  }
+  .league-leaders-table .stat-player small {
+    white-space: normal;
+    max-width: 130px;
+    line-height: 1.5;
+  }
+  .league-pagination {
+    gap: 8px;
+  }
+  .league-pagination > span {
+    flex-basis: 100%;
+  }
+}

@@ -154,13 +154,18 @@ export interface GameResult extends Matchup {
   boxScore?: PlayerBox[];
   overtimePeriods?: number;
   possessions?: number;
+  leagueGameId?: string;
+  opponentBoxScore?: LeagueBox[];
+  playerOfGameTeamId?: number;
 }
 export interface SeasonResult {
   games: GameResult[];
   wins: number;
   losses: number;
   mvpId: number;
-  modelVersion?: 1 | 2;
+  modelVersion?: 1 | 2 | 3;
+  league?: LeagueResult;
+  mvpTeamId?: number;
   playerStats?: SeasonPlayer[];
   awards?: SeasonAward[];
 }
@@ -175,6 +180,7 @@ export interface Run {
   seasonSeed: number;
   tactic: Tactic;
   rotation: RotationStyle;
+  defense?: DefenseScheme;
   result: SeasonResult | null;
 }
 export interface ModeRecords {
@@ -187,7 +193,106 @@ export interface Records {
   free: ModeRecords;
 }
 export interface GameState {
-  version: 2;
+  version: 3;
   run: Run;
   records: Records;
+}
+
+export const DEFENSE_SCHEMES = ["man", "switch", "zone", "press"] as const;
+export type DefenseScheme = (typeof DEFENSE_SCHEMES)[number];
+export const DEFENSE_LABELS: Record<DefenseScheme, string> = {
+  man: "Man to man",
+  switch: "Switch everything",
+  zone: "Protect the paint",
+  press: "Full-court pressure",
+};
+export type PlayType =
+  "transition" | "pickRoll" | "isolation" | "post" | "spotUp";
+export interface LeagueTeam {
+  id: number;
+  name: string;
+  roster: Roster;
+  tactic: Tactic;
+  rotation: RotationStyle;
+  defense: DefenseScheme;
+  ratings: TeamRatings;
+}
+export interface LeagueFixture {
+  id: string;
+  round: number;
+  homeTeamId: number;
+  awayTeamId: number;
+  seed: number;
+}
+export interface LeagueBox extends PlayerBox {
+  teamId: number;
+  playerId: string;
+  started: boolean;
+  fouls: number;
+  plusMinus: number;
+  rimFgm: number;
+  rimFga: number;
+  midFgm: number;
+  midFga: number;
+}
+export interface LeagueGameSummary extends LeagueFixture {
+  homeScore: number;
+  awayScore: number;
+  overtimePeriods: number;
+}
+export interface LeagueMatch {
+  homeScore: number;
+  awayScore: number;
+  homeBox: LeagueBox[];
+  awayBox: LeagueBox[];
+  overtimePeriods: number;
+  possessions: number;
+  periods: { home: number; away: number }[];
+  leadChanges: number;
+  largestLead: { home: number; away: number };
+  plays: Record<PlayType, { home: number; away: number }>;
+  playerOfGameId: string;
+}
+export interface LeaguePlayer extends SeasonPlayer {
+  teamId: number;
+  teamName: string;
+  playerId: string;
+  fouls: number;
+  plusMinus: number;
+  rimFgm: number;
+  rimFga: number;
+  midFgm: number;
+  midFga: number;
+}
+export interface Standing {
+  teamId: number;
+  wins: number;
+  losses: number;
+  pointsFor: number;
+  pointsAgainst: number;
+  homeWins: number;
+  awayWins: number;
+  streak: number;
+  lastTen: number;
+}
+export interface LeagueAward extends SeasonAward {
+  playerId: string;
+  teamId: number;
+  score: number;
+  finalists: {
+    playerId: string;
+    teamId: number;
+    pokemonId: number;
+    score: number;
+    value: string;
+  }[];
+}
+export interface LeagueResult {
+  teams: LeagueTeam[];
+  games: LeagueGameSummary[];
+  players: LeaguePlayer[];
+  standings: Standing[];
+  awards: LeagueAward[];
+  allLeague: string[];
+  allDefense: string[];
 }

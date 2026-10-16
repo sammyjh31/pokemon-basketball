@@ -51,3 +51,40 @@ describe("run state", () => {
     expect(next.run.mode).toBe("free");
   });
 });
+
+it("applies an asynchronous result only to its unchanged source run, once", () => {
+  const source = initialState(4);
+  source.run.mode = "free";
+  source.run.offerIds = [];
+  source.run.roster = {
+    PG: 65,
+    SG: 135,
+    SF: 149,
+    PF: 68,
+    C: 143,
+    B1: 121,
+    B2: 6,
+    B3: 131,
+  };
+  const result = {
+    modelVersion: 3 as const,
+    games: [],
+    wins: 40,
+    losses: 42,
+    mvpId: 65,
+  };
+  const edited = gameReducer(source, { type: "DEFENSE", defense: "zone" });
+  expect(
+    gameReducer(edited, { type: "APPLY_SEASON", source: source.run, result }),
+  ).toBe(edited);
+  const applied = gameReducer(source, {
+    type: "APPLY_SEASON",
+    source: source.run,
+    result,
+  });
+  expect(applied.records.free.runs).toBe(1);
+  expect(applied.run.result).toBe(result);
+  expect(
+    gameReducer(applied, { type: "APPLY_SEASON", source: source.run, result }),
+  ).toBe(applied);
+});
