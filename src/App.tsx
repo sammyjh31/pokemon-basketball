@@ -33,6 +33,7 @@ import { emptyRoster } from "./game/types";
 import { randomLineup } from "./game/lineup";
 import { FranchisePanel } from "./components/FranchisePanel";
 import { LocalLeagueMode } from "./components/LocalLeagueMode";
+import { SaveMenu } from "./components/SaveMenu";
 const ArcadeMode = lazy(() =>
   import("./components/ArcadeMode").then((m) => ({ default: m.ArcadeMode })),
 );
@@ -62,6 +63,7 @@ export default function App({
       simulationError,
       restoring,
       restorationProgress,
+      saveControls,
     } = useGame(initial, storage),
     { run, records } = state;
   const choosingCoach =
@@ -374,6 +376,7 @@ export default function App({
               )}
             </p>
           )}
+          <SaveMenu {...saveControls} />
           {restoring ? (
             <section
               className="season-panel"

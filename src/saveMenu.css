@@ -1,0 +1,37 @@
+.save-menu {
+  margin-bottom: 20px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  font-size: 13px;
+}
+.save-menu > summary {
+  padding: 10px 14px;
+  cursor: pointer;
+  color: var(--muted);
+  font: 700 12px var(--display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.save-menu[open] > summary {
+  border-bottom: 1px solid var(--line);
+}
+.save-menu > :not(summary) {
+  margin: 12px 14px;
+}
+.save-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+.save-alert p {
+  margin: 0 0 10px;
+}
+.save-note,
+.save-status {
+  color: var(--muted);
+}
+.save-status {
+  overflow-wrap: anywhere;
+}

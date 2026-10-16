@@ -3,8 +3,20 @@ import { gameReducer, type GameAction } from "../game/state";
 import {
   prepareGameLoad,
   saveGame,
+  savedGameSource,
+  STORAGE_KEY,
+  type LoadedGame,
   type StorageLike,
 } from "../game/persistence";
+import {
+  browserStorage,
+  isSaveStorage,
+  keepVerifiedCopy,
+  setAsideRejected,
+} from "../game/saveStorage";
+import { restoreSavedGame, validateGameSource } from "../game/restoreClient";
+import type { SaveControls } from "../components/SaveMenu";
+import { useOtherTabChanges } from "./useOtherTabChanges";
 import { simulateSeasonAsync } from "../game/season";
 import { advanceFranchiseSeasonAsync } from "../game/interactiveSeason";
 import type { OfficialGame } from "../game/franchiseFeatures";
@@ -12,14 +24,37 @@ import { submitPlayoffGame, simulatePlayoffsAsync } from "../game/playoffs";
 import type { PlayoffMode } from "../game/playoffTypes";
 import type { GameState, Run } from "../game/types";
 import { parseLineup } from "../game/lineup";
-const browserStorage: StorageLike = {
-  getItem: (key) => window.localStorage.getItem(key),
-  setItem: (key, value) => window.localStorage.setItem(key, value),
-};
 type HookAction = GameAction | { type: "RESTORE_SAVED"; state: GameState };
 const reducer = (state: GameState, action: HookAction) =>
   action.type === "RESTORE_SAVED" ? action.state : gameReducer(state, action);
 export const newSeed = () => crypto.getRandomValues(new Uint32Array(1))[0];
+const SET_ASIDE =
+  "A copy of the original save was set aside in Save options, so it cannot be overwritten.";
+/**
+ * A fully validated save becomes the last-known-good backup. A rejected one is
+ * moved to its own key first, so continuing to play cannot overwrite it.
+ */
+function settleLoad(
+  storage: StorageLike,
+  loaded: LoadedGame,
+  source: string | null,
+): LoadedGame {
+  if (source === null) return loaded;
+  if (loaded.notice === null) {
+    keepVerifiedCopy(storage, STORAGE_KEY, source);
+    return loaded;
+  }
+  if (loaded.preserveSource && setAsideRejected(storage, STORAGE_KEY, source))
+    return {
+      ...loaded,
+      notice: loaded.notice.replace(/ The original [^.]*\.$/, ` ${SET_ASIDE}`),
+    };
+  return loaded;
+}
+const describeGame = (state: GameState) =>
+  state.franchise
+    ? `Franchise year ${state.franchise.year}, ${state.franchise.phase}.`
+    : `A ${state.run.mode} draft${state.run.result ? " with a completed season" : ""}.`;
 export function useGame(
   initial?: GameState,
   storage: StorageLike = browserStorage,
@@ -33,8 +68,21 @@ export function useGame(
         confirmImport: false,
         restore: undefined,
         preserveSource: false,
+        source: null,
+        seed: 0,
+        verified: false,
       };
-    const loaded = prepareGameLoad(storage, newSeed());
+    const seed = newSeed();
+    let source: string | null = null;
+    try {
+      source = savedGameSource(storage);
+    } catch {
+      // prepareGameLoad reports unavailable storage.
+    }
+    const prepared = prepareGameLoad(storage, seed);
+    const loaded = prepared.restore
+      ? prepared
+      : { ...prepared, ...settleLoad(storage, prepared, source) };
     const roster = parseLineup(window.location.search);
     const hasProgress =
       Object.values(loaded.state.run.roster).some((id) => id !== null) ||
@@ -49,11 +97,27 @@ export function useGame(
       loaded.state = gameReducer(fresh, { type: "SET_LINEUP", roster });
       // A valid shared-lineup URL explicitly replaces an unusable save.
       // Enable persistence for the imported draft and its later season.
+      if (source !== null && (loaded.preserveSource || loaded.restore))
+        setAsideRejected(storage, STORAGE_KEY, source);
       loaded.preserveSource = false;
       loaded.restore = undefined;
       loaded.notice = null;
     }
-    return { ...loaded, roster, confirmImport: !!roster && hasProgress };
+    return {
+      ...loaded,
+      roster,
+      confirmImport: !!roster && hasProgress,
+      source,
+      seed,
+      // Already stored exactly as validated; rewriting it unchanged would
+      // only signal other open tabs that this save had changed.
+      verified:
+        source !== null &&
+        !loaded.restore &&
+        loaded.notice === null &&
+        !loaded.preserveSource &&
+        !(roster && !hasProgress),
+    };
   });
   const [state, rawDispatch] = useReducer(reducer, loaded.state);
   const latestState = useRef(state);
@@ -72,19 +136,30 @@ export function useGame(
     loaded.notice,
   );
   const restoredOnce = useRef(false);
+  const lastPersistedState = useRef<GameState | null>(
+    loaded.verified ? loaded.state : null,
+  );
   useEffect(() => {
     // Development refresh reruns effects while retaining hook state. Never
     // replay the mount-time snapshot over progress made since restoration.
     if (!loaded.restore || restoredOnce.current) return;
     const controller = new AbortController();
     busy.current = true;
-    void loaded
-      .restore((completed, total) => {
+    void restoreSavedGame(
+      loaded,
+      loaded.source ?? "",
+      loaded.seed,
+      (completed, total) => {
         if (!controller.signal.aborted)
           setRestorationProgress({ completed, total });
-      }, controller.signal)
-      .then((restored) => {
+      },
+      controller.signal,
+    )
+      .then((result) => {
         if (controller.signal.aborted) return;
+        const restored = settleLoad(storage, result, loaded.source);
+        if (restored.notice === null && !restored.preserveSource)
+          lastPersistedState.current = restored.state;
         restoredOnce.current = true;
         rawDispatch({ type: "RESTORE_SAVED", state: restored.state });
         setStorageNotice(restored.notice);
@@ -97,7 +172,17 @@ export function useGame(
         // Validation failures are returned as a recoverable LoadedGame notice.
       });
     return () => controller.abort();
-  }, [loaded]);
+  }, [loaded, storage]);
+  const otherTab = useOtherTabChanges(STORAGE_KEY);
+  useEffect(
+    () =>
+      isSaveStorage(storage)
+        ? storage.subscribe(({ key, error }) => {
+            if (key === STORAGE_KEY) setStorageNotice(error);
+          })
+        : undefined,
+    [storage],
+  );
   const [simulating, setSimulating] = useState(false);
   const [progress, setProgress] = useState({ completed: 0, total: 1230 });
   const [simulationError, setSimulationError] = useState<string | null>(null);
@@ -290,26 +375,62 @@ export function useGame(
     url.searchParams.delete("lineup");
     window.history.replaceState(null, "", url);
   }, [loaded.roster, importPending, restoring]);
-  const lastPersistedState = useRef<GameState | null>(null);
   useEffect(() => {
-    if (restoring || !canSave || lastPersistedState.current === state) return;
+    if (
+      restoring ||
+      !canSave ||
+      otherTab ||
+      lastPersistedState.current === state
+    )
+      return;
     const saved = saveGame(storage, state);
     // Effects can rerun without a game action during development refresh.
     // An idle preview must not overwrite another tab's newer saved progress.
     if (saved.notice === null) lastPersistedState.current = state;
     setStorageNotice(saved.notice);
-  }, [state, storage, restoring, canSave]);
+  }, [state, storage, restoring, canSave, otherTab]);
   const retrySave =
-    canSave && !restoring
+    canSave && !restoring && !otherTab
       ? () => {
           const saved = saveGame(storage, state);
           if (saved.notice === null) lastPersistedState.current = state;
           setStorageNotice(saved.notice);
         }
       : undefined;
+  const saveControls: SaveControls = {
+    kind: "game",
+    slot: STORAGE_KEY,
+    storage,
+    busy: restoring || simulating || playoffSimulating,
+    otherTab,
+    exportSave: () => JSON.stringify(latestState.current),
+    checkImport: async (source, onProgress, signal) => {
+      const checked = await validateGameSource(
+        source,
+        newSeed(),
+        onProgress,
+        signal,
+      );
+      if (checked.notice !== null)
+        throw new Error(
+          "This save could not be fully verified, so nothing was changed.",
+        );
+      return {
+        summary: describeGame(checked.state),
+        apply: () => {
+          if (busy.current) return;
+          rawDispatch({ type: "RESTORE_SAVED", state: checked.state });
+          setCanSave(true);
+          setStorageNotice(null);
+          keepVerifiedCopy(storage, STORAGE_KEY, source);
+        },
+      };
+    },
+  };
   return {
     state,
     dispatch,
+    saveControls,
     storageNotice,
     importPending,
     resolveImport,

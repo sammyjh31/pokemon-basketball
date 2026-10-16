@@ -1,4 +1,4 @@
-import type { LocalLeague } from "./localLeague";
+import { LOCAL_SAVE_MAX_LENGTH, type LocalLeague } from "./localLeague";
 
 export type LocalRestoreMessage =
   | { type: "progress"; completed: number; total: number }
@@ -7,7 +7,7 @@ export type LocalRestoreMessage =
 
 /** Routing only: the worker still validates the entire untrusted save. */
 export function needsBackgroundLocalRestore(raw: string): boolean {
-  if (raw.length > 5_000_000) return false;
+  if (raw.length > LOCAL_SAVE_MAX_LENGTH) return false;
   const value = JSON.parse(raw);
   if (!value?.career) return false;
   return (
