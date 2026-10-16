@@ -16,6 +16,7 @@ import {
 } from "../game/types";
 import { LeagueBoxScore } from "./LeagueBoxScore";
 import { Portrait } from "./Portrait";
+import { LeagueAnalytics } from "./LeagueAnalytics";
 import "../league.css";
 
 const name = (id: number) => POKEMON_BY_ID.get(id)?.name ?? `#${id}`;
@@ -1052,6 +1053,7 @@ function Games({
 }
 const sections = [
   "Standings",
+  "Team analysis",
   "Player leaders",
   "Team rosters",
   "League games",
@@ -1111,6 +1113,7 @@ export function LeaguePanel({
           />
         )}
         {section === "Player leaders" && <Leaders league={league} />}
+        {section === "Team analysis" && <LeagueAnalytics league={league} />}
         {section === "Team rosters" && (
           <Rosters league={league} teamId={teamId} setTeamId={setTeamId} />
         )}

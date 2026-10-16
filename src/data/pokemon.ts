@@ -1,6 +1,7 @@
 import data from "./pokemon.json";
 import rookieData from "./rookie-pokemon.json";
 import type { Pokemon } from "../game/types";
+export const ALL_POKEMON: Pokemon[] = data.map((mon) => ({ ...mon, spriteUrl: `/pokemon/${mon.id}.png` }));
 export const POKEMON: Pokemon[] = data
   .filter((mon) => mon.id <= 251)
   .map((mon) => ({
@@ -23,3 +24,5 @@ export const POKEMON_BY_ID = new Map(
   FRANCHISE_POKEMON.map((mon) => [mon.id, mon]),
 );
 export const TYPES = [...new Set(POKEMON.flatMap((mon) => mon.types))].sort();
+export const generationOf = (id: number) =>
+  [151, 251, 386, 493, 649, 721, 809].findIndex((last) => id <= last) + 1;

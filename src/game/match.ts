@@ -3,6 +3,7 @@ import { clamp, rotationMinutes } from "./ratings";
 import { nextRandom } from "./random";
 import { DEVELOPMENT_SKILLS } from "./developmentTypes";
 import { playerProfile, type PlayerProfile } from "./playerProfile";
+import { evaluateShot } from "./shotModel";
 import {
   POSITIONS,
   ROSTER_SLOTS,
@@ -247,6 +248,9 @@ export function simulateMatch(
   away: LeagueTeam,
   seed: number,
 ): LeagueMatch {
+  if (home.simulationVersion !== away.simulationVersion)
+    throw new Error("Both teams must use the same simulation model.");
+  const modern = home.simulationVersion === 2;
   const h = buildTeam(home, "home"),
     a = buildTeam(away, "away");
   const result: LeagueMatch = {
@@ -267,6 +271,14 @@ export function simulateMatch(
       spotUp: { home: 0, away: 0 },
     },
     playerOfGameId: "",
+    ...(modern
+      ? {
+          shotQuality: {
+            home: { attempts: 0, expectedPoints: 0, points: 0 },
+            away: { attempts: 0, expectedPoints: 0, points: 0 },
+          },
+        }
+      : {}),
   };
   let randomSeed = seed >>> 0;
   const random = () => {
@@ -655,6 +667,28 @@ export function simulateMatch(
       if (isClutch)
         accuracy += (shooter.profile.attributes.composure - 60) * 0.0007;
       accuracy = clamp(accuracy, 0.13, 0.82);
+      if (modern)
+        accuracy = evaluateShot({
+          shooter: shooter.profile,
+          defender: defender.profile,
+          shooterHeight: POKEMON_BY_ID.get(shooter.box.pokemonId)!.heightM,
+          defenderHeight: POKEMON_BY_ID.get(defender.box.pokemonId)!.heightM,
+          zone,
+          play,
+          coverage: defense.config.defense,
+          shooterEnergy: shooter.energy,
+          defenderEnergy: defender.energy,
+          spacing,
+          protection,
+          passing: passer ? skill(passer, "passing") : undefined,
+          screening: screener.profile.traits.screening,
+          roleFitPenalty:
+            Math.max(...Object.values(shooter.profile.positions)) -
+            shooter.profile.positions[POSITIONS[shooterRole]],
+          home: offense.side === "home",
+          clutch: isClutch,
+          defenseFirst: defense.config.tactic === "defense",
+        }).probability;
       const assistChance = clamp(
         (play === "spotUp"
           ? 0.88
@@ -706,16 +740,22 @@ export function simulateMatch(
         zone === "rim"
           ? pick(defense.floor, (p) => skill(p, "block") ** 3)
           : defender;
-      const blocked =
-        random() <
-        clamp(
-          (zone === "rim" ? 0.052 : zone === "mid" ? 0.021 : 0.009) +
-            (skill(blocker, "block") - skill(shooter, "vertical")) *
-              (zone === "rim" ? 0.0008 : 0.00025),
-          0.003,
-          0.14,
-        );
+      const blockRate = clamp(
+        (zone === "rim" ? 0.052 : zone === "mid" ? 0.021 : 0.009) +
+          (skill(blocker, "block") - skill(shooter, "vertical")) *
+            (zone === "rim" ? 0.0008 : 0.00025),
+        0.003,
+        0.14,
+      );
+      const blocked = random() < blockRate;
       const made = !blocked && random() < accuracy;
+      if (result.shotQuality) {
+        const quality = result.shotQuality[offense.side],
+          value = zone === "three" ? 3 : 2;
+        quality.attempts++;
+        quality.expectedPoints += accuracy * (1 - blockRate) * value;
+        quality.points += made ? value : 0;
+      }
       if (blocked) blocker.box.blocks++;
       fieldGoal(offense, defense, shooter, zone, made, passer, assistChance);
       if (made || !rebound(offense, defense)) return;

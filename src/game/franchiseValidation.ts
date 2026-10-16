@@ -92,8 +92,8 @@ function array(value: unknown, length: number): unknown[] {
   if (!Array.isArray(value) || value.length !== length) return fail();
   return value;
 }
-function species(value: unknown, includeLegends: boolean): number {
-  const id = integer(value, 1, 1025),
+function species(value: unknown, includeLegends: boolean, maxId = 1025): number {
+  const id = integer(value, 1, maxId),
     mon = POKEMON_BY_ID.get(id);
   if (!mon || (!includeLegends && mon.legendary)) return fail();
   return id;
@@ -273,6 +273,7 @@ function reports(
 export function validateLeagueTeams(
   value: unknown,
   includeLegends: boolean,
+  simulationVersion?: 2,
 ): LeagueTeam[] {
   const taken = new Set<number>();
   const rows = array(value, 30),
@@ -292,11 +293,16 @@ export function validateLeagueTeams(
       Object.keys(source).length !== 8 ||
       !TACTICS.includes(row.tactic as never) ||
       !ROTATIONS.includes(row.rotation as never) ||
-      !DEFENSE_SCHEMES.includes(row.defense as never)
+      !DEFENSE_SCHEMES.includes(row.defense as never) ||
+      row.simulationVersion !== simulationVersion
     )
       return fail();
     for (const slot of ROSTER_SLOTS) {
-      const id = species(source[slot], includeLegends);
+      const id = species(
+        source[slot],
+        includeLegends,
+        simulationVersion === 2 ? 809 : 1025,
+      );
       if (taken.has(id)) return fail();
       taken.add(id);
       roster[slot] = id;
@@ -319,6 +325,7 @@ export function validateLeagueTeams(
       ratings: teamRatings(roster, tactic, rotation, offsets, rotationPlan),
       ...(offsets ? { development: offsets } : {}),
       ...(rotationPlan ? { rotationPlan } : {}),
+      ...(simulationVersion === 2 ? { simulationVersion } : {}),
     };
   });
 }

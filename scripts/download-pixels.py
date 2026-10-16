@@ -1,4 +1,4 @@
-"""Complete the local Gen V pixel collection using PokeAPI's sprite repository."""
+"""Complete local pixel sprites; use the default Gen V-style collection for later species."""
 import hashlib
 import json
 import subprocess
@@ -15,7 +15,8 @@ existing = {row['id']: row for row in json.loads(manifest_path.read_text())} if 
 
 def download(mon):
     number = mon['id']
-    source = f'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/{number}.png'
+    source = (f'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/{number}.png'
+              if number <= 649 else f'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{number}.png')
     path = folder / f'{number}.png'
     if path.exists() and number in existing:
         data = path.read_bytes()
@@ -34,4 +35,4 @@ def download(mon):
 
 manifest = list(ThreadPoolExecutor(max_workers=8).map(download, mons))
 manifest_path.write_text(json.dumps(manifest, indent=2) + '\n')
-print(f'Bundled {len(manifest)} Gen V pixel sprites; retained verified local files.')
+print(f'Bundled {len(manifest)} pixel sprites; retained verified local files.')

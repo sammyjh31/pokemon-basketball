@@ -82,6 +82,7 @@ describe("shareable basketball lineups", () => {
     for (const invalid of [
       { ...roster, C: 65 },
       { ...roster, C: 150 },
+      { ...roster, C: 252 },
       { ...roster, C: 1026 },
     ])
       expect(gameReducer(free, { type: "SET_LINEUP", roster: invalid })).toBe(

@@ -23,6 +23,7 @@ import { BenchPanel } from "./components/BenchPanel";
 import { emptyRoster } from "./game/types";
 import { randomLineup } from "./game/lineup";
 import { FranchisePanel } from "./components/FranchisePanel";
+import { LocalLeagueMode } from "./components/LocalLeagueMode";
 const ArcadeMode = lazy(() =>
   import("./components/ArcadeMode").then((m) => ({ default: m.ArcadeMode })),
 );
@@ -55,6 +56,9 @@ export default function App({
     } = useGame(initial, storage),
     { run, records } = state;
   const [arcadeOpen, setArcadeOpen] = useState(false);
+  const [localLeagueOpen, setLocalLeagueOpen] = useState(
+    () => window.location.hash === "#local-league",
+  );
   const [officialGame, setOfficialGame] = useState<OfficialArcadeProps | null>(
     null,
   );
@@ -166,6 +170,20 @@ export default function App({
     });
     setArcadeOpen(true);
   };
+  if (localLeagueOpen)
+    return (
+      <LocalLeagueMode
+        storage={storage}
+        onExit={() => {
+          setLocalLeagueOpen(false);
+          window.history.replaceState(
+            null,
+            "",
+            `${window.location.pathname}${window.location.search}#draft`,
+          );
+        }}
+      />
+    );
   if (arcadeOpen)
     return (
       <Suspense
@@ -245,6 +263,17 @@ export default function App({
       <div className="app-shell">
         <Scoreboard
           mode={run.mode}
+          localLeagueDisabled={
+            simulating || playoffSimulating || restoring || importPending
+          }
+          onLocalLeague={() => {
+            setLocalLeagueOpen(true);
+            window.history.replaceState(
+              null,
+              "",
+              `${window.location.pathname}${window.location.search}#local-league`,
+            );
+          }}
           disabled={
             simulating || playoffSimulating || restoring || !!state.franchise
           }

@@ -18,7 +18,11 @@ export { resolveScore, winProbability, SEASON_RULES } from "./v2Season";
 export function seasonTeams(run: Run): LeagueTeam[] {
   if (!run.leagueTeams && !run.rotationPlan) return createLeague(run);
   const teams = run.leagueTeams
-    ? validateLeagueTeams(run.leagueTeams, run.includeLegends)
+    ? validateLeagueTeams(
+        run.leagueTeams,
+        run.includeLegends,
+        run.simulationVersion,
+      )
     : createLeague(run);
   if (run.seasonProgress && run.seasonProgress.completedRounds > 0)
     return teams;

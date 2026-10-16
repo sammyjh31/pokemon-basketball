@@ -175,6 +175,7 @@ export interface SeasonResult {
   awards?: SeasonAward[];
 }
 export interface Run {
+  simulationVersion?: 2;
   id: string;
   mode: Mode;
   includeLegends: boolean;
@@ -220,6 +221,7 @@ export const DEFENSE_LABELS: Record<DefenseScheme, string> = {
 export type PlayType =
   "transition" | "pickRoll" | "isolation" | "post" | "spotUp";
 export interface LeagueTeam {
+  simulationVersion?: 2;
   id: number;
   name: string;
   roster: Roster;
@@ -255,6 +257,10 @@ export interface LeagueGameSummary extends LeagueFixture {
   overtimePeriods: number;
 }
 export interface LeagueMatch {
+  shotQuality?: Record<
+    "home" | "away",
+    { attempts: number; expectedPoints: number; points: number }
+  >;
   homeScore: number;
   awayScore: number;
   homeBox: LeagueBox[];

@@ -16,6 +16,7 @@ import {
   type Run,
 } from "../game/types";
 import { SeasonPanel } from "./SeasonPanel";
+import { PlayoffPanel } from "./PlayoffPanel";
 
 const baseRun = {
   ...createRun("free", false, 11),
@@ -89,14 +90,12 @@ const pairings = [
 function postseason(): Playoffs {
   return {
     modelVersion: 1,
-    seeds: league.standings
-      .slice(0, 16)
-      .map((s, i) => ({
-        seed: i + 1,
-        teamId: s.teamId,
-        wins: s.wins,
-        losses: s.losses,
-      })),
+    seeds: league.standings.slice(0, 16).map((s, i) => ({
+      seed: i + 1,
+      teamId: s.teamId,
+      wins: s.wins,
+      losses: s.losses,
+    })),
     series: [8, 4, 2, 1].flatMap((count, round) =>
       Array.from({ length: count }, (_, index) => ({
         id: `playoffs-${round}-${index}`,
@@ -157,6 +156,62 @@ function setup(
 const panel = () => screen.getByRole("region", { name: "Playoffs" });
 
 describe("playoff presentation", () => {
+  it("tracks every local friend, including nonzero team IDs, elimination and championship ownership", () => {
+    const managers = [
+      { name: "Sam", teamId: 1 },
+      { name: "Alex", teamId: 7 },
+      { name: "Jo", teamId: 24 },
+    ];
+    const playoffs = postseason();
+    const props = { league, seasonSeed: 11, managers, onAdvance: () => {} };
+    const view = render(<PlayoffPanel {...props} playoffs={playoffs} />);
+    expect(
+      screen.queryByLabelText("Your playoff status"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Sam's playoff status")).toHaveTextContent(
+      "Qualified · Seed 2",
+    );
+    expect(screen.getByLabelText("Jo's playoff status")).toHaveTextContent(
+      "Did not qualify",
+    );
+    expect(screen.getByLabelText("Sam's playoff status")).toHaveTextContent(
+      teams[1].name,
+    );
+    const alexSeries = screen.getByRole("button", {
+      name: /View First round series 2:/,
+    });
+    expect(
+      within(alexSeries).getByText(teams[7].name).closest(".playoff-team"),
+    ).toHaveClass("is-user");
+    const finished = structuredClone(playoffs);
+    finished.series[1].winnerId = 8;
+    finished.series[1].lowerSeedWins = 4;
+    finished.championId = 1;
+    finished.series[14] = {
+      ...finished.series[14],
+      higherSeedId: 1,
+      lowerSeedId: 2,
+      higherSeedWins: 4,
+      winnerId: 1,
+    };
+    view.rerender(<PlayoffPanel {...props} playoffs={finished} />);
+    expect(screen.getByLabelText("Alex's playoff status")).toHaveTextContent(
+      "Eliminated · First round",
+    );
+    expect(screen.getByLabelText("Sam's playoff status")).toHaveTextContent(
+      "Champion · Seed 2",
+    );
+    expect(
+      screen.getByRole("article", { name: "Playoff champion" }),
+    ).toHaveTextContent("Sam wins the championship!");
+    view.rerender(
+      <PlayoffPanel {...props} playoffs={{ ...finished, championId: 0 }} />,
+    );
+    expect(
+      screen.getByRole("article", { name: "Playoff champion" }),
+    ).toHaveTextContent("CPU-managed team");
+  });
+
   it("reveals the complete seeded bracket only after the season and keeps future rounds visible", () => {
     setup(undefined, { animate: true });
     expect(

@@ -1,4 +1,4 @@
-import { POKEMON, POKEMON_BY_ID } from "../data/pokemon";
+import { POKEMON, POKEMON_BY_ID, POKEMON_COUNT } from "../data/pokemon";
 import { nextRandom } from "./random";
 import { ROSTER_SLOTS, type Roster } from "./types";
 

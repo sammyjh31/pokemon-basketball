@@ -91,6 +91,28 @@ After completing the Finals, choose **Continue as franchise**. The completed sea
 
 Injuries, aging, contracts, free agency, generations beyond IX, multiplayer accounts and public hosting are not included.
 
+## Local league with friends
+
+Choose **Local league** in the top navigation to run a snake draft together on one computer. Add 2–30 friends, give each a name and a different team, and choose whether legendary/mythical Pokémon are available. The CPU manages all remaining teams.
+
+New local drafts include **Generations I–VII: 809 species**, with **739 eligible without legendaries/mythicals**. Filter the draft pool by generation. Existing local drafts and solo modes keep their original Generations I–II pool; use **New local league** when ready for the expanded pool.
+
+All 30 teams draft eight players from one shared pool. The order is randomized once and reverses each round. CPU picks happen automatically until the next friend's turn. Select an available Pokémon, choose an empty position, then **Confirm pick**; no Pokémon can appear on two teams.
+
+After the draft, use **Review friend** to rearrange each person's starters and reserves and choose offense, defense and rotation. **Simulate local season** runs the existing 82-game schedule for all teams. The friends leaderboard compares records and point differential, while the league center includes every team's roster, player statistics, awards and game box scores.
+
+The top 16 teams then enter the existing four-round, best-of-seven **Playoffs**. Each friend has a qualification/elimination status card, and friends' teams are highlighted in the bracket. Use **Play next slate**, **Finish round**, or **Finish playoffs** to find the champion and Finals MVP. The champion card names the winning friend or identifies a CPU-managed winner. Everyone can follow the tournament even if their team misses the playoffs or is eliminated.
+
+Drafts save under `pokemon-basketball:local-league:v1`, separately from the solo/franchise save. Refreshing resumes the draft; completed seasons and playoff progress reconstruct from their saved rosters, coaching, seed and playoff game count. Existing local seasons can start playoffs without redrafting. Future simulation changes must version this replay contract. **Back to game** preserves both saves; **New local league** asks before replacing only the local league. This is pass-and-play on one browser, without accounts or network multiplayer.
+
+### Understanding results and probabilities
+
+Open **Matchup explorer** in a new local league to select a shooter, defender, shot location, play type, coverage, position, energy and teammate spacing. Its displayed probability comes from the same shot formula used by the new simulator. The controlled scenario excludes blocks/shooting fouls and assumes neutral court, a fresh defender, average help defense, and no passing/screening advantage. Actual games supply their live lineup context.
+
+Local save version 2 uses a bounded logistic shot model with skill, contest, help, spacing, passing, screens, size/strength/speed matchups, closeouts, coverage, transition, nonlinear fatigue, positional fit and clutch/home effects. Size benefits saturate; no species gets automatic baskets. Types affect underlying basketball skills, not elemental damage multipliers. These are initial game-design coefficients, not a fit to real basketball results. Version-1 local saves and solo seasons keep their existing simulator and deterministic replays.
+
+**Team analysis** in the league center compares estimated points per 100 possessions, eFG%, TS%, turnover rate, free-throw rate, shot mix, offensive rebounds and reserve scoring. Its guide defines each denominator and separates estimates from measured totals. Game boxes include both teams' efficiency factors and actual opposing rebound opportunities. New-model games also compare actual and expected field-goal points on non-foul attempts, excluding free throws and shooting-foul attempts. Descriptive metrics and finishing variance are evidence to investigate, not proof of causation.
+
 ## Data and artwork
 
 See [data sources](src/data/SOURCES.md). Refresh factual data with `npm run data:import`, artwork with `python3 scripts/download-artwork.py`, and pixel sprites with `python3 scripts/download-pixels.py` (Python 3 and curl required). These are maintainer commands, not startup requirements. They use verified HTTPS requests to PokeAPI's public GitHub repositories. The application does not copy the reference site's implementation.
@@ -112,4 +134,4 @@ Complete all eight roster slots, then select **Play arcade**. Choose a CPU oppon
 
 Arcade uses a separate spatial game engine with live movement, passing lanes, shot timing, AI spacing/cuts/screens, and man-to-man defense. Season coaching choices remain season settings. Exhibitions do not change your saved roster, regular-season results, or playoff bracket. Match progress ends on exit or refresh; audio/effects preferences are stored separately. Focus loss pauses play. Audio is optional, and reduced effects respect system reduced-motion preferences.
 
-The initial mode is single-player versus CPU with procedural pixel-sprite animation. Gamepads, multiplayer and signature combat abilities are future work. Scheduled franchise games use the same arcade controls through the season’s **Play next game** buttons.
+The initial mode is single-player versus CPU with procedural pixel-sprite animation. Xbox-style gamepads are supported; see [controller controls](docs/CONTROLLER.md). Multiplayer and signature combat abilities are future work. Scheduled franchise games use the same arcade controls through the season’s **Play next game** buttons.

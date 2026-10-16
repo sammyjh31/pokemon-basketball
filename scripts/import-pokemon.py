@@ -1,4 +1,4 @@
-"""Append Generation II PokeAPI facts without changing saved-season Generation I inputs.
+"""Append PokeAPI species through Generation VII without changing existing replay inputs.
 
 HTTPS certificate verification remains enabled. The committed source-manifest.json
 records the exact response hashes; this script leaves the human-written SOURCES.md alone.
@@ -30,9 +30,11 @@ def read(name):
 
 
 existing = json.loads(TARGET.read_text())
-# Generation I facts are a replay contract. A refresh only replaces IDs 152–251.
-mons = [mon for mon in existing if mon['id'] <= 151]
-assert [mon['id'] for mon in mons] == list(range(1, 152)), 'Keep the original Generation I snapshot before importing'
+# Every committed fact is a replay contract. Refreshes only append missing species.
+mons = list(existing)
+preserved_count = len(mons)
+assert 251 <= preserved_count <= 809
+assert [mon['id'] for mon in mons] == list(range(1, preserved_count + 1))
 responses = list(ThreadPoolExecutor(max_workers=6).map(read, FILES))
 tables = {name: rows for name, rows, _ in responses}
 stats = {}
@@ -48,8 +50,9 @@ names = {int(row['pokemon_species_id']): row['name']
 keys = ['hp', 'attack', 'defense', 'specialAttack', 'specialDefense', 'speed']
 for row in tables['pokemon.csv']:
     number = int(row['id'])
-    if not 152 <= number <= 251:
+    if not preserved_count < number <= 809:
         continue
+    assert int(species[number]['generation_id']) <= 7
     mons.append(dict(
         id=number, name=names[number], types=[name for _, name in sorted(types[number])],
         stats={key: stats[number][index + 1] for index, key in enumerate(keys)},
@@ -58,14 +61,14 @@ for row in tables['pokemon.csv']:
         spriteUrl=f'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{number}.png',
     ))
 mons.sort(key=lambda mon: mon['id'])
-assert [mon['id'] for mon in mons] == list(range(1, 252))
-assert sum(not mon['legendary'] for mon in mons) == 240
-assert mons[:151] == existing[:151], 'Generation I replay facts changed'
+assert [mon['id'] for mon in mons] == list(range(1, 810))
+assert mons[:preserved_count] == existing, 'Saved-season replay facts changed'
 TARGET.write_text(json.dumps(mons, ensure_ascii=False, indent=2) + '\n')
-(ROOT / 'src/data/source-manifest.json').write_text(json.dumps({
+if preserved_count < 809:
+ (ROOT / 'src/data/source-manifest.json').write_text(json.dumps({
     'retrieved': datetime.now(timezone.utc).isoformat(),
-    'importedIds': [152, 251],
-    'preservedIds': [1, 151],
+    'importedIds': [preserved_count + 1, 809],
+    'preservedIds': [1, preserved_count],
     'files': {name: source for name, _, source in responses},
 }, indent=2) + '\n')
-print(f'Imported {len(mons)} Pokémon; preserved all 151 Generation I records.')
+print(f'Catalog: {len(mons)} Pokémon; preserved {preserved_count} existing records; {sum(not m["legendary"] for m in mons)} nonlegendary/nonmythical.')

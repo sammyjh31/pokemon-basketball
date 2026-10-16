@@ -3,10 +3,14 @@ export function Scoreboard({
   mode,
   onMode,
   disabled = false,
+  onLocalLeague,
+  localLeagueDisabled = false,
 }: {
   mode: Mode;
   disabled?: boolean;
   onMode: (mode: Mode) => void;
+  onLocalLeague?: () => void;
+  localLeagueDisabled?: boolean;
 }) {
   return (
     <header className="masthead" id="top">
@@ -32,6 +36,15 @@ export function Scoreboard({
         >
           <span>82–0</span> CHALLENGE
         </button>
+        {onLocalLeague && (
+          <button
+            disabled={localLeagueDisabled}
+            onClick={onLocalLeague}
+            aria-label="Local league"
+          >
+            LOCAL LEAGUE
+          </button>
+        )}
         <a href="#season">SEASON</a>
         <a href="#rules">SCOUTING GUIDE</a>
       </nav>

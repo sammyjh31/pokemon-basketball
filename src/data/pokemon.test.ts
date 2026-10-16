@@ -4,9 +4,25 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import data from "./pokemon.json";
-import { POKEMON, POKEMON_BY_ID } from "./pokemon";
+import { ALL_POKEMON, POKEMON, POKEMON_BY_ID, generationOf } from "./pokemon";
 
 describe("the Generation I and II player catalog", () => {
+  it("adds Generations III–VII while keeping the solo pool and all old factual inputs", () => {
+    expect(ALL_POKEMON).toHaveLength(809);
+    expect(ALL_POKEMON.map((p) => p.id)).toEqual(
+      Array.from({ length: 809 }, (_, i) => i + 1),
+    );
+    expect(POKEMON).toHaveLength(251);
+    expect(
+      createHash("sha256")
+        .update(JSON.stringify(data.slice(0, 251)))
+        .digest("hex"),
+    ).toBe("b956ce8654db22c7831ce4c29bb83a8b2b381e5c80d4986e2ddca3f64a861352");
+    expect([252, 387, 495, 650, 722, 809].map(generationOf)).toEqual([
+      3, 4, 5, 6, 7, 7,
+    ]);
+    expect(POKEMON_BY_ID.get(809)?.name).toBe("Melmetal");
+  });
   it("provides 240 distinct eligible players for thirty eight-player rosters", () => {
     expect(POKEMON.map((mon) => mon.id)).toEqual(
       Array.from({ length: 251 }, (_, index) => index + 1),
@@ -45,7 +61,7 @@ describe("the Generation I and II player catalog", () => {
         speed: 30,
       },
     });
-    for (const mon of POKEMON.slice(151)) {
+    for (const mon of ALL_POKEMON.slice(151)) {
       expect(Object.values(mon.stats)).toHaveLength(6);
       expect(
         Object.values(mon.stats).every(
@@ -60,7 +76,7 @@ describe("the Generation I and II player catalog", () => {
   });
 
   it.each(["pokemon", "pokemon-pixel"])(
-    "bundles all 251 %s PNGs with matching source manifests",
+    "bundles all 809 %s PNGs with matching source manifests",
     (folder) => {
       const base = resolve("public", folder);
       const manifest = JSON.parse(
@@ -70,9 +86,9 @@ describe("the Generation I and II player catalog", () => {
         Array.isArray(manifest)
           ? manifest.map((entry) => [String(entry.id), entry])
           : Object.entries(manifest);
-      expect(entries).toHaveLength(251);
+      expect(entries).toHaveLength(809);
       expect(entries.map(([id]) => Number(id)).sort((a, b) => a - b)).toEqual(
-        Array.from({ length: 251 }, (_, index) => index + 1),
+        Array.from({ length: 809 }, (_, index) => index + 1),
       );
       for (const [id, entry] of entries) {
         const png = readFileSync(resolve(base, `${id}.png`));

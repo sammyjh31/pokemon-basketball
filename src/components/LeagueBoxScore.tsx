@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
+import { GameAnalytics } from "./LeagueAnalytics";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { simulateMatch } from "../game/match";
 import type {
@@ -297,6 +298,7 @@ export function LeagueBoxScore({
             </tbody>
           </table>
         </div>
+        <GameAnalytics match={match} home={home} away={away} />
         <TeamBox team={away} players={match.awayBox} />
         <TeamBox team={home} players={match.homeBox} />
         <div

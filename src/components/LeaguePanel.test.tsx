@@ -165,6 +165,24 @@ const setup = (animate = false) =>
   );
 
 describe("league results", () => {
+  it("shows sortable team efficiency and explains estimated denominators", () => {
+    setup();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Team analysis" }),
+    );
+    const table = screen.getByRole("table", {
+      name: "Team efficiency comparison",
+    });
+    expect(within(table).getAllByRole("row")).toHaveLength(3);
+    expect(within(table).getAllByRole("row")[1]).toHaveTextContent(
+      "Pallet Pioneers",
+    );
+    fireEvent.change(screen.getByLabelText("Analyze team"), {
+      target: { value: "1" },
+    });
+    expect(within(table).getAllByRole("row")[1]).toHaveTextContent("90.0");
+    expect(screen.getByText(/Estimated possessions = FGA/)).toBeInTheDocument();
+  });
   it("shows an opponent as league MVP and keeps new results out of archived team awards", () => {
     setup();
     expect(screen.getByText("LEAGUE MVP")).toBeInTheDocument();

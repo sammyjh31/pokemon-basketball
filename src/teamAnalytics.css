@@ -1,0 +1,86 @@
+.analysis-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+.analysis-cards article {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #141d27;
+  min-width: 0;
+}
+.analysis-cards strong {
+  display: block;
+  font: 700 28px var(--display);
+  color: var(--gold);
+  margin: 8px 0;
+}
+.analysis-cards small {
+  display: block;
+  color: #bac7d6;
+  font-size: 11px;
+}
+.analysis-cards p,
+.analysis-guide p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #b8c5d3;
+}
+.analysis-guide {
+  padding: 18px;
+  border: 1px solid var(--line);
+  margin-top: 20px;
+}
+.analysis-guide summary {
+  cursor: pointer;
+  color: var(--gold);
+}
+.team-analysis,
+.game-analysis {
+  min-width: 0;
+}
+.game-analysis {
+  margin: 24px 0;
+}
+.matchup-lab {
+  margin: 24px 0;
+}
+.matchup-lab .league-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 12px;
+}
+.matchup-lab input[type="range"] {
+  width: 100%;
+}
+.matchup-lab select {
+  max-width: 100%;
+}
+.matchup-lab .portrait,
+.matchup-lab .portrait-fallback {
+  display: block;
+  width: 112px;
+  height: 112px;
+  margin: 0 auto 14px;
+}
+.matchup-lab output {
+  display: block;
+  font: 700 36px var(--display);
+  color: var(--gold);
+  margin: 16px 0;
+}
+.probability-factors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 8px;
+}
+.probability-factors span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+}

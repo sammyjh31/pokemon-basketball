@@ -23,6 +23,7 @@ export function PlayoffPanel({
   onPlayGame,
   simulating = false,
   progress,
+  managers,
 }: {
   league: LeagueResult;
   seasonSeed: number;
@@ -31,6 +32,7 @@ export function PlayoffPanel({
   onPlayGame?: () => void;
   simulating?: boolean;
   progress?: { completed: number; total: number };
+  managers?: { name: string; teamId: number }[];
 }) {
   const id = useId();
   const bracket = useMemo(
@@ -58,6 +60,9 @@ export function PlayoffPanel({
     bracket.seeds.find((entry) => entry.teamId === teamId)?.seed;
   const teamLabel = (teamId: number | null) =>
     teamId === null ? "TBD" : `#${seed(teamId)} ${teamName(teamId)}`;
+  const followedTeams = managers ?? [{ name: "You", teamId: 0 }];
+  const isFollowed = (teamId: number | null) =>
+    followedTeams.some((manager) => manager.teamId === teamId);
   const activeRound =
     bracket.series.find((series) => series.winnerId === null)?.round ?? 3;
   const activeSeries = bracket.series.filter(
@@ -66,7 +71,8 @@ export function PlayoffPanel({
   const selected =
     bracket.series.find((series) => series.id === selection?.id) ??
     activeSeries.find(
-      (series) => series.higherSeedId === 0 || series.lowerSeedId === 0,
+      (series) =>
+        isFollowed(series.higherSeedId) || isFollowed(series.lowerSeedId),
     ) ??
     activeSeries[0] ??
     bracket.series.at(-1)!;
@@ -74,21 +80,25 @@ export function PlayoffPanel({
     (sum, series) => sum + series.games.length,
     0,
   );
-  const userSeed = seed(0);
-  const eliminated = bracket.series.find(
-    (series) =>
-      (series.higherSeedId === 0 || series.lowerSeedId === 0) &&
-      series.winnerId !== null &&
-      series.winnerId !== 0,
-  );
-  const userStatus =
-    bracket.championId === 0
-      ? `Champion · Seed ${userSeed}`
-      : !userSeed
+  const teamStatus = (teamId: number) => {
+    const teamSeed = seed(teamId);
+    const eliminated = bracket.series.find(
+      (series) =>
+        (series.higherSeedId === teamId || series.lowerSeedId === teamId) &&
+        series.winnerId !== null &&
+        series.winnerId !== teamId,
+    );
+    return bracket.championId === teamId
+      ? `Champion · Seed ${teamSeed}`
+      : !teamSeed
         ? "Did not qualify · Top 16 advance"
         : eliminated
-          ? `Eliminated · ${PLAYOFF_ROUND_LABELS[eliminated.round]} · Seed ${userSeed}`
-          : `Qualified · Seed ${userSeed} · ${PLAYOFF_ROUND_LABELS[activeRound]}`;
+          ? `Eliminated · ${PLAYOFF_ROUND_LABELS[eliminated.round]} · Seed ${teamSeed}`
+          : `Qualified · Seed ${teamSeed} · ${PLAYOFF_ROUND_LABELS[activeRound]}`;
+  };
+  const championManager = managers?.find(
+    (manager) => manager.teamId === bracket.championId,
+  );
   const completed = bracket.championId !== null;
   const mvp =
     completed && bracket.finalsMvp
@@ -114,13 +124,31 @@ export function PlayoffPanel({
           <h3 id={`${id}-title`}>Playoffs</h3>
           <p>16 teams. Four rounds. Every series best of seven.</p>
         </div>
-        <span
-          className={`playoff-user-status${bracket.championId === 0 ? " is-champion" : ""}`}
-          aria-label="Your playoff status"
-        >
-          {userStatus}
-        </span>
+        {!managers && (
+          <span
+            className={`playoff-user-status${bracket.championId === 0 ? " is-champion" : ""}`}
+            aria-label="Your playoff status"
+          >
+            {teamStatus(0)}
+          </span>
+        )}
       </div>
+      {managers && (
+        <div className="playoff-manager-statuses" aria-live="polite">
+          {managers.map((manager) => (
+            <div
+              key={manager.teamId}
+              className={`playoff-user-status${bracket.championId === manager.teamId ? " is-champion" : ""}`}
+              aria-label={`${manager.name}'s playoff status`}
+            >
+              <strong>
+                {manager.name} · {teamName(manager.teamId)}
+              </strong>
+              <span>{teamStatus(manager.teamId)}</span>
+            </div>
+          ))}
+        </div>
+      )}
       <p className="stat-legend">
         Top 16 by regular-season wins, then point differential, then team ID.
         Fixed bracket; no reseeding. Higher seed hosts games 1, 2, 5 and 7.
@@ -130,6 +158,13 @@ export function PlayoffPanel({
           <article className="playoff-champion" aria-label="Playoff champion">
             <span className="eyebrow">PLAYOFF CHAMPION</span>
             <h4>{teamName(bracket.championId)}</h4>
+            {managers && (
+              <p className="playoff-champion-owner">
+                {championManager
+                  ? `${championManager.name} wins the championship!`
+                  : "CPU-managed team"}
+              </p>
+            )}
             <p>
               Seed {seed(bracket.championId)} · Wins the Finals{" "}
               {finals
@@ -207,7 +242,8 @@ export function PlayoffPanel({
       {!completed && (
         <p className="stat-legend">
           Next slate plays one game in each unfinished series of the current
-          round. You can follow every round even after your team is eliminated.
+          round. You can follow every round even after{" "}
+          {managers ? "your teams are" : "your team is"} eliminated.
         </p>
       )}
       {simulating && (
@@ -307,7 +343,7 @@ export function PlayoffPanel({
                               (teamId, index) => (
                                 <span
                                   key={index}
-                                  className={`playoff-team${series.winnerId !== null && teamId === series.winnerId ? " is-winner" : ""}${teamId === 0 ? " is-user" : ""}`}
+                                  className={`playoff-team${series.winnerId !== null && teamId === series.winnerId ? " is-winner" : ""}${isFollowed(teamId) ? " is-user" : ""}`}
                                 >
                                   <span className="playoff-seed">
                                     {seed(teamId) ?? "—"}

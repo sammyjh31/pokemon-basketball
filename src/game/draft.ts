@@ -1,4 +1,4 @@
-import { POKEMON, POKEMON_BY_ID } from "../data/pokemon";
+import { POKEMON, POKEMON_BY_ID, POKEMON_COUNT } from "../data/pokemon";
 import { nextRandom } from "./random";
 import {
   ROSTER_SLOTS,
@@ -63,7 +63,7 @@ export function placePokemon(
   if (
     run.result ||
     !mon ||
-    pokemonId > 251 ||
+    pokemonId > POKEMON_COUNT ||
     !ROSTER_SLOTS.includes(position) ||
     (!run.includeLegends && mon.legendary) ||
     Object.values(run.roster).includes(pokemonId)
