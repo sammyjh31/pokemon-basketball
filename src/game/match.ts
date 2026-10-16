@@ -110,6 +110,9 @@ const baseShotMix: Record<PlayType, number[]> = {
 };
 /** Share of the carrier-pressure turnover rate applied on top of version-2 court risks. */
 const COURT_PRESSURE_SHARE = 0.4;
+/** Version 3: shot accuracy shifts 0.15 points per point of lead, at most 3. */
+const SCORE_STATE_PER_POINT = 0.0015;
+const SCORE_STATE_CAP = 0.03;
 /** Version 2: a pass that leads straight to the shot is usually an assist. */
 function catchAssistChance(
   droveAfterCatch: boolean,
@@ -2024,6 +2027,18 @@ export function simulateMatch(
           0.88,
         );
       const physicalChanceDelta = accuracy - beforePhysical;
+      if (courtV3)
+        // Version 3 score state: a comfortable lead relaxes, a deficit raises effort.
+        accuracy = clamp(
+          accuracy -
+            clamp(
+              margin(offense) * SCORE_STATE_PER_POINT,
+              -SCORE_STATE_CAP,
+              SCORE_STATE_CAP,
+            ),
+          0.1,
+          0.88,
+        );
       // Measure type impact against the completed basketball/depth probability.
       let untypedAccuracy = accuracy;
       if (typeEffect)
@@ -2322,10 +2337,16 @@ export function simulateMatch(
           }
           const close =
             minute >= 44 && Math.abs(result.homeScore - result.awayScore) <= 12;
+          const lead = Math.abs(result.homeScore - result.awayScore);
+          // Version 3 garbage time: both coaches empty the bench once a game is decided.
+          const garbage =
+            courtV3 &&
+            period < 4 &&
+            (minute >= 42 ? lead >= 16 : minute >= 36 && lead >= 22);
           const homeFloor = h.floor,
             awayFloor = a.floor;
-          chooseLineup(h, minute, close, awayFloor);
-          chooseLineup(a, minute, close, homeFloor);
+          chooseLineup(h, minute, close, awayFloor, garbage);
+          chooseLineup(a, minute, close, homeFloor, garbage);
           gameMinute = minute;
         }
         const defense = offense === h ? a : h;

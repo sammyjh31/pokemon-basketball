@@ -123,3 +123,43 @@ it("spreads rebounds beyond one designated crasher under version 3", () => {
   // Team rebounding volume is unchanged; only who collects them moves.
   expect(Math.abs(v3.total - v2.total) / v2.total).toBeLessThan(0.05);
 });
+
+it("closes version-3 margins with score-state effort and garbage time", () => {
+  const sample = (version: CourtVersion) => {
+    const teams = clubs(9824, version);
+    let margin = 0,
+      blowouts = 0,
+      overtime = 0,
+      reserveMinutes = 0;
+    const games = 120;
+    for (let i = 0; i < games; i++) {
+      const m = simulateMatch(
+        teams[i % 30],
+        teams[((i % 30) + 1 + (i % 29)) % 30],
+        512000 + i,
+      );
+      const d = Math.abs(m.homeScore - m.awayScore);
+      margin += d;
+      blowouts += Number(d >= 20);
+      overtime += Number(m.overtimePeriods > 0);
+      for (const p of [...m.homeBox, ...m.awayBox])
+        if (p.slot.startsWith("B")) reserveMinutes += p.minutes;
+    }
+    return {
+      margin: margin / games,
+      blowouts: blowouts / games,
+      overtime: overtime / games,
+      reserveMinutes,
+    };
+  };
+  const v2 = sample(2),
+    v3 = sample(3);
+  expect(v3.margin).toBeLessThan(v2.margin - 2);
+  expect(v3.margin).toBeGreaterThan(9);
+  expect(v3.margin).toBeLessThan(14);
+  expect(v3.blowouts).toBeLessThan(v2.blowouts);
+  expect(v3.blowouts).toBeLessThan(0.24);
+  expect(v3.overtime).toBeGreaterThanOrEqual(v2.overtime);
+  // Decided games hand minutes to the reserves.
+  expect(v3.reserveMinutes).toBeGreaterThan(v2.reserveMinutes);
+});
