@@ -11,6 +11,7 @@ import {
 import { validateCoachTraining } from "./coachTraining";
 import { validateCoachOffice, verifyCoachChronology } from "./coachOffice";
 import { validateCoach } from "./trainerCoaches";
+import { isCourtVersion } from "./courtTypes";
 import { captureRivalScouting, parseRivalScouting } from "./rivalScouting";
 import { validateRosterTransactions } from "./franchiseTransactions";
 import { validateFreeAgency } from "./freeAgencyValidation";
@@ -348,7 +349,8 @@ export function validateLeagueTeams(
   )
     return fail();
   if (evaluationVersion !== undefined && evaluationVersion !== 1) return fail();
-  if (courtVersion !== undefined && courtVersion !== 1) return fail();
+  if (courtVersion !== undefined && !isCourtVersion(courtVersion))
+    return fail();
   if (matchupVersion !== undefined && matchupVersion !== 1) return fail();
   if (possessionVersion !== undefined && possessionVersion !== 1) return fail();
   const tacticsVersion = object(rows[0]).typeTacticsVersion;
@@ -443,7 +445,7 @@ export function validateLeagueTeams(
           }
         : {}),
       ...(evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
-      ...(courtVersion === 1 ? { courtVersion: 1 as const } : {}),
+      ...(isCourtVersion(courtVersion) ? { courtVersion } : {}),
       ...(matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
       ...(possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
     };

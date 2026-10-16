@@ -16,10 +16,10 @@ const run = () => ({
 it("enables the same model on all new clubs and CPU regular-season and playoff games", () => {
   const r = run(),
     teams = createLeague(r);
-  expect(r.courtVersion).toBe(1);
-  expect(teams.every((t) => t.courtVersion === 1)).toBe(true);
+  expect(r.courtVersion).toBe(2);
+  expect(teams.every((t) => t.courtVersion === 2)).toBe(true);
   expect(
-    validateLeagueTeams(teams, true).every((t) => t.courtVersion === 1),
+    validateLeagueTeams(teams, true).every((t) => t.courtVersion === 2),
   ).toBe(true);
   const fixture = {
     id: "cpu",
@@ -39,7 +39,7 @@ it("enables the same model on all new clubs and CPU regular-season and playoff g
   expect(() => validateLeagueTeams(mixed, true)).toThrow();
   expect(() =>
     validateLeagueTeams(
-      teams.map((t) => ({ ...t, courtVersion: 2 as 1 })),
+      teams.map((t) => ({ ...t, courtVersion: 3 as 2 })),
       true,
     ),
   ).toThrow();
@@ -55,7 +55,7 @@ it("retains current and historical rule flags through solo saves and archive rec
       value = "";
     },
   };
-  for (const version of [1, undefined] as const) {
+  for (const version of [2, 1, undefined] as const) {
     const r = { ...run(), courtVersion: version },
       state = { ...initialState(22), run: r };
     saveGame(storage, state);
@@ -78,11 +78,14 @@ it("opts new local leagues in, but never upgrades a saved local career implicitl
     22,
     2,
   );
-  expect(d.courtVersion).toBe(1);
-  expect(parseLocalLeague(JSON.stringify(d)).courtVersion).toBe(1);
+  expect(d.courtVersion).toBe(2);
+  expect(parseLocalLeague(JSON.stringify(d)).courtVersion).toBe(2);
+  expect(
+    parseLocalLeague(JSON.stringify({ ...d, courtVersion: 1 })).courtVersion,
+  ).toBe(1);
   delete d.courtVersion;
   expect(parseLocalLeague(JSON.stringify(d)).courtVersion).toBeUndefined();
   expect(() =>
-    parseLocalLeague(JSON.stringify({ ...d, courtVersion: 2 })),
+    parseLocalLeague(JSON.stringify({ ...d, courtVersion: 3 })),
   ).toThrow();
 });

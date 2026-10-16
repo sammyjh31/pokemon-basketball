@@ -43,3 +43,9 @@ export interface CourtSequence {
     "shot" | "turnover" | "violation" | "made" | "missed" | "blocked" | "foul";
   points: number;
 }
+
+/** Court rules for newly created seasons. Version 1 stays frozen for saved replays. */
+export const COURT_VERSION = 2 as const;
+export type CourtVersion = 1 | 2;
+export const isCourtVersion = (value: unknown): value is CourtVersion =>
+  value === 1 || value === 2;

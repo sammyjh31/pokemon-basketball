@@ -1,6 +1,6 @@
 {
   "note": "Seeded fictional tuning smoke test across 30 rosters. Rates are descriptive, not real basketball calibration or an optimal strategy search. All score, minute and clock assertions passed.",
-  "games": 1000,
+  "games": 1500,
   "results": [
     {
       "courtVersion": "previous body engine",
@@ -16,7 +16,7 @@
       "late": 0,
       "violations": 0,
       "coverages": {},
-      "milliseconds": 779
+      "milliseconds": 894
     },
     {
       "courtVersion": "previous body engine",
@@ -32,7 +32,7 @@
       "late": 0,
       "violations": 0,
       "coverages": {},
-      "milliseconds": 723
+      "milliseconds": 733
     },
     {
       "courtVersion": "previous body engine",
@@ -48,7 +48,7 @@
       "late": 0,
       "violations": 0,
       "coverages": {},
-      "milliseconds": 648
+      "milliseconds": 684
     },
     {
       "courtVersion": "previous body engine",
@@ -64,7 +64,7 @@
       "late": 0,
       "violations": 0,
       "coverages": {},
-      "milliseconds": 644
+      "milliseconds": 680
     },
     {
       "courtVersion": "previous body engine",
@@ -80,7 +80,7 @@
       "late": 0,
       "violations": 0,
       "coverages": {},
-      "milliseconds": 625
+      "milliseconds": 654
     },
     {
       "courtVersion": 1,
@@ -102,7 +102,7 @@
         "switch": 1074,
         "trap": 1160
       },
-      "milliseconds": 1296
+      "milliseconds": 1357
     },
     {
       "courtVersion": 1,
@@ -124,7 +124,7 @@
         "switch": 1199,
         "trap": 1322
       },
-      "milliseconds": 1270
+      "milliseconds": 1323
     },
     {
       "courtVersion": 1,
@@ -146,7 +146,7 @@
         "under": 597,
         "trap": 1088
       },
-      "milliseconds": 1173
+      "milliseconds": 1229
     },
     {
       "courtVersion": 1,
@@ -168,7 +168,7 @@
         "under": 566,
         "trap": 1098
       },
-      "milliseconds": 1188
+      "milliseconds": 1211
     },
     {
       "courtVersion": 1,
@@ -190,7 +190,117 @@
         "switch": 1107,
         "trap": 1227
       },
-      "milliseconds": 1129
+      "milliseconds": 1169
+    },
+    {
+      "courtVersion": 2,
+      "tactic": "balanced",
+      "games": 100,
+      "points": 113.3,
+      "allowed": 108.56,
+      "possessions": 100.28,
+      "win": 0.58,
+      "turnovers": 12.53,
+      "threes": 32.04,
+      "multi": 179.18,
+      "late": 21.6,
+      "violations": 0.2,
+      "coverages": {
+        "switch": 1144,
+        "hedge": 227,
+        "under": 641,
+        "drop": 2375,
+        "trap": 1205
+      },
+      "milliseconds": 1284
+    },
+    {
+      "courtVersion": 2,
+      "tactic": "pace",
+      "games": 100,
+      "points": 119.93,
+      "allowed": 117.54,
+      "possessions": 106.88,
+      "win": 0.54,
+      "turnovers": 14.28,
+      "threes": 36.55,
+      "multi": 190.16,
+      "late": 17.56,
+      "violations": 0.14,
+      "coverages": {
+        "hedge": 225,
+        "drop": 2645,
+        "switch": 1186,
+        "under": 705,
+        "trap": 1248
+      },
+      "milliseconds": 1330
+    },
+    {
+      "courtVersion": 2,
+      "tactic": "interior",
+      "games": 100,
+      "points": 108.61,
+      "allowed": 109.55,
+      "possessions": 99.97,
+      "win": 0.49,
+      "turnovers": 14.47,
+      "threes": 15.11,
+      "multi": 179.48,
+      "late": 21.55,
+      "violations": 0.24,
+      "coverages": {
+        "drop": 2168,
+        "hedge": 201,
+        "under": 577,
+        "switch": 912,
+        "trap": 1036
+      },
+      "milliseconds": 1266
+    },
+    {
+      "courtVersion": 2,
+      "tactic": "perimeter",
+      "games": 100,
+      "points": 115.56,
+      "allowed": 108.37,
+      "possessions": 100.01,
+      "win": 0.64,
+      "turnovers": 13.22,
+      "threes": 54.27,
+      "multi": 177.61,
+      "late": 21.35,
+      "violations": 0.11,
+      "coverages": {
+        "drop": 2191,
+        "hedge": 208,
+        "switch": 1064,
+        "under": 620,
+        "trap": 1087
+      },
+      "milliseconds": 1261
+    },
+    {
+      "courtVersion": 2,
+      "tactic": "defense",
+      "games": 100,
+      "points": 106.38,
+      "allowed": 103.92,
+      "possessions": 96.3,
+      "win": 0.6,
+      "turnovers": 12.76,
+      "threes": 30.86,
+      "multi": 170.95,
+      "late": 24.84,
+      "violations": 0.21,
+      "coverages": {
+        "hedge": 293,
+        "drop": 2507,
+        "switch": 1155,
+        "under": 721,
+        "trap": 1213
+      },
+      "milliseconds": 1239
     }
   ]
 }

@@ -222,9 +222,18 @@ New solo seasons and configurable local leagues adopt the rules. Standard franch
 
 ### Court positioning and chained possessions
 
-New solo/franchise seasons and new local leagues use `courtVersion: 1` in the shared match engine. Every simulated fixture—including CPU versus CPU, playoffs, and the simulated schedule around manually played games—uses the same rules. User-controlled arcade basketball keeps its separate real-time physics.
+New solo/franchise seasons and new local leagues use `courtVersion: 2` in the shared match engine; saved seasons and local careers keep the court rules they started with (version 1 or none). Every simulated fixture—including CPU versus CPU, playoffs, and the simulated schedule around manually played games—uses the same rules. User-controlled arcade basketball keeps its separate real-time physics.
 
 Ten players occupy half-court coordinates in feet. Shooting threat determines spacing and defensive shading; current distances influence passing lanes, driving congestion, help, contests and blocks. Recovery speed includes body inertia, speed and energy. Screens lead to drop, switch, hedge, trap or under coverage, selected from the actual matchup and defensive scheme. An offense can pass, drive, kick out or reset before shooting. Actions spend game time and shot-clock time; offensive rebounds reset to 14 seconds. Minutes and fatigue follow time spent on the floor, and substitutions occur between attacks or immediately after foul-outs.
+
+Version 2 fixes four gaps in the original court rules, measured over 600 seeded league games (`node scripts/court-metrics.mjs --court=2 --games=600`):
+
+- **Turnovers:** ball pressure from the defense's steal skill, press scheme, ball handling and decisions now applies on top of pass and drive risk. Turnovers rise from 6.9% to about 12.4% of plays, and steals go to the defender in the passing lane or the one who stripped the drive.
+- **Shot selection:** before shooting, players step into the zone their tendencies, coaching tactic and the opposing defense favour. Moving costs time and lets the defender recover. Threes rise from 27% to about 37.5% of shots, and the perimeter and interior tactics change shot mix again.
+- **Assists:** a pass that leads straight to a shot counts as an assist about 93% of the time; a catch followed by a drive about 60%. Assisted baskets rise from 32% to about 56%.
+- **Fouls:** non-shooting fouls spread across the defense by proximity and discipline, and coaches sit players in foul trouble ahead of their minute targets. Foul-outs fall from about 0.65–0.75 to about 0.2–0.3 a game.
+
+Pace stays near 101 possessions and scoring near 112 points per team. These are game-design coefficients, not a fit to real basketball data.
 
 Open **Inside this result → Court positioning and possession chains** for coverage counts, multi-action attacks, late-clock shots, turnovers, an action browser and a court diagram. These locations influence the engine; earlier schematic shot charts remain labeled as such. Coverage counts and scoring differences are observations, not proof of causation. The model is fictional game tuning, not empirical tracking data.
 

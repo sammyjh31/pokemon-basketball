@@ -1,6 +1,7 @@
 import { neutralMorale } from "./playerMorale";
 import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
 import { validateCoach } from "./trainerCoaches";
+import { COURT_VERSION, isCourtVersion, type CourtVersion } from "./courtTypes";
 import {
   ALL_POKEMON,
   FRANCHISE_POKEMON,
@@ -63,7 +64,7 @@ export interface LocalLeague {
   /** Stable species personalities and automatic captains; requires player morale. */
   personalityVersion?: 1;
   evaluationVersion?: 1;
-  courtVersion?: 1;
+  courtVersion?: CourtVersion;
   matchupVersion?: 1;
   possessionVersion?: 1;
   seed: number;
@@ -158,7 +159,7 @@ export function createLocalLeague(
           moraleVersion: 1 as const,
           personalityVersion: 1 as const,
           evaluationVersion: 1 as const,
-          courtVersion: 1 as const,
+          courtVersion: COURT_VERSION,
           matchupVersion: 1 as const,
           possessionVersion: 1 as const,
         }
@@ -410,7 +411,7 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
       ...(draft.evaluationVersion === 1
         ? { evaluationVersion: 1 as const }
         : {}),
-      ...(draft.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
+      ...(draft.courtVersion ? { courtVersion: draft.courtVersion } : {}),
       ...(draft.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
       ...(draft.possessionVersion === 1
         ? { possessionVersion: 1 as const }
@@ -476,7 +477,7 @@ export function localLeagueRun(draft: LocalLeague): Run {
     ...(teams[0].evaluationVersion === 1
       ? { evaluationVersion: 1 as const }
       : {}),
-    ...(draft.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
+    ...(draft.courtVersion ? { courtVersion: draft.courtVersion } : {}),
     ...(draft.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
     ...(draft.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
     ...(draft.typeTacticsVersion === 1
@@ -612,7 +613,7 @@ export function parseLocalLeague(
     (value.moraleVersion !== undefined && value.moraleVersion !== 1) ||
     (value.moraleVersion === 1 && value.chemistryGrowthVersion !== 1) ||
     (value.evaluationVersion !== undefined && value.evaluationVersion !== 1) ||
-    (value.courtVersion !== undefined && value.courtVersion !== 1) ||
+    (value.courtVersion !== undefined && !isCourtVersion(value.courtVersion)) ||
     (value.matchupVersion !== undefined && value.matchupVersion !== 1) ||
     (value.possessionVersion !== undefined && value.possessionVersion !== 1) ||
     ![1, 2].includes(value.version) ||
@@ -656,7 +657,8 @@ export function parseLocalLeague(
   if (value.personalityVersion === 1) draft.personalityVersion = 1;
   if (value.moraleVersion === 1) draft.moraleVersion = 1;
   if (value.evaluationVersion === 1) draft.evaluationVersion = 1;
-  if (value.courtVersion === 1) draft.courtVersion = 1;
+  if (isCourtVersion(value.courtVersion))
+    draft.courtVersion = value.courtVersion;
   if (value.matchupVersion === 1) draft.matchupVersion = 1;
   if (value.possessionVersion === 1) draft.possessionVersion = 1;
   if (value.typeMatchupsVersion === 1) draft.typeMatchupsVersion = 1;

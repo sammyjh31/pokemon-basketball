@@ -1,4 +1,5 @@
 import { validateCoach, coachOffers } from "./trainerCoaches";
+import { isCourtVersion } from "./courtTypes";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { initialState } from "./state";
 import {
@@ -156,7 +157,8 @@ function validate(
     return fail();
   if (raw.evaluationVersion !== undefined && raw.evaluationVersion !== 1)
     return fail();
-  if (raw.courtVersion !== undefined && raw.courtVersion !== 1) return fail();
+  if (raw.courtVersion !== undefined && !isCourtVersion(raw.courtVersion))
+    return fail();
   if (raw.matchupVersion !== undefined && raw.matchupVersion !== 1)
     return fail();
   if (raw.possessionVersion !== undefined && raw.possessionVersion !== 1)
@@ -199,7 +201,9 @@ function validate(
       ? { chemistryGrowthVersion: 1 as const }
       : {}),
     ...(raw.evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
-    ...(raw.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
+    ...(isCourtVersion(raw.courtVersion)
+      ? { courtVersion: raw.courtVersion }
+      : {}),
     ...(raw.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
     ...(raw.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
     ...(raw.typeMatchupsVersion === 1

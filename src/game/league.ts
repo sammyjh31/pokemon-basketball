@@ -177,7 +177,7 @@ export function createLeague(run: Run): LeagueTeam[] {
       team.personalityVersion = 1;
     }
     if (run.evaluationVersion === 1) team.evaluationVersion = 1;
-    if (run.courtVersion === 1) team.courtVersion = 1;
+    if (run.courtVersion) team.courtVersion = run.courtVersion;
     if (run.matchupVersion === 1) team.matchupVersion = 1;
     if (run.possessionVersion === 1) team.possessionVersion = 1;
   }

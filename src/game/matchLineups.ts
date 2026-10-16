@@ -186,16 +186,22 @@ export function chooseLineup(
         continue;
       const foulThreshold =
         minute < 12 ? 2 : minute < 24 ? 3 : minute < 36 ? 4 : 5;
+      // Version-2 coaches sit foul trouble ahead of minute targets, and keep a
+      // five-foul player off the floor until the closing minutes.
       const foulPenalty =
-        minute < 43 && p.box.fouls >= foulThreshold
-          ? 14 + (p.box.fouls - foulThreshold) * 9
-          : 0;
+        team.config.courtVersion === 2
+          ? (minute < 43 && p.box.fouls >= foulThreshold
+              ? 60 + (p.box.fouls - foulThreshold) * 30
+              : 0) + (p.box.fouls >= 5 && minute < 46 ? 80 : 0)
+          : minute < 43 && p.box.fouls >= foulThreshold
+            ? 14 + (p.box.fouls - foulThreshold) * 9
+            : 0;
       const debt = p.target * phase - Math.min(p.box.minutes, 48);
       const basketballScore = close
         ? roleValue(team, p, role) * 0.85 +
           p.energy * 0.42 +
           p.profile.attributes.composure * 0.12 -
-          foulPenalty * 0.2
+          foulPenalty * (team.config.courtVersion === 2 ? 0.6 : 0.2)
         : roleValue(team, p, role) * 0.5 +
           p.energy * 0.22 +
           p.target * 0.8 +

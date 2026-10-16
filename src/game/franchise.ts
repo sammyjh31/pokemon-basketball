@@ -8,6 +8,7 @@ import { mergeAbilityActivations } from "./abilities";
 import { projectedCoaches } from "./coachOffice";
 import { reviewFranchiseCoaches } from "./coachFranchise";
 import { assignLeagueCoaches } from "./trainerCoaches";
+import { COURT_VERSION } from "./courtTypes";
 import { captureRivalScouting } from "./rivalScouting";
 import { processCpuFreeAgency } from "./freeAgency";
 import type { TradePackage } from "./tradeTypes";
@@ -352,7 +353,7 @@ export function startFranchiseSeason(
     physicalAbilityVersion: 1 as const,
     chemistryVersion: 1 as const,
     evaluationVersion: 1 as const,
-    courtVersion: 1 as const,
+    courtVersion: COURT_VERSION,
     matchupVersion: 1 as const,
     possessionVersion: 1 as const,
   }));

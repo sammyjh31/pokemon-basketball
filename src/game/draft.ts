@@ -1,4 +1,5 @@
 import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
+import { COURT_VERSION } from "./courtTypes";
 import { POKEMON, POKEMON_BY_ID, POKEMON_COUNT } from "../data/pokemon";
 import { nextRandom } from "./random";
 import {
@@ -41,7 +42,7 @@ export function createRun(
     moraleVersion: 1,
     personalityVersion: 1,
     evaluationVersion: 1,
-    courtVersion: 1,
+    courtVersion: COURT_VERSION,
     matchupVersion: 1,
     possessionVersion: 1,
     mode,

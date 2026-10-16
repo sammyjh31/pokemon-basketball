@@ -63,7 +63,7 @@ export function archivedSeasonRun(season: FranchiseSeason): Run {
       ? { chemistryGrowthVersion: 1 as const }
       : {}),
     ...(user.evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
-    ...(user.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
+    ...(user.courtVersion ? { courtVersion: user.courtVersion } : {}),
     ...(user.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
     ...(user.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
     ...(user.typeTacticsVersion === 1
