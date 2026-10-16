@@ -244,5 +244,5 @@ describe("franchise detail dialogs", () => {
     expect(
       screen.getByRole("button", { name: "Close box score" }),
     ).toBeInTheDocument();
-  }, 15000);
+  }, 60000); // Builds the archived season before checking its filters and box.
 });

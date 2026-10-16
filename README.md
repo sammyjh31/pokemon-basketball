@@ -53,7 +53,7 @@ Playwright uses `/usr/bin/chromium` when available, or the `CHROMIUM_PATH` overr
 
 GitHub's `main` branch at [sammyjh31/pokemon-basketball](https://github.com/sammyjh31/pokemon-basketball) is the shared source. Start each session with a clean working tree and `git pull --ff-only origin main`. Commit and push validated changes before switching environments. Never force-push to resolve concurrent local/cloud work; fetch and reconcile it instead.
 
-Local checkout: `/Users/sam/Documents/PokeBBall`. Existing cloud checkout: `/workspace/pokemon-basketball`. Run `npm ci` after dependency changes. Browser saves stay in the current browser, so use Copy link to carry a lineup between environments.
+Active local basketball checkout: `/Users/sam/.codex/worktrees/pokemon-matchup-engine/PokeBBall` (the primary directory has concurrent project work; see `docs/LOCAL_HANDOFF.md`). Existing cloud checkout: `/workspace/pokemon-basketball`. Run `npm ci` after dependency changes. Browser saves stay in the current browser, so use Copy link to carry a lineup between environments.
 
 ## Scouting, coaching, and league statistics
 
@@ -124,7 +124,7 @@ Local save version 2 uses a bounded logistic shot model with skill, contest, hel
 
 New configurable leagues add bounded physical effects, distinct player tendencies, complementary-lineup chemistry, small signatures, and CPU adjustments based on the previous period. No evolutions, injuries, aging, retirement, or draft-pick trading are included. [Engine depth and tuning](docs/ENGINE_DEPTH.md) documents the coefficients and reproducible 3,600-game balance audit.
 
-**Season insights** builds player game trends, five-player lineup statistics, and defensive assignment measures on demand. New game boxes add recorded postgame comparisons, filtered shot charts and event logs, lineups, defense, and coaching changes. Shot coordinates are schematic illustrations, not tracked court positions. Missing historical telemetry is explicitly disclosed. Regular-season qualifications scale with season length.
+**Season insights** builds player game trends, five-player lineup statistics, and defensive assignment measures on demand. New game boxes add recorded postgame comparisons, filtered shot charts and event logs, lineups, defense, and coaching changes. Shot coordinates follow simulated court positions under the new court rules; earlier rules use labeled schematic illustrations. Missing historical telemetry is explicitly disclosed. Regular-season qualifications scale with season length.
 
 ## Data and artwork
 

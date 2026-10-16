@@ -1,6 +1,22 @@
 # Local and cloud handoff — 2026-10-16
 
-Development continues in `/Users/sam/Documents/PokeBBall`, synchronized to `main` at `https://github.com/sammyjh31/pokemon-basketball.git`. The league update was `36f760a`, and playoffs were `8a1257a`; franchise mode builds on both. A concurrent arcade-design documentation commit was preserved.
+Basketball development uses the attached checkout `/Users/sam/.codex/worktrees/pokemon-matchup-engine/PokeBBall`, synchronized with `main` at `https://github.com/sammyjh31/pokemon-basketball.git`. The primary directory currently contains concurrent basketball draft work and a separate Grand Table project; do not reset, switch or clean it as part of basketball work.
+
+## Court positioning, action chains and screen coverages
+
+New runs and configurable local leagues opt into `courtVersion: 1`. Existing standard franchises adopt it when starting their next season; active and archived seasons retain their saved rules. Existing local careers remain frozen. The flag follows all league teams, archived inputs and save validation. Every simulated fixture uses the shared match engine, including CPU-versus-CPU games, regular-season rounds, playoffs and reconstructed boxes. Manually controlled arcade games keep their separate physics engine.
+
+`courtPossession.ts` places ten players on a modeled half court and chains screens, drives, passes, kickouts, resets and shots. Current geometry affects passing risk, lane crowding, spacing, help, contests and in-range blocks. Speed, fatigue, body inertia and typing influence actions and matchups. Coaches select drop, switch, hedge, trap or under from the lineup's shooting, mobility, physical/type mismatches and configured defense. Each choice moves defenders differently. Spatial effects replace abstract screen/help movement bonuses rather than accumulating them twice.
+
+Actions consume game time with 24-second possessions, 14-second offensive-rebound resets and bounded period clocks. End-of-period rushed advances use the remaining period and a range penalty; they cannot generate repeated instant half-court attacks. Player fatigue, minutes and lineup time follow elapsed action time. Career minutes can be fractional, while scoring/counting stats remain integers and both teams' total minutes are conserved.
+
+Open a game box score and **Inside this result → Court positioning and possession chains**. Coverage counts, multi-action attacks, late-clock attempts, shot-clock turnovers, a filterable action browser, ten-player diagram and player legend come from recorded simulation decisions. The shot chart uses actual simulated coordinates for new rules; older games retain schematic coordinates and an explicit absence-of-recording message.
+
+The user’s other basketball chat also supplied its validated lineup-ranking and position-lock patch. It is integrated here so preview handoff retains those features; `localLeague.ts` preserves both position locks and `courtVersion`. Its ratings optimization was checked against 1,350 old/new rating/rotation cases, 48 legacy match fixtures and identical 1,000-game audit outcomes. The primary directory and its Grand Table work were untouched.
+
+Verification: all 822 cases have passing evidence across the full run and focused repairs (see the execution record for initial failures and follow-ups). The final production build, 48 byte-identical legacy fixtures and 1,000-game audit passed. Desktop/mobile screenshots are in `docs/design/court-possession-*.png`.
+
+Reproduce the seeded audit with `node scripts/court-audit.mjs --samples=100`. It covers 1,000 games across 30 rosters and five tactics, checks score/minute/clock accounting, and writes `docs/court-balance-audit.json`. Prior matchup/possession audit scripts explicitly retain their older court-disabled rules. Design and execution evidence are in [the court specification](superpowers/specs/2026-10-16-court-possession-engine.md) and [implementation record](superpowers/plans/2026-10-16-court-possession-engine.md).
 
 ## Physical and type matchup engine
 
@@ -105,6 +121,6 @@ The final test league finished 21–61 and restored the identical result and awa
 2. Node ≥24.15, tested 24.19.0. Run `npm ci` after dependency changes. Local bundled Node is `/Users/sam/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin`.
 3. Preview: `npm run dev -- --host 127.0.0.1 --port 5173 --strictPort`. Cloud may need `--host 0.0.0.0` and its forwarded URL.
 4. Run appropriate checks, commit and push before switching environments. Reconcile concurrent work without force-pushing.
-5. **Preserve regular-season models 3/4/5/6, postseason models 1/2 and franchise models 1/2/3 before changing deterministic inputs or outputs.** Roster draft, schedule, event probabilities, profiles, aggregation and award formulas all affect replay validation. Future behavioral changes need new model versions and migration.
+5. **Preserve regular-season models 3/4/5/6, postseason models 1/2, franchise models 1/2/3 and every saved engine flag (including `courtVersion: 1`) before changing deterministic inputs or outputs.** Roster draft, schedule, event probabilities, profiles, aggregation and award formulas all affect replay validation. Future behavioral changes need new model versions and migration.
 
 Browser saves stay in their browser. Shared links carry eight player IDs, not coaching or results. See [league formulas](LEAGUE_MODEL.md), [design QA](../design-qa.md), [screenshots](design/), [README](../README.md), and the [implementation plan](superpowers/plans/2026-10-15-league-simulation.md).
