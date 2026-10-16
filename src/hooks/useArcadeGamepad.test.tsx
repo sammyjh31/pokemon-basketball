@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ArcadeInputController } from "../arcade/input";
 import { useArcadeGamepad } from "./useArcadeGamepad";
 import { useArcade } from "./useArcade";
@@ -68,7 +69,7 @@ it("navigates scoped menus, changes select options, and activates A only once", 
   function Menu() {
     const ref = useRef<HTMLDivElement>(null),
       [input] = useState(() => new ArcadeInputController());
-    const status = useArcadeGamepad(ref, input);
+    const { status } = useArcadeGamepad(ref, input);
     const [opponent, setOpponent] = useState("one");
     return (
       <div ref={ref}>
@@ -128,7 +129,7 @@ it("plays through the real runtime, pauses on Menu/disconnect, and neutralizes h
   function Game() {
     const ref = useRef<HTMLDivElement>(null),
       [input] = useState(() => new ArcadeInputController());
-    const status = useArcadeGamepad(ref, input);
+    const { status } = useArcadeGamepad(ref, input);
     const runtime = useArcade(
       state,
       assets,
@@ -190,7 +191,7 @@ it("handles missing/blocked APIs and ignores nonstandard mappings without breaki
   function Status() {
     const ref = useRef<HTMLDivElement>(null),
       [input] = useState(() => new ArcadeInputController());
-    const status = useArcadeGamepad(ref, input);
+    const { status } = useArcadeGamepad(ref, input);
     return <div ref={ref}>{status}</div>;
   }
   render(<Status />);
@@ -205,4 +206,50 @@ it("handles missing/blocked APIs and ignores nonstandard mappings without breaki
   });
   frame();
   expect(screen.getByText(/unavailable/)).toBeInTheDocument();
+});
+
+it("keeps controller input inside an arcade-owned portaled dialog", () => {
+  const leave = vi.fn();
+  function Results() {
+    const root = useRef<HTMLDivElement>(null);
+    const [input] = useState(() => new ArcadeInputController());
+    const { onFocusCapture } = useArcadeGamepad(root, input);
+    const [open, setOpen] = useState(false);
+    return (
+      <div ref={root} onFocusCapture={onFocusCapture}>
+        <button className="arcade-primary" onClick={leave}>
+          Continue to franchise
+        </button>
+        <button onClick={() => setOpen(true)}>View box score</button>
+        {open &&
+          createPortal(
+            <div
+              role="dialog"
+              onKeyDown={(event) => {
+                if (event.key === "Escape") setOpen(false);
+              }}
+            >
+              <button autoFocus onClick={() => setOpen(false)}>
+                Close box score
+              </button>
+              <button>Box score detail</button>
+            </div>,
+            document.body,
+          )}
+      </div>
+    );
+  }
+  render(<Results />);
+  tick();
+  fireEvent.click(screen.getByText("View box score"));
+  tick([13]);
+  expect(screen.getByText("Box score detail")).toHaveFocus();
+  tick();
+  tick([1]);
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByText("View box score"));
+  tick();
+  tick([0]);
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(leave).not.toHaveBeenCalled();
 });

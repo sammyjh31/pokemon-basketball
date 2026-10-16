@@ -258,7 +258,10 @@ export function ArcadeMode({
 }) {
   const shellRef = useRef<HTMLElement>(null);
   const [input] = useState(() => new ArcadeInputController());
-  const controllerStatus = useArcadeGamepad(shellRef, input);
+  const { status: controllerStatus, onFocusCapture } = useArcadeGamepad(
+    shellRef,
+    input,
+  );
   const [official] = useState(() =>
     requestedOfficial
       ? {
@@ -377,7 +380,11 @@ export function ArcadeMode({
     }
   };
   return (
-    <main className="arcade-shell" ref={shellRef}>
+    <main
+      className="arcade-shell"
+      ref={shellRef}
+      onFocusCapture={onFocusCapture}
+    >
       <p className="arcade-controller-status" role="status">
         {controllerStatus}
       </p>

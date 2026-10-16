@@ -1,4 +1,10 @@
-import { useEffect, useState, type RefObject } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FocusEvent,
+  type RefObject,
+} from "react";
 import {
   isNeutralGamepad,
   neutralGamepad,
@@ -17,6 +23,7 @@ export function useArcadeGamepad(
   input: ArcadeInputController,
 ) {
   const [status, setStatus] = useState(WAITING);
+  const ownedDialog = useRef<HTMLElement | null>(null);
   useEffect(() => {
     let frameId = 0,
       active: { index: number; id: string } | null = null;
@@ -101,12 +108,14 @@ export function useArcadeGamepad(
           const playArea = shell.querySelector<HTMLElement>(
             "[data-gamepad-play]:not([inert])",
           );
-          if (playArea?.contains(document.activeElement)) {
+          const dialog =
+            (ownedDialog.current?.isConnected ? ownedDialog.current : null) ??
+            shell.querySelector<HTMLElement>('[role="dialog"]');
+          if (!dialog && playArea?.contains(document.activeElement)) {
             input.updateGamepad(next);
             direction = 0;
           } else {
             input.updateGamepad(null);
-            const dialog = shell.querySelector<HTMLElement>('[role="dialog"]');
             const scope = dialog ?? shell;
             const controls = Array.from(
               scope.querySelectorAll<HTMLElement>(
@@ -185,5 +194,13 @@ export function useArcadeGamepad(
       input.updateGamepad(null);
     };
   }, [root, input]);
-  return status;
+  return {
+    status,
+    // React focus events bubble through this arcade's own portals. Register only
+    // those dialogs, never an unrelated modal elsewhere in the document.
+    onFocusCapture: (event: FocusEvent<HTMLElement>) => {
+      const dialog = event.target.closest<HTMLElement>('[role="dialog"]');
+      if (dialog) ownedDialog.current = dialog;
+    },
+  };
 }
