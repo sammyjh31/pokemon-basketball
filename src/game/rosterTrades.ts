@@ -39,7 +39,13 @@ export function exchangePlayers(
       ...team,
       roster,
       ...(development ? { development } : {}),
-      ratings: teamRatings(roster, team.tactic, team.rotation, development),
+      ratings: teamRatings(
+        roster,
+        team.tactic,
+        team.rotation,
+        development,
+        team.rotationPlan,
+      ),
     };
   });
 }

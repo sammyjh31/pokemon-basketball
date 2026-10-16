@@ -1,4 +1,6 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
+import type { RotationPlan } from "./franchiseFeatures";
+import { validateRotationPlan } from "./rotationPlan";
 import {
   DEVELOPMENT_SKILLS,
   DEVELOPMENT_MIN,
@@ -297,7 +299,9 @@ export function rotationMinutes(
   roster: Roster,
   rotation: RotationStyle = "balanced",
   development?: PlayerDevelopment,
+  plan?: RotationPlan,
 ): Record<RosterSlot, number> {
+  if (plan) return validateRotationPlan(plan).minutes;
   const minutes = Object.fromEntries(
     ROSTER_SLOTS.map((slot) => [slot, 0]),
   ) as Record<RosterSlot, number>;
@@ -336,6 +340,7 @@ export function teamRatings(
   tactic: Tactic = "balanced",
   rotation: RotationStyle = "balanced",
   development?: PlayerDevelopment,
+  plan?: RotationPlan,
 ): TeamRatings {
   const available = players(roster, development),
     filled = available.filter((p) => p.starter).length;
@@ -353,7 +358,7 @@ export function teamRatings(
     chemistry: 0,
   };
   if (!available.length) return empty;
-  const minutes = rotationMinutes(roster, rotation, development),
+  const minutes = rotationMinutes(roster, rotation, development, plan),
     total = Object.values(minutes).reduce((sum, n) => sum + n, 0) || 1;
   const avg = (pick: (p: (typeof available)[number]) => number) =>
     available.reduce((sum, p) => sum + pick(p) * minutes[p.slot], 0) / total;

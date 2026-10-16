@@ -29,6 +29,7 @@ export function SeasonPanel({
   playoffProgress,
   franchiseYear,
   franchiseEntry,
+  onPlayGame,
 }: {
   run: Run;
   ratings: TeamRatings;
@@ -41,6 +42,7 @@ export function SeasonPanel({
   playoffProgress?: { completed: number; total: number };
   franchiseYear?: number;
   franchiseEntry?: ReactNode;
+  onPlayGame?: () => void;
 }) {
   const result = run.result;
   const skippedResult = useRef<typeof result>(null);
@@ -83,7 +85,7 @@ export function SeasonPanel({
     wins = showing.filter((g) => g.won).length,
     losses = showing.length - wins;
   const done = !!result && visible === 82;
-  const league = [3, 4, 5].includes(result?.modelVersion ?? 0)
+  const league = [3, 4, 5, 6].includes(result?.modelVersion ?? 0)
     ? result?.league
     : undefined;
   const archived =
@@ -332,7 +334,12 @@ export function SeasonPanel({
               awards={league ? [] : result.awards}
             />
           )}
-          {done && league && <LeaguePanel league={league} />}
+          {done && league && (
+            <LeaguePanel
+              league={league}
+              playedGames={run.seasonProgress?.playedGames}
+            />
+          )}
           {done && league && onPlayoffs && (
             <PlayoffPanel
               key={run.id}
@@ -340,6 +347,7 @@ export function SeasonPanel({
               seasonSeed={run.seasonSeed}
               playoffs={run.playoffs}
               onAdvance={onPlayoffs}
+              onPlayGame={onPlayGame}
               simulating={playoffSimulating}
               progress={playoffProgress}
             />
@@ -493,6 +501,7 @@ export function SeasonPanel({
       {done && selectedLeagueGame && league && (
         <LeagueBoxScore
           game={selectedLeagueGame}
+          match={run.seasonProgress?.playedGames[selectedLeagueGame.id]?.match}
           teams={league.teams}
           onClose={() => setSelectedGame(null)}
         />

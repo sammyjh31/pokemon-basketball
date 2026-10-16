@@ -1,3 +1,7 @@
+import { CareerDetail } from "./CareerDetail";
+import { HistoricalGames } from "./HistoricalGames";
+import { TrainingPanel } from "./TrainingPanel";
+import type { TrainingPlans } from "../game/franchiseFeatures";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { careerPlayers, evaluateTrade } from "../game/franchise";
@@ -26,6 +30,7 @@ export interface FranchisePanelProps {
   onEnterOffseason: () => void;
   onStartSeason: () => void;
   onProcessOffseason?: () => void;
+  onTraining?: (plans: TrainingPlans) => void;
   onTrade: (teamId: number, giveId: number, receiveId: number) => void;
 }
 
@@ -560,6 +565,7 @@ function Careers({ franchise, run }: { franchise: Franchise; run: Run }) {
     [playoffs, setPlayoffs] = useState(false);
   const [sort, setSort] = useState({ key: "points", descending: true });
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [careerId, setCareerId] = useState<number | null>(null);
   const honorRef = useRef<HTMLElement>(null),
     openerRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
@@ -607,6 +613,14 @@ function Careers({ franchise, run }: { franchise: Franchise; run: Run }) {
   ).length;
   return (
     <section aria-label="Career statistics">
+      {careerId !== null && (
+        <CareerDetail
+          pokemonId={careerId}
+          franchise={franchise}
+          run={run}
+          onClose={() => setCareerId(null)}
+        />
+      )}
       <div className="franchise-section-heading">
         <div>
           <h3>Every season adds up.</h3>
@@ -703,6 +717,12 @@ function Careers({ franchise, run }: { franchise: Franchise; run: Run }) {
               Close honors
             </button>
           </div>
+          <button
+            className="button primary"
+            onClick={() => setCareerId(selectedId)}
+          >
+            Open {playerName(selectedId)} career page
+          </button>
           {honors.length ? (
             <ul>
               {honors.map((honor, index) => (
@@ -795,6 +815,14 @@ function Careers({ franchise, run }: { franchise: Franchise; run: Run }) {
                       </span>
                     </span>
                   </button>
+                  <button
+                    className="text-button"
+                    type="button"
+                    aria-label={`Open ${playerName(player.pokemonId)} career page`}
+                    onClick={() => setCareerId(player.pokemonId)}
+                  >
+                    Career page
+                  </button>
                 </th>
                 {columns.map((column) => {
                   const value = getValue(
@@ -864,6 +892,7 @@ function HistoricalSelections({
 }
 
 function History({ franchise }: { franchise: Franchise }) {
+  const [showGames, setShowGames] = useState(false);
   const [selectedYear, setSelectedYear] = useState(
     franchise.history.at(-1)?.year ?? 1,
   );
@@ -875,12 +904,15 @@ function History({ franchise }: { franchise: Franchise }) {
   );
   return (
     <section aria-label="Season history">
+      {showGames && season && (
+        <HistoricalGames season={season} onClose={() => setShowGames(false)} />
+      )}
       <div className="franchise-section-heading">
         <div>
           <h3>The seasons that built this team.</h3>
           <p>
-            Only the active season keeps replayable box scores. Archived years
-            retain final standings, rosters, awards and career totals.
+            Newly archived seasons preserve player stats and every game. Older
+            saves keep the history they originally recorded.
           </p>
         </div>
       </div>
@@ -908,6 +940,9 @@ function History({ franchise }: { franchise: Franchise }) {
               </select>
             </label>
           </div>
+          <button className="button primary" onClick={() => setShowGames(true)}>
+            View Year {season.year} games
+          </button>
           <div className="franchise-history-summary">
             <article>
               <span className="eyebrow">CHAMPIONS</span>
@@ -1057,9 +1092,10 @@ export function FranchisePanel({
   onStartSeason,
   onTrade,
   onProcessOffseason,
+  onTraining,
 }: FranchisePanelProps) {
   const [view, setView] = useState<
-    "overview" | "careers" | "history" | "development"
+    "overview" | "careers" | "history" | "development" | "training"
   >("overview");
   const { franchise, run } = state;
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -1123,6 +1159,9 @@ export function FranchisePanel({
               label: franchise.phase === "offseason" ? "Offseason" : "Overview",
             },
             { id: "development", label: "Development report" },
+            ...(onTraining
+              ? [{ id: "training" as const, label: "Training plans" }]
+              : []),
             { id: "careers", label: "Career stats" },
             { id: "history", label: "History" },
           ] as const
@@ -1164,7 +1203,7 @@ export function FranchisePanel({
                   ? "Enter the offseason to archive these results, make trades and prepare your next season."
                   : run.result
                     ? "The regular season is complete. Play through the Finals to open the next offseason."
-                    : "Set your lineup and coaching, then simulate an 82-game season with your returning roster."}
+                    : "Set your rotation, then play or simulate scheduled games with your returning roster."}
               </p>
             </div>
             {complete && (
@@ -1179,6 +1218,18 @@ export function FranchisePanel({
             )}
           </section>
         ))}
+      {view === "training" && onTraining && (
+        <TrainingPanel
+          roster={
+            franchise.phase === "offseason"
+              ? franchise.teams[0].roster
+              : run.roster
+          }
+          plans={franchise.trainingPlans}
+          disabled={disabled}
+          onChange={onTraining}
+        />
+      )}
       {view === "development" && <OffseasonReport franchise={franchise} />}
       {view === "careers" && <Careers franchise={franchise} run={run} />}
       {view === "history" && <History franchise={franchise} />}

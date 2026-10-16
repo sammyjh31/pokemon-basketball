@@ -52,8 +52,13 @@ export function BenchPanel({
   onRotation: (rotation: RotationStyle) => void;
   onDefense: (defense: DefenseScheme) => void;
 }) {
-  const minutes = rotationMinutes(run.roster, run.rotation, development),
-    locked = !!run.result;
+  const minutes = rotationMinutes(
+      run.roster,
+      run.rotation,
+      development,
+      run.rotationPlan,
+    ),
+    locked = !!run.result || (run.seasonProgress?.completedRounds ?? 0) > 0;
   return (
     <section className="bench-panel" aria-label="Bench and coaching">
       <div className="bench-heading">

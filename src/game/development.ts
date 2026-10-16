@@ -13,6 +13,8 @@ import {
   type PlayerDevelopmentChange,
 } from "./developmentTypes";
 import { POSITIONS, type LeaguePlayer } from "./types";
+import type { PlayerTrainingPlan } from "./franchiseFeatures";
+import { TRAINING_FOCUS_LABELS, trainingSkillAdjustment } from "./training";
 const rounded = (n: number) => Math.round(n * 10) / 10;
 
 /** A species/year seed makes form repeatable and independent of roster ordering. */
@@ -21,6 +23,7 @@ export function developPlayer(
   previous: DevelopmentRatings,
   year: number,
   seasonSeed: number,
+  plan?: PlayerTrainingPlan,
 ): PlayerDevelopmentChange {
   const mon = POKEMON_BY_ID.get(player.pokemonId)!;
   const a = attributes(mon, previous);
@@ -114,13 +117,24 @@ export function developPlayer(
   for (const skill of DEVELOPMENT_SKILLS) {
     const current = previous[skill] ?? 0;
     // Development regresses toward a species' foundation instead of inflating forever.
-    const projected =
+    let projected =
       opportunity +
       production +
       form +
       (skillEvidence[skill] ?? touch * 0.25) -
       current / 10 +
       (roll() - 0.5) * 3;
+    if (plan && (plan.focus !== "balanced" || plan.intensity !== "standard")) {
+      // Reuse the same random draws so plan comparisons hold the player's camp constant.
+      const formScale =
+        plan.intensity === "steady"
+          ? 0.65
+          : plan.intensity === "aggressive"
+            ? 1.35
+            : 1;
+      projected +=
+        form * (formScale - 1) + trainingSkillAdjustment(plan, skill);
+    }
     const change = Math.round(
       clamp(projected, DEVELOPMENT_YEAR_MIN, DEVELOPMENT_YEAR_MAX),
     );
@@ -150,6 +164,18 @@ export function developPlayer(
   ];
   if (minutesPerGame > 36)
     reasons.push("A heavy workload put extra pressure on conditioning.");
+  if (plan?.focus && plan.focus !== "balanced")
+    reasons.push(
+      `${TRAINING_FOCUS_LABELS[plan.focus]}${plan.focus === "position" ? ` at ${plan.position}` : ""} redirected practice toward selected skills at the cost of general development.`,
+    );
+  if (plan?.intensity === "steady")
+    reasons.push(
+      "Steady training reduced camp volatility, limiting both breakouts and slumps.",
+    );
+  if (plan?.intensity === "aggressive")
+    reasons.push(
+      "Aggressive training increased camp volatility: larger gains come with greater risk of decline.",
+    );
   return {
     pokemonId: player.pokemonId,
     teamId: player.teamId,

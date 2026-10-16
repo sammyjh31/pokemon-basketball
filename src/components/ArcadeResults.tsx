@@ -101,7 +101,7 @@ export function ArcadeResults({
           totals = emptyStats();
         for (const player of players)
           for (const key of Object.keys(totals) as (keyof ArcadeStats)[])
-            totals[key] += player.stats[key];
+            totals[key] = (totals[key] ?? 0) + (player.stats[key] ?? 0);
         return (
           <section className="arcade-card arcade-box-card" key={side}>
             <div className="arcade-section-title">

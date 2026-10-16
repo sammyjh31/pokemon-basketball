@@ -1,3 +1,4 @@
+import type { OfficialGame } from "../game/franchiseFeatures";
 import { useId, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { bestPosition, positionRating } from "../game/ratings";
@@ -375,7 +376,7 @@ const standingColumns: {
   label: string;
   title: string;
   value: (s: Standing) => number;
-  format?: (n: number) => string;
+  format?: (n: number, standing: Standing) => string;
 }[] = [
   { key: "wins", label: "W", title: "wins", value: (s) => s.wins },
   { key: "losses", label: "L", title: "losses", value: (s) => s.losses },
@@ -424,7 +425,8 @@ const standingColumns: {
     label: "LAST 10",
     title: "last ten wins",
     value: (s) => s.lastTen,
-    format: (n) => `${n}–${10 - n}`,
+    format: (n, standing) =>
+      `${n}–${Math.min(10, standing.wins + standing.losses) - n}`,
   },
   {
     key: "streak",
@@ -519,7 +521,7 @@ function Standings({
                   </button>
                 </th>
                 {standingColumns.map((c) => (
-                  <td key={c.key}>{c.format?.(c.value(s)) ?? c.value(s)}</td>
+                  <td key={c.key}>{c.format?.(c.value(s), s) ?? c.value(s)}</td>
                 ))}
               </tr>
             ))}
@@ -964,7 +966,13 @@ const sections = [
   "Compare players",
   "Awards",
 ] as const;
-export function LeaguePanel({ league }: { league: LeagueResult }) {
+export function LeaguePanel({
+  league,
+  playedGames = {},
+}: {
+  league: LeagueResult;
+  playedGames?: Record<string, OfficialGame>;
+}) {
   const [section, setSection] =
       useState<(typeof sections)[number]>("Standings"),
     [teamId, setTeamId] = useState("0"),
@@ -986,17 +994,19 @@ export function LeaguePanel({ league }: { league: LeagueResult }) {
         </div>
       </div>
       <div className="league-navigation" role="group" aria-label="League views">
-        {sections.map((label) => (
-          <button
-            type="button"
-            key={label}
-            aria-pressed={section === label}
-            aria-controls={`${id}-content`}
-            onClick={() => setSection(label)}
-          >
-            {label}
-          </button>
-        ))}
+        {sections
+          .filter((label) => label !== "Awards" || league.awards.length > 0)
+          .map((label) => (
+            <button
+              type="button"
+              key={label}
+              aria-pressed={section === label}
+              aria-controls={`${id}-content`}
+              onClick={() => setSection(label)}
+            >
+              {label}
+            </button>
+          ))}
       </div>
       <div id={`${id}-content`} className="league-view">
         {section === "Standings" && (
@@ -1021,6 +1031,7 @@ export function LeaguePanel({ league }: { league: LeagueResult }) {
       {game && (
         <LeagueBoxScore
           game={game}
+          match={playedGames[game.id]?.match}
           teams={league.teams}
           onClose={() => setGame(null)}
         />

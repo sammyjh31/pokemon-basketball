@@ -5,6 +5,7 @@ export type Phase = "tipoff" | "live" | "inbound" | "break" | "final";
 export type PlayerAction =
   "idle" | "run" | "shoot" | "pass" | "dunk" | "block" | "steal" | "screen";
 export interface ArcadeSetup {
+  official?: boolean;
   teams: [
     { name: string; roster: Roster; development?: PlayerDevelopment },
     { name: string; roster: Roster; development?: PlayerDevelopment },
@@ -20,6 +21,11 @@ export interface ArcadeInput {
   turbo: boolean;
 }
 export interface ArcadeStats {
+  rimFgm?: number;
+  rimFga?: number;
+  midFgm?: number;
+  midFga?: number;
+  plusMinus?: number;
   seconds: number;
   points: number;
   fgm: number;
@@ -57,6 +63,7 @@ export interface ArcadePlayer {
   stats: ArcadeStats;
 }
 export interface Ball {
+  officialZone?: "rim" | "mid" | "three";
   testedInterceptors?: number[];
   rimContact?: boolean;
   releaseTime?: number;
@@ -79,6 +86,7 @@ export interface Ball {
   lastTouch: Side;
 }
 export interface ArcadeEvent {
+  zone?: "rim" | "mid" | "three";
   tick?: number;
   id: number;
   kind:
@@ -98,6 +106,8 @@ export interface ArcadeEvent {
   time: number;
 }
 export interface ArcadeState {
+  official?: boolean;
+  officialSeed?: number;
   modelVersion: 1;
   names: [string, string];
   players: ArcadePlayer[];

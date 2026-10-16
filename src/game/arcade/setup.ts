@@ -56,12 +56,20 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
         cooldown: 0,
         jumpTime: 0,
         charge: null,
-        stats: emptyStats(),
+        stats: {
+          ...emptyStats(),
+          ...(setup.official
+            ? { rimFgm: 0, rimFga: 0, midFgm: 0, midFga: 0, plusMinus: 0 }
+            : {}),
+        },
       });
     });
   });
   const s: ArcadeState = {
     modelVersion: 1,
+    ...(setup.official
+      ? { official: true, officialSeed: setup.seed >>> 0 }
+      : {}),
     names: [setup.teams[0].name, setup.teams[1].name],
     players,
     phase: "tipoff",

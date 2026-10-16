@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createRun } from "./draft";
 import { createLeague } from "./league";
 import { seasonTeams, simulateSeason } from "./season";
+import { defaultRotationPlan } from "./rotationPlan";
 import { ROSTER_SLOTS, type Run } from "./types";
 const base = (): Run => ({
   ...createRun("free", true, 340),
@@ -42,6 +43,13 @@ describe("fixed-roster franchise seasons", () => {
     expect(updated.slice(1)).toEqual(teams.slice(1));
     expect(updated[0].ratings).not.toEqual(teams[0].ratings);
     expect(teams[0].roster).toEqual(run.roster);
+  });
+  it("clears an inherited custom rotation when the coach selects a preset before tipoff", () => {
+    const run = base(),
+      teams = createLeague(run);
+    teams[0].rotationPlan = defaultRotationPlan(run.roster);
+    const next = { ...run, leagueTeams: teams, rotation: "bench" as const };
+    expect(seasonTeams(next)[0].rotationPlan).toBeUndefined();
   });
   it("rejects importing a new species or a duplicated league member", () => {
     const run = base(),

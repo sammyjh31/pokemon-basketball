@@ -67,7 +67,9 @@ export function Court({
               aria-label={`${position} slot: ${mon?.name ?? "Empty"}`}
               aria-pressed={swap === position}
               disabled={
-                !!run.result || (!!pending && run.mode === "spin" && !!mon)
+                !!run.result ||
+                (run.seasonProgress?.completedRounds ?? 0) > 0 ||
+                (!!pending && run.mode === "spin" && !!mon)
               }
               onClick={() => onSlot(position)}
             >

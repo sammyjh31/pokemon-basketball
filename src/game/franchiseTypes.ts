@@ -1,3 +1,4 @@
+import type { TrainingPlans, SeasonReplayArchive } from "./franchiseFeatures";
 import type { LeaguePlayer, LeagueTeam, Standing, SeasonAward } from "./types";
 import type { FinalsMvp } from "./playoffTypes";
 import type { OffseasonReport } from "./developmentTypes";
@@ -57,6 +58,7 @@ export interface FranchiseSeason {
   runnerUpId: number;
   runnerUpWins: number;
   finalsMvp: FinalsMvp;
+  replay?: SeasonReplayArchive;
 }
 export interface FranchiseTrade {
   year: number;
@@ -68,7 +70,7 @@ export interface FranchiseTrade {
   reason?: string;
 }
 export interface Franchise {
-  modelVersion: 1 | 2;
+  modelVersion: 1 | 2 | 3;
   year: number;
   phase: "season" | "offseason";
   teams: LeagueTeam[];
@@ -76,6 +78,7 @@ export interface Franchise {
   history: FranchiseSeason[];
   trades: FranchiseTrade[];
   offseasons?: OffseasonReport[];
+  trainingPlans?: TrainingPlans;
 }
 export interface TradeEvaluation {
   accepted: boolean;

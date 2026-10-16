@@ -64,13 +64,17 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
         )
         .join(";")
     : "";
-  const key = `${ids.join(",")}:${config.rotation}:${offsetsKey}`;
+  const planKey = config.rotationPlan
+    ? `:${ROSTER_SLOTS.map((slot) => config.rotationPlan!.minutes[slot]).join(",")}:${config.rotationPlan.closing.join(",")}`
+    : "";
+  const key = `${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
   let targets = targetCache.get(key);
   if (!targets) {
     targets = rotationMinutes(
       config.roster,
       config.rotation,
       config.development,
+      config.rotationPlan,
     );
     // A bounded cache covers many seasons without retaining every custom roster.
     if (targetCache.size > 240) targetCache.clear();
@@ -115,11 +119,27 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
       },
     };
   });
+  const floor = players.slice(0, 5);
+  if (config.rotationPlan) {
+    for (const role of ROLE_ORDER) {
+      if (floor[role].target > 0) continue;
+      const available = players.filter(
+        (p) => p.target > 0 && !floor.includes(p),
+      );
+      available.sort(
+        (a, b) =>
+          b.profile.positions[POSITIONS[role]] -
+          a.profile.positions[POSITIONS[role]],
+      );
+      floor[role] = available[0];
+    }
+    for (const player of players) player.box.started = floor.includes(player);
+  }
   return {
     config,
     side,
     players,
-    floor: players.slice(0, 5),
+    floor,
     fouls: 0,
     transition: 0,
   };
@@ -132,6 +152,15 @@ const average = (players: Player[], get: (p: Player) => number) =>
 
 function eligiblePlayers(team: Team): Player[] {
   const eligible = team.players.filter((p) => p.box.fouls < 6);
+  if (team.config.rotationPlan) {
+    const active = eligible.filter((p) => p.target > 0);
+    // A zero-minute player is emergency cover only after foul-outs deplete the rotation.
+    if (active.length < 5)
+      active.push(
+        ...eligible.filter((p) => p.target === 0).slice(0, 5 - active.length),
+      );
+    eligible.splice(0, eligible.length, ...active);
+  }
   // Depleted-roster exception: basketball always remains five-on-five. Return
   // only the minimum disqualified players, preferring the fewest fouls. Every
   // subsequent personal foul by a returned player also incurs a technical FT.
@@ -148,12 +177,24 @@ function eligiblePlayers(team: Team): Player[] {
 function chooseLineup(team: Team, minute: number, close: boolean): void {
   const pool = eligiblePlayers(team),
     chosen: Player[] = [];
+  const closers =
+    close && team.config.rotationPlan
+      ? pool.filter((p) =>
+          team.config.rotationPlan!.closing.includes(p.box.slot),
+        )
+      : [];
   const phase = Math.min(minute / 48, 1);
   for (const role of ROLE_ORDER) {
     let best: Player | undefined,
       bestScore = -Infinity;
     for (const p of pool) {
       if (chosen.includes(p)) continue;
+      // Assign every available requested closer a role before choosing foul-out cover.
+      if (
+        closers.some((closer) => !chosen.includes(closer)) &&
+        !closers.includes(p)
+      )
+        continue;
       const foulThreshold =
         minute < 12 ? 2 : minute < 24 ? 3 : minute < 36 ? 4 : 5;
       const foulPenalty =

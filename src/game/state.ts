@@ -23,9 +23,19 @@ import {
 } from "./types";
 import { validRoster } from "./lineup";
 import type { Playoffs } from "./playoffTypes";
-import { enterOffseason, startFranchiseSeason, applyTrade } from "./franchise";
+import {
+  archiveFranchiseSeason,
+  startInteractiveFranchiseSeason,
+  applyTrade,
+} from "./franchise";
 import { processOffseason } from "./offseason";
+import type { RotationPlan, TrainingPlans } from "./franchiseFeatures";
+import { validateRotationPlan } from "./rotationPlan";
+import { validateTrainingPlans } from "./training";
 export type GameAction =
+  | { type: "ROTATION_PLAN"; plan: RotationPlan | undefined }
+  | { type: "TRAINING_PLANS"; plans: TrainingPlans }
+  | { type: "APPLY_FRANCHISE_RUN"; source: Run; run: Run }
   | { type: "ENTER_OFFSEASON" }
   | { type: "PROCESS_OFFSEASON" }
   | { type: "START_FRANCHISE_SEASON"; seed: number }
@@ -55,12 +65,52 @@ export function initialState(seed: number): GameState {
 export function gameReducer(state: GameState, action: GameAction): GameState {
   const run = state.run;
   if (action.type === "ENTER_OFFSEASON")
-    return processOffseason(enterOffseason(state));
+    return processOffseason(archiveFranchiseSeason(state));
   if (action.type === "PROCESS_OFFSEASON") return processOffseason(state);
   if (action.type === "START_FRANCHISE_SEASON")
-    return startFranchiseSeason(processOffseason(state), action.seed);
+    return startInteractiveFranchiseSeason(
+      processOffseason(state),
+      action.seed,
+    );
   if (action.type === "TRADE")
     return applyTrade(state, action.teamId, action.giveId, action.receiveId);
+  if (action.type === "TRAINING_PLANS") {
+    if (!state.franchise) return state;
+    try {
+      const trainingPlans = validateTrainingPlans(
+        action.plans,
+        state.franchise.phase === "offseason"
+          ? state.franchise.teams[0].roster
+          : run.roster,
+      );
+      return {
+        ...state,
+        franchise: { ...state.franchise, modelVersion: 3, trainingPlans },
+      };
+    } catch {
+      return state;
+    }
+  }
+  if (action.type === "APPLY_FRANCHISE_RUN") {
+    const rounds = action.run.seasonProgress?.completedRounds ?? 0;
+    if (
+      !state.franchise ||
+      state.franchise.phase !== "season" ||
+      action.source !== run ||
+      run.result ||
+      action.run.id !== run.id ||
+      action.run.seasonSeed !== run.seasonSeed ||
+      !Number.isInteger(rounds) ||
+      rounds <= (run.seasonProgress?.completedRounds ?? 0) ||
+      rounds > 82
+    )
+      return state;
+    return {
+      ...state,
+      run: action.run,
+      franchise: { ...state.franchise, modelVersion: 3 },
+    };
+  }
   if (action.type === "NEW_RUN")
     return {
       version: 3,
@@ -70,7 +120,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   if (action.type === "APPLY_PLAYOFFS") {
     if (
       action.source !== run ||
-      ![3, 4, 5].includes(run.result?.modelVersion ?? 0) ||
+      ![3, 4, 5, 6].includes(run.result?.modelVersion ?? 0) ||
       state.franchise?.phase === "offseason" ||
       !run.result?.league
     )
@@ -78,6 +128,29 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     return { ...state, run: { ...run, playoffs: action.playoffs } };
   }
   if (run.result) return state;
+  const started = (run.seasonProgress?.completedRounds ?? 0) > 0;
+  if (
+    started &&
+    ["SWAP", "TACTIC", "DEFENSE", "ROTATION", "ROTATION_PLAN"].includes(
+      action.type,
+    )
+  )
+    return state;
+  if (action.type === "ROTATION_PLAN") {
+    if (!state.franchise || state.franchise.phase !== "season") return state;
+    try {
+      const next = { ...run };
+      if (action.plan) next.rotationPlan = validateRotationPlan(action.plan);
+      else delete next.rotationPlan;
+      return {
+        ...state,
+        run: next,
+        franchise: { ...state.franchise, modelVersion: 3 },
+      };
+    } catch {
+      return state;
+    }
+  }
   if (state.franchise) {
     if (state.franchise.phase !== "season") return state;
     if (["AUTO_BENCH", "SET_LINEUP", "REROLL", "PLACE"].includes(action.type))
@@ -105,7 +178,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       : state;
   if (action.type === "ROTATION")
     return ROTATIONS.includes(action.rotation)
-      ? { ...state, run: { ...run, rotation: action.rotation } }
+      ? {
+          ...state,
+          run: {
+            ...run,
+            rotation: action.rotation,
+            ...(run.rotationPlan ? { rotationPlan: undefined } : {}),
+          },
+        }
       : state;
   if (action.type === "SET_LINEUP") {
     if (run.mode !== "free" || !validRoster(action.roster, run.includeLegends))
@@ -121,7 +201,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       previous = state.records[run.mode];
     return {
       ...state,
-      run: { ...run, result },
+      run: {
+        ...run,
+        result,
+        ...(run.seasonProgress
+          ? {
+              seasonProgress: {
+                modelVersion: 1 as const,
+                completedRounds: 82,
+                playedGames: run.seasonProgress.playedGames,
+              },
+            }
+          : {}),
+      },
       records: state.franchise
         ? state.records
         : {

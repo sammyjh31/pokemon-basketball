@@ -1,7 +1,14 @@
 import { addBox, leaguePlayers, playerImpact } from "./leagueStats";
 import { simulateMatch } from "./match";
 import { nextRandom } from "./random";
-import type { LeaguePlayer, LeagueResult, LeagueTeam } from "./types";
+import type {
+  LeagueFixture,
+  LeaguePlayer,
+  LeagueResult,
+  LeagueTeam,
+} from "./types";
+import type { OfficialGame } from "./franchiseFeatures";
+import { validateOfficialGame } from "./officialGame";
 import type {
   PlayoffMode,
   PlayoffRound,
@@ -148,9 +155,9 @@ export function selectFinalsMvp(players: LeaguePlayer[], championId: number) {
   };
 }
 
-function playOne(playoffs: Playoffs, league: LeagueResult, seasonSeed: number) {
+function nextPlayoffFixture(playoffs: Playoffs, seasonSeed: number) {
   const round = activeRound(playoffs);
-  if (round === undefined) return false;
+  if (round === undefined) return null;
   // Balanced slates: play at most one game per active series before its next game.
   const series = playoffs.series
     .filter((s) => s.round === round && s.winnerId === null)
@@ -174,15 +181,43 @@ function playOne(playoffs: Playoffs, league: LeagueResult, seasonSeed: number) {
       Math.imul(1 + round * 56 + series.index * 7 + gameIndex, 0x9e3779b1)) >>>
       0,
   ).seed;
-  const home = league.teams.find((t) => t.id === homeId)!,
-    away = league.teams.find((t) => t.id === awayId)!;
-  const match = simulateMatch(home, away, gameSeed);
+  return {
+    series,
+    fixture: {
+      id: `${series.id}-g${gameIndex + 1}`,
+      round,
+      homeTeamId: homeId,
+      awayTeamId: awayId,
+      seed: gameSeed,
+    },
+  };
+}
+
+export function resolvePlayoffMatch(
+  fixture: LeagueFixture,
+  teams: LeagueTeam[],
+  playedGames: Record<string, OfficialGame> = {},
+) {
+  if (playedGames[fixture.id])
+    return validateOfficialGame(playedGames[fixture.id], fixture, teams).match;
+  const home = teams.find((t) => t.id === fixture.homeTeamId),
+    away = teams.find((t) => t.id === fixture.awayTeamId);
+  if (!home || !away) throw new Error("Missing playoff team.");
+  return simulateMatch(home, away, fixture.seed);
+}
+
+function playOne(playoffs: Playoffs, league: LeagueResult, seasonSeed: number) {
+  const next = nextPlayoffFixture(playoffs, seasonSeed);
+  if (!next) return false;
+  const { series, fixture } = next,
+    { homeTeamId: homeId, awayTeamId: awayId, round } = fixture;
+  const match = resolvePlayoffMatch(
+    fixture,
+    league.teams,
+    playoffs.playedGames,
+  );
   series.games.push({
-    id: `${series.id}-g${gameIndex + 1}`,
-    round,
-    homeTeamId: homeId,
-    awayTeamId: awayId,
-    seed: gameSeed,
+    ...fixture,
     homeScore: match.homeScore,
     awayScore: match.awayScore,
     overtimePeriods: match.overtimePeriods,
@@ -214,14 +249,32 @@ function progression(
   seasonSeed: number,
   current: Playoffs | undefined,
   mode: PlayoffMode,
+  overrides?: Record<string, OfficialGame>,
 ) {
   if (!["game", "round", "all"].includes(mode))
     throw new Error("Unknown playoff progression mode.");
-  if (current && current.modelVersion !== 1)
+  if (current && ![1, 2].includes(current.modelVersion))
     throw new Error("Unsupported playoff model.");
   const playoffs = current
     ? structuredClone(current)
     : createPlayoffs(league, seasonSeed);
+  if (overrides) {
+    const merged = { ...playoffs.playedGames };
+    for (const [id, game] of Object.entries(overrides)) {
+      if (merged[id] && JSON.stringify(merged[id]) !== JSON.stringify(game))
+        throw new Error("Cannot replace an official playoff result.");
+      if (
+        !merged[id] &&
+        playoffs.series.some((series) => series.games.some((f) => f.id === id))
+      )
+        throw new Error("Cannot replace a completed playoff fixture.");
+      merged[id] = game;
+    }
+    if (Object.keys(merged).length) {
+      playoffs.modelVersion = 2;
+      playoffs.playedGames = structuredClone(merged);
+    }
+  }
   const round = activeRound(playoffs),
     initialCount = playoffGameCount(playoffs);
   const active = playoffs.series.filter(
@@ -257,9 +310,11 @@ export function simulatePlayoffs(
   seasonSeed: number,
   current?: Playoffs,
   mode: PlayoffMode = "all",
+  overrides?: Record<string, OfficialGame>,
 ): Playoffs {
-  const job = progression(league, seasonSeed, current, mode);
+  const job = progression(league, seasonSeed, current, mode, overrides);
   while (job.more()) playOne(job.playoffs, league, seasonSeed);
+  assertPlayedPrefix(job.playoffs);
   return job.playoffs;
 }
 
@@ -270,9 +325,10 @@ export async function simulatePlayoffsAsync(
   mode: PlayoffMode,
   onProgress: (completed: number, total: number) => void = () => {},
   signal?: AbortSignal,
+  overrides?: Record<string, OfficialGame>,
 ): Promise<Playoffs> {
   signal?.throwIfAborted();
-  const job = progression(league, seasonSeed, current, mode);
+  const job = progression(league, seasonSeed, current, mode, overrides);
   onProgress(0, job.remaining);
   while (job.more()) {
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -286,6 +342,7 @@ export async function simulatePlayoffsAsync(
   signal?.throwIfAborted();
   const completed = playoffGameCount(job.playoffs) - job.initialCount;
   onProgress(completed, completed);
+  assertPlayedPrefix(job.playoffs);
   return job.playoffs;
 }
 
@@ -294,12 +351,83 @@ export function replayPlayoffs(
   league: LeagueResult,
   seasonSeed: number,
   gameCount: number,
+  playedGames: Record<string, OfficialGame> = {},
 ): Playoffs {
   if (!Number.isInteger(gameCount) || gameCount < 0 || gameCount > 105)
     throw new Error("Invalid playoff game count.");
+  if (
+    !playedGames ||
+    typeof playedGames !== "object" ||
+    Array.isArray(playedGames) ||
+    Object.keys(playedGames).length > 28
+  )
+    throw new Error("Invalid official playoff results.");
   const playoffs = createPlayoffs(league, seasonSeed);
+  if (Object.keys(playedGames).length) {
+    playoffs.modelVersion = 2;
+    playoffs.playedGames = structuredClone(playedGames);
+  }
   for (let i = 0; i < gameCount; i++)
     if (!playOne(playoffs, league, seasonSeed))
       throw new Error("The saved playoffs continue after the championship.");
+  assertPlayedPrefix(playoffs);
   return playoffs;
+}
+
+function projectUserFixture(
+  league: LeagueResult,
+  seed: number,
+  current?: Playoffs,
+) {
+  const playoffs = current
+    ? replayPlayoffs(
+        league,
+        seed,
+        playoffGameCount(current),
+        current.playedGames,
+      )
+    : createPlayoffs(league, seed);
+  if (!playoffs.seeds.some((s) => s.teamId === 0))
+    return { playoffs, fixture: null };
+  for (let i = 0; i <= 105; i++) {
+    const next = nextPlayoffFixture(playoffs, seed);
+    if (!next) return { playoffs, fixture: null };
+    if ([next.fixture.homeTeamId, next.fixture.awayTeamId].includes(0))
+      return { playoffs, fixture: next.fixture };
+    playOne(playoffs, league, seed);
+  }
+  throw new Error("Invalid playoff progression.");
+}
+
+/** CPU fixtures before the next coach fixture are projected deterministically, without changing current. */
+export function nextUserPlayoffFixture(
+  league: LeagueResult,
+  seed: number,
+  current?: Playoffs,
+): LeagueFixture | null {
+  return projectUserFixture(league, seed, current).fixture;
+}
+
+export function submitPlayoffGame(
+  league: LeagueResult,
+  seed: number,
+  current: Playoffs | undefined,
+  game: OfficialGame,
+): Playoffs {
+  const { playoffs, fixture } = projectUserFixture(league, seed, current);
+  if (!fixture || playoffs.playedGames?.[fixture.id])
+    throw new Error("No pending user playoff fixture.");
+  const validated = validateOfficialGame(game, fixture, league.teams);
+  playoffs.modelVersion = 2;
+  playoffs.playedGames = { ...playoffs.playedGames, [fixture.id]: validated };
+  playOne(playoffs, league, seed);
+  return playoffs;
+}
+
+function assertPlayedPrefix(playoffs: Playoffs) {
+  const completed = new Set(
+    playoffs.series.flatMap((series) => series.games.map((game) => game.id)),
+  );
+  if (Object.keys(playoffs.playedGames ?? {}).some((id) => !completed.has(id)))
+    throw new Error("Official playoff result is outside the completed prefix.");
 }

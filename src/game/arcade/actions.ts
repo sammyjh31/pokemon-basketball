@@ -88,6 +88,8 @@ export function releaseShot(
   const closest = Math.min(10, ...defenders.map((e) => distance(e, p)));
   const dunk = turbo && p.energy > 12 && d < TUNE.dunkRange && closest > 0.6;
   const value = d > TUNE.three ? 3 : 2;
+  if (s.official)
+    s.ball.officialZone = value === 3 ? "three" : d < 3 ? "rim" : "mid";
   const skill =
     d < 3
       ? p.attributes.finishing
@@ -140,7 +142,13 @@ export function releaseShot(
   p.jumpTime = TUNE.jump;
   p.cooldown = 0.55;
   if (dunk) p.energy = Math.max(0, p.energy - 10);
-  emit(s, { kind: "shot", team: p.team, player: p.id, value });
+  emit(s, {
+    kind: "shot",
+    team: p.team,
+    player: p.id,
+    value,
+    ...(s.official ? { zone: s.ball.officialZone } : {}),
+  });
   notify(
     s,
     dunk
@@ -287,6 +295,7 @@ export function advanceBall(
             team: from.team,
             player: from.id,
             value: b.shotValue,
+            ...(s.official ? { zone: b.officialZone } : {}),
           });
           if (
             s.lastPass?.to === from.id &&

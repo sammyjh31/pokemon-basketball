@@ -1,4 +1,10 @@
-import { lazy, Suspense, useState } from "react";
+import { RotationEditor } from "./components/RotationEditor";
+import { FranchiseSchedule } from "./components/FranchiseSchedule";
+import { nextFranchiseFixture } from "./game/interactiveSeason";
+import { nextUserPlayoffFixture } from "./game/playoffs";
+import { seasonTeams } from "./game/season";
+import type { OfficialArcadeProps } from "./components/ArcadeMode";
+import { lazy, Suspense, useState, useMemo } from "react";
 import { POKEMON_BY_ID } from "./data/pokemon";
 import { teamRatings } from "./game/ratings";
 import { teamRatings as legacyTeamRatings } from "./game/legacyRatings";
@@ -35,6 +41,9 @@ export default function App({
       importPending,
       resolveImport,
       simulate,
+      advanceSeason,
+      recordPlayoffGame,
+      retrySave,
       simulating,
       progress,
       advancePlayoffs,
@@ -46,6 +55,9 @@ export default function App({
     } = useGame(initial, storage),
     { run, records } = state;
   const [arcadeOpen, setArcadeOpen] = useState(false);
+  const [officialGame, setOfficialGame] = useState<OfficialArcadeProps | null>(
+    null,
+  );
   const [pending, setPending] = useState<number | null>(null),
     [swap, setSwap] = useState<RosterSlot | null>(null);
   const [reset, setReset] = useState<{
@@ -58,7 +70,13 @@ export default function App({
   const development = run.leagueTeams?.[0].development;
   const ratings = archived
     ? legacyTeamRatings(run.roster)
-    : teamRatings(run.roster, run.tactic, run.rotation, development);
+    : teamRatings(
+        run.roster,
+        run.tactic,
+        run.rotation,
+        development,
+        run.rotationPlan,
+      );
   const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("pixel");
   const start = (mode: Mode, includeLegends: boolean) => {
     if (simulating || playoffSimulating || restoring) return;
@@ -79,7 +97,14 @@ export default function App({
     else start(mode, includeLegends);
   };
   const onSlot = (position: RosterSlot) => {
-    if (run.result || simulating || playoffSimulating || restoring) return;
+    if (
+      run.result ||
+      (run.seasonProgress?.completedRounds ?? 0) > 0 ||
+      simulating ||
+      playoffSimulating ||
+      restoring
+    )
+      return;
     if (pending !== null) {
       if (run.mode === "spin" && run.roster[position] !== null) return;
       dispatch({ type: "PLACE", pokemonId: pending, position });
@@ -107,6 +132,40 @@ export default function App({
           leagueTeams: state.franchise.teams,
         }
       : run;
+  const playoffFixture = useMemo(
+    () =>
+      state.franchise?.phase === "season" && run.result?.league
+        ? nextUserPlayoffFixture(
+            run.result.league,
+            run.seasonSeed,
+            run.playoffs,
+          )
+        : null,
+    [state.franchise?.phase, run.result?.league, run.seasonSeed, run.playoffs],
+  );
+  const openOfficialGame = () => {
+    if (
+      simulating ||
+      playoffSimulating ||
+      restoring ||
+      state.franchise?.phase !== "season"
+    )
+      return;
+    const source = run;
+    const league = run.result?.league;
+    const fixture = league ? playoffFixture : nextFranchiseFixture(run);
+    if (!fixture) return;
+    setOfficialGame({
+      fixture,
+      teams: league?.teams ?? seasonTeams(run),
+      label: `Year ${state.franchise.year} · ${league ? "Playoffs" : `Game ${(run.seasonProgress?.completedRounds ?? 0) + 1} of 82`}`,
+      onComplete: (game) =>
+        league
+          ? recordPlayoffGame(game, source)
+          : advanceSeason(1, game, source),
+    });
+    setArcadeOpen(true);
+  };
   if (arcadeOpen)
     return (
       <Suspense
@@ -116,7 +175,24 @@ export default function App({
           </main>
         }
       >
-        <ArcadeMode run={arcadeRun} onExit={() => setArcadeOpen(false)} />
+        {storageNotice && (
+          <p className="notice" role="status">
+            {storageNotice}{" "}
+            {retrySave && (
+              <button className="text-button" onClick={retrySave}>
+                Retry saving
+              </button>
+            )}
+          </p>
+        )}
+        <ArcadeMode
+          run={arcadeRun}
+          official={officialGame ?? undefined}
+          onExit={() => {
+            setArcadeOpen(false);
+            setOfficialGame(null);
+          }}
+        />
       </Suspense>
     );
   const franchisePanel = (
@@ -144,6 +220,7 @@ export default function App({
           "Your next franchise season is ready. Set your rotation and coaching before tipoff.",
         );
       }}
+      onTraining={(plans) => dispatch({ type: "TRAINING_PLANS", plans })}
       onTrade={(teamId, giveId, receiveId) =>
         dispatch({ type: "TRADE", teamId, giveId, receiveId })
       }
@@ -170,7 +247,12 @@ export default function App({
         <main aria-busy={restoring}>
           {storageNotice && (
             <p className="notice" role="status">
-              {storageNotice}
+              {storageNotice}{" "}
+              {retrySave && (
+                <button className="text-button" onClick={retrySave}>
+                  Retry saving
+                </button>
+              )}
             </p>
           )}
           {restoring ? (
@@ -262,6 +344,20 @@ export default function App({
                         }
                       />
                     )}
+                    {state.franchise && (
+                      <RotationEditor
+                        run={run}
+                        disabled={
+                          simulating ||
+                          playoffSimulating ||
+                          !!run.result ||
+                          (run.seasonProgress?.completedRounds ?? 0) > 0
+                        }
+                        onChange={(plan) =>
+                          dispatch({ type: "ROTATION_PLAN", plan })
+                        }
+                      />
+                    )}
                   </div>
                   {!state.franchise && (
                     <DraftPanel
@@ -347,7 +443,10 @@ export default function App({
                       importPending ||
                       Object.values(run.roster).some((id) => id === null)
                     }
-                    onClick={() => setArcadeOpen(true)}
+                    onClick={() => {
+                      setOfficialGame(null);
+                      setArcadeOpen(true);
+                    }}
                   >
                     Play arcade
                   </button>
@@ -358,25 +457,37 @@ export default function App({
                   )}
                 </div>
               </section>
-              <SeasonPanel
-                key={run.id}
-                run={run}
-                ratings={ratings}
-                animate={animatedRun === run.id}
-                simulating={simulating}
-                progress={progress}
-                onPlayoffs={(mode) => void advancePlayoffs(mode)}
-                playoffSimulating={playoffSimulating}
-                playoffProgress={playoffProgress}
-                franchiseYear={state.franchise?.year}
-                franchiseEntry={!state.franchise ? franchisePanel : undefined}
-                onSimulate={() => {
-                  setAnimatedRun(run.id);
-                  setPending(null);
-                  setSwap(null);
-                  void simulate();
-                }}
-              />
+              {state.franchise?.phase === "season" && !run.result ? (
+                <FranchiseSchedule
+                  run={run}
+                  year={state.franchise.year}
+                  busy={simulating || playoffSimulating}
+                  progress={progress}
+                  onPlay={openOfficialGame}
+                  onAdvance={(rounds) => void advanceSeason(rounds)}
+                />
+              ) : (
+                <SeasonPanel
+                  key={run.id}
+                  run={run}
+                  ratings={ratings}
+                  animate={animatedRun === run.id}
+                  simulating={simulating}
+                  progress={progress}
+                  onPlayoffs={(mode) => void advancePlayoffs(mode)}
+                  playoffSimulating={playoffSimulating}
+                  playoffProgress={playoffProgress}
+                  onPlayGame={playoffFixture ? openOfficialGame : undefined}
+                  franchiseYear={state.franchise?.year}
+                  franchiseEntry={!state.franchise ? franchisePanel : undefined}
+                  onSimulate={() => {
+                    setAnimatedRun(run.id);
+                    setPending(null);
+                    setSwap(null);
+                    void simulate();
+                  }}
+                />
+              )}
               {simulationError && (
                 <p className="notice" role="alert">
                   {simulationError}

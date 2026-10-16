@@ -20,6 +20,12 @@ import {
   prepareArcadeTeams,
 } from "./ArcadeSetup";
 import { ArcadeTouchControls } from "./ArcadeTouchControls";
+import {
+  OfficialArcadeResults,
+  OfficialArcadeSetup,
+  type OfficialArcadeProps,
+} from "./OfficialArcade";
+export type { OfficialArcadeProps } from "./OfficialArcade";
 import "../arcade.css";
 
 const clockLabel = (clock: number) =>
@@ -33,6 +39,7 @@ function ArcadeGame({
   onRematch,
   onChangeOpponent,
   onExit,
+  official,
 }: {
   state: ArcadeState;
   assets: Map<number, HTMLImageElement>;
@@ -42,6 +49,7 @@ function ArcadeGame({
   onRematch: () => void;
   onChangeOpponent: () => void;
   onExit: () => void;
+  official?: OfficialArcadeProps;
 }) {
   const runtime = useArcade(state, assets, settings, audio),
     s = runtime.snapshot;
@@ -60,6 +68,16 @@ function ArcadeGame({
       </div>
     );
   if (s.phase === "final")
+    // The HUD snapshot trims events; official conversion needs the complete final history.
+    if (official)
+      return (
+        <OfficialArcadeResults
+          state={state}
+          official={official}
+          onExit={onExit}
+        />
+      );
+  if (s.phase === "final")
     return (
       <ArcadeResults
         state={s}
@@ -77,7 +95,9 @@ function ArcadeGame({
           POKÉMON <b>HOOPS</b>
         </span>
         <div className="arcade-live-toolbar">
-          <span className="arcade-tag">5v5 EXHIBITION</span>
+          <span className="arcade-tag">
+            {official ? "OFFICIAL SEASON GAME" : "5v5 EXHIBITION"}
+          </span>
           <button
             className="arcade-button arcade-quiet arcade-pause-button"
             aria-label="Pause game"
@@ -87,6 +107,12 @@ function ArcadeGame({
           </button>
         </div>
       </div>
+      {official && (
+        <p className="arcade-session-note">
+          {official.label} · Court score {s.score[0]}–{s.score[1]} · Official
+          score {s.score[0] * 12}–{s.score[1] * 12} · You / CPU
+        </p>
+      )}
       <div
         className="arcade-scoreboard"
         aria-label={`${s.names[0]} ${s.score[0]}, ${s.names[1]} ${s.score[1]}`}
@@ -194,8 +220,9 @@ function ArcadeGame({
           onClose={() => setLeaving(false)}
         >
           <p>
-            This exhibition will end. Your drafted roster and saved season stay
-            as they are.
+            {official
+              ? "This attempt will end without recording a result. The fixture stays pending, ready to play again or simulate."
+              : "This exhibition will end. Your drafted roster and saved season stay as they are."}
           </p>
           <div className="arcade-modal-actions">
             <button
@@ -214,10 +241,33 @@ function ArcadeGame({
   );
 }
 
-export function ArcadeMode({ run, onExit }: { run: Run; onExit: () => void }) {
-  const [prepared] = useState(() => prepareArcadeTeams(run));
-  const [opponentId, setOpponentId] = useState(
-    () => prepared.teams.find((team) => team.id !== 0)?.id ?? 1,
+export function ArcadeMode({
+  run,
+  onExit,
+  official: requestedOfficial,
+}: {
+  run: Run;
+  onExit: () => void;
+  official?: OfficialArcadeProps;
+}) {
+  const [official] = useState(() =>
+    requestedOfficial
+      ? {
+          ...requestedOfficial,
+          fixture: { ...requestedOfficial.fixture },
+          teams: structuredClone(requestedOfficial.teams),
+        }
+      : undefined,
+  );
+  const [prepared] = useState(() =>
+    official ? { teams: official.teams, error: null } : prepareArcadeTeams(run),
+  );
+  const [opponentId, setOpponentId] = useState(() =>
+    official
+      ? official.fixture.homeTeamId === 0
+        ? official.fixture.awayTeamId
+        : official.fixture.homeTeamId
+      : (prepared.teams.find((team) => team.id !== 0)?.id ?? 1),
   );
   const [settings, setSettings] = useState(() =>
     readArcadeSettings(
@@ -285,14 +335,15 @@ export function ArcadeMode({ run, onExit }: { run: Run; onExit: () => void }) {
     if (!ready || !opponent) return;
     try {
       const random = new Uint32Array(1);
-      if (typeof crypto?.getRandomValues === "function")
+      if (official) random[0] = official.fixture.seed;
+      else if (typeof crypto?.getRandomValues === "function")
         crypto.getRandomValues(random);
       else random[0] = Date.now();
       const state = createGame({
         teams: [
           {
             name: user?.name ?? "Kanto Basketball Club",
-            roster: { ...run.roster },
+            roster: { ...(official ? user!.roster : run.roster) },
             development: user?.development,
           },
           {
@@ -302,6 +353,7 @@ export function ArcadeMode({ run, onExit }: { run: Run; onExit: () => void }) {
           },
         ],
         seed: random[0],
+        ...(official ? { official: true } : {}),
       });
       if (!audio.current) audio.current = new ArcadeAudio();
       audio.current.setEnabled(settings.audio);
@@ -328,22 +380,33 @@ export function ArcadeMode({ run, onExit }: { run: Run; onExit: () => void }) {
           onRematch={start}
           onChangeOpponent={() => setMatch(null)}
           onExit={onExit}
+          official={official}
         />
       ) : (
         <>
-          <ArcadeSetupScreen
-            roster={run.roster}
-            teams={prepared.teams}
-            error={setupError ?? prepared.error}
-            opponentId={opponentId}
-            onOpponent={(id) => {
-              setOpponentId(id);
-              setSetupError(null);
-            }}
-            ready={ready}
-            onStart={start}
-            onExit={onExit}
-          />
+          {official ? (
+            <OfficialArcadeSetup
+              official={official}
+              ready={ready}
+              error={setupError ?? prepared.error}
+              onStart={start}
+              onExit={onExit}
+            />
+          ) : (
+            <ArcadeSetupScreen
+              roster={run.roster}
+              teams={prepared.teams}
+              error={setupError ?? prepared.error}
+              opponentId={opponentId}
+              onOpponent={(id) => {
+                setOpponentId(id);
+                setSetupError(null);
+              }}
+              ready={ready}
+              onStart={start}
+              onExit={onExit}
+            />
+          )}
           <div className="arcade-setup-settings">
             <ArcadeSettingsControls
               settings={settings}

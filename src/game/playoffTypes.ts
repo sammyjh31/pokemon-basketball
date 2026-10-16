@@ -1,4 +1,5 @@
 import type { LeagueGameSummary, LeaguePlayer } from "./types";
+import type { OfficialGame } from "./franchiseFeatures";
 
 export type PlayoffMode = "game" | "round" | "all";
 export type PlayoffRound = 0 | 1 | 2 | 3;
@@ -27,7 +28,8 @@ export interface FinalsMvp {
   value: string;
 }
 export interface Playoffs {
-  modelVersion: 1;
+  modelVersion: 1 | 2;
+  playedGames?: Record<string, OfficialGame>;
   seeds: PlayoffSeed[];
   series: PlayoffSeries[];
   players: LeaguePlayer[];

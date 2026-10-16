@@ -204,7 +204,7 @@ describe("the league offseason", () => {
     });
     expect(loadGame(memory(ready), 999).state).toEqual(ready);
     const played = gameReducer(ready, { type: "SIMULATE" });
-    expect(played.run.result!.modelVersion).toBe(5);
+    expect(played.run.result!.modelVersion).toBe(6);
     const completed = {
       ...played,
       run: {
@@ -220,7 +220,10 @@ describe("the league offseason", () => {
     expect(second.franchise!.offseasons![0]).toEqual(
       first.franchise!.offseasons![0],
     );
-    expect(second.franchise!.history[0]).toEqual(first.franchise!.history[0]);
+    expect(second.franchise!.history[0]).toEqual(ready.franchise!.history[0]);
+    expect(second.franchise!.history[0]).toMatchObject(
+      first.franchise!.history[0],
+    );
     const previous = new Map(
       first.franchise!.offseasons![0].players.map((p) => [
         p.pokemonId,

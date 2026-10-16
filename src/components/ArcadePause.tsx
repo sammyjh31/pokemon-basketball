@@ -106,7 +106,7 @@ export function ArcadePause({
           {inBreak ? "Continue" : "Resume game"}
         </button>
         <button className="arcade-button arcade-quiet" onClick={onLeave}>
-          Leave exhibition
+          {state.official ? "Leave official game" : "Leave exhibition"}
         </button>
       </div>
       <div className="arcade-section-title">
@@ -211,12 +211,15 @@ export function ArcadePause({
         <p className="arcade-muted">
           Three unanswered baskets ignite a 10-second hot streak. Turbo + pass
           can throw a lob to a teammate cutting near the rim. Four one-minute
-          quarters; tied games add 30-second overtimes. No fouls or free throws.
+          quarters; tied games add {state.official ? "25" : "30"}-second
+          overtimes. No fouls or free throws.
         </p>
       </details>
       <ArcadeSettingsControls settings={settings} onChange={onSettings} />
       <p className="arcade-session-note">
-        Refreshing or leaving ends this exhibition. Match progress is not saved.
+        {state.official
+          ? "Refreshing or leaving before the final buzzer ends this attempt; the fixture stays pending. Match progress is not saved."
+          : "Refreshing or leaving ends this exhibition. Match progress is not saved."}
       </p>
     </ArcadeDialog>
   );

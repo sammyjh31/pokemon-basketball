@@ -369,7 +369,7 @@ describe("franchise hub", () => {
     expect(history).toHaveTextContent("4–2");
     expect(history).toHaveTextContent("50–32");
     expect(history).toHaveTextContent("Bulbasaur");
-    expect(history).toHaveTextContent(/Only the active season.*box scores/i);
+    expect(history).toHaveTextContent(/Newly archived seasons preserve player stats and every game/i);
     expect(
       within(
         screen.getByRole("table", { name: "Year 1 final standings" }),

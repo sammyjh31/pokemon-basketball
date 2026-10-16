@@ -151,7 +151,7 @@ function endPeriod(s: ArcadeState) {
 export function continuePeriod(s: ArcadeState) {
   if (s.phase !== "break") return;
   s.period++;
-  s.clock = s.period > 4 ? 30 : 60;
+  s.clock = s.period > 4 ? (s.official ? 25 : 30) : 60;
   s.pendingHorn = false;
   s.paused = false;
   for (const p of s.players) p.energy = Math.min(100, p.energy + 18);

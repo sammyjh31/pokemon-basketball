@@ -20,6 +20,7 @@ export function PlayoffPanel({
   seasonSeed,
   playoffs,
   onAdvance,
+  onPlayGame,
   simulating = false,
   progress,
 }: {
@@ -27,6 +28,7 @@ export function PlayoffPanel({
   seasonSeed: number;
   playoffs?: Playoffs;
   onAdvance: (mode: PlayoffMode) => void;
+  onPlayGame?: () => void;
   simulating?: boolean;
   progress?: { completed: number; total: number };
 }) {
@@ -166,13 +168,23 @@ export function PlayoffPanel({
           role="group"
           aria-label="Advance playoffs"
         >
+          {onPlayGame && !completed && (
+            <button
+              type="button"
+              className="button primary"
+              disabled={simulating}
+              onClick={onPlayGame}
+            >
+              Play next playoff game
+            </button>
+          )}
           <button
             type="button"
             className="button primary"
             disabled={simulating || completed}
             onClick={() => onAdvance("game")}
           >
-            Play next slate
+            {onPlayGame ? "Simulate next slate" : "Play next slate"}
           </button>
           <button
             type="button"
@@ -440,6 +452,7 @@ export function PlayoffPanel({
       {selectedGame && (
         <LeagueBoxScore
           game={selectedGame.game}
+          match={bracket.playedGames?.[selectedGame.game.id]?.match}
           teams={league.teams}
           contextLabel={selectedGame.context}
           onClose={() => setSelectedGame(null)}

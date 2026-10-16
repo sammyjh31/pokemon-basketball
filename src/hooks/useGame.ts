@@ -6,9 +6,11 @@ import {
   type StorageLike,
 } from "../game/persistence";
 import { simulateSeasonAsync } from "../game/season";
-import { simulatePlayoffsAsync } from "../game/playoffs";
+import { advanceFranchiseSeasonAsync } from "../game/interactiveSeason";
+import type { OfficialGame } from "../game/franchiseFeatures";
+import { submitPlayoffGame, simulatePlayoffsAsync } from "../game/playoffs";
 import type { PlayoffMode } from "../game/playoffTypes";
-import type { GameState } from "../game/types";
+import type { GameState, Run } from "../game/types";
 import { parseLineup } from "../game/lineup";
 const browserStorage: StorageLike = {
   getItem: (key) => window.localStorage.getItem(key),
@@ -54,6 +56,9 @@ export function useGame(
     return { ...loaded, roster, confirmImport: !!roster && hasProgress };
   });
   const [state, rawDispatch] = useReducer(reducer, loaded.state);
+  const latestState = useRef(state);
+  latestState.current = state;
+  const recordedSources = useRef(new WeakSet<Run>());
   const busy = useRef(!!loaded.restore);
   const [restoring, setRestoring] = useState(!!loaded.restore);
   const [canSave, setCanSave] = useState(
@@ -109,7 +114,93 @@ export function useGame(
       rawDispatch(action);
     }
   };
+  const seasonController = useRef<AbortController | null>(null);
+  useEffect(() => () => seasonController.current?.abort(), []);
+  const advanceSeason = async (
+    rounds = 1,
+    played?: OfficialGame,
+    expected?: Run,
+  ) => {
+    const source = state.run;
+    if (
+      busy.current ||
+      source !== latestState.current.run ||
+      source.result ||
+      latestState.current.franchise?.phase !== "season" ||
+      recordedSources.current.has(source) ||
+      (expected && expected !== source)
+    ) {
+      if (played)
+        throw new Error(
+          "This game no longer matches the active franchise season.",
+        );
+      return;
+    }
+    const controller = new AbortController();
+    seasonController.current = controller;
+    busy.current = true;
+    setSimulating(true);
+    setSimulationError(null);
+    try {
+      const run = await advanceFranchiseSeasonAsync(
+        source,
+        rounds,
+        (completed, total) => {
+          if (!controller.signal.aborted) setProgress({ completed, total });
+        },
+        controller.signal,
+        played,
+      );
+      controller.signal.throwIfAborted();
+      if (
+        latestState.current.run !== source ||
+        latestState.current.franchise?.phase !== "season"
+      )
+        throw new Error(
+          "The franchise changed while this game was being recorded.",
+        );
+      recordedSources.current.add(source);
+      setCanSave(true);
+      rawDispatch({ type: "APPLY_FRANCHISE_RUN", source, run });
+    } catch (error) {
+      if (!controller.signal.aborted)
+        setSimulationError(
+          error instanceof Error
+            ? error.message
+            : "Season advancement failed. Please try again.",
+        );
+      if (played) throw error;
+    } finally {
+      if (!controller.signal.aborted) {
+        busy.current = false;
+        seasonController.current = null;
+        setSimulating(false);
+      }
+    }
+  };
+  const recordPlayoffGame = async (game: OfficialGame, source: Run) => {
+    if (
+      busy.current ||
+      latestState.current.run !== source ||
+      recordedSources.current.has(source) ||
+      !source.result?.league ||
+      latestState.current.franchise?.phase !== "season"
+    )
+      throw new Error(
+        "This game no longer matches the active playoff bracket.",
+      );
+    const playoffs = submitPlayoffGame(
+      source.result.league,
+      source.seasonSeed,
+      source.playoffs,
+      game,
+    );
+    recordedSources.current.add(source);
+    setCanSave(true);
+    rawDispatch({ type: "APPLY_PLAYOFFS", source, playoffs });
+  };
   const simulate = async () => {
+    if (state.franchise?.phase === "season") return advanceSeason(82);
     if (busy.current || state.run.result) return;
     busy.current = true;
     setSimulating(true);
@@ -136,7 +227,7 @@ export function useGame(
     const league = source.result?.league;
     if (
       busy.current ||
-      ![3, 4, 5].includes(source.result?.modelVersion ?? 0) ||
+      ![3, 4, 5, 6].includes(source.result?.modelVersion ?? 0) ||
       !league ||
       source.playoffs?.championId != null
     )
@@ -208,6 +299,14 @@ export function useGame(
     if (saved.notice === null) lastPersistedState.current = state;
     setStorageNotice(saved.notice);
   }, [state, storage, restoring, canSave]);
+  const retrySave =
+    canSave && !restoring
+      ? () => {
+          const saved = saveGame(storage, state);
+          if (saved.notice === null) lastPersistedState.current = state;
+          setStorageNotice(saved.notice);
+        }
+      : undefined;
   return {
     state,
     dispatch,
@@ -215,6 +314,9 @@ export function useGame(
     importPending,
     resolveImport,
     simulate,
+    advanceSeason,
+    recordPlayoffGame,
+    retrySave,
     simulating,
     progress,
     advancePlayoffs,

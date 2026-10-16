@@ -1,3 +1,4 @@
+import type { RotationPlan, SeasonProgress } from "./franchiseFeatures";
 import type { Playoffs } from "./playoffTypes";
 import type { Franchise } from "./franchiseTypes";
 import type { PlayerDevelopment } from "./developmentTypes";
@@ -167,7 +168,7 @@ export interface SeasonResult {
   wins: number;
   losses: number;
   mvpId: number;
-  modelVersion?: 1 | 2 | 3 | 4 | 5;
+  modelVersion?: 1 | 2 | 3 | 4 | 5 | 6;
   league?: LeagueResult;
   mvpTeamId?: number;
   playerStats?: SeasonPlayer[];
@@ -189,6 +190,8 @@ export interface Run {
   playoffs?: Playoffs;
   /** Fixed league membership for franchise seasons (model 4). */
   leagueTeams?: LeagueTeam[];
+  rotationPlan?: RotationPlan;
+  seasonProgress?: SeasonProgress;
 }
 export interface ModeRecords {
   runs: number;
@@ -226,6 +229,7 @@ export interface LeagueTeam {
   ratings: TeamRatings;
   /** Frozen cumulative skill changes for this club's eight players. */
   development?: PlayerDevelopment;
+  rotationPlan?: RotationPlan;
 }
 export interface LeagueFixture {
   id: string;

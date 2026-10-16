@@ -1,6 +1,19 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { OPPONENTS } from "../data/opponents";
 import { positionRating, teamRatings } from "./ratings";
+import { validateRotationPlan } from "./rotationPlan";
+import { validateTrainingPlans } from "./training";
+import { replayArchivedSeasonSync } from "./archive";
+import { leagueSchedule } from "./league";
+import { validateOfficialGame } from "./officialGame";
+import { replayPlayoffs } from "./playoffs";
+import type { SeasonReplayArchive } from "./franchiseFeatures";
+import type { Playoffs } from "./playoffTypes";
+import type { SeasonResult } from "./types";
+export type VerifiedArchives = ReadonlyMap<
+  number,
+  { regular: SeasonResult; playoffs: Playoffs }
+>;
 import {
   DEVELOPMENT_SKILLS,
   DEVELOPMENT_MIN,
@@ -290,6 +303,9 @@ export function validateLeagueTeams(
     const offsets = developed
       ? development(row.development, roster)
       : undefined;
+    const rotationPlan = Object.hasOwn(row, "rotationPlan")
+      ? validateRotationPlan(row.rotationPlan)
+      : undefined;
     return {
       id: index,
       name,
@@ -297,8 +313,9 @@ export function validateLeagueTeams(
       tactic,
       rotation,
       defense: row.defense as LeagueTeam["defense"],
-      ratings: teamRatings(roster, tactic, rotation, offsets),
+      ratings: teamRatings(roster, tactic, rotation, offsets, rotationPlan),
       ...(offsets ? { development: offsets } : {}),
+      ...(rotationPlan ? { rotationPlan } : {}),
     };
   });
 }
@@ -377,6 +394,8 @@ function archivedSeason(
   index: number,
   includeLegends: boolean,
   leagueIds: number[],
+  preliminary = false,
+  verified?: VerifiedArchives extends ReadonlyMap<number, infer T> ? T : never,
 ): FranchiseSeason {
   const row = object(value);
   if (row.year !== index + 1) return fail();
@@ -427,7 +446,7 @@ function archivedSeason(
     mvp.playerId !== `${identity.teamId}:${identity.pokemonId}`
   )
     return fail();
-  return {
+  const season: FranchiseSeason = {
     year: index + 1,
     seasonSeed: integer(row.seasonSeed, 0, 0xffffffff),
     standings: rows,
@@ -444,6 +463,178 @@ function archivedSeason(
       score: number(mvp.score, -1000000, 1000000),
       value: text(mvp.value),
     },
+  };
+  if (Object.hasOwn(row, "replay"))
+    season.replay = archivedReplay(
+      row.replay,
+      season,
+      includeLegends,
+      preliminary,
+      verified,
+    );
+  return season;
+}
+function archivedReplay(
+  value: unknown,
+  season: FranchiseSeason,
+  includeLegends: boolean,
+  preliminary = false,
+  verified?: VerifiedArchives extends ReadonlyMap<number, infer T> ? T : never,
+): SeasonReplayArchive {
+  const row = object(value);
+  if (
+    row.modelVersion !== 1 ||
+    ![3, 4, 5, 6].includes(row.seasonModel as number)
+  )
+    return fail();
+  const teams = validateLeagueTeams(row.teams, includeLegends);
+  if (
+    teams.some((team, index) =>
+      ROSTER_SLOTS.some(
+        (slot, slotIndex) =>
+          team.roster[slot] !== season.rosters[index][slotIndex],
+      ),
+    )
+  )
+    return fail();
+  if (
+    (row.seasonModel === 3 || row.seasonModel === 4) &&
+    teams.some((team) => team.development || team.rotationPlan)
+  )
+    return fail();
+  if (
+    row.seasonModel === 5 &&
+    teams.some((team) => !team.development || team.rotationPlan)
+  )
+    return fail();
+  array(row.regularPlayers, 240);
+  if (!Array.isArray(row.playoffPlayers) || row.playoffPlayers.length !== 128)
+    return fail();
+  const source = object(row.playedGames),
+    playedGames: SeasonReplayArchive["playedGames"] = {};
+  if (
+    Object.keys(source).length > 82 ||
+    (row.seasonModel !== 6 && Object.keys(source).length)
+  )
+    return fail();
+  const fixtures = new Map(
+    leagueSchedule(season.seasonSeed).map((fixture) => [fixture.id, fixture]),
+  );
+  for (const [id, game] of Object.entries(source)) {
+    const fixture = fixtures.get(id);
+    if (!fixture || (fixture.homeTeamId !== 0 && fixture.awayTeamId !== 0))
+      return fail();
+    playedGames[id] = validateOfficialGame(game, fixture, teams);
+  }
+  const bracket = object(row.playoffs);
+  if (![1, 2].includes(bracket.modelVersion as number)) return fail();
+  const series = array(bracket.series, 15);
+  const gameCount = series.reduce<number>((total, value) => {
+    const games = object(value).games;
+    if (!Array.isArray(games) || games.length < 4 || games.length > 7)
+      return fail();
+    return total + games.length;
+  }, 0);
+  const parsedPlayers = (
+    values: unknown[],
+    maxGames: number,
+  ): LeaguePlayer[] => {
+    const seen = new Set<number>();
+    return values.map((value) => {
+      const player = object(value),
+        teamId = integer(player.teamId, 0, 29),
+        pokemonId = species(player.pokemonId, includeLegends);
+      const slot = ROSTER_SLOTS.find(
+        (slot) => teams[teamId].roster[slot] === pokemonId,
+      );
+      if (
+        !slot ||
+        player.slot !== slot ||
+        player.playerId !== `${teamId}:${pokemonId}` ||
+        player.teamName !== teams[teamId].name ||
+        seen.has(pokemonId)
+      )
+        return fail();
+      seen.add(pokemonId);
+      return {
+        ...totals(player, maxGames),
+        pokemonId,
+        teamId,
+        slot,
+        playerId: `${teamId}:${pokemonId}`,
+        teamName: teams[teamId].name,
+      };
+    });
+  };
+  const inputs: SeasonReplayArchive = {
+    modelVersion: 1,
+    seasonModel: row.seasonModel as SeasonReplayArchive["seasonModel"],
+    teams,
+    regularPlayers: parsedPlayers(row.regularPlayers as unknown[], 82),
+    playoffPlayers: parsedPlayers(row.playoffPlayers as unknown[], 28),
+    playedGames,
+    playoffs: structuredClone(row.playoffs) as SeasonReplayArchive["playoffs"],
+  };
+  if (preliminary) return inputs;
+  const expected =
+      verified?.regular ??
+      replayArchivedSeasonSync({ ...season, replay: inputs }),
+    league = expected.league!;
+  if (
+    JSON.stringify(row.regularPlayers) !== JSON.stringify(league.players) ||
+    JSON.stringify(season.standings) !== JSON.stringify(league.standings)
+  )
+    return fail();
+  if (
+    season.awards.some((award, index) =>
+      Object.entries(award).some(
+        ([key, value]) =>
+          league.awards[index][key as keyof typeof award] !== value,
+      ),
+    )
+  )
+    return fail();
+  const honorIds = (honors: HistoricalHonor[]) =>
+    honors.map((honor) => `${honor.teamId}:${honor.pokemonId}`);
+  if (
+    JSON.stringify(honorIds(season.allLeague)) !==
+      JSON.stringify(league.allLeague) ||
+    JSON.stringify(honorIds(season.allDefense)) !==
+      JSON.stringify(league.allDefense)
+  )
+    return fail();
+  const playoffs =
+    verified?.playoffs ??
+    replayPlayoffs(
+      league,
+      season.seasonSeed,
+      gameCount,
+      bracket.playedGames as SeasonReplayArchive["playedGames"] | undefined,
+    );
+  if (
+    JSON.stringify(bracket) !== JSON.stringify(playoffs) ||
+    JSON.stringify(row.playoffPlayers) !== JSON.stringify(playoffs.players)
+  )
+    return fail();
+  const finals = playoffs.series[14];
+  if (
+    playoffs.championId !== season.championId ||
+    JSON.stringify(playoffs.finalsMvp) !== JSON.stringify(season.finalsMvp) ||
+    season.runnerUpId !==
+      (finals.higherSeedId === playoffs.championId
+        ? finals.lowerSeedId
+        : finals.higherSeedId) ||
+    season.runnerUpWins !==
+      (finals.higherSeedId === playoffs.championId
+        ? finals.lowerSeedWins
+        : finals.higherSeedWins)
+  )
+    return fail();
+  return {
+    ...inputs,
+    regularPlayers: league.players,
+    playoffPlayers: playoffs.players,
+    playoffs,
   };
 }
 function totals(value: unknown, maxGames: number): CareerTotals {
@@ -509,27 +700,63 @@ function careers(
       return playedTeams[index];
     });
     let starts = 0,
+      regularGames = 0,
       qualifiedYears = 0,
       minimumPlayoffGames = 0;
+    const detailedRegular: LeaguePlayer[] = [],
+      detailedPlayoffs: LeaguePlayer[] = [];
     for (const [index, year] of history.entries()) {
       const teamId = year.rosters.findIndex((roster) =>
         roster.includes(pokemonId),
       );
-      if (year.rosters[teamId].indexOf(pokemonId) < 5) starts += 82;
+      const detail = year.replay?.regularPlayers.find(
+        (player) => player.pokemonId === pokemonId,
+      );
+      if (detail) {
+        starts += detail.gamesStarted;
+        regularGames += detail.gamesPlayed;
+        detailedRegular.push(detail);
+      } else {
+        regularGames += 82;
+        if (year.rosters[teamId].indexOf(pokemonId) < 5) starts += 82;
+      }
+      const postseason = year.replay?.playoffPlayers.find(
+        (player) => player.pokemonId === pokemonId,
+      );
+      if (postseason) detailedPlayoffs.push(postseason);
       if (playoffTeams[index].includes(teamId)) {
         qualifiedYears++;
-        minimumPlayoffGames +=
-          teamId === year.championId || teamId === year.runnerUpId ? 16 : 4;
+        minimumPlayoffGames += year.replay
+          ? (postseason?.gamesPlayed ?? 0)
+          : teamId === year.championId || teamId === year.runnerUpId
+            ? 16
+            : 4;
       }
     }
     const regular = totals(row.regular, history.length * 82),
       playoffs = totals(row.playoffs, qualifiedYears * 28);
     if (
-      regular.gamesPlayed !== history.length * 82 ||
+      regular.gamesPlayed !== regularGames ||
       regular.gamesStarted !== starts ||
       playoffs.gamesPlayed < minimumPlayoffGames
     )
       return fail();
+    const detailed = (players: LeaguePlayer[], total: CareerTotals) => {
+      for (const key of CAREER_KEYS) {
+        const sum =
+          key === "highPoints"
+            ? Math.max(0, ...players.map((player) => player[key]))
+            : players.reduce((sum, player) => sum + player[key], 0);
+        if (
+          history.every((year) => year.replay)
+            ? total[key] !== sum
+            : key !== "plusMinus" && total[key] < sum
+        )
+          return fail();
+      }
+    };
+    detailed(detailedRegular, regular);
+    detailed(detailedPlayoffs, playoffs);
     return { pokemonId, seasons: history.length, teamIds, regular, playoffs };
   });
   if (
@@ -540,7 +767,17 @@ function careers(
         0,
       ) ||
     rows.reduce((sum, row) => sum + row.regular.gamesStarted, 0) !==
-      history.length * 30 * 82 * 5 ||
+      history.reduce(
+        (sum, year) =>
+          sum +
+          (year.replay
+            ? year.replay.regularPlayers.reduce(
+                (sum, player) => sum + player.gamesStarted,
+                0,
+              )
+            : 30 * 82 * 5),
+        0,
+      ) ||
     rows.reduce((sum, row) => sum + row.regular.playerOfGame, 0) !==
       history.length * 1230 ||
     rows.reduce((sum, row) => sum + row.regular.plusMinus, 0) !== 0 ||
@@ -548,16 +785,40 @@ function careers(
   )
     return fail();
   for (const phase of ["regular", "playoffs"] as const) {
-    const played =
-      rows.reduce((sum, row) => sum + row[phase].gamesPlayed, 0) / 16;
+    const played = rows.reduce((sum, row) => sum + row[phase].playerOfGame, 0);
+    const detailedYears = history.filter((year) => year.replay);
+    const detailedGames = detailedYears.reduce(
+      (sum, year) =>
+        sum +
+        (phase === "regular"
+          ? 1230
+          : year.replay!.playoffs.series.reduce(
+              (sum, series) => sum + series.games.length,
+              0,
+            )),
+      0,
+    );
+    const detailedPlayers = detailedYears.flatMap((year) =>
+      phase === "regular"
+        ? year.replay!.regularPlayers
+        : year.replay!.playoffPlayers,
+    );
+    const expectedAppearances =
+      (played - detailedGames) * 16 +
+      detailedPlayers.reduce((sum, player) => sum + player.gamesPlayed, 0);
+    const expectedStarts =
+      (played - detailedGames) * 10 +
+      detailedPlayers.reduce((sum, player) => sum + player.gamesStarted, 0);
     const minutes = rows.reduce((sum, row) => sum + row[phase].minutes, 0);
     if (
       !Number.isSafeInteger(played) ||
+      rows.reduce((sum, row) => sum + row[phase].gamesPlayed, 0) !==
+        expectedAppearances ||
       minutes < played * 480 ||
       (minutes - played * 480) % 50 !== 0 ||
       rows.reduce((sum, row) => sum + row[phase].playerOfGame, 0) !== played ||
       rows.reduce((sum, row) => sum + row[phase].gamesStarted, 0) !==
-        played * 10
+        expectedStarts
     )
       return fail();
     if (
@@ -653,11 +914,12 @@ export function validateFranchise(
   value: unknown,
   run: Run,
   preliminary = false,
+  verifiedArchives?: VerifiedArchives,
 ): Franchise {
   const row = object(value),
     year = integer(row.year, 1, FRANCHISE_MAX_YEARS);
   if (
-    (row.modelVersion !== 1 && row.modelVersion !== 2) ||
+    ![1, 2, 3].includes(row.modelVersion as number) ||
     (row.phase !== "season" && row.phase !== "offseason") ||
     (row.phase === "season" && year < 2)
   )
@@ -666,8 +928,24 @@ export function validateFranchise(
     leagueIds = teams.flatMap((team) => Object.values(team.roster) as number[]);
   const historyCount = row.phase === "offseason" ? year : year - 1;
   const history = array(row.history, historyCount).map((entry, index) =>
-    archivedSeason(entry, index, run.includeLegends, leagueIds),
+    archivedSeason(
+      entry,
+      index,
+      run.includeLegends,
+      leagueIds,
+      preliminary,
+      verifiedArchives?.get(index + 1),
+    ),
   );
+  if (
+    row.modelVersion !== 3 &&
+    (history.some((season) => season.replay) ||
+      Object.hasOwn(row, "trainingPlans") ||
+      teams.some((team) => team.rotationPlan) ||
+      run.seasonProgress ||
+      run.rotationPlan)
+  )
+    return fail();
   const parsedCareers = careers(row.careers, history, leagueIds);
   if (!Array.isArray(row.trades) || row.trades.length > FRANCHISE_MAX_TRADES)
     return fail();
@@ -678,7 +956,10 @@ export function validateFranchise(
       run.leagueTeams?.some((team) => team.development))
   )
     return fail();
-  if (row.modelVersion === 2 && teams.some((team) => !team.development))
+  if (
+    (row.modelVersion === 2 || Object.hasOwn(row, "offseasons")) &&
+    teams.some((team) => !team.development)
+  )
     return fail();
   let previousYear = 1;
   const trades = row.trades.map((value): FranchiseTrade => {
@@ -733,7 +1014,7 @@ export function validateFranchise(
     expected,
   );
   const developmentHistory =
-    row.modelVersion === 2
+    row.modelVersion === 2 || Object.hasOwn(row, "offseasons")
       ? reports(row.offseasons, history, trades, historyCount)
       : undefined;
   if (developmentHistory)
@@ -743,6 +1024,34 @@ export function validateFranchise(
         developmentHistory.cumulative,
         Object.values(team.roster) as number[],
       );
+  if (!developmentHistory && teams.some((team) => team.development))
+    return fail();
+  const offsets: PlayerDevelopment = {};
+  for (const archived of history) {
+    if (archived.replay)
+      for (const team of archived.replay.teams) {
+        const hasEarlierReport = developmentHistory?.reports.some(
+          (report) => report.year < archived.year,
+        );
+        if (hasEarlierReport)
+          sameDevelopment(
+            team.development,
+            offsets,
+            Object.values(team.roster) as number[],
+          );
+        else if (team.development) return fail();
+      }
+    const report = developmentHistory?.reports.find(
+      (report) => report.year === archived.year,
+    );
+    for (const player of report?.players ?? [])
+      for (const skill of DEVELOPMENT_SKILLS) {
+        offsets[player.pokemonId] ??= {};
+        offsets[player.pokemonId]![skill] =
+          (offsets[player.pokemonId]?.[skill] ?? 0) +
+          (player.changes[skill] ?? 0);
+      }
+  }
   if (year === 1 ? run.leagueTeams !== undefined : !run.leagueTeams)
     return fail();
   if (run.leagueTeams) {
@@ -773,7 +1082,7 @@ export function validateFranchise(
       return fail();
   }
   const franchise: Franchise = {
-    modelVersion: row.modelVersion,
+    modelVersion: row.modelVersion as Franchise["modelVersion"],
     year,
     phase: row.phase,
     teams,
@@ -781,12 +1090,21 @@ export function validateFranchise(
     history,
     trades,
     ...(developmentHistory ? { offseasons: developmentHistory.reports } : {}),
+    ...(Object.hasOwn(row, "trainingPlans")
+      ? {
+          trainingPlans: validateTrainingPlans(
+            row.trainingPlans,
+            teams[0].roster,
+          ),
+        }
+      : {}),
   };
   if (!preliminary) {
     if (year === 1 && run.result?.modelVersion !== 3) return fail();
     if (
       year > 1 &&
       run.result &&
+      run.result.modelVersion !== 6 &&
       run.result.modelVersion !== (run.leagueTeams?.[0].development ? 5 : 4)
     )
       return fail();

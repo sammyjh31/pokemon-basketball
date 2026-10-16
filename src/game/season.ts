@@ -1,5 +1,7 @@
 import { createLeague, leagueSchedule } from "./league";
 import { simulateMatch } from "./match";
+import { validateOfficialGame } from "./officialGame";
+import type { OfficialGame } from "./franchiseFeatures";
 import { addBox, leagueHonors, leaguePlayers } from "./leagueStats";
 import { validateLeagueTeams } from "./franchiseValidation";
 import { teamRatings } from "./ratings";
@@ -14,8 +16,12 @@ import type {
 } from "./types";
 export { resolveScore, winProbability, SEASON_RULES } from "./v2Season";
 export function seasonTeams(run: Run): LeagueTeam[] {
-  if (!run.leagueTeams) return createLeague(run);
-  const teams = validateLeagueTeams(run.leagueTeams, run.includeLegends);
+  if (!run.leagueTeams && !run.rotationPlan) return createLeague(run);
+  const teams = run.leagueTeams
+    ? validateLeagueTeams(run.leagueTeams, run.includeLegends)
+    : createLeague(run);
+  if (run.seasonProgress && run.seasonProgress.completedRounds > 0)
+    return teams;
   const members = new Set(Object.values(teams[0].roster));
   const chosen = Object.values(run.roster);
   if (
@@ -32,20 +38,48 @@ export function seasonTeams(run: Run): LeagueTeam[] {
     tactic: run.tactic,
     rotation: run.rotation,
     defense: run.defense ?? "man",
+    ...(run.rotationPlan
+      ? { rotationPlan: structuredClone(run.rotationPlan) }
+      : {}),
     ratings: teamRatings(
       run.roster,
       run.tactic,
       run.rotation,
       teams[0].development,
+      run.rotationPlan,
     ),
   };
+  if (!run.rotationPlan) delete teams[0].rotationPlan;
   return teams;
 }
-function seasonBuilder(run: Run) {
+export function seasonBuilder(
+  run: Run,
+  completedRounds = 82,
+  playedGames: Record<string, OfficialGame> = run.seasonProgress?.playedGames ??
+    {},
+) {
+  if (
+    !Number.isInteger(completedRounds) ||
+    completedRounds < 0 ||
+    completedRounds > 82 ||
+    !playedGames ||
+    typeof playedGames !== "object" ||
+    Array.isArray(playedGames)
+  )
+    throw new Error("Invalid season progress.");
   if (run.result) throw new Error("This roster has already played its season.");
   const teams = seasonTeams(run),
     fixtures = leagueSchedule(run.seasonSeed),
     players = leaguePlayers(teams);
+  const eligible = new Map(
+    fixtures.slice(0, completedRounds * 15).map((f) => [f.id, f]),
+  );
+  for (const [id, game] of Object.entries(playedGames)) {
+    const fixture = eligible.get(id);
+    if (!fixture)
+      throw new Error("Official game is outside the completed season prefix.");
+    validateOfficialGame(game, fixture, teams);
+  }
   const byPlayer = new Map(players.map((p) => [p.playerId, p]));
   const standings: Standing[] = teams.map((t) => ({
     teamId: t.id,
@@ -63,7 +97,7 @@ function seasonBuilder(run: Run) {
     summaries: LeagueGameSummary[] = [];
   const play = (fixture: LeagueFixture) => {
     const { homeTeamId: h, awayTeamId: a } = fixture,
-      match = simulateMatch(teams[h], teams[a], fixture.seed);
+      match = resolveSeasonMatch(fixture, teams, playedGames);
     summaries.push({
       ...fixture,
       homeScore: match.homeScore,
@@ -119,25 +153,33 @@ function seasonBuilder(run: Run) {
     }
   };
   const finish = (): SeasonResult => {
-    const honors = leagueHonors(players, standings),
-      mvp = honors.awards.find((a) => a.id === "mvp")!;
+    const honors =
+        completedRounds === 82
+          ? leagueHonors(players, standings)
+          : { awards: [], allLeague: [], allDefense: [] },
+      mvp = honors.awards.find((a) => a.id === "mvp");
     return {
-      modelVersion: run.leagueTeams
-        ? teams.some((team) => team.development !== undefined)
-          ? 5
-          : 4
-        : 3,
+      modelVersion:
+        run.seasonProgress ||
+        run.rotationPlan ||
+        teams.some((team) => team.rotationPlan)
+          ? 6
+          : run.leagueTeams
+            ? teams.some((team) => team.development !== undefined)
+              ? 5
+              : 4
+            : 3,
       games,
       wins: standings[0].wins,
       losses: standings[0].losses,
-      mvpId: mvp.pokemonId,
-      mvpTeamId: mvp.teamId,
+      mvpId: mvp?.pokemonId ?? 0,
+      mvpTeamId: mvp?.teamId ?? 0,
       playerStats: players.filter((p) => p.teamId === 0),
       awards: honors.awards,
       league: { teams, games: summaries, players, standings, ...honors },
     };
   };
-  return { fixtures, play, finish };
+  return { fixtures: fixtures.slice(0, completedRounds * 15), play, finish };
 }
 export function simulateSeason(run: Run): SeasonResult {
   const season = seasonBuilder(run);
@@ -163,4 +205,18 @@ export async function simulateSeasonAsync(
   }
   signal?.throwIfAborted();
   return season.finish();
+}
+
+/** Resolve an archived or current fixture without replacing an authoritative played result. */
+export function resolveSeasonMatch(
+  fixture: LeagueFixture,
+  teams: LeagueTeam[],
+  playedGames: Record<string, OfficialGame> = {},
+) {
+  if (playedGames[fixture.id])
+    return validateOfficialGame(playedGames[fixture.id], fixture, teams).match;
+  const home = teams.find((team) => team.id === fixture.homeTeamId),
+    away = teams.find((team) => team.id === fixture.awayTeamId);
+  if (!home || !away) throw new Error("Missing fixture team.");
+  return simulateMatch(home, away, fixture.seed);
 }

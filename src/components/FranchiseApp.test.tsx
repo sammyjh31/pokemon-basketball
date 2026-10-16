@@ -86,15 +86,20 @@ it("continues a completed league into the next season and restores its careers w
       <App storage={storage} />
     </StrictMode>,
   );
+  await act(async () => {
+    await vi.runAllTimersAsync();
+  });
   expect(screen.getByLabelText("Coaching style")).toHaveValue("pace");
-  fireEvent.click(screen.getByRole("button", { name: /Simulate season/i }));
+  fireEvent.click(
+    screen.getByRole("button", { name: /Simulate remaining season/i }),
+  );
   await act(async () => {
     await vi.runAllTimersAsync();
   });
   const skip = screen.queryByRole("button", { name: "Skip reveal" });
   if (skip) fireEvent.click(skip);
   const played = JSON.parse(storage.getItem(STORAGE_KEY)!) as GameState;
-  expect(played.run.result?.modelVersion).toBe(5);
+  expect(played.run.result?.modelVersion).toBe(6);
   expect(played.records).toEqual(finished.records);
   expect(played.franchise?.history).toHaveLength(1);
   expect(screen.getByRole("region", { name: "Playoffs" })).toBeInTheDocument();

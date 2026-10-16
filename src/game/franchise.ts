@@ -1,5 +1,6 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { createRun } from "./draft";
+import { captureSeasonReplay } from "./archive";
 import { validateLeagueTeams } from "./franchiseValidation";
 import {
   CAREER_KEYS,
@@ -24,7 +25,7 @@ import {
 
 function validPhase(franchise: Franchise, phase: Franchise["phase"]) {
   return (
-    [1, 2].includes(franchise.modelVersion) &&
+    [1, 2, 3].includes(franchise.modelVersion) &&
     franchise.phase === phase &&
     Number.isInteger(franchise.year) &&
     franchise.year >= 1 &&
@@ -72,10 +73,12 @@ function addTotals(target: CareerTotals, player: LeaguePlayer) {
 }
 
 function addSeason(careers: CareerPlayer[], run: Run): CareerPlayer[] {
+  const league = (run.result ?? run.seasonProgress?.result)?.league;
+  if (!league) return structuredClone(careers);
   const result = structuredClone(careers);
   const bySpecies = new Map(result.map((player) => [player.pokemonId, player]));
   const played = new Set<number>();
-  for (const player of run.result!.league!.players) {
+  for (const player of league.players) {
     let career = bySpecies.get(player.pokemonId);
     if (!career) {
       career = {
@@ -106,11 +109,16 @@ function addSeason(careers: CareerPlayer[], run: Run): CareerPlayer[] {
 export function careerPlayers(franchise: Franchise, run?: Run): CareerPlayer[] {
   if (
     validPhase(franchise, "season") &&
-    [4, 5].includes(run?.result?.modelVersion ?? 0) &&
-    run?.result?.league &&
-    sameMembership(franchise.teams, run.result.league.teams)
+    [4, 5, 6].includes(
+      (run?.result ?? run?.seasonProgress?.result)?.modelVersion ?? 0,
+    ) &&
+    (run?.result ?? run?.seasonProgress?.result)?.league &&
+    sameMembership(
+      franchise.teams,
+      (run!.result ?? run!.seasonProgress!.result)!.league!.teams,
+    )
   )
-    return addSeason(franchise.careers, run);
+    return addSeason(franchise.careers, run!);
   return structuredClone(franchise.careers);
 }
 
@@ -120,7 +128,7 @@ function seasonArchive(run: Run, year: number): FranchiseSeason | null {
   if (
     !league ||
     !playoffs ||
-    playoffs.modelVersion !== 1 ||
+    ![1, 2].includes(playoffs.modelVersion) ||
     playoffs.championId === null ||
     !playoffs.finalsMvp ||
     run.result!.games.length !== 82 ||
@@ -229,7 +237,7 @@ export function enterOffseason(state: GameState): GameState {
   if (
     previous
       ? !validPhase(previous, "season") ||
-        ![4, 5].includes(run.result?.modelVersion ?? 0) ||
+        ![4, 5, 6].includes(run.result?.modelVersion ?? 0) ||
         !run.leagueTeams
       : run.result?.modelVersion !== 3
   )
@@ -246,6 +254,7 @@ export function enterOffseason(state: GameState): GameState {
   const year = previous?.year ?? 1,
     archive = seasonArchive(run, year);
   if (!archive) return state;
+  if (previous?.modelVersion === 3) archive.replay = captureSeasonReplay(run);
   const franchise: Franchise = {
     modelVersion: previous?.modelVersion ?? 1,
     year,
@@ -255,6 +264,9 @@ export function enterOffseason(state: GameState): GameState {
     history: [...(previous?.history ?? []), archive],
     trades: previous?.trades ?? [],
     ...(previous?.offseasons ? { offseasons: previous.offseasons } : {}),
+    ...(previous?.trainingPlans
+      ? { trainingPlans: previous.trainingPlans }
+      : {}),
   };
   return { ...state, franchise };
 }
@@ -286,11 +298,92 @@ export function startFranchiseSeason(
     defense: user.defense,
     offerIds: [],
     leagueTeams: teams,
+    ...(user.rotationPlan
+      ? { rotationPlan: structuredClone(user.rotationPlan) }
+      : {}),
+    ...(franchise.modelVersion === 3
+      ? {
+          seasonProgress: {
+            modelVersion: 1 as const,
+            completedRounds: 0,
+            playedGames: {},
+          },
+        }
+      : {}),
   };
   return {
     ...state,
     run,
     franchise: { ...franchise, year: franchise.year + 1, phase: "season" },
+  };
+}
+
+/** Save validators can normalize property order without changing the recorded data. */
+function sameSnapshot(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (
+    !a ||
+    !b ||
+    typeof a !== "object" ||
+    typeof b !== "object" ||
+    Array.isArray(a) !== Array.isArray(b)
+  )
+    return false;
+  const left = a as Record<string, unknown>,
+    right = b as Record<string, unknown>;
+  const keys = Object.keys(left);
+  return (
+    keys.length === Object.keys(right).length &&
+    keys.every(
+      (key) => Object.hasOwn(right, key) && sameSnapshot(left[key], right[key]),
+    )
+  );
+}
+
+/** Opt into connected history without changing the older model-1/2 helpers. */
+export function archiveFranchiseSeason(state: GameState): GameState {
+  const next = enterOffseason(state);
+  if (
+    !next.franchise ||
+    (next === state &&
+      (next.franchise.phase !== "offseason" ||
+        next.franchise.history.at(-1)?.replay))
+  )
+    return state;
+  const source = seasonArchive(next.run, next.franchise.year);
+  const previousSummary = { ...next.franchise.history.at(-1)! };
+  delete previousSummary.replay;
+  if (!source || !sameSnapshot(source, previousSummary)) return state;
+  const history = [...next.franchise.history];
+  history[history.length - 1] = {
+    ...history.at(-1)!,
+    replay: captureSeasonReplay(next.run),
+  };
+  return {
+    ...next,
+    franchise: { ...next.franchise, modelVersion: 3, history },
+  };
+}
+
+export function startInteractiveFranchiseSeason(
+  state: GameState,
+  seed: number,
+): GameState {
+  const next = startFranchiseSeason(state, seed);
+  if (next === state || !next.franchise) return state;
+  return {
+    ...next,
+    franchise: {
+      ...next.franchise,
+      modelVersion: 3,
+      history:
+        archiveFranchiseSeason(state).franchise?.history ??
+        next.franchise.history,
+    },
+    run: {
+      ...next.run,
+      seasonProgress: { modelVersion: 1, completedRounds: 0, playedGames: {} },
+    },
   };
 }
 
@@ -350,6 +443,7 @@ export function evaluateTrade(
     partner.tactic,
     partner.rotation,
     partner.development,
+    partner.rotationPlan,
   ).overall;
   values.partnerAfter = teamRatings(
     { ...partner.roster, [receiveSlot]: giveId },
@@ -358,6 +452,7 @@ export function evaluateTrade(
     partner.development
       ? { ...partner.development, [giveId]: user.development?.[giveId] ?? {} }
       : undefined,
+    partner.rotationPlan,
   ).overall;
   const abilityChange = values.outgoingValue - values.incomingValue;
   const fitChange = values.partnerAfter - values.partnerBefore;
@@ -402,6 +497,15 @@ export function applyTrade(
     franchise: {
       ...franchise,
       teams,
+      ...(franchise.trainingPlans
+        ? {
+            trainingPlans: Object.fromEntries(
+              Object.entries(franchise.trainingPlans).filter(
+                ([id]) => Number(id) !== giveId,
+              ),
+            ),
+          }
+        : {}),
       trades: [
         ...franchise.trades,
         { year: franchise.year, teamId, giveId, receiveId },

@@ -1,7 +1,18 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { initialState } from "./state";
-import { simulateSeason, simulateSeasonAsync } from "./season";
-import { replayPlayoffs } from "./playoffs";
+import {
+  simulateSeason,
+  simulateSeasonAsync,
+  seasonTeams,
+  seasonBuilder,
+} from "./season";
+import { replaySeasonProgress } from "./interactiveSeason";
+import { validateRotationPlan } from "./rotationPlan";
+import { validateOfficialGame } from "./officialGame";
+import { leagueSchedule } from "./league";
+import { replayPlayoffs, simulatePlayoffsAsync } from "./playoffs";
+import { replayArchivedSeason } from "./archive";
+import type { VerifiedArchives } from "./franchiseValidation";
 import { validateFranchise, validateLeagueTeams } from "./franchiseValidation";
 import {
   ROSTER_SLOTS,
@@ -55,7 +66,11 @@ function records(value: unknown): ModeRecords {
     return fail();
   return { runs, bestWins, perfectSeasons };
 }
-function validate(value: unknown, replay?: SeasonResult): GameState {
+function validate(
+  value: unknown,
+  replay?: SeasonResult,
+  preliminary = false,
+): GameState {
   const root = object(value);
   if (root.version === 1 || root.version === 2) return validateV2(root);
   if (root.version !== 3) return fail();
@@ -134,11 +149,50 @@ function validate(value: unknown, replay?: SeasonResult): GameState {
     if (!Object.hasOwn(root, "franchise") || chosen.length !== 8) return fail();
     run.leagueTeams = validateLeagueTeams(raw.leagueTeams, run.includeLegends);
   }
-  if (raw.result !== null) {
+  if (Object.hasOwn(raw, "rotationPlan")) {
+    if (!Object.hasOwn(root, "franchise") || !run.leagueTeams) return fail();
+    run.rotationPlan = validateRotationPlan(raw.rotationPlan);
+  }
+  if (Object.hasOwn(raw, "seasonProgress")) {
+    if (!Object.hasOwn(root, "franchise") || !run.leagueTeams) return fail();
+    const progress = object(raw.seasonProgress),
+      completedRounds = integer(progress.completedRounds, 0, 82);
+    if (
+      progress.modelVersion !== 1 ||
+      (completedRounds === 82) !== (raw.result !== null)
+    )
+      return fail();
+    const source = object(progress.playedGames),
+      playedGames = {} as NonNullable<Run["seasonProgress"]>["playedGames"];
+    if (Object.keys(source).length > completedRounds) return fail();
+    const fixtures = new Map(
+      leagueSchedule(run.seasonSeed)
+        .slice(0, completedRounds * 15)
+        .map((fixture) => [fixture.id, fixture]),
+    );
+    const teams = seasonTeams(run);
+    for (const [id, game] of Object.entries(source)) {
+      const fixture = fixtures.get(id);
+      if (!fixture || (fixture.homeTeamId !== 0 && fixture.awayTeamId !== 0))
+        return fail();
+      playedGames[id] = validateOfficialGame(game, fixture, teams);
+    }
+    run.seasonProgress = { modelVersion: 1, completedRounds, playedGames };
+    if (completedRounds === 0 || completedRounds === 82) {
+      if (Object.hasOwn(progress, "result")) return fail();
+    } else if (!preliminary) {
+      const expected =
+        replay ?? replaySeasonProgress(run, completedRounds, playedGames);
+      if (JSON.stringify(progress.result) !== JSON.stringify(expected))
+        return fail();
+      run.seasonProgress.result = expected;
+    } else if (!Object.hasOwn(progress, "result")) return fail();
+  }
+  if (raw.result !== null && !preliminary) {
     const result = object(raw.result);
     if (
       chosen.length !== 8 ||
-      ([4, 5].includes(result.modelVersion as number) && !run.leagueTeams) ||
+      ([4, 5, 6].includes(result.modelVersion as number) && !run.leagueTeams) ||
       !Array.isArray(result.games) ||
       result.games.length !== 82
     )
@@ -175,7 +229,11 @@ export interface PreparedGameLoad extends LoadedGame {
     signal: AbortSignal,
   ) => Promise<LoadedGame>;
 }
-function validateSavedGame(value: unknown, replay?: SeasonResult): LoadedGame {
+function validateSavedGame(
+  value: unknown,
+  replay?: SeasonResult,
+  verifiedArchives?: VerifiedArchives,
+): LoadedGame {
   // Only a verified regular season can supply teams or seeds for the playoffs.
   const state = validate(value, replay);
   const root = object(value),
@@ -186,9 +244,9 @@ function validateSavedGame(value: unknown, replay?: SeasonResult): LoadedGame {
       const candidate = object(raw.playoffs);
       if (
         !state.run.result ||
-        ![3, 4, 5].includes(state.run.result?.modelVersion as number) ||
+        ![3, 4, 5, 6].includes(state.run.result?.modelVersion as number) ||
         !state.run.result.league ||
-        candidate.modelVersion !== 1 ||
+        ![1, 2].includes(candidate.modelVersion as number) ||
         !Array.isArray(candidate.series) ||
         candidate.series.length !== 15
       )
@@ -205,6 +263,8 @@ function validateSavedGame(value: unknown, replay?: SeasonResult): LoadedGame {
         state.run.result.league,
         state.run.seasonSeed,
         gameCount,
+        candidate.playedGames as
+          NonNullable<Run["seasonProgress"]>["playedGames"] | undefined,
       );
       if (JSON.stringify(candidate) !== JSON.stringify(expected)) return fail();
       state.run.playoffs = expected;
@@ -218,13 +278,18 @@ function validateSavedGame(value: unknown, replay?: SeasonResult): LoadedGame {
     }
   if (Object.hasOwn(root, "franchise")) {
     try {
-      state.franchise = validateFranchise(root.franchise, state.run);
+      state.franchise = validateFranchise(
+        root.franchise,
+        state.run,
+        false,
+        verifiedArchives,
+      );
     } catch {
       // A fixed-roster season cannot become a standalone challenge save: doing
       // so would silently discard the only copy of its previous years.
       if (
         state.run.leagueTeams ||
-        [4, 5].includes(state.run.result?.modelVersion as number)
+        [4, 5, 6].includes(state.run.result?.modelVersion as number)
       )
         return fail();
       loaded = {
@@ -282,16 +347,20 @@ function readGame(
       Object.hasOwn(root, "franchise") ||
       Object.hasOwn(raw, "leagueTeams") ||
       (!!raw.result &&
-        [4, 5].includes(object(raw.result).modelVersion as number));
+        [4, 5, 6].includes(object(raw.result).modelVersion as number));
     if (
       deferLeague &&
       root.version === 3 &&
-      raw.result !== null &&
-      ![1, 2].includes(object(raw.result).modelVersion as number)
+      ((raw.result !== null &&
+        ![1, 2].includes(object(raw.result).modelVersion as number)) ||
+        (Object.hasOwn(raw, "seasonProgress") &&
+          integer(object(raw.seasonProgress).completedRounds, 0, 82) > 0) ||
+        (root.franchise !== undefined &&
+          object(root.franchise).modelVersion === 3))
     ) {
       // Validate the inexpensive draft/history first; the app can paint before
       // the full league replay. Retain the original object for the final check.
-      const state = validate({ ...root, run: { ...raw, result: null } });
+      const state = validate(root, undefined, true);
       if (Object.hasOwn(root, "franchise")) {
         try {
           state.franchise = validateFranchise(root.franchise, state.run, true);
@@ -307,13 +376,91 @@ function readGame(
         notice: null,
         restore: async (onProgress, signal) => {
           try {
-            const replay = await simulateSeasonAsync(
-              state.run,
-              onProgress,
-              signal,
-            );
             signal.throwIfAborted();
-            return validateSavedGame(parsed, replay);
+            const archives =
+              state.franchise?.history.filter((season) => season.replay) ?? [];
+            const currentGames = state.run.seasonProgress
+              ? state.run.seasonProgress.completedRounds * 15
+              : raw.result !== null
+                ? 1230
+                : 0;
+            const archiveGames = archives.map(
+              (season) =>
+                1230 +
+                season.replay!.playoffs.series.reduce(
+                  (sum, series) => sum + series.games.length,
+                  0,
+                ),
+            );
+            const totalGames =
+              currentGames +
+              archiveGames.reduce((sum, count) => sum + count, 0);
+            const verifiedArchives = new Map() as Map<
+              number,
+              { regular: SeasonResult; playoffs: NonNullable<Run["playoffs"]> }
+            >;
+            let completedGames = 0;
+            let lastProgress = -1;
+            const reportProgress = (completed: number, total: number) => {
+              if (completed === lastProgress) return;
+              lastProgress = completed;
+              onProgress(completed, total);
+            };
+            reportProgress(0, totalGames);
+            for (const [index, season] of archives.entries()) {
+              const regular = await replayArchivedSeason(
+                season,
+                (completed) =>
+                  reportProgress(completedGames + completed, totalGames),
+                signal,
+              );
+              const playoffs = await simulatePlayoffsAsync(
+                regular.league!,
+                season.seasonSeed,
+                undefined,
+                "all",
+                (completed) =>
+                  reportProgress(
+                    Math.min(
+                      completedGames + 1230 + completed,
+                      completedGames + archiveGames[index],
+                    ),
+                    totalGames,
+                  ),
+                signal,
+                season.replay!.playoffs.playedGames,
+              );
+              verifiedArchives.set(season.year, { regular, playoffs });
+              completedGames += archiveGames[index];
+            }
+            const activeProgress = (completed: number) =>
+              reportProgress(completedGames + completed, totalGames);
+            let replay: SeasonResult | undefined;
+            if (state.run.seasonProgress && currentGames > 0) {
+              const progress = state.run.seasonProgress;
+              const builder = seasonBuilder(
+                state.run,
+                progress.completedRounds,
+                progress.playedGames,
+              );
+              activeProgress(0);
+              for (let i = 0; i < builder.fixtures.length; i += 15) {
+                await new Promise<void>((resolve) => setTimeout(resolve, 0));
+                signal.throwIfAborted();
+                builder.fixtures.slice(i, i + 15).forEach(builder.play);
+                activeProgress(Math.min(i + 15, builder.fixtures.length));
+              }
+              replay = builder.finish();
+            } else if (currentGames > 0)
+              replay = await simulateSeasonAsync(
+                state.run,
+                activeProgress,
+                signal,
+              );
+            signal.throwIfAborted();
+            const loaded = validateSavedGame(parsed, replay, verifiedArchives);
+            onProgress(totalGames, totalGames);
+            return loaded;
           } catch (error) {
             if (signal.aborted) throw error;
             return failedLoad(fallbackSeed, franchiseSave, true);

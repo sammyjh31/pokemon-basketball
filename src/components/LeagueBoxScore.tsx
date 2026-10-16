@@ -4,6 +4,7 @@ import { POKEMON_BY_ID } from "../data/pokemon";
 import { simulateMatch } from "../game/match";
 import type {
   LeagueBox,
+  LeagueMatch,
   LeagueGameSummary,
   LeagueTeam,
   PlayType,
@@ -141,17 +142,19 @@ export function LeagueBoxScore({
   teams,
   onClose,
   contextLabel,
+  match: providedMatch,
 }: {
   game: LeagueGameSummary;
   teams: LeagueTeam[];
   onClose: () => void;
   contextLabel?: string;
+  match?: LeagueMatch;
 }) {
   const home = teams.find((team) => team.id === game.homeTeamId)!;
   const away = teams.find((team) => team.id === game.awayTeamId)!;
   const match = useMemo(
-    () => simulateMatch(home, away, game.seed),
-    [home, away, game.seed],
+    () => providedMatch ?? simulateMatch(home, away, game.seed),
+    [home, away, game.seed, providedMatch],
   );
   const dialog = useRef<HTMLDivElement>(null),
     titleId = useId(),

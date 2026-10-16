@@ -25,7 +25,7 @@ export function processOffseason(state: GameState): GameState {
     f.offseasons?.some((r) => r.year === f.year)
   )
     return state;
-  if (f.modelVersion === 2 && f.offseasons?.at(-1)?.year !== f.year - 1)
+  if (f.offseasons?.length && f.offseasons.at(-1)?.year !== f.year - 1)
     return state;
   const teams = validateLeagueTeams(f.teams, state.run.includeLegends);
   const old: PlayerDevelopment = Object.assign(
@@ -38,6 +38,7 @@ export function processOffseason(state: GameState): GameState {
       old[player.pokemonId] ?? {},
       f.year,
       state.run.seasonSeed,
+      f.trainingPlans?.[player.pokemonId],
     ),
   );
   const next: PlayerDevelopment = {};
@@ -65,6 +66,7 @@ export function processOffseason(state: GameState): GameState {
         team.tactic,
         team.rotation,
         development,
+        team.rotationPlan,
       ),
     };
   });
@@ -81,7 +83,7 @@ export function processOffseason(state: GameState): GameState {
     ...state,
     franchise: {
       ...f,
-      modelVersion: 2,
+      modelVersion: f.modelVersion === 3 ? 3 : 2,
       teams: activity.teams,
       trades: [...f.trades, ...activity.trades],
       offseasons: [
