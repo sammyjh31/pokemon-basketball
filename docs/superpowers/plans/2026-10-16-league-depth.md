@@ -36,12 +36,17 @@ Engine owner owns match.ts, engineInsightsTypes.ts, engineDepth.ts, types.ts add
 - [x] Insights: red fixture tests for postgame drivers, shot charts, lineup/defense denominators and player trends; implement accessible responsive components using engine telemetry and on-demand replay; green tests.
 - [x] Parent draft advice: test roster need/scarcity/explanation; implement recommendation panel and player physical/ability scouting.
 - [x] Parent local UI: setup format/progression/ability controls; career offseason flow, trades, rookie picks, history; refresh-safe hook and save boundaries. Test full two-year flow and both modes.
-- [ ] Integration: preserve exclusions and all legacy behavior; independent review; full suite/build, seeded balance audit and desktop/mobile browser workflows. Record evidence, merge reviewed changes, commit/push authorized project work.
+- [x] Integration: preserve exclusions and all legacy behavior; independent review; full suite/build, seeded balance audit and desktop/mobile browser workflows. Record evidence, merge reviewed changes, commit/push authorized project work.
 
-## Verification so far
+## Verification
 
 - Full pre-integration suite: 545 tests across 89 files pass.
 - Desktop and mobile: both career modes across two seasons, frozen history, rookie save reload, trades, insights; 30-club full-pool season/playoff/reload flow. All six browser tests pass.
 - Seeded 3,600-game audit passes; signature-on paired mean margin +0.675 points.
 - Independent review found recommendation recalculation latency and rookie keyboard-focus loss; both fixed.
-- Free agency integrated from 363723b. Final combined verification and preservation of uncommitted type work pending.
+- Free agency integrated from 363723b. Feature commits: d0c8536 and 67f6f07.
+- Combined type/depth/free-agency run: 608 tests passed; the sole failure captured the new Gen IX explorer regression test during its red stage. The corrected explorer and typed/untyped career replay then passed all four focused tests, covering all 609 cases across the broad and focused runs. This was not a clean single full-suite run.
+- Combined desktop/mobile suite: all six workflows passed. Final production build passed in the primary checkout.
+- Independent final review found no actionable integration issues. Eighty type-only games exactly matched the frozen pre-integration source; 60 combined games reconciled telemetry, and 20 neutral-type games had zero type delta.
+- All 261 source/test files in the installed primary checkout match the tested integration. The live preview at 127.0.0.1:5173 serves the new setup.
+- Pre-existing type-matchup work remains unstaged, including the necessary local-career flag preservation and Player.depth compatibility additions. It is not included in this feature's commits; its original bytes also remain recoverable from the integration autostash.
