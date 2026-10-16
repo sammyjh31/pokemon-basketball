@@ -20,6 +20,8 @@ export interface MatchupActor {
   energy: number;
 }
 export interface BodyContext {
+  /** Geometry already resolved movement; retain only contact, reach and typing. */
+  resolvedCourt?: { separated: boolean };
   play: PlayType;
   zone: ShotZone;
   coverage: DefenseScheme;
@@ -175,20 +177,23 @@ export function resolveBodyMatchup(
     rim = c.zone === "rim",
     post = c.play === "post" && rim;
   const screen =
-    c.play === "pickRoll" && c.screener && c.screener !== a
+    !c.resolvedCourt && c.play === "pickRoll" && c.screener && c.screener !== a
       ? screenLeverage(c.screener, d) *
         (c.coverage === "switch" ? 0.25 : c.coverage === "zone" ? 0.55 : 1)
       : 0;
   const helper = c.helper && c.helper !== d && rim ? c.helper : undefined;
-  const help = helper
-    ? clamp(
-        0.05 +
-          (helper.body?.reach ?? neutral.reach) * 0.08 +
-          helper.profile.attributes.interiorDefense * readiness(helper) * 0.001,
-        0,
-        0.22,
-      )
-    : 0;
+  const help =
+    !c.resolvedCourt && helper
+      ? clamp(
+          0.05 +
+            (helper.body?.reach ?? neutral.reach) * 0.08 +
+            helper.profile.attributes.interiorDefense *
+              readiness(helper) *
+              0.001,
+          0,
+          0.22,
+        )
+      : 0;
   const advantageChance = clamp(
     0.38 +
       (post
@@ -197,21 +202,21 @@ export function resolveBodyMatchup(
       e.type * 0.045 +
       screen * 0.23 -
       help +
-      (c.kickout ? 0.23 : 0),
+      (!c.resolvedCourt && c.kickout ? 0.23 : 0),
     0.12,
     0.8,
   );
-  const won = roll < advantageChance;
+  const won = c.resolvedCourt?.separated ?? roll < advantageChance;
   const physicalLogOdds = clamp(
     (rim
       ? post
         ? e.contact * 0.34 + e.reach * 0.18
         : e.quickness * 0.28 + e.reach * 0.15 + e.contact * 0.08
       : e.reach * (c.zone === "mid" ? 0.21 : 0.12) + e.quickness * 0.18) +
-      (won ? 0.14 : -0.08) +
+      (c.resolvedCourt ? 0 : won ? 0.14 : -0.08) +
       screen * 0.1 -
       help * 0.85 +
-      (c.kickout ? 0.1 : 0),
+      (!c.resolvedCourt && c.kickout ? 0.1 : 0),
     -0.55,
     0.55,
   );
@@ -256,7 +261,7 @@ export function resolveBodyMatchup(
         screen * 0.18 -
         e.reach * 0.08 +
         help * 0.5 -
-        (c.kickout ? 0.17 : 0),
+        (!c.resolvedCourt && c.kickout ? 0.17 : 0),
       0.2,
       0.94,
     ),

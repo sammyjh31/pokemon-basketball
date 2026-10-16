@@ -76,7 +76,8 @@ export function CourtInsights({
         Actual simulated locations affect passing lanes, help, closeouts and
         shot quality. Screen coverage is chosen for the players on the floor.
         Each attack below ends in a shot, foul or turnover; an offensive rebound
-        starts another attack with 14 seconds.
+        starts another attack with 14 seconds. Clocks show the time available
+        before either the shot clock or period expires.
       </p>
       <div className="court-metrics">
         <div>
@@ -264,8 +265,8 @@ export function CourtInsights({
               </strong>
               <p>
                 {number(current.seconds)} seconds used ·{" "}
-                {number(current.shotClock)} on the shot clock · nearest defender{" "}
-                {number(current.defenderDistance)} ft away.
+                {number(current.shotClock)} seconds left to shoot · nearest
+                defender {number(current.defenderDistance)} ft away.
               </p>
               {current.coverage && (
                 <p>

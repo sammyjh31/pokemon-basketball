@@ -130,12 +130,13 @@ export function courtGeometry(
       .filter((p) => p !== shooter)
       .reduce((n, p) => n + Math.min(28, distance(point, court.get(p)!)), 0) /
     4;
-  const shotLogOdds = clamp(
-    (defenderDistance - 3) * 0.065 -
-      (zone === "rim" ? paintCrowding * 0.035 : 0),
-    -0.28,
-    0.42,
-  );
+  const shotLogOdds =
+    clamp(
+      (defenderDistance - 3) * 0.065 -
+        (zone === "rim" ? paintCrowding * 0.035 : 0),
+      -0.28,
+      0.42,
+    ) - clamp((shooterRim - 27) * 0.12, 0, 2);
   return {
     zone,
     defender,
@@ -257,13 +258,19 @@ export function resolveCourtPossession(
     actions: CourtAction[] = [];
   let coverage: ScreenCoverage | undefined, coverageReason: string | undefined;
   let outcome: CourtSequence["outcome"] = "shot",
-    kickout = false;
+    kickout = false,
+    clockLimited = false;
   const spend = (
     kind: CourtAction["kind"],
     duration: number,
     target?: Player,
     recover = true,
   ) => {
+    // Never complete a pass/drive/screen using time that the clock cannot supply.
+    if (kind !== "shoot" && kind !== "violation" && duration + 0.6 > clock) {
+      clockLimited = true;
+      return false;
+    }
     const used = Math.min(clock, duration);
     clock = Math.max(0, clock - used);
     seconds += used;
@@ -286,14 +293,18 @@ export function resolveCourtPossession(
       ...(target ? { targetId: target.box.playerId } : {}),
       clock,
     });
+    return true;
   };
   const pass = (target: Player, kind: "pass" | "kickout") => {
     const risk = passRisk(court, ball, target, c.defense);
-    spend(
-      kind,
-      1.1 + distance(court.get(ball)!, court.get(target)!) / 35,
-      target,
-    );
+    if (
+      !spend(
+        kind,
+        1.1 + distance(court.get(ball)!, court.get(target)!) / 35,
+        target,
+      )
+    )
+      return false;
     if (random() < risk) {
       outcome = "turnover";
       return false;
@@ -303,35 +314,53 @@ export function resolveCourtPossession(
     kickout = kind === "kickout";
     return true;
   };
-  spend(
-    "advance",
-    c.putback?.box.playerId
-      ? 1
-      : c.play === "transition"
-        ? 3
-        : c.tactic === "pace"
-          ? 5.5
-          : c.tactic === "defense"
-            ? 8.5
-            : 7.5,
-  );
-  if (!c.putback && c.play === "pickRoll" && clock > 4) {
-    const chosen = chooseScreenCoverage(c);
-    coverage = chosen.coverage;
-    coverageReason = chosen.reason;
-    spend("screen", 2.4 + (c.screener.body?.inertia ?? 0.5), c.screener, false);
-    applyScreenCoverage(court, c, coverage);
+  const advanceSeconds = c.putback
+    ? 1
+    : c.play === "transition"
+      ? 3
+      : c.tactic === "pace"
+        ? 5.5
+        : c.tactic === "defense"
+          ? 8.5
+          : 7.5;
+  const rushedAdvance = !spend("advance", advanceSeconds);
+  if (rushedAdvance && !c.putback) {
+    // The half-court formation assumes the offense has arrived. When the
+    // period cannot supply that travel time, finish with a distant heave.
+    court.set(ball, {
+      x: 0,
+      y: 31 + 16 * (1 - clamp((clock - 0.6) / advanceSeconds, 0, 1)),
+    });
   }
-  if (c.play === "post" && !c.putback && clock > 3) {
+  if (!clockLimited && !c.putback && c.play === "pickRoll" && clock > 4) {
+    const chosen = chooseScreenCoverage(c);
+    if (
+      spend(
+        "screen",
+        2.4 + (c.screener.body?.inertia ?? 0.5),
+        c.screener,
+        false,
+      )
+    ) {
+      coverage = chosen.coverage;
+      coverageReason = chosen.reason;
+      applyScreenCoverage(court, c, coverage);
+    }
+  }
+  if (!clockLimited && c.play === "post" && !c.putback && clock > 3) {
     court.set(c.screener, { x: 5, y: 10 });
     pass(c.screener, "pass");
-  } else if (c.play === "spotUp" && clock > 3) {
+  } else if (!clockLimited && !c.putback && c.play === "spotUp" && clock > 3) {
     const target = c.offense
       .filter((p) => p !== ball)
       .sort((a, b) => skill(b, "threePoint") - skill(a, "threePoint"))[0];
     pass(target, "pass");
   }
-  for (let step = 0; outcome === "shot" && step < 4 && clock > 1.5; step++) {
+  for (
+    let step = 0;
+    !clockLimited && outcome === "shot" && step < 4 && clock > 1.5;
+    step++
+  ) {
     const geometry = courtGeometry(court, ball, c.offense, c.defense);
     const open = geometry.defenderDistance > 5;
     const shooting = skill(
@@ -411,7 +440,8 @@ export function resolveCourtPossession(
       const target = beat
         ? { x: from.x * 0.2, y: 8 }
         : { x: from.x * 0.55, y: 18 };
-      spend("drive", 2.7 + (ball.body?.inertia ?? 0.5), undefined, false);
+      if (!spend("drive", 2.7 + (ball.body?.inertia ?? 0.5), undefined, false))
+        break;
       court.set(ball, moveToward(from, target, ball, 2.7));
       // The beaten defender trails; nearby help can leave its assignment and open a kickout.
       court.set(
@@ -452,11 +482,17 @@ export function resolveCourtPossession(
     else spend("reset", 2.5 + random() * 2);
   }
   if (outcome === "shot") {
-    if (clock <= 0.05 && c.periodRemaining >= c.shotClock)
+    if (
+      clockLimited &&
+      c.periodRemaining >= c.shotClock &&
+      random() >
+        clamp(0.55 + ball.profile.traits.decisionMaking * 0.004, 0.65, 0.95)
+    ) {
       outcome = "violation";
-    else spend("shoot", Math.min(clock, 0.6));
+      spend("violation", clock, undefined, false);
+    } else spend("shoot", rushedAdvance ? clock : Math.min(clock, 0.6));
   }
-  if (outcome !== "shot")
+  if (outcome !== "shot" && actions.at(-1)?.kind !== "violation")
     actions.push({
       kind: outcome === "violation" ? "violation" : "turnover",
       playerId: ball.box.playerId,
@@ -492,6 +528,7 @@ export function resolveCourtPossession(
   };
   return {
     sequence,
+    putback: !!c.putback && ball === c.putback && !passer,
     shooter: ball,
     defender: geometry.defender,
     passer,

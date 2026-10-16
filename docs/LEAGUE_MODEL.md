@@ -12,7 +12,7 @@ A circle schedule plays all 29 opponents home and away (58 games). Twelve additi
 
 ## Match decisions
 
-The clock advances in 7.5-second steps. Normal substitutions are evaluated every minute using planned minutes, positional coverage, accumulated workload, energy and foul trouble. Close games prefer a closing lineup in the final four minutes. Bench players recover energy; halftime and quarter breaks add recovery. Pressing and fast pace cost extra energy.
+Court-enabled games (`courtVersion: 1`) advance the clock by each possession segment's actual duration; earlier saved rules retain 7.5-second steps. Normal substitutions are evaluated at the first possession boundary in each new minute using planned minutes, positional coverage, accumulated workload, energy and foul trouble. Close games prefer a closing lineup in the final four minutes. Bench players recover energy; halftime and quarter breaks add recovery. Pressing and fast pace cost extra energy.
 
 Each possession chooses a handler and play type from transition, pick-and-roll, isolation, post or spot-up actions. Both teams use actual players and five-player floor lineups. Screens, passing, off-ball movement, shot preference, defensive matchups, help protection, closeouts and spacing affect shots. Switching changes pick-and-roll defenders; zones protect the rim while conceding perimeter opportunities; pressure trades turnovers for fouls and fatigue. Shooting fouls, and-ones, bonus free throws, offensive fouls and final-free-throw rebounds update both boxes. Play-type counts represent actions, including repeated actions after a foul or offensive rebound.
 

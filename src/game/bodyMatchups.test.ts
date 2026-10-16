@@ -190,3 +190,20 @@ it("the preview averages won and contained outcomes without changing the input o
   expect(0.5 + p.physicalChange + p.typeChange).toBeCloseTo(p.probability, 12);
   expect(p).toEqual(previewBodyShot(0.5, a, d, drive));
 });
+it("does not add abstract screen, help or kickout movement again after court positions resolve it", () => {
+  const a = actor(),
+    d = actor(),
+    s = actor(1.5, 400),
+    h = actor();
+  const c = { ...drive, resolvedCourt: { separated: true } };
+  const base = resolveBodyMatchup(a, d, c, 0.99);
+  const screened = resolveBodyMatchup(
+    a,
+    d,
+    { ...c, play: "pickRoll", screener: s, helper: h, kickout: true },
+    0.99,
+  );
+  expect(screened.screen).toBe(0);
+  expect(screened.physicalLogOdds).toBeCloseTo(base.physicalLogOdds, 10);
+  expect(screened.won).toBe(true);
+});

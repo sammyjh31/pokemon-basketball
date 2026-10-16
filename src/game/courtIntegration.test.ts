@@ -21,6 +21,7 @@ it("runs real action sequences for CPU teams, preserving points, clocks, minutes
   const [h, a] = [teams[3], teams[15]];
   const before = JSON.stringify([h, a]);
   const match = simulateMatch(h, a, 711);
+  expect(match.insights?.coordinateSystem).toBe("simulated-half-court");
   expect(match.insights?.court?.length).toBeGreaterThan(100);
   expect(match.insights!.court!.some((s) => s.actions.length >= 4)).toBe(true);
   expect(
@@ -86,6 +87,7 @@ it("keeps old games free of new evidence and rejects mixed or unsupported court 
     1,
   );
   expect(legacy.insights?.court).toBeUndefined();
+  expect(legacy.insights?.coordinateSystem).toBe("schematic-half-court");
 });
 it("allows only defenders within recovery range to block a spatial shot", () => {
   const teams = clubs();
@@ -111,4 +113,35 @@ it("records fouls and turnovers instead of phantom shot actions when an attack e
       shotSequences.has(index),
     );
   });
+});
+it("derives putbacks and screen credit from actual court actions without duplicate spatial bonuses", () => {
+  const teams = clubs(),
+    m = simulateMatch(teams[3], teams[15], 711);
+  let putbacks = 0;
+  for (const shot of m.insights!.shots) {
+    const seq = m.insights!.court![shot.courtSequence!];
+    const direct =
+      shot.secondChance &&
+      !seq.actions.some((a) =>
+        ["screen", "drive", "pass", "kickout", "reset"].includes(a.kind),
+      );
+    if (direct) {
+      expect(shot.putback).toBe(true);
+      putbacks++;
+    }
+    expect(shot.matchup!.screen).toBe(0);
+  }
+  expect(putbacks).toBeGreaterThan(0);
+  const credited = m.insights!.possession!.players.reduce(
+    (n, p) => n + p.screenAssists,
+    0,
+  );
+  const screenedMakes = m.insights!.shots.filter(
+    (s) =>
+      s.made &&
+      m.insights!.court![s.courtSequence!].actions.some(
+        (a) => a.kind === "screen",
+      ),
+  ).length;
+  expect(credited).toBeLessThanOrEqual(screenedMakes);
 });

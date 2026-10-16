@@ -412,7 +412,9 @@ export function simulateMatch(
   if (depthEnabled || possessionDepth || courtEnabled)
     result.insights = {
       version: 1,
-      coordinateSystem: "schematic-half-court",
+      coordinateSystem: courtEnabled
+        ? "simulated-half-court"
+        : "schematic-half-court",
       shots: [],
       lineups: [],
       defense: [...h.players, ...a.players].map((p) => ({
@@ -1153,18 +1155,19 @@ export function simulateMatch(
                 : 1)
           );
         });
-      let putback =
-        !courtEnabled &&
-        possessionDepth &&
-        secondChance &&
-        lastRebounder &&
-        offense.floor.includes(lastRebounder) &&
-        random() <
-          clamp(
-            0.34 + (skill(lastRebounder, "finishing") - 60) * 0.004,
-            0.18,
-            0.65,
-          );
+      let putback = court
+        ? !!court.putback
+        : !courtEnabled &&
+          possessionDepth &&
+          secondChance &&
+          lastRebounder &&
+          offense.floor.includes(lastRebounder) &&
+          random() <
+            clamp(
+              0.34 + (skill(lastRebounder, "finishing") - 60) * 0.004,
+              0.18,
+              0.65,
+            );
       if (putback) shooter = lastRebounder!;
       let shooterRole = offense.floor.indexOf(shooter);
       let defender =
@@ -1289,7 +1292,14 @@ export function simulateMatch(
             shooter,
             defender,
             {
-              play,
+              ...(court
+                ? {
+                    resolvedCourt: {
+                      separated: court.sequence.defenderDistance > 4,
+                    },
+                  }
+                : {}),
+              play: court?.putback ? "post" : play,
               zone,
               coverage: coverageScheme,
               screener,
@@ -1702,7 +1712,13 @@ export function simulateMatch(
           random() < creationChance(play, skill(passer, "passing"), disrupted)
         )
           createdBy = passer;
-        if (play === "pickRoll" && screener !== shooter && !putback)
+        if (
+          (court
+            ? court.sequence.actions.some((a) => a.kind === "screen")
+            : play === "pickRoll") &&
+          screener !== shooter &&
+          !putback
+        )
           screenBy = screener;
         const boost =
           (createdBy

@@ -17,6 +17,7 @@ try {
   const { createLeague } = await server.ssrLoadModule("/src/game/league.ts");
   const teams = createLeague({
     ...createRun("free", true, 9824),
+    courtVersion: undefined,
     roster: {
       PG: 65,
       SG: 135,

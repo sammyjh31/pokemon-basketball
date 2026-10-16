@@ -699,8 +699,9 @@ function totals(value: unknown, maxGames: number): CareerTotals {
             key === "plusMinus" ? -maxGames * 10000 : 0,
             maxGames * 10000,
           );
+  // Court possessions use continuous game time, so minutes no longer land
+  // on the legacy eighth-minute grid. Counting statistics remain integers.
   if (
-    !Number.isSafeInteger(result.minutes * 8) ||
     result.gamesPlayed > maxGames ||
     result.gamesStarted > result.gamesPlayed ||
     result.doubleDoubles > result.gamesPlayed ||
@@ -879,8 +880,13 @@ function careers(
       !Number.isSafeInteger(played) ||
       rows.reduce((sum, row) => sum + row[phase].gamesPlayed, 0) !==
         expectedAppearances ||
-      minutes < played * 480 ||
-      (minutes - played * 480) % 50 !== 0 ||
+      // Sum fractional minutes with floating-point tolerance; every overtime
+      // still contributes exactly 50 league-wide player minutes.
+      minutes < played * 480 - 1e-6 ||
+      Math.abs(
+        (minutes - played * 480) / 50 -
+          Math.round((minutes - played * 480) / 50),
+      ) > 1e-8 ||
       rows.reduce((sum, row) => sum + row[phase].playerOfGame, 0) !== played ||
       rows.reduce((sum, row) => sum + row[phase].gamesStarted, 0) !==
         expectedStarts

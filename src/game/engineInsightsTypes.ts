@@ -35,7 +35,7 @@ export interface ShotEvent {
   /** A missed shooting-foul attempt is not an official field-goal attempt. */
   countsAsAttempt: boolean;
   contested: boolean;
-  /** Schematic display coordinates, 0..100, not simulated court tracking. */
+  /** 0..100 display coordinates; courtSequence identifies simulated positions. */
   x: number;
   y: number;
 }
@@ -81,7 +81,7 @@ export interface MatchInsights {
   court?: import("./courtTypes").CourtSequence[];
   possession?: PossessionInsights;
   version: 1;
-  coordinateSystem: "schematic-half-court";
+  coordinateSystem: "schematic-half-court" | "simulated-half-court";
   shots: ShotEvent[];
   lineups: LineupSummary[];
   defense: DefenseSummary[];

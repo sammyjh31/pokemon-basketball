@@ -130,3 +130,48 @@ it("uses available time, preserves ten actual positions and terminates short-per
     ).toBe(true);
   }
 });
+it("uses a short period only for a rushed release, never a completed action plus a zero-time shot", () => {
+  const c = { ...setup(), play: "isolation" as const, periodRemaining: 0.3 };
+  const r = resolveCourtPossession(c, () => 0.6);
+  expect(r.sequence.actions.map((a) => a.kind)).toEqual(["shoot"]);
+  expect(r.sequence.seconds).toBeCloseTo(0.3);
+  expect(
+    r.sequence.positions.find((p) => p.playerId === c.handler.box.playerId),
+  ).toMatchObject({ x: 0, y: 47 });
+  const longer = resolveCourtPossession(
+    { ...c, periodRemaining: 9 },
+    () => 0.6,
+  );
+  const clocks = [
+    longer.sequence.initialClock,
+    ...longer.sequence.actions.map((a) => a.clock),
+  ];
+  expect(clocks.at(-2)! - clocks.at(-1)!).toBeGreaterThan(0);
+  for (let i = 0; i < longer.sequence.actions.length; i++)
+    if (longer.sequence.actions[i].kind === "drive")
+      expect(clocks[i] - clocks[i + 1]).toBeGreaterThanOrEqual(2.7);
+});
+it("uses the remaining period for a rushed advance instead of inventing repeated half-court attacks", () => {
+  for (const remaining of [0.3, 0.9, 2, 5, 8]) {
+    const c = {
+      ...setup(),
+      play: "isolation" as const,
+      periodRemaining: remaining,
+    };
+    const r = resolveCourtPossession(c, () => 0.6);
+    expect(r.sequence.seconds).toBeCloseTo(remaining);
+    expect(r.sequence.shotClock).toBe(0);
+    expect(
+      r.sequence.positions.find((p) => p.playerId === c.handler.box.playerId)!
+        .y,
+    ).toBeGreaterThanOrEqual(31);
+  }
+  const c = setup(),
+    court = createCourt(c);
+  for (const p of c.defense) court.set(p, { x: 24, y: 10 });
+  const normal = courtGeometry(court, c.handler, c.offense, c.defense);
+  court.set(c.handler, { x: 0, y: 47 });
+  expect(
+    courtGeometry(court, c.handler, c.offense, c.defense).shotLogOdds,
+  ).toBeLessThan(normal.shotLogOdds - 1);
+});

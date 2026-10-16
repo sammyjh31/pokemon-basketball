@@ -25,6 +25,7 @@ export interface CourtSequence {
   defenseTeamId: number;
   period: number;
   elapsedSeconds: number;
+  /** Effective attack clock, capped by time remaining in the period. */
   initialClock: number;
   shotClock: number;
   seconds: number;

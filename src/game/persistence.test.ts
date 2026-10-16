@@ -36,7 +36,7 @@ describe("saved progress", () => {
     const s = finished(),
       loaded = loadGame(memory(JSON.stringify(s)), 1).state;
     expect(gameReducer(loaded, { type: "SIMULATE" }).records.spin.runs).toBe(1);
-  }, 60000); // Multiple full-league generations and validation replays.
+  }, 120000); // Four full-league generations/replays with the court model.
 
   it("starts clean when there is no save", () => {
     expect(loadGame(memory(), 17)).toEqual({
