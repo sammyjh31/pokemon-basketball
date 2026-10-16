@@ -1,4 +1,5 @@
 import { getCoach } from "../game/trainerCoaches";
+import { CoachPortrait } from "./CoachPortrait";
 import { coachGamePlan } from "../game/coachPolicy";
 import type { OfficialGame } from "../game/franchiseFeatures";
 import { useCallback, useId, useState } from "react";
@@ -648,6 +649,7 @@ function Rosters({
   const team =
     league.teams.find((t) => String(t.id) === teamId) ?? league.teams[0];
   if (!team) return null;
+  const coach = getCoach(team.coach?.id ?? "");
   return (
     <section>
       <div className="league-controls">
@@ -660,23 +662,27 @@ function Rosters({
         />
       </div>
       <div className="league-team-profile">
-        <div>
-          <span className="eyebrow">COACHING IDENTITY</span>
-          <h4>{team.name}</h4>
-          <p>
-            {team.coach
-              ? `${getCoach(team.coach.id)!.name} · ${getCoach(team.coach.id)!.style} · Automatic coaching`
-              : `${TACTIC_LABELS[team.tactic]} · ${DEFENSE_LABELS[team.defense]}`}{" "}
-            ·{" "}
-            {(team.coach ? coachGamePlan(team).rotation : team.rotation) ===
-            "starters"
-              ? "Starter-heavy"
-              : (team.coach ? coachGamePlan(team).rotation : team.rotation) ===
-                  "bench"
-                ? "Deep bench"
-                : "Balanced"}{" "}
-            rotation
-          </p>
+        <div className="coach-identity">
+          {coach && <CoachPortrait coach={coach} size="small" />}
+          <div>
+            <span className="eyebrow">COACHING IDENTITY</span>
+            <h4>{team.name}</h4>
+            <p>
+              {team.coach
+                ? `${getCoach(team.coach.id)!.name} · ${getCoach(team.coach.id)!.style} · Automatic coaching`
+                : `${TACTIC_LABELS[team.tactic]} · ${DEFENSE_LABELS[team.defense]}`}{" "}
+              ·{" "}
+              {(team.coach ? coachGamePlan(team).rotation : team.rotation) ===
+              "starters"
+                ? "Starter-heavy"
+                : (team.coach
+                      ? coachGamePlan(team).rotation
+                      : team.rotation) === "bench"
+                  ? "Deep bench"
+                  : "Balanced"}{" "}
+              rotation
+            </p>
+          </div>
         </div>
         <div className="league-team-ratings">
           <span>

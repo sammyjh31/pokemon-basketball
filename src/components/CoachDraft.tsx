@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { COACHES, coachOffers } from "../game/trainerCoaches";
 import { TACTIC_LABELS, DEFENSE_LABELS } from "../game/types";
+import { CoachPortrait } from "./CoachPortrait";
 import "../coaches.css";
 export function CoachDraft({
   seed,
@@ -68,16 +69,7 @@ export function CoachDraft({
             key={c.id}
           >
             <div className="coach-card-top">
-              <span className="coach-monogram" aria-hidden="true">
-                {c.id === "mom"
-                  ? "MOM"
-                  : c.name
-                      .replace("Professor ", "")
-                      .split(" ")
-                      .map((w) => w[0])
-                      .slice(0, 2)
-                      .join("")}
-              </span>
+              <CoachPortrait coach={c} size="large" />
               <span className="eyebrow">{c.identity}</span>
             </div>
             <h3>{c.name}</h3>
@@ -116,6 +108,10 @@ export function CoachDraft({
       <p className="coach-footnote">
         Coaches stay with their club across seasons. Trainer identities come
         from Pokémon; basketball styles are original to this game.{" "}
+        <a href="/coaches/credits.html" target="_blank" rel="noreferrer">
+          Portrait credits
+        </a>
+        .{" "}
         {nextSeason &&
           "This choice begins next season; completed results stay unchanged."}
       </p>

@@ -4,6 +4,8 @@ Basketball development uses the attached checkout `/Users/sam/.codex/worktrees/p
 
 ## Trainer coaches
 
+Coach portraits now appear in draft cards, the selected-coach summary, league roster profiles and trainer game reports. All 32 images are bundled under `public/coaches/`, with source checksums, named artist credits and a linked attribution page. Image failures fall back to initials. No coach policies or saved-game data changed. Verified all 32 PNGs/checksums, four existing coach-selection tests, TypeScript/production build, desktop cards and 390px mobile selection/summary (no horizontal overflow or browser errors). Screenshot: `docs/design/coach-portraits.png`.
+
 Draftable, versioned trainer coaches now drive the shared simulated-match engine. The challenge offers three seeded trainers; builder and local friend drafts use the available 32-person catalog. New friend leagues collect every human choice before filling CPU jobs, with unique identities per league. Coaches persist through seasons, trades, development and replayable archives. Existing played inputs remain uncoached until an explicit eligible hire, so historical results do not change.
 
 `trainerCoaches.ts` owns identities/preferences; `coachPolicy.ts` derives roster-sensitive plans, workload and live responses. Selection-only role preferences and workload targets enter the real lineup picker; bounded screen preferences enter the real coverage resolver. Decisions use score, time, fatigue and observed shots independently of optional insights. The UI replaces manual coaching controls with trainer summaries, projected rotation and recorded game decisions. Manually controlled arcade games retain their existing physics and controls.

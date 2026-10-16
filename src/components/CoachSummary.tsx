@@ -1,4 +1,5 @@
 import { getCoach } from "../game/trainerCoaches";
+import { CoachPortrait } from "./CoachPortrait";
 import { coachGamePlan, coachRotationMinutes } from "../game/coachPolicy";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { TACTIC_LABELS, DEFENSE_LABELS, type LeagueTeam } from "../game/types";
@@ -20,13 +21,18 @@ export function CoachSummary({
       className="coach-summary"
       aria-label={`${c.name} automatic coaching`}
     >
-      <span className="eyebrow">
-        {nextSeason ? "Next season's head coach" : "Your head coach"} ·
-        Automatic coaching
-      </span>
-      <h2>
-        {c.name} <small>{c.style}</small>
-      </h2>
+      <div className="coach-identity">
+        <CoachPortrait coach={c} />
+        <div>
+          <span className="eyebrow">
+            {nextSeason ? "Next season's head coach" : "Your head coach"} ·
+            Automatic coaching
+          </span>
+          <h2>
+            {c.name} <small>{c.style}</small>
+          </h2>
+        </div>
+      </div>
       <p>
         {c.description} Starters and closers are selected by role fit, matchups,
         fatigue and fouls.

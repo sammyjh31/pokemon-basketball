@@ -610,6 +610,10 @@ export default function App({
             >
               Pokémon All-22
             </a>
+            .{" "}
+            <a href="/coaches/credits.html" target="_blank" rel="noreferrer">
+              Coach portrait credits
+            </a>
             .
           </p>
         </footer>
