@@ -5,7 +5,8 @@ test.beforeEach(({ page }) => asReturningPlayer(page));
 test("friends draft a complete local league, compare results, and restore without replacing solo progress", async ({
   page,
 }, info) => {
-  test.setTimeout(90000);
+  // Includes drafting 16 picks and re-verifying a 1,230-game season on reload.
+  test.setTimeout(180000);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
