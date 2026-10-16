@@ -1,4 +1,15 @@
 import { expect, test } from "@playwright/test";
+import { asReturningPlayer } from "./returningPlayer";
+test.beforeEach(({ page }) => asReturningPlayer(page));
+// Advanced scouting is remembered per browser; these flows start with it open,
+// except the first test, which opens it like a new scout would.
+test.beforeEach(({ page }, info) =>
+  info.title.startsWith("scout, compare")
+    ? undefined
+    : page.addInitScript(() =>
+        localStorage.setItem("pokemon-basketball:advanced-scouting", "open"),
+      ),
+);
 
 test("scout, compare across filters, and confirm a local pick", async ({
   page,
@@ -18,6 +29,21 @@ test("scout, compare across filters, and confirm a local pick", async ({
       JSON.parse(localStorage.getItem("pokemon-basketball:local-league:v1")!),
     );
   const before = await save();
+  const advanced = page.getByRole("group").filter({
+    has: page.getByText("Advanced scouting", { exact: true }),
+  });
+  await expect(
+    page.getByRole("region", { name: "Team impact ranking", exact: true }),
+  ).toBeHidden();
+  await page.getByText("Advanced scouting", { exact: true }).click();
+  await expect(advanced).toHaveAttribute("open", "");
+  await page.getByRole("button", { name: "Fit", exact: true }).focus();
+  await expect(page.getByRole("tooltip").first()).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
   await expect(
     page.getByRole("combobox", { name: "Rank players by" }),
   ).toHaveValue("impact");

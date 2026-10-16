@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { asReturningPlayer } from "./returningPlayer";
+test.beforeEach(({ page }) => asReturningPlayer(page));
 
 for (const mode of ["generational", "full-pool"] as const) {
   test(`${mode} friends league plays two seasons, inspects events and restores history`, async ({
@@ -26,6 +28,7 @@ for (const mode of ["generational", "full-pool"] as const) {
     await page
       .getByRole("button", { name: "Draft Misty", exact: true })
       .click();
+    await page.getByText("Advanced scouting", { exact: true }).click();
     await page.getByText(/Draft recommendations for/).click();
     await expect(page.getByText(/Based on open roles/)).toBeVisible();
     for (let i = 0; i < 16; i++) {
@@ -35,7 +38,9 @@ for (const mode of ["generational", "full-pool"] as const) {
         .getByRole("button", { name: /^View scouting for / })
         .first()
         .click();
-      await page.getByRole("button", { name: /^Confirm pick:/ }).click();
+      await page
+        .getByRole("button", { name: /^Confirm pick(?: & lineup)?:/ })
+        .click();
     }
     const initial = await save();
     expect(initial.picks).toHaveLength(32);

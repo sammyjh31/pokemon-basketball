@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { asReturningPlayer } from "./returningPlayer";
+test.beforeEach(({ page }) => asReturningPlayer(page));
 async function chooseCoach(page: Page) {
   await page
     .getByRole("region", { name: "Your team. Their game plan." })
@@ -19,7 +21,10 @@ async function draftSpin(page: Page) {
   }
 }
 async function checkRecord(page: Page) {
-  await expect(page.getByTestId("game-result")).toHaveCount(82);
+  // Seasons simulate, and saved leagues re-verify on reload, asynchronously.
+  await expect(page.getByTestId("game-result")).toHaveCount(82, {
+    timeout: 60000,
+  });
   const text = await page.getByTestId("season-record").textContent();
   expect(
     text!

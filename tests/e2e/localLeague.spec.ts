@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { asReturningPlayer } from "./returningPlayer";
+test.beforeEach(({ page }) => asReturningPlayer(page));
 
 test("friends draft a complete local league, compare results, and restore without replacing solo progress", async ({
   page,
@@ -78,7 +80,9 @@ test("friends draft a complete local league, compare results, and restore withou
       .getByRole("button", { name: /^View scouting for / })
       .first()
       .click();
-    await page.getByRole("button", { name: /^Confirm pick:/ }).click();
+    await page
+      .getByRole("button", { name: /^Confirm pick(?: & lineup)?:/ })
+      .click();
     if (i === 4) {
       const before = await page
         .getByRole("heading", { name: /On the clock:/ })
