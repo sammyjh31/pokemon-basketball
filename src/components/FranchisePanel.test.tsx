@@ -689,6 +689,23 @@ describe("complete offseason workspace", () => {
     onPickRookie: vi.fn(),
   });
 
+  it("opens the free-agent workspace and keeps it locked until the rookie draft finishes", () => {
+    const state = readyState();
+    const callbacks = {
+      ...newCallbacks(),
+      onSignFreeAgent: vi.fn(),
+      onCpuFreeAgency: vi.fn(),
+    };
+    setup(state, callbacks);
+    fireEvent.click(screen.getByRole("button", { name: "Free agents" }));
+    expect(
+      screen.getByRole("heading", { name: "Free agents" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Run CPU free agency" }),
+    ).toBeDisabled();
+  });
+
   it("requires this offseason's rookie draft and forwards beginning and individual picks", () => {
     const state = readyState(),
       callbacks = newCallbacks();

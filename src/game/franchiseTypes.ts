@@ -1,4 +1,5 @@
 import type { RookieDraft } from "./rookieDraftTypes";
+import type { FreeAgency } from "./freeAgencyTypes";
 import type { TrainingPlans, SeasonReplayArchive } from "./franchiseFeatures";
 import type { LeaguePlayer, LeagueTeam, Standing, SeasonAward } from "./types";
 import type { FinalsMvp } from "./playoffTypes";
@@ -84,6 +85,7 @@ export interface Franchise {
   offseasons?: OffseasonReport[];
   trainingPlans?: TrainingPlans;
   rookieDrafts?: RookieDraft[];
+  freeAgency?: FreeAgency;
 }
 export interface TradeEvaluation {
   accepted: boolean;

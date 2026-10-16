@@ -243,6 +243,10 @@ export default function App({
       onTradePackage={(offer) => dispatch({ type: "TRADE_PACKAGE", offer })}
       onRoster={(settings) => dispatch({ type: "OFFSEASON_ROSTER", settings })}
       onBeginDraft={() => dispatch({ type: "BEGIN_ROOKIE_DRAFT" })}
+      onSignFreeAgent={(pokemonId, releasedId) =>
+        dispatch({ type: "SIGN_FREE_AGENT", pokemonId, releasedId })
+      }
+      onCpuFreeAgency={() => dispatch({ type: "PROCESS_CPU_FREE_AGENCY" })}
       onAdvanceDraft={() => dispatch({ type: "ADVANCE_ROOKIE_DRAFT" })}
       onPickRookie={(pokemonId, releasedId) =>
         dispatch({ type: "PICK_ROOKIE", pokemonId, releasedId })

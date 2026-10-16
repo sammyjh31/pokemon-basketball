@@ -4,6 +4,7 @@ import { TrainingPanel } from "./TrainingPanel";
 import { TradeCenter } from "./TradeCenter";
 import { OffseasonRoster } from "./OffseasonRoster";
 import { RookieDraftPanel } from "./RookieDraftPanel";
+import { FreeAgentMarket } from "./FreeAgentMarket";
 import type { TrainingPlans } from "../game/franchiseFeatures";
 import type { TradePackage } from "../game/tradeTypes";
 import type { OffseasonRosterSettings } from "../game/offseasonRoster";
@@ -43,6 +44,8 @@ export interface FranchisePanelProps {
   onBeginDraft?: () => void;
   onAdvanceDraft?: () => void;
   onPickRookie?: (pokemonId: number, releasedId: number) => void;
+  onSignFreeAgent?: (pokemonId: number, releasedId: number) => void;
+  onCpuFreeAgency?: () => void;
 }
 
 const playerName = (id: number) =>
@@ -78,6 +81,8 @@ function Offseason({
   onBeginDraft,
   onAdvanceDraft,
   onPickRookie,
+  onSignFreeAgent,
+  onCpuFreeAgency,
 }: Pick<
   FranchisePanelProps,
   | "state"
@@ -90,6 +95,8 @@ function Offseason({
   | "onBeginDraft"
   | "onAdvanceDraft"
   | "onPickRookie"
+  | "onSignFreeAgent"
+  | "onCpuFreeAgency"
 > & {
   onReviewDevelopment: () => void;
   franchise: Franchise;
@@ -139,6 +146,9 @@ function Offseason({
     ...(onRoster ? [{ id: "roster", label: "Roster & coaching" }] : []),
     ...(onTradePackage ? [{ id: "market", label: "Trade market" }] : []),
     ...(draftEnabled ? [{ id: "draft", label: "Rookie draft" }] : []),
+    ...(onSignFreeAgent && onCpuFreeAgency
+      ? [{ id: "free-agents", label: "Free agents" }]
+      : []),
   ];
   const activeWorkspace = sections.some((section) => section.id === workspace)
     ? workspace
@@ -259,6 +269,16 @@ function Offseason({
             onBegin={onBeginDraft}
             onAdvance={onAdvanceDraft}
             onPick={onPickRookie}
+          />
+        )}
+      {activeWorkspace === "free-agents" &&
+        onSignFreeAgent &&
+        onCpuFreeAgency && (
+          <FreeAgentMarket
+            state={state}
+            disabled={disabled}
+            onSign={onSignFreeAgent}
+            onCpu={onCpuFreeAgency}
           />
         )}
       {!onRoster && (
@@ -1288,6 +1308,8 @@ export function FranchisePanel({
   onBeginDraft,
   onAdvanceDraft,
   onPickRookie,
+  onSignFreeAgent,
+  onCpuFreeAgency,
 }: FranchisePanelProps) {
   const [view, setView] = useState<
     "overview" | "careers" | "history" | "development" | "training"
@@ -1387,6 +1409,8 @@ export function FranchisePanel({
             onBeginDraft={onBeginDraft}
             onAdvanceDraft={onAdvanceDraft}
             onPickRookie={onPickRookie}
+            onSignFreeAgent={onSignFreeAgent}
+            onCpuFreeAgency={onCpuFreeAgency}
           />
         ) : (
           <section

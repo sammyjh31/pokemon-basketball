@@ -1,4 +1,5 @@
 import { validateRosterTransactions } from "./franchiseTransactions";
+import { validateFreeAgency } from "./freeAgencyValidation";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { OPPONENTS } from "../data/opponents";
 import { positionRating, teamRatings } from "./ratings";
@@ -92,7 +93,11 @@ function array(value: unknown, length: number): unknown[] {
   if (!Array.isArray(value) || value.length !== length) return fail();
   return value;
 }
-function species(value: unknown, includeLegends: boolean, maxId = 1025): number {
+function species(
+  value: unknown,
+  includeLegends: boolean,
+  maxId = 1025,
+): number {
   const id = integer(value, 1, maxId),
     mon = POKEMON_BY_ID.get(id);
   if (!mon || (!includeLegends && mon.legendary)) return fail();
@@ -962,6 +967,7 @@ export function validateFranchise(
     (history.some((season) => season.replay) ||
       Object.hasOwn(row, "trainingPlans") ||
       Object.hasOwn(row, "rookieDrafts") ||
+      Object.hasOwn(row, "freeAgency") ||
       teams.some((team) => team.rotationPlan) ||
       run.seasonProgress ||
       run.rotationPlan)
@@ -1073,6 +1079,14 @@ export function validateFranchise(
       : undefined;
   if (Object.hasOwn(row, "rookieDrafts") && row.rookieDrafts === undefined)
     return fail();
+  const freeAgency = Object.hasOwn(row, "freeAgency")
+    ? validateFreeAgency(
+        row.freeAgency,
+        historyCount,
+        trades.length,
+        run.includeLegends,
+      )
+    : undefined;
   const { drafts, expected } = validateRosterTransactions(
     row.rookieDrafts,
     history,
@@ -1082,6 +1096,7 @@ export function validateFranchise(
     year,
     row.phase,
     developmentHistory?.reports,
+    freeAgency,
   );
   if (developmentHistory)
     for (const team of teams)
@@ -1156,6 +1171,7 @@ export function validateFranchise(
     history,
     trades,
     ...(drafts ? { rookieDrafts: drafts } : {}),
+    ...(freeAgency ? { freeAgency } : {}),
     ...(developmentHistory ? { offseasons: developmentHistory.reports } : {}),
     ...(Object.hasOwn(row, "trainingPlans")
       ? {

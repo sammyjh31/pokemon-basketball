@@ -1,3 +1,4 @@
+import { processCpuFreeAgency } from "./freeAgency";
 import type { TradePackage } from "./tradeTypes";
 import { evaluateTradePackage } from "./tradeMarket";
 import { exchangePackage } from "./rosterTrades";
@@ -267,6 +268,7 @@ export function enterOffseason(state: GameState): GameState {
     history: [...(previous?.history ?? []), archive],
     trades: previous?.trades ?? [],
     ...(previous?.rookieDrafts ? { rookieDrafts: previous.rookieDrafts } : {}),
+    ...(previous?.freeAgency ? { freeAgency: previous.freeAgency } : {}),
     ...(previous?.offseasons ? { offseasons: previous.offseasons } : {}),
     ...(previous?.trainingPlans
       ? { trainingPlans: previous.trainingPlans }
@@ -279,7 +281,7 @@ export function startFranchiseSeason(
   state: GameState,
   seed: number,
 ): GameState {
-  const franchise = state.franchise;
+  let franchise = state.franchise;
   if (
     !franchise ||
     !validPhase(franchise, "offseason") ||
@@ -290,6 +292,8 @@ export function startFranchiseSeason(
         !franchise.rookieDrafts.at(-1)?.complete))
   )
     return state;
+  const prepared = processCpuFreeAgency(state);
+  franchise = prepared.franchise!;
   let teams: LeagueTeam[];
   try {
     teams = validateLeagueTeams(franchise.teams, state.run.includeLegends);

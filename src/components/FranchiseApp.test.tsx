@@ -74,7 +74,9 @@ it("continues a completed league into the next season and restores its careers w
   expect(ready.franchise?.year).toBe(2);
   expect(ready.run.result).toBeNull();
   expect(ready.run.playoffs).toBeUndefined();
-  expect(ready.run.leagueTeams).toEqual(drafted.franchise!.teams);
+  expect(ready.run.leagueTeams).toEqual(ready.franchise!.teams);
+  expect(ready.franchise!.teams[0]).toEqual(drafted.franchise!.teams[0]);
+  expect(ready.franchise!.freeAgency?.cpuYears).toEqual([1]);
   expect(screen.getByRole("button", { name: "Lineup builder" })).toBeDisabled();
   fireEvent.click(
     screen.getByRole("button", {

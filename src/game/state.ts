@@ -1,3 +1,4 @@
+import { processCpuFreeAgency, signFreeAgent } from "./freeAgency";
 import {
   beginRookieDraft,
   advanceRookieDraft,
@@ -44,6 +45,8 @@ import type { RotationPlan, TrainingPlans } from "./franchiseFeatures";
 import { validateRotationPlan } from "./rotationPlan";
 import { validateTrainingPlans } from "./training";
 export type GameAction =
+  | { type: "SIGN_FREE_AGENT"; pokemonId: number; releasedId: number }
+  | { type: "PROCESS_CPU_FREE_AGENCY" }
   | { type: "TRADE_PACKAGE"; offer: TradePackage }
   | { type: "BEGIN_ROOKIE_DRAFT" }
   | { type: "ADVANCE_ROOKIE_DRAFT" }
@@ -80,6 +83,10 @@ export function initialState(seed: number): GameState {
 }
 export function gameReducer(state: GameState, action: GameAction): GameState {
   const run = state.run;
+  if (action.type === "SIGN_FREE_AGENT")
+    return signFreeAgent(state, action.pokemonId, action.releasedId);
+  if (action.type === "PROCESS_CPU_FREE_AGENCY")
+    return processCpuFreeAgency(state);
   if (action.type === "TRADE_PACKAGE")
     return applyTradePackage(state, action.offer);
   if (action.type === "BEGIN_ROOKIE_DRAFT")

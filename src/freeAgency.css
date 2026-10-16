@@ -1,0 +1,302 @@
+.free-agent-market {
+  margin-top: 22px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  min-width: 0;
+}
+.free-agent-heading,
+.free-agent-cpu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+.free-agent-heading h3 {
+  margin: 6px 0;
+  font: 700 28px var(--display);
+}
+.free-agent-market h4 {
+  margin: 0 0 8px;
+}
+.free-agent-market .eyebrow {
+  color: #cfb87e;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+.free-agent-rule,
+.free-agent-source {
+  padding: 8px 10px;
+  border: 1px solid #655731;
+  border-radius: 4px;
+  color: var(--gold);
+  background: #29291f;
+  font-size: 11px;
+}
+.free-agent-intro,
+.free-agent-cpu p,
+.free-agent-note,
+.free-agent-empty {
+  color: #b8c3d0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.free-agent-intro {
+  max-width: 90ch;
+  margin: 12px 0 18px;
+}
+.free-agent-notice {
+  background: #29271d;
+  border: 1px solid #75623a;
+  color: #e5d2a0;
+  border-radius: 5px;
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.free-agent-cpu {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 16px;
+  margin: 18px 0;
+  background: #141d27;
+}
+.free-agent-cpu p {
+  margin: 0;
+  max-width: 80ch;
+}
+.free-agent-cpu > .button {
+  flex-shrink: 0;
+}
+.free-agent-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 310px);
+  align-items: start;
+  gap: 20px;
+}
+.free-agent-board {
+  min-width: 0;
+}
+.free-agent-filters {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 10px;
+}
+.free-agent-market .league-field {
+  min-width: 0;
+}
+.free-agent-market input,
+.free-agent-market select {
+  width: 100%;
+  min-width: 0;
+}
+.free-agent-count {
+  color: #aeb9c8;
+  font-size: 11px;
+  margin: 12px 0;
+}
+.free-agent-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 740px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.free-agent-list > li {
+  border: 1px solid #35404c;
+  border-radius: 6px;
+  background: #111a23;
+  padding: 13px;
+  min-width: 0;
+}
+.free-agent-list > li.selected {
+  border-color: #c5aa61;
+  background: #22251e;
+}
+.free-agent-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.free-agent-player .portrait,
+.free-agent-player .portrait-fallback {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+.free-agent-player > div:not(.free-agent-rating) {
+  min-width: 0;
+}
+.free-agent-player strong {
+  font: 700 17px var(--display);
+  overflow-wrap: anywhere;
+}
+.free-agent-player div > span {
+  display: block;
+  color: #aeb9c8;
+  font-size: 10px;
+  margin-top: 4px;
+}
+.free-agent-rating {
+  margin-left: auto;
+  text-align: right;
+}
+.free-agent-rating > strong {
+  color: var(--gold);
+  font-size: 24px;
+}
+.free-agent-rating small {
+  display: block;
+  font-size: 8px;
+  color: #aeb9c8;
+  letter-spacing: 0.1em;
+}
+.free-agent-origin {
+  color: #aeb9c8;
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 12px 0 6px;
+}
+.free-agent-fit {
+  color: #dac68e;
+  font-size: 11px;
+}
+.free-agent-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.free-agent-actions .button {
+  padding: 8px 13px;
+  font-size: 11px;
+}
+.free-agent-market .text-button {
+  min-height: 44px;
+}
+.free-agent-preview {
+  position: sticky;
+  top: 16px;
+  border: 1px solid #655731;
+  border-radius: 6px;
+  background: #181e22;
+  padding: 18px;
+  min-width: 0;
+}
+.free-agent-preview h4 {
+  margin: 8px 0 16px;
+  font: 700 20px var(--display);
+}
+.free-agent-exchange {
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.free-agent-exchange small {
+  display: block;
+  color: #c5b780;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+.free-agent-exchange > strong {
+  display: block;
+  font: 700 22px var(--display);
+  margin: 7px 0;
+}
+.free-agent-exchange > span {
+  font-size: 11px;
+  color: #b8c3d0;
+}
+.free-agent-exchange.outgoing {
+  margin-top: 16px;
+}
+.free-agent-exchange.outgoing small {
+  color: #d7aaa3;
+}
+.free-agent-evaluation {
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.free-agent-evaluation p {
+  color: #b8c3d0;
+}
+.free-agent-evaluation strong {
+  color: #e6e9ed;
+}
+.free-agent-preview > .button {
+  width: 100%;
+  margin-top: 8px;
+}
+.free-agent-activity {
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.free-agent-activity .league-field {
+  width: min(200px, 100%);
+}
+.free-agent-transactions {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+}
+.free-agent-transactions li {
+  display: flex;
+  align-items: start;
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.free-agent-source {
+  flex-shrink: 0;
+}
+.free-agent-transactions strong {
+  font-size: 13px;
+}
+.free-agent-transactions p {
+  margin: 6px 0 0;
+  color: #b8c3d0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.free-agent-scout {
+  margin-top: 20px;
+}
+@media (max-width: 1000px) {
+  .free-agent-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .free-agent-preview {
+    position: static;
+  }
+  .free-agent-cpu {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (max-width: 600px) {
+  .free-agent-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .free-agent-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .free-agent-filters > :first-child {
+    grid-column: 1 / -1;
+  }
+  .free-agent-list {
+    grid-template-columns: minmax(0, 1fr);
+    max-height: 560px;
+  }
+  .free-agent-transactions li {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .free-agent-cpu > .button {
+    width: 100%;
+  }
+}

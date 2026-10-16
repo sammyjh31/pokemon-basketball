@@ -10,6 +10,7 @@ import type {
   FranchiseTrade,
 } from "./franchiseTypes";
 import type { RookieDraft, RookiePick } from "./rookieDraftTypes";
+import type { FreeAgency } from "./freeAgencyTypes";
 
 const fail = (): never => {
   throw new Error("Invalid saved franchise transactions");
@@ -52,6 +53,7 @@ export function validateRosterTransactions(
   year: number,
   phase: Franchise["phase"],
   reports: OffseasonReport[] | undefined,
+  freeAgency?: FreeAgency,
 ): { drafts?: RookieDraft[]; expected: number[][] } {
   const hasDrafts = value !== undefined;
   if (
@@ -143,6 +145,8 @@ export function validateRosterTransactions(
   let expected = history[0].rosters.map((roster) => [...roster]),
     tradeIndex = 0;
   const used = new Set(expected.flat());
+  const available = new Set<number>();
+  let signingCount = 0;
   const applyTrade = (trade: FranchiseTrade) => {
     const from = trade.fromTeamId ?? 0,
       give = trade.giveIds ?? [trade.giveId],
@@ -192,6 +196,7 @@ export function validateRosterTransactions(
           return fail();
         expected[pick.teamId][slot] = pick.pokemonId;
         used.add(pick.pokemonId);
+        available.add(pick.releasedId);
         if (new Set(expected.flat()).size !== 240) return fail();
       }
       const remaining = ROOKIE_POKEMON.some(
@@ -209,9 +214,39 @@ export function validateRosterTransactions(
           return fail();
       } else if (!remaining || tradeIndex !== trades.length) return fail();
     }
+    const signings =
+      freeAgency?.transactions.filter((t) => t.year === archived.year) ?? [];
+    if (
+      (signings.length || freeAgency?.cpuYears.includes(archived.year)) &&
+      !draft?.complete
+    )
+      return fail();
+    const protectedRookies = new Set(draft?.picks.map((p) => p.pokemonId));
+    for (const signing of signings) {
+      if (signing.tradeIndex < tradeIndex || signing.tradeIndex > yearEnd)
+        return fail();
+      while (tradeIndex < signing.tradeIndex) applyTrade(trades[tradeIndex++]);
+      const slot = expected[signing.teamId].indexOf(signing.releasedId);
+      if (
+        slot < 0 ||
+        !available.has(signing.pokemonId) ||
+        expected.some((roster) => roster.includes(signing.pokemonId)) ||
+        (signing.source === "cpu" && protectedRookies.has(signing.releasedId))
+      )
+        return fail();
+      expected[signing.teamId][slot] = signing.pokemonId;
+      available.delete(signing.pokemonId);
+      available.add(signing.releasedId);
+      signingCount++;
+      if (new Set(expected.flat()).size !== 240) return fail();
+    }
     while (tradeIndex < yearEnd) applyTrade(trades[tradeIndex++]);
   }
-  if (tradeIndex !== trades.length || !matches(currentRosters, expected))
+  if (
+    tradeIndex !== trades.length ||
+    signingCount !== (freeAgency?.transactions.length ?? 0) ||
+    !matches(currentRosters, expected)
+  )
     return fail();
   return { ...(hasDrafts ? { drafts } : {}), expected };
 }
