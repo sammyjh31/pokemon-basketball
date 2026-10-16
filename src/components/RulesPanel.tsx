@@ -225,6 +225,23 @@ export function RulesPanel() {
             </span>
           </div>
         </div>
+        <h3>Move the defense before taking the shot</h3>
+        <p>
+          New seasons place all ten players on a modeled half court. Shooting
+          threat creates spacing; crowded lanes attract help. Screens, drives,
+          passes, kickouts and resets can chain together, using a 24-second shot
+          clock. Offensive rebounds restart it at 14 seconds. Long attacks slow
+          the game and short clocks force rushed shots or turnovers.
+        </p>
+        <p>
+          CPU coaches choose drop, switch, hedge, trap or under coverage for
+          each screen using shooting threat, mobility, passing and body/type
+          matchups. Help and recovery take time. Game insights show each action
+          chain, coverage choice and final court positions for both teams. These
+          rules apply to every simulated regular-season and playoff game.
+          Existing standard franchises upgrade next season; historical results
+          and existing local-career rules remain frozen.
+        </p>
         <h3>Make the physical matchup count</h3>
         <p>
           New simulated seasons resolve post position and separation before a

@@ -167,3 +167,14 @@ Offenses select plays and recipients using actual physical/type matchups. Coache
 Open **Inside this result → Matchups that shaped the attacks** for actual attacker/defender pairings, dimensions, advantages won, post seals and conditional accuracy shifts. Shot evidence refers to the final shooter and defender after a kickout. Body/action shifts include screens, containment and help; they are not an isolated causal contribution or a counterfactual winning margin. Historical and manually played games without this telemetry remain unestimated.
 
 New solo seasons and configurable local leagues adopt the rules. Standard franchises upgrade at the next season boundary. Existing local careers keep their frozen rules, including future years; start a new local league for the new engine. Archives retain exact prior seeds/results. See [matchup design](docs/superpowers/specs/2026-10-16-pokemon-matchup-engine.md) and [seeded tuning audit](docs/matchup-balance-audit.json). Reproduce with `node scripts/matchup-audit.mjs --samples=100`.
+
+
+### Court positioning and chained possessions
+
+New solo/franchise seasons and new local leagues use `courtVersion: 1` in the shared match engine. Every simulated fixture—including CPU versus CPU, playoffs, and the simulated schedule around manually played games—uses the same rules. User-controlled arcade basketball keeps its separate real-time physics.
+
+Ten players occupy half-court coordinates in feet. Shooting threat determines spacing and defensive shading; current distances influence passing lanes, driving congestion, help, contests and blocks. Recovery speed includes body inertia, speed and energy. Screens lead to drop, switch, hedge, trap or under coverage, selected from the actual matchup and defensive scheme. An offense can pass, drive, kick out or reset before shooting. Actions spend game time and shot-clock time; offensive rebounds reset to 14 seconds. Minutes and fatigue follow time spent on the floor, and substitutions occur between attacks or immediately after foul-outs.
+
+Open **Inside this result → Court positioning and possession chains** for coverage counts, multi-action attacks, late-clock shots, turnovers, an action browser and a court diagram. These locations influence the engine; earlier schematic shot charts remain labeled as such. Coverage counts and scoring differences are observations, not proof of causation. The model is fictional game tuning, not empirical tracking data.
+
+Standard franchises adopt the update at the next season boundary. Current seasons, archived results and existing local careers keep their saved rules. Start a new local league to adopt the update there. No saved result is silently recalculated under new rules.

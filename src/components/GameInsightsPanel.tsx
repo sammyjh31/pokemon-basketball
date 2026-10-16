@@ -1,3 +1,4 @@
+import { CourtInsights } from "./CourtInsights";
 import { BodyMatchupInsights } from "./BodyMatchupInsights";
 import { PossessionInsightsPanel } from "./PossessionInsightsPanel";
 import { useMemo, useState } from "react";
@@ -221,8 +222,9 @@ function ShotChart({
     <section className="insight-section">
       <h4>Recorded shot chart</h4>
       <p>
-        Schematic locations within the recorded shot zone, not tracked court
-        positions. The coordinates do not influence the simulation.
+        {shots.some((shot) => shot.courtSequence !== undefined)
+          ? "Locations come from the simulated court positions that shaped these shots. They are model coordinates, not real-world tracking."
+          : "Schematic locations within the recorded shot zone, not tracked court positions. The coordinates do not influence the simulation."}
       </p>
       <div className="insight-controls">
         <label>
@@ -559,6 +561,10 @@ export function GameInsightsPanel({
         </p>
       ) : (
         <>
+          <CourtInsights
+            sequences={match.insights.court}
+            teams={[home, away]}
+          />
           <BodyMatchupInsights
             shots={match.insights.shots}
             teams={[home, away]}
