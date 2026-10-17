@@ -64,6 +64,7 @@ export function archivedSeasonRun(season: FranchiseSeason): Run {
       : {}),
     ...(user.evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
     ...(user.courtVersion ? { courtVersion: user.courtVersion } : {}),
+    ...(user.gameFlowVersion === 1 ? { gameFlowVersion: 1 as const } : {}),
     ...(user.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
     ...(user.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
     ...(user.typeTacticsVersion === 1
@@ -129,6 +130,7 @@ export function resolveArchivedMatch(
         scouting: game.scouting,
         chemistry: game.chemistry,
         morale: game.morale,
+        flow: game.flow,
       },
     )
   );

@@ -5,6 +5,7 @@ import type {
   MoraleGameReport,
 } from "./playerMorale";
 import type { PairBonds, ChemistryFixture } from "./teammateChemistry";
+import type { GameFlowFixture, GameFlowReport } from "./gameFlow";
 import type { AbilityActivations } from "./abilities";
 import type { CoachAssignment } from "./trainerCoaches";
 import type {
@@ -217,6 +218,8 @@ export interface Run {
   personalityVersion?: 1;
   /** Shared team evaluation; absent on historical seasons for exact replay. */
   evaluationVersion?: 1;
+  /** Playoffs, timeouts, referees, home gyms and rest; requires court rules. */
+  gameFlowVersion?: 1;
   id: string;
   mode: Mode;
   includeLegends: boolean;
@@ -290,6 +293,8 @@ export interface LeagueTeam {
   personalityVersion?: 1;
   /** Shared team evaluation; absent on historical seasons for exact replay. */
   evaluationVersion?: 1;
+  /** Playoffs, timeouts, referees, home gyms and rest; requires court rules. */
+  gameFlowVersion?: 1;
   id: number;
   name: string;
   roster: Roster;
@@ -304,6 +309,7 @@ export interface LeagueTeam {
 export interface LeagueFixture {
   chemistry?: ChemistryFixture;
   morale?: MoraleFixture;
+  flow?: GameFlowFixture;
   id: string;
   round: number;
   homeTeamId: number;
@@ -329,6 +335,7 @@ export interface LeagueGameSummary extends LeagueFixture {
 }
 export interface LeagueMatch {
   moraleReport?: MoraleGameReport;
+  gameFlow?: GameFlowReport;
   chemistryMinutes?: { home: PairBonds; away: PairBonds };
   typeTactics?: TypeTacticsReport;
   insights?: MatchInsights;

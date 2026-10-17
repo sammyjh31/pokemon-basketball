@@ -707,6 +707,7 @@ function nextYearTeams(
   adoptChemistryGrowth = true,
   adoptMorale = true,
   adoptPersonality = true,
+  adoptGameFlow = true,
 ): LeagueTeam[] {
   const archived = career.history.at(-1)!;
   const appointed = projectedCoaches(
@@ -729,6 +730,10 @@ function nextYearTeams(
       ...(adoptPhysicalAbilities ? { physicalAbilityVersion: 1 as const } : {}),
       ...(adoptChemistry ? { chemistryVersion: 1 as const } : {}),
       ...(adoptEvaluation ? { evaluationVersion: 1 as const } : {}),
+      // Game flow needs court rules, which older local careers keep frozen.
+      ...(adoptGameFlow && team.courtVersion !== undefined
+        ? { gameFlowVersion: 1 as const }
+        : {}),
       ...(team.engineRules
         ? {
             engineRules: {
@@ -953,6 +958,14 @@ function parseTeams(
     array(value, format.teamCount)[0],
   ).evaluationVersion;
   if (evaluationVersion !== undefined && evaluationVersion !== 1) fail();
+  const gameFlowVersion = object(
+    array(value, format.teamCount)[0],
+  ).gameFlowVersion;
+  if (
+    (gameFlowVersion !== undefined && gameFlowVersion !== 1) ||
+    (gameFlowVersion === 1 && draft.courtVersion === undefined)
+  )
+    fail();
   return array(value, format.teamCount).map((value, id) => {
     const row = object(value),
       rawRoster = object(row.roster),
@@ -976,6 +989,7 @@ function parseTeams(
       row.courtVersion !== draft.courtVersion ||
       row.matchupVersion !== draft.matchupVersion ||
       row.possessionVersion !== draft.possessionVersion ||
+      row.gameFlowVersion !== gameFlowVersion ||
       !TACTICS.includes(row.tactic) ||
       !ROTATIONS.includes(row.rotation) ||
       !DEFENSE_SCHEMES.includes(row.defense) ||
@@ -1055,6 +1069,7 @@ function parseTeams(
       ...(draft.possessionVersion === 1
         ? { possessionVersion: 1 as const }
         : {}),
+      ...(gameFlowVersion === 1 ? { gameFlowVersion: 1 as const } : {}),
       ...(draft.typeTacticsVersion === 1
         ? { typeTacticsVersion: 1 as const }
         : {}),
@@ -1087,6 +1102,7 @@ function sameRosterState(actual: LeagueTeam[], expected: LeagueTeam[]) {
       JSON.stringify(a.morale) !== JSON.stringify(e.morale) ||
       JSON.stringify(a.chemistryBonds) !== JSON.stringify(e.chemistryBonds) ||
       a.evaluationVersion !== e.evaluationVersion ||
+      a.gameFlowVersion !== e.gameFlowVersion ||
       JSON.stringify(a.engineRules) !== JSON.stringify(e.engineRules) ||
       a.coach?.id !== e.coach?.id
     )
@@ -1426,6 +1442,8 @@ export function parseLocalCareer(
           .moraleVersion === 1,
         object(array(nextRawTeams, draft.options.format.teamCount)[0])
           .personalityVersion === 1,
+        object(array(nextRawTeams, draft.options.format.teamCount)[0])
+          .gameFlowVersion === 1,
       );
     } else expected = replay.career!.teams;
     onProgress?.(i + 1, rawHistory.length);

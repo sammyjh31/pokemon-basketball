@@ -15,6 +15,7 @@ import type { ScoutingMemory, MatchScouting } from "./typeTacticsTypes";
 import { nextRandom } from "./random";
 import { addBox, leagueHonors, leaguePlayers } from "./leagueStats";
 import { simulateMatch } from "./match";
+import { scheduleFlow } from "./gameFlow";
 import {
   localLeagueRun,
   localLeagueTeams,
@@ -86,6 +87,8 @@ export function localSeasonBuilder(
   const inputs = structuredClone(teams),
     fixtures = localSchedule(format, seed),
     players = leaguePlayers(inputs);
+  const flows =
+    inputs[0].gameFlowVersion === 1 ? scheduleFlow(fixtures) : undefined;
   const chemistryBonds = initialChemistryBanks(inputs);
   const morale = initialMoraleBanks(inputs);
   const byPlayer = new Map(players.map((p) => [p.playerId, p]));
@@ -119,6 +122,7 @@ export function localSeasonBuilder(
     const chemistry = snapshotChemistry(currentTeams[h], currentTeams[a]);
     const moraleSnapshot = snapshotMorale(currentTeams[h], currentTeams[a]);
     const context = scouting ? scoutingForMatch(scouting, h, a) : undefined;
+    const flow = flows?.get(fixture.id);
     const match = simulateMatch(
       currentTeams[h],
       currentTeams[a],
@@ -127,6 +131,7 @@ export function localSeasonBuilder(
         scouting: context,
         chemistry,
         morale: moraleSnapshot,
+        flow,
       },
     );
     if (scouting)
@@ -143,6 +148,7 @@ export function localSeasonBuilder(
       ...fixture,
       ...(chemistry ? { chemistry } : {}),
       ...(moraleSnapshot ? { morale: moraleSnapshot } : {}),
+      ...(flow ? { flow } : {}),
       ...(context ? { scouting: context } : {}),
       homeScore: match.homeScore,
       awayScore: match.awayScore,

@@ -170,6 +170,11 @@ function validate(
   if (raw.possessionVersion !== undefined && raw.possessionVersion !== 1)
     return fail();
   if (
+    (raw.gameFlowVersion !== undefined && raw.gameFlowVersion !== 1) ||
+    (raw.gameFlowVersion === 1 && raw.courtVersion === undefined)
+  )
+    return fail();
+  if (
     raw.matchupVersion === 1 &&
     (raw.possessionVersion !== 1 || raw.typeTacticsVersion !== 1)
   )
@@ -212,6 +217,7 @@ function validate(
       : {}),
     ...(raw.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
     ...(raw.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
+    ...(raw.gameFlowVersion === 1 ? { gameFlowVersion: 1 as const } : {}),
     ...(raw.typeMatchupsVersion === 1
       ? { typeMatchupsVersion: 1 as const }
       : {}),
@@ -259,7 +265,8 @@ function validate(
           team.evaluationVersion !== run.evaluationVersion ||
           team.courtVersion !== run.courtVersion ||
           team.matchupVersion !== run.matchupVersion ||
-          team.possessionVersion !== run.possessionVersion,
+          team.possessionVersion !== run.possessionVersion ||
+          team.gameFlowVersion !== run.gameFlowVersion,
       )
     )
       return fail();

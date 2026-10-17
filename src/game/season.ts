@@ -14,6 +14,7 @@ import { recordScouting, scoutingForMatch } from "./opponentScouting";
 import type { ScoutingMemory, MatchScouting } from "./typeTacticsTypes";
 import { createLeague, leagueSchedule } from "./league";
 import { simulateMatch } from "./match";
+import { scheduleFlow } from "./gameFlow";
 import { validateOfficialGame } from "./officialGame";
 import type { OfficialGame } from "./franchiseFeatures";
 import { addBox, leagueHonors, leaguePlayers } from "./leagueStats";
@@ -92,6 +93,8 @@ export function seasonBuilder(
   const teams = seasonTeams(run),
     fixtures = leagueSchedule(run.seasonSeed),
     players = leaguePlayers(teams);
+  const flows =
+    teams[0].gameFlowVersion === 1 ? scheduleFlow(fixtures) : undefined;
   const eligible = new Map(
     fixtures.slice(0, completedRounds * 15).map((f) => [f.id, f]),
   );
@@ -134,12 +137,15 @@ export function seasonBuilder(
     const chemistry = snapshotChemistry(currentTeams[h], currentTeams[a]);
     const moraleSnapshot = snapshotMorale(currentTeams[h], currentTeams[a]);
     const context = scouting ? scoutingForMatch(scouting, h, a) : undefined;
+    // Played arcade games keep their own rules; only simulated fixtures carry game flow.
+    const flow = playedGames[fixture.id] ? undefined : flows?.get(fixture.id);
     const match = resolveSeasonMatch(
       {
         ...fixture,
         ...(context ? { scouting: context } : {}),
         ...(chemistry ? { chemistry } : {}),
         ...(moraleSnapshot ? { morale: moraleSnapshot } : {}),
+        ...(flow ? { flow } : {}),
       },
       currentTeams,
       playedGames,
@@ -158,6 +164,7 @@ export function seasonBuilder(
       ...fixture,
       ...(chemistry ? { chemistry } : {}),
       ...(moraleSnapshot ? { morale: moraleSnapshot } : {}),
+      ...(flow ? { flow } : {}),
       ...(context ? { scouting: context } : {}),
       homeScore: match.homeScore,
       awayScore: match.awayScore,
@@ -292,5 +299,6 @@ export function resolveSeasonMatch(
     scouting: fixture.scouting,
     chemistry: fixture.chemistry,
     morale: fixture.morale,
+    flow: fixture.flow,
   });
 }

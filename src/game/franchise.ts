@@ -356,6 +356,7 @@ export function startFranchiseSeason(
     courtVersion: COURT_VERSION,
     matchupVersion: 1 as const,
     possessionVersion: 1 as const,
+    gameFlowVersion: 1 as const,
   }));
   if (franchise.pendingCoach)
     teams = assignLeagueCoaches(

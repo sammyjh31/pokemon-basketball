@@ -11,6 +11,8 @@ import { getMatchChemistry, refreshLineupChemistry } from "./matchChemistry";
 type Side = "home" | "away";
 export interface Player {
   chemistry?: ChemistryEffects;
+  /** Game-flow field condition: movement and energy-drain multipliers. */
+  field?: { movement: number; drain: number };
   physicalAbilities?: true;
   depth?: EngineProfile;
   body?: BodyProfile;

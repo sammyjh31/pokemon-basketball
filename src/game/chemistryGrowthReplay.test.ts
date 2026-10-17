@@ -23,6 +23,7 @@ it("preserves the chemistry enabled coached draft and matches from release e5582
   delete (run as { chemistryGrowthVersion?: 1 }).chemistryGrowthVersion;
   delete run.moraleVersion;
   delete run.personalityVersion;
+  delete (run as { gameFlowVersion?: 1 }).gameFlowVersion;
   const teams = createLeague(run);
   const value = {
     teams,

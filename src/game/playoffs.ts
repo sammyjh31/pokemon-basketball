@@ -15,6 +15,7 @@ import type { ScoutingMemory, MatchScouting } from "./typeTacticsTypes";
 import { validateLocalFormat } from "./localFormat";
 import { addBox, leaguePlayers, playerImpact } from "./leagueStats";
 import { simulateMatch } from "./match";
+import { playoffFlow } from "./gameFlow";
 import { nextRandom } from "./random";
 import type {
   LeagueFixture,
@@ -273,6 +274,7 @@ export function resolvePlayoffMatch(
     scouting: fixture.scouting,
     chemistry: fixture.chemistry,
     morale: fixture.morale,
+    flow: fixture.flow,
   });
 }
 
@@ -292,12 +294,17 @@ function playOne(playoffs: Playoffs, league: LeagueResult, seasonSeed: number) {
   const context = playoffs.scouting
     ? scoutingForMatch(playoffs.scouting, homeId, awayId)
     : undefined;
+  const flow =
+    home.gameFlowVersion === 1 && !playoffs.playedGames?.[fixture.id]
+      ? playoffFlow(series, homeId, playoffs.format?.bestOf ?? 7)
+      : undefined;
   const match = resolvePlayoffMatch(
     {
       ...fixture,
       ...(context ? { scouting: context } : {}),
       ...(chemistry ? { chemistry } : {}),
       ...(morale ? { morale } : {}),
+      ...(flow ? { flow } : {}),
     },
     teams,
     playoffs.playedGames,
@@ -316,6 +323,7 @@ function playOne(playoffs: Playoffs, league: LeagueResult, seasonSeed: number) {
     ...fixture,
     ...(chemistry ? { chemistry } : {}),
     ...(morale ? { morale } : {}),
+    ...(flow ? { flow } : {}),
     ...(context ? { scouting: context } : {}),
     homeScore: match.homeScore,
     awayScore: match.awayScore,

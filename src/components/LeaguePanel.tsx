@@ -1131,6 +1131,7 @@ export function LeaguePanel({
           scouting: game.scouting,
           chemistry: game.chemistry,
           morale: game.morale,
+          flow: game.flow,
         },
       ),
     [league, playedGames],

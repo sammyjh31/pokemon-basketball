@@ -41,6 +41,17 @@ Solo/franchise progress and the local league are saved separately in this browse
 - **Several tabs:** if another tab changes the same save, this tab stops saving, so it cannot overwrite the newer progress, and offers **Reload to continue**.
 - **Faster restore:** saved leagues are re-simulated to validate them on load. This replay runs in a background worker with progress, so the page stays responsive; it falls back to the page when workers are unavailable, with the same result.
 
+## Game flow: playoffs, timeouts, officials, arenas and rest
+
+New games give every simulated fixture its context. The regular season has a calendar: each round spans two days, so teams play some back-to-backs (about 14 a season) and long road trips. Tired players start below full energy, and coaches who prefer rest shift starters' minutes to the bench on the second night.
+
+Playoff games play differently. Rotations tighten, especially in elimination games, though coaches who prefer depth tighten less. The pace slows into more half-court offense, defenses tighten, stars carry more usage, composure matters under pressure and home crowds are louder. A coach who lost the previous game of a series, and is adaptable enough, re-plans from the series' scouting evidence.
+
+Trainer coaches call timeouts to stop opponent runs, rest a tired floor or set up a late-game play with the ball advanced to the frontcourt. Each team has six regulation timeouts, at most three in the fourth quarter, plus two per overtime. A timeout lets both teams rest and substitute immediately, and the calling coach draws up an after-timeout play.
+
+Every game has an officiating crew, from **Let them play** to **Whistle-happy**. Crews scale reach, shooting and offensive foul rates. Under a tight crew, disciplined defenders and foul-drawing scorers matter more. Each arena has a field condition, such as rain for the Cerulean Waves, sun for the Cinnabar Flames or snow for the Mahogany Frost; your club's arena follows its roster's shared type. Matching weather strengthens weather species abilities (Swift Swim, Chlorophyll, Sand Veil and others), and players of a comfortable type tire more slowly. A Drizzle or Drought player on the floor changes the court's condition. These effects never add points directly; they act through energy, minutes, shot selection, foul rates and the existing shot model.
+
+Box scores show **Game context**: the stage and series score, elimination status, rest, road trip, crew, arena condition and every timeout with its reason. Existing active seasons, archives and played arcade games keep their original rules; existing franchises and local careers with court rules adopt game flow at the next season boundary. Reproduce the balance audit with `node scripts/game-flow-audit.mjs --samples=450`; results are saved to `docs/game-flow-audit.json`.
 ## Player personalities and captains
 
 New games give every Pokémon a stable basketball personality: ambition, loyalty, resilience, coachability and leadership, plus a readable archetype. Personalities stay with the species across roster moves and seasons. They change minutes expectations, reactions to winning and losing, trade adjustment, compatibility with trainers and automatic training intensity. These are game adaptations, not canonical Pokémon personality claims.

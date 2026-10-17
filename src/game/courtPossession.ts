@@ -28,6 +28,10 @@ export interface CourtContext {
   putback?: Player;
   /** Version 2: rim/mid/three intent weights for whoever ends up with the shot. */
   zoneIntent?: (shooter: Player) => readonly [number, number, number];
+  /** Game flow: extra seconds to advance (playoff half-court pace). */
+  advanceDelta?: number;
+  /** Game flow: a late after-timeout inbound starts in the frontcourt. */
+  frontCourt?: boolean;
 }
 const basket = { x: 0, y: 5.25 };
 const distance = (a: CourtPoint, b: CourtPoint) =>
@@ -53,7 +57,10 @@ export function moveToward(
   seconds: number,
 ): CourtPoint {
   const span = distance(from, to),
-    speed = mobility(player) * (player.chemistry?.movement ?? 1),
+    speed =
+      mobility(player) *
+      (player.chemistry?.movement ?? 1) *
+      (player.field?.movement ?? 1),
     boost = physicalPlayerEffects(player).movement,
     fraction = Math.min(1, (speed * boost * seconds) / Math.max(0.001, span));
   const point = bounded({
@@ -414,18 +421,21 @@ export function resolveCourtPossession(
     kickout = kind === "kickout";
     return true;
   };
+  // A late after-timeout inbound starts in the frontcourt and skips the v2 half-court time.
   const advanceSeconds =
-    (c.putback
+    c.frontCourt && !c.putback
       ? 1
-      : c.play === "transition"
-        ? 3
-        : c.tactic === "pace"
-          ? 5.5
-          : c.tactic === "defense"
-            ? 8.5
-            : 7.5) -
-    // Version 2 spends extra half-court time moving the ball and relocating.
-    (c.zoneIntent && !c.putback && c.play !== "transition" ? 1 : 0);
+      : (c.putback
+          ? 1
+          : (c.play === "transition"
+              ? 3
+              : c.tactic === "pace"
+                ? 5.5
+                : c.tactic === "defense"
+                  ? 8.5
+                  : 7.5) + (c.advanceDelta ?? 0)) -
+        // Version 2 spends extra half-court time moving the ball and relocating.
+        (c.zoneIntent && !c.putback && c.play !== "transition" ? 1 : 0);
   const rushedAdvance = !spend("advance", advanceSeconds);
   if (rushedAdvance && !c.putback) {
     // The half-court formation assumes the offense has arrived. When the
