@@ -13,6 +13,7 @@ import { ROSTER_SLOTS } from "../game/types";
 import { useGame } from "./useGame";
 import { useLocalLeague } from "./useLocalLeague";
 import App from "../App";
+import { coachOffers } from "../game/trainerCoaches";
 
 function slots(seed: Record<string, string> = {}) {
   const data = new Map(Object.entries(seed));
@@ -123,6 +124,34 @@ describe("solo and franchise save safety", () => {
     expect(JSON.parse(result.current.saveControls.exportSave()!)).toEqual(
       imported,
     );
+  });
+});
+
+describe("trainer coach saves", () => {
+  it("backs up, exports and imports a save with a trainer coach", async () => {
+    const start = drafted();
+    const coached = gameReducer(start, {
+      type: "SELECT_COACH",
+      id: coachOffers(start.run.seasonSeed)[0].id,
+    });
+    expect(coached.run.coach).toBeDefined();
+    const source = JSON.stringify(coached);
+    const { data, storage } = slots({ [STORAGE_KEY]: source });
+    const { result } = renderHook(() => useGame(undefined, storage));
+    expect(result.current.storageNotice).toBeNull();
+    expect(result.current.state.run.coach).toEqual(coached.run.coach);
+    expect(data.get(backupKey(STORAGE_KEY))).toBe(source);
+    const exported = result.current.saveControls.exportSave()!;
+    expect(JSON.parse(exported).run.coach).toEqual(coached.run.coach);
+    const fresh = slots();
+    const other = renderHook(() => useGame(undefined, fresh.storage));
+    const checked = await other.result.current.saveControls.checkImport(
+      exported,
+      () => {},
+      new AbortController().signal,
+    );
+    act(() => checked.apply());
+    expect(other.result.current.state.run.coach).toEqual(coached.run.coach);
   });
 });
 
