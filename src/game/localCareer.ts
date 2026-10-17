@@ -1050,7 +1050,7 @@ function parseTeams(
           }
         : {}),
       ...(evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
-      ...(draft.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
+      ...(draft.courtVersion ? { courtVersion: draft.courtVersion } : {}),
       ...(draft.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
       ...(draft.possessionVersion === 1
         ? { possessionVersion: 1 as const }

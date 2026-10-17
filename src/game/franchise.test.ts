@@ -210,8 +210,8 @@ describe("franchise lifecycle", () => {
     // Season boundaries opt every club in, while the completed season stays frozen.
     const historicalVersion = offseason.run.courtVersion;
     const next = startFranchiseSeason(offseason, 903);
-    expect(next.run.courtVersion).toBe(1);
-    expect(next.franchise!.teams.every((t) => t.courtVersion === 1)).toBe(true);
+    expect(next.run.courtVersion).toBe(2);
+    expect(next.franchise!.teams.every((t) => t.courtVersion === 2)).toBe(true);
     expect(offseason.run.courtVersion).toBe(historicalVersion);
     expect(next.franchise).toMatchObject({ year: 2, phase: "season" });
     expect(next.run).toMatchObject({

@@ -8,6 +8,7 @@ it("preserves the chemistry enabled coached draft and matches from release e5582
   const run = {
     ...createRun("free", true, 22),
     coach: { version: 1 as const, id: "misty" },
+    courtVersion: 1 as const,
     roster: {
       PG: 65,
       SG: 135,

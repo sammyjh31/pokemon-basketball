@@ -34,7 +34,7 @@ import {
 } from "./coachPolicy";
 import { getCoach, validateCoach } from "./trainerCoaches";
 import { resolveCourtPossession } from "./courtPossession";
-import type { CourtSequence } from "./courtTypes";
+import { isCourtVersion, type CourtSequence } from "./courtTypes";
 import {
   bodyProfile,
   matchupEdges,
@@ -108,6 +108,22 @@ const baseShotMix: Record<PlayType, number[]> = {
   post: [77, 19, 4],
   spotUp: [18, 12, 70],
 };
+/** Share of the carrier-pressure turnover rate applied on top of version-2 court risks. */
+const COURT_PRESSURE_SHARE = 0.4;
+/** Version 2: a pass that leads straight to the shot is usually an assist. */
+function catchAssistChance(
+  droveAfterCatch: boolean,
+  passing: number,
+  disrupted: boolean,
+) {
+  return clamp(
+    (droveAfterCatch ? 0.6 : 0.93) +
+      (passing - 60) * 0.003 -
+      (disrupted ? 0.18 : 0),
+    0.1,
+    0.95,
+  );
+}
 const targetCache = new Map<string, ReturnType<typeof rotationMinutes>>();
 
 function buildTeam(config: LeagueTeam, side: Side): Team {
@@ -350,7 +366,7 @@ export function simulateMatch(
     );
   if (
     home.courtVersion !== away.courtVersion ||
-    (home.courtVersion !== undefined && home.courtVersion !== 1)
+    (home.courtVersion !== undefined && !isCourtVersion(home.courtVersion))
   )
     throw new Error("Both teams must use valid, matching court rules.");
   if (
@@ -381,7 +397,9 @@ export function simulateMatch(
     (home.chemistryVersion !== undefined && home.chemistryVersion !== 1)
   )
     throw new Error("Both teams must use valid, matching chemistry rules.");
-  const courtEnabled = home.courtVersion === 1;
+  const courtEnabled = home.courtVersion !== undefined;
+  // Version 2 adds ball pressure, shot-zone intent, catch assists and foul spreading.
+  const courtV2 = home.courtVersion === 2;
   const bodyEnabled = home.matchupVersion === 1;
   const possessionDepth = home.possessionVersion === 1;
   const advanced = home.typeTacticsVersion === 1;
@@ -1303,6 +1321,51 @@ export function simulateMatch(
       firstAction = false;
       result.plays[play][offense.side]++;
       offense.transition = 0;
+      const zoneWeights = (shooter: Player, defender: Player) => {
+        const shotWeights = [...baseShotMix[play]];
+        if (shooter.depth) {
+          shotWeights[0] *= shooter.depth.tendencies.rim;
+          shotWeights[1] *= shooter.depth.tendencies.mid;
+          shotWeights[2] *= shooter.depth.tendencies.three;
+        }
+        shotWeights[0] *= clamp(
+          1 +
+            (skill(shooter, "finishing") - skill(shooter, "threePoint")) *
+              0.015,
+          0.5,
+          1.6,
+        );
+        shotWeights[2] *= clamp(
+          1 +
+            (skill(shooter, "threePoint") - skill(shooter, "finishing")) *
+              0.017,
+          0.45,
+          1.65,
+        );
+        if (tactic === "perimeter") {
+          shotWeights[0] *= 0.65;
+          shotWeights[1] *= 0.7;
+          shotWeights[2] *= 1.7;
+        }
+        if (tactic === "interior") {
+          shotWeights[0] *= 1.45;
+          shotWeights[2] *= 0.62;
+        }
+        if (defense.config.defense === "zone") {
+          shotWeights[0] *= 0.82;
+          shotWeights[2] *= 1.2;
+        }
+        if (bodyEnabled) {
+          shotWeights[0] *= matchupPreference(
+            shooter,
+            defender,
+            play === "post" ? "post" : "isolation",
+          );
+          shotWeights[2] *= matchupPreference(shooter, defender, "spotUp");
+        }
+        if (chaseThree) shotWeights[2] *= 3;
+        return shotWeights as [number, number, number];
+      };
       let court: ReturnType<typeof resolveCourtPossession> | undefined;
       if (courtEnabled) {
         court = resolveCourtPossession(
@@ -1322,6 +1385,15 @@ export function simulateMatch(
             periodRemaining: periodTicks * 7.5 - courtSecondsInPeriod,
             ...(secondChance && lastRebounder
               ? { putback: lastRebounder }
+              : {}),
+            ...(courtV2
+              ? {
+                  zoneIntent: (p: Player) =>
+                    zoneWeights(
+                      p,
+                      guards?.get(p) ?? defense.floor[offense.floor.indexOf(p)],
+                    ),
+                }
               : {}),
           },
           random,
@@ -1346,8 +1418,9 @@ export function simulateMatch(
           court.shooter.box.turnovers++;
           const live = activeCourt.outcome === "turnover" && random() < 0.64;
           if (live) {
-            court.defender.box.steals++;
-            const row = defenseMap.get(court.defender.box.playerId);
+            const thief = court.stealer ?? court.defender;
+            thief.box.steals++;
+            const row = defenseMap.get(thief.box.playerId);
             if (row) {
               row.steals++;
               row.deflections++;
@@ -1453,46 +1526,7 @@ export function simulateMatch(
             offense.floor.indexOf(shooter === screener ? handler : screener)
           ];
       }
-      const shotWeights = [...baseShotMix[play]];
-      if (shooter.depth) {
-        shotWeights[0] *= shooter.depth.tendencies.rim;
-        shotWeights[1] *= shooter.depth.tendencies.mid;
-        shotWeights[2] *= shooter.depth.tendencies.three;
-      }
-      shotWeights[0] *= clamp(
-        1 +
-          (skill(shooter, "finishing") - skill(shooter, "threePoint")) * 0.015,
-        0.5,
-        1.6,
-      );
-      shotWeights[2] *= clamp(
-        1 +
-          (skill(shooter, "threePoint") - skill(shooter, "finishing")) * 0.017,
-        0.45,
-        1.65,
-      );
-      if (tactic === "perimeter") {
-        shotWeights[0] *= 0.65;
-        shotWeights[1] *= 0.7;
-        shotWeights[2] *= 1.7;
-      }
-      if (tactic === "interior") {
-        shotWeights[0] *= 1.45;
-        shotWeights[2] *= 0.62;
-      }
-      if (defense.config.defense === "zone") {
-        shotWeights[0] *= 0.82;
-        shotWeights[2] *= 1.2;
-      }
-      if (bodyEnabled) {
-        shotWeights[0] *= matchupPreference(
-          shooter,
-          defender,
-          play === "post" ? "post" : "isolation",
-        );
-        shotWeights[2] *= matchupPreference(shooter, defender, "spotUp");
-      }
-      if (chaseThree) shotWeights[2] *= 3;
+      const shotWeights = zoneWeights(shooter, defender);
       let zone =
         court?.zone ??
         pick<Zone>(["rim", "mid", "three"], (_zone, i) => shotWeights[i]);
@@ -1648,7 +1682,23 @@ export function simulateMatch(
         0.28,
       );
       const pressureRoll = random();
-      if (!court && pressureRoll < turnoverRate) {
+      // Version 2 court possessions already risk passes and drives, so apply a
+      // reduced share of the carrier-pressure rate (press, steals, handling).
+      if (
+        (!court || courtV2) &&
+        pressureRoll < turnoverRate * (court ? COURT_PRESSURE_SHARE : 1)
+      ) {
+        if (activeCourt) {
+          activeCourt.outcome = "turnover";
+          activeCourt.actions = activeCourt.actions.filter(
+            (a) => a.kind !== "shoot",
+          );
+          activeCourt.actions.push({
+            kind: "turnover",
+            playerId: carrier.box.playerId,
+            clock: activeCourt.shotClock,
+          });
+        }
         carrier.box.turnovers++;
         let liveBall = false;
         if (random() < 0.64) {
@@ -1728,6 +1778,15 @@ export function simulateMatch(
         (defense.config.defense === "press" ? 0.025 : 0) +
         (65 - defender.profile.traits.discipline) * 0.0003;
       if (intentional || random() < reachRate) {
+        const fouler =
+          courtV2 && !intentional
+            ? pick(
+                defense.floor,
+                (p) =>
+                  (p === defender ? 2.2 : 1) *
+                  clamp(1.6 - p.profile.traits.discipline / 100, 0.5, 1.5),
+              )
+            : defender;
         if (activeCourt) {
           activeCourt.outcome = "foul";
           activeCourt.actions = activeCourt.actions.filter(
@@ -1735,11 +1794,11 @@ export function simulateMatch(
           );
           activeCourt.actions.push({
             kind: "foul",
-            playerId: defender.box.playerId,
+            playerId: fouler.box.playerId,
             clock: activeCourt.shotClock,
           });
         }
-        foul(offense, defense, defender);
+        foul(offense, defense, fouler);
         if (defense.fouls >= (period < 4 ? 5 : 4)) {
           if (!freeThrows(offense, defense, carrier, 2)) return;
           secondChance = true;
@@ -1983,7 +2042,14 @@ export function simulateMatch(
       if (possessionDepth) {
         if (
           passer &&
-          random() < creationChance(play, skill(passer, "passing"), disrupted)
+          random() <
+            (courtV2 && court
+              ? catchAssistChance(
+                  court.droveAfterCatch,
+                  skill(passer, "passing"),
+                  disrupted,
+                )
+              : creationChance(play, skill(passer, "passing"), disrupted))
         )
           createdBy = passer;
         if (

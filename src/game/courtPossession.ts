@@ -26,6 +26,8 @@ export interface CourtContext {
   shotClock: number;
   periodRemaining: number;
   putback?: Player;
+  /** Version 2: rim/mid/three intent weights for whoever ends up with the shot. */
+  zoneIntent?: (shooter: Player) => readonly [number, number, number];
 }
 const basket = { x: 0, y: 5.25 };
 const distance = (a: CourtPoint, b: CourtPoint) =>
@@ -301,13 +303,24 @@ export function applyScreenCoverage(
     court.set(big, { x: ball.x + 1.5, y: ball.y - 2 });
   }
 }
+function laneDefenders(
+  court: Court,
+  from: Player,
+  to: Player,
+  defense: Player[],
+) {
+  const a = court.get(from)!,
+    b = court.get(to)!,
+    span = distance(a, b);
+  return defense.filter(
+    (p) => distance(a, court.get(p)!) + distance(court.get(p)!, b) < span + 2,
+  );
+}
 function passRisk(court: Court, from: Player, to: Player, defense: Player[]) {
   const a = court.get(from)!,
     b = court.get(to)!,
     span = distance(a, b);
-  const interceptors = defense.filter(
-    (p) => distance(a, court.get(p)!) + distance(court.get(p)!, b) < span + 2,
-  ).length;
+  const interceptors = laneDefenders(court, from, to, defense).length;
   const pressure = defense.filter((p) => distance(a, court.get(p)!) < 4).length;
   return clamp(
     0.012 +
@@ -328,7 +341,8 @@ export function resolveCourtPossession(
     court = createCourt(c);
   let ball = c.putback ?? c.handler,
     passer: Player | undefined,
-    helper: Player | undefined;
+    helper: Player | undefined,
+    stealer: Player | undefined;
   let clock = Math.min(c.shotClock, c.periodRemaining),
     seconds = 0;
   const initialClock = clock,
@@ -385,6 +399,13 @@ export function resolveCourtPossession(
       return false;
     if (random() < risk) {
       outcome = "turnover";
+      if (c.zoneIntent) {
+        // Credit the defender in the passing lane, or the one pressuring the passer.
+        const lane = laneDefenders(court, ball, target, c.defense);
+        stealer = (lane.length ? lane : c.defense).reduce((best, p) =>
+          skill(p, "steal") > skill(best, "steal") ? p : best,
+        );
+      }
       return false;
     }
     passer = ball;
@@ -393,15 +414,18 @@ export function resolveCourtPossession(
     kickout = kind === "kickout";
     return true;
   };
-  const advanceSeconds = c.putback
-    ? 1
-    : c.play === "transition"
-      ? 3
-      : c.tactic === "pace"
-        ? 5.5
-        : c.tactic === "defense"
-          ? 8.5
-          : 7.5;
+  const advanceSeconds =
+    (c.putback
+      ? 1
+      : c.play === "transition"
+        ? 3
+        : c.tactic === "pace"
+          ? 5.5
+          : c.tactic === "defense"
+            ? 8.5
+            : 7.5) -
+    // Version 2 spends extra half-court time moving the ball and relocating.
+    (c.zoneIntent && !c.putback && c.play !== "transition" ? 1 : 0);
   const rushedAdvance = !spend("advance", advanceSeconds);
   if (rushedAdvance && !c.putback) {
     // The half-court formation assumes the offense has arrived. When the
@@ -461,7 +485,7 @@ export function resolveCourtPossession(
       c.putback ||
       clock < 4 ||
       (step > 0 && open && shooting > 55) ||
-      random() < 0.13
+      random() < (c.zoneIntent ? 0.08 : 0.13)
     )
       break;
     const candidates = c.offense
@@ -489,7 +513,8 @@ export function resolveCourtPossession(
     const best = candidates[0];
     const current = geometry.defenderDistance * 0.65 + shooting * 0.05;
     if (
-      (best.value > current + 1 || (coverage === "trap" && step === 0)) &&
+      (best.value > current + (c.zoneIntent ? 0.3 : 1) ||
+        (coverage === "trap" && step === 0)) &&
       random() < read
     ) {
       if (
@@ -562,11 +587,21 @@ export function resolveCourtPossession(
           0.005,
           0.075,
         )
-      )
+      ) {
         outcome = "turnover";
+        if (c.zoneIntent) stealer = helper ?? defender;
+      }
     } else if (open || step >= 2) break;
     else spend("reset", 2.5 + random() * 2);
   }
+  if (
+    c.zoneIntent &&
+    outcome === "shot" &&
+    !c.putback &&
+    !rushedAdvance &&
+    !clockLimited
+  )
+    relocateForIntent(c, court, ball, c.zoneIntent(ball), random, spend);
   if (outcome === "shot") {
     if (
       clockLimited &&
@@ -623,6 +658,8 @@ export function resolveCourtPossession(
           : c.play) as PlayType,
     putback: !!c.putback && ball === c.putback && !passer,
     shooter: ball,
+    stealer,
+    droveAfterCatch,
     defender: geometry.defender,
     passer,
     helper:
@@ -635,4 +672,78 @@ export function resolveCourtPossession(
     zone: geometry.zone,
     spacing: clamp(35 + geometry.spacing * 1.4, 35, 80),
   };
+}
+
+const zoneRadius = { rim: 4, mid: 15, three: 24.5 } as const;
+/** Version 2: the shooter steps into the zone their tendencies, tactic and the
+ * defense favour. Moving costs time, and the on-ball defender recovers while it
+ * happens, so a relocated shot is usually more contested than the open look. */
+function relocateForIntent(
+  c: CourtContext,
+  court: Court,
+  shooter: Player,
+  weights: readonly [number, number, number],
+  random: () => number,
+  spend: (
+    kind: CourtAction["kind"],
+    duration: number,
+    target?: Player,
+    recover?: boolean,
+  ) => boolean,
+) {
+  const from = court.get(shooter)!,
+    current = zoneAt(from),
+    zones = ["rim", "mid", "three"] as const;
+  // Staying put is cheaper than moving, so the current zone gets a bonus. Spaced
+  // version-2 offenses lean slightly further toward the arc.
+  const adjusted = zones.map(
+    (zone, i) =>
+      Math.max(0, weights[i]) *
+      (zone === current ? 1.35 : 1) *
+      (zone === "three" ? 1.15 : 1),
+  );
+  const total = adjusted.reduce((a, b) => a + b, 0);
+  if (total <= 0) return;
+  let roll = random() * total,
+    desired: (typeof zones)[number] = zones[2];
+  for (let i = 0; i < zones.length; i++) {
+    roll -= adjusted[i];
+    if (roll < 0) {
+      desired = zones[i];
+      break;
+    }
+  }
+  if (desired === current) return;
+  const dx = from.x - basket.x,
+    dy = from.y - basket.y,
+    length = Math.hypot(dx, dy) || 1;
+  const ux = length > 0.5 ? dx / length : 0,
+    uy = length > 0.5 ? dy / length : 1;
+  const radius = zoneRadius[desired];
+  let target = bounded({
+    x: basket.x + ux * radius,
+    y: Math.max(1, basket.y + uy * radius),
+  });
+  if (desired === "three" && zoneAt(target) !== "three")
+    target = bounded({
+      x: Math.sign(ux || 1) * 22.5,
+      y: Math.max(1, target.y),
+    });
+  if (desired !== "three" && zoneAt(target) === "three")
+    target = bounded({ x: target.x * 0.6, y: Math.min(target.y, 18) });
+  if (zoneAt(target) !== desired) return;
+  const duration = desired === "rim" ? 1.5 : 0.7;
+  if (!spend(desired === "rim" ? "drive" : "reset", duration, undefined, false))
+    return;
+  court.set(shooter, target);
+  const guard = c.guards.get(shooter)!;
+  court.set(
+    guard,
+    moveToward(
+      court.get(guard)!,
+      guardSpot(target, shooter, c.scheme),
+      guard,
+      duration * (desired === "rim" ? 0.55 : 0.7),
+    ),
+  );
 }

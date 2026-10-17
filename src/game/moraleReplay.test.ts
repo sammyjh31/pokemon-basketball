@@ -7,6 +7,7 @@ it("preserves the pre-morale release 02b6586", () => {
   const run = {
     ...createRun("free", true, 22),
     coach: { version: 1 as const, id: "misty" },
+    courtVersion: 1 as const,
     roster: {
       PG: 65,
       SG: 135,

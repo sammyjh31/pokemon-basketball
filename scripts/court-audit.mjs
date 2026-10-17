@@ -31,7 +31,7 @@ try {
   const mean = (v) =>
       Number((v.reduce((a, b) => a + b, 0) / v.length).toFixed(3)),
     results = [];
-  for (const version of [undefined, 1])
+  for (const version of [undefined, 1, 2])
     for (const tactic of [
       "balanced",
       "pace",
@@ -113,7 +113,7 @@ try {
     }
   const output = {
     note: "Seeded fictional tuning smoke test across 30 rosters. Rates are descriptive, not real basketball calibration or an optimal strategy search. All score, minute and clock assertions passed.",
-    games: samples * 10,
+    games: samples * 15,
     results,
   };
   await writeFile(
