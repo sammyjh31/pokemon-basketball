@@ -3,6 +3,12 @@ import { POKEMON_BY_ID } from "../data/pokemon";
 import { attributes, positionRating, teamRatings } from "./ratings";
 import { exchangePackage } from "./rosterTrades";
 import {
+  compareTeamEvaluation,
+  createEvaluationContext,
+  evaluatePlayer,
+  type EvaluationContext,
+} from "./teamEvaluation";
+import {
   FRANCHISE_MAX_TRADES,
   type Franchise,
   type FranchiseTrade,
@@ -27,6 +33,15 @@ import type {
   SuggestionOptions,
   TradeFactor,
 } from "./tradeTypes";
+import type { DevelopmentRatings } from "./developmentTypes";
+import { projectedCoaches } from "./coachOffice";
+import { playerProfile } from "./playerProfile";
+
+function evaluationTeams(franchise: Franchise) {
+  return franchise.teams.some((team) => team.evaluationVersion === 1)
+    ? projectedCoaches(franchise.teams, franchise.coachOffice, franchise.year)
+    : franchise.teams;
+}
 
 const average = (values: number[]) =>
   values.reduce((sum, value) => sum + value, 0) / (values.length || 1);
@@ -44,6 +59,7 @@ interface PlayerProfile {
   best: number;
   position: Position;
   trend: number;
+  offsets?: DevelopmentRatings;
 }
 interface Context {
   players: Map<number, PlayerProfile>;
@@ -52,13 +68,18 @@ interface Context {
   profiles: Map<number, ClubTradeProfile>;
   ratings: Map<number, ReturnType<typeof teamRatings>>;
   availability: Map<number, TradeAvailability>;
+  evaluations: Map<number, EvaluationContext>;
+  playerValues: Map<string, number>;
 }
 // Franchise snapshots are immutable in the reducer. Reuse factual skill profiles
 // during a bounded search; execution receives a fresh snapshot after any edit.
 const contexts = new WeakMap<Franchise, Context>();
 function context(franchise: Franchise): Context {
   const cached = contexts.get(franchise);
-  if (cached) return cached;
+  // Modern consumers also support edited snapshots: no identity cache may hide
+  // a changed coach, development map, or roster.
+  const modern = franchise.teams.some((team) => team.evaluationVersion === 1);
+  if (cached && !modern) return cached;
   const trends = new Map<number, number>();
   for (const report of [...(franchise.offseasons ?? [])].sort(
     (a, b) => b.year - a.year,
@@ -81,28 +102,36 @@ function context(franchise: Franchise): Context {
       for (const id of rosterIds(team)) {
         const mon = POKEMON_BY_ID.get(id)!,
           development = team.development?.[id];
+        const developed = modern ? playerProfile(mon, development) : undefined;
         const fits = POSITIONS.map((position) =>
-          positionRating(mon, position, development),
+          developed
+            ? developed.positions[position]
+            : positionRating(mon, position, development),
         );
         const best = Math.max(...fits);
         players.set(id, {
           id,
-          a: attributes(mon, development),
+          a: developed?.attributes ?? attributes(mon, development),
           fits,
           best,
           position: POSITIONS[fits.indexOf(best)],
           trend: trends.get(id) ?? 0,
+          offsets: development,
         });
       }
       ratings.set(
         team.id,
-        teamRatings(
-          team.roster,
-          team.tactic,
-          team.rotation,
-          team.development,
-          team.rotationPlan,
-        ),
+        // Contextual scores replace these for modern teams. Avoid calculating
+        // thirty unrelated legacy rotation ratings for every full negotiation.
+        team.evaluationVersion === 1
+          ? team.ratings
+          : teamRatings(
+              team.roster,
+              team.tactic,
+              team.rotation,
+              team.development,
+              team.rotationPlan,
+            ),
       );
     }
   const result: Context = {
@@ -112,8 +141,10 @@ function context(franchise: Franchise): Context {
     ratings,
     profiles: new Map(),
     availability: new Map(),
+    evaluations: new Map(),
+    playerValues: new Map(),
   };
-  contexts.set(franchise, result);
+  if (!modern) contexts.set(franchise, result);
   return result;
 }
 
@@ -354,8 +385,9 @@ export function evaluateTradePackage(
     return reject(
       "The league needs 30 complete rosters and 240 distinct Pokémon.",
     );
-  const source = franchise.teams[fromTeamId],
-    partner = franchise.teams[offer.teamId];
+  const teams = evaluationTeams(franchise);
+  const source = teams[fromTeamId],
+    partner = teams[offer.teamId];
   if (!source || !partner || source.id === partner.id)
     return reject("Choose two different clubs.");
   if (
@@ -384,7 +416,7 @@ export function evaluateTradePackage(
   );
   result.partnerBefore = ctx.ratings.get(partner.id)!.overall;
   const traded = exchangePackage(
-    franchise.teams,
+    teams,
     fromTeamId,
     offer.teamId,
     give,
@@ -393,15 +425,28 @@ export function evaluateTradePackage(
   result.partnerAfter = traded[partner.id].ratings.overall;
   result.userDelta =
     traded[source.id].ratings.overall - ctx.ratings.get(source.id)!.overall;
+  const shared =
+    partner.evaluationVersion === 1
+      ? compareTeamEvaluation(partner, traded[partner.id])
+      : undefined;
+  if (shared) {
+    result.partnerBefore = shared.before;
+    result.partnerAfter = shared.after;
+  }
+  if (source.evaluationVersion === 1)
+    result.userDelta = compareTeamEvaluation(source, traded[source.id]).delta;
   const beforeIds = rosterIds(partner),
     afterIds = rosterIds(traded[partner.id]);
   const abilityChange =
     (result.outgoingValue - result.incomingValue) / give.length;
   const fitChange = result.partnerAfter - result.partnerBefore;
-  const schemeChange =
-    coaching(partner, give, ctx) - coaching(partner, receive, ctx);
-  const depthChange = depth(afterIds, ctx) - depth(beforeIds, ctx);
-  const needs = weaknessChange(beforeIds, afterIds, ctx);
+  const schemeChange = shared
+    ? 0
+    : coaching(partner, give, ctx) - coaching(partner, receive, ctx);
+  const depthChange = shared ? 0 : depth(afterIds, ctx) - depth(beforeIds, ctx);
+  const needs = shared
+    ? { delta: 0, names: [] }
+    : weaknessChange(beforeIds, afterIds, ctx);
   const trend =
     average(give.map((id) => ctx.players.get(id)!.trend)) -
     average(receive.map((id) => ctx.players.get(id)!.trend));
@@ -421,36 +466,40 @@ export function evaluateTradePackage(
     detail: string,
   ): TradeFactor => ({ label, change, contribution: change * weight, detail });
   result.factors = [
-    factor(
-      "Player ability",
-      abilityChange,
-      1,
-      `${signed(abilityChange)} average best-position ability; sorted talent floors protect stars and package balance.`,
-    ),
-    factor(
-      "Rotation fit",
-      fitChange,
-      club.direction === "contend" ? 2.8 : 2.3,
-      `${signed(fitChange)} team rating after assigning incoming players to the outgoing vacant slots.`,
-    ),
-    factor(
-      "Coaching scheme",
-      schemeChange,
-      0.18,
-      `${signed(schemeChange)} skill match for ${TACTIC_LABELS[partner.tactic]} and ${DEFENSE_LABELS[partner.defense]}.`,
-    ),
-    factor(
-      "Positional depth",
-      depthChange,
-      club.direction === "develop" ? 0.8 : 0.6,
-      `${signed(depthChange)} coverage across the best two options at each of five positions.`,
-    ),
-    factor(
-      "Roster needs",
-      needs.delta,
-      0.35,
-      `${signed(needs.delta)} improvement in this club's weakest areas: ${needs.names.join(" and ")}.`,
-    ),
+    ...(shared
+      ? shared.factors
+      : [
+          factor(
+            "Player ability",
+            abilityChange,
+            1,
+            `${signed(abilityChange)} average best-position ability; sorted talent floors protect stars and package balance.`,
+          ),
+          factor(
+            "Rotation fit",
+            fitChange,
+            club.direction === "contend" ? 2.8 : 2.3,
+            `${signed(fitChange)} team rating after assigning incoming players to the outgoing vacant slots.`,
+          ),
+          factor(
+            "Coaching scheme",
+            schemeChange,
+            0.18,
+            `${signed(schemeChange)} skill match for ${TACTIC_LABELS[partner.tactic]} and ${DEFENSE_LABELS[partner.defense]}.`,
+          ),
+          factor(
+            "Positional depth",
+            depthChange,
+            club.direction === "develop" ? 0.8 : 0.6,
+            `${signed(depthChange)} coverage across the best two options at each of five positions.`,
+          ),
+          factor(
+            "Roster needs",
+            needs.delta,
+            0.35,
+            `${signed(needs.delta)} improvement in this club's weakest areas: ${needs.names.join(" and ")}.`,
+          ),
+        ]),
     factor(
       "Development trend",
       trend,
@@ -543,6 +592,38 @@ function fitPotential(
   const slots = ROSTER_SLOTS.filter((slot) =>
     outgoing.includes(team.roster[slot]!),
   );
+  if (team.evaluationVersion === 1) {
+    let evaluation = ctx.evaluations.get(team.id);
+    if (!evaluation) {
+      evaluation = createEvaluationContext(team);
+      ctx.evaluations.set(team.id, evaluation);
+    }
+    // Shared player values form a bounded shortlist; no old skill/scheme
+    // formula can screen out an enabled ability or a coach's preferred style.
+    // The full roster comparison below remains the acceptance authority.
+    return average(
+      slots.map((slot) => {
+        const role = POSITIONS.includes(slot as Position)
+          ? (slot as Position)
+          : undefined;
+        const value = (id: number) => {
+          const key = `${team.id}:${slot}:${id}`;
+          let score = ctx.playerValues.get(key);
+          if (score === undefined) {
+            score = evaluatePlayer(
+              evaluation!,
+              id,
+              role,
+              ctx.players.get(id)!.offsets ?? {},
+            ).score;
+            ctx.playerValues.set(key, score);
+          }
+          return score;
+        };
+        return Math.max(...incoming.map(value)) - value(team.roster[slot]!);
+      }),
+    );
+  }
   // An inexpensive upper bound shortlists packages; only the full evaluator accepts.
   return average(
     slots.map((slot) => {
@@ -605,9 +686,13 @@ function candidates(
       const aFit = fitPotential(source, giveIds, receiveIds, ctx),
         bFit = fitPotential(partner, receiveIds, giveIds, ctx);
       const potential =
-        (mutual
-          ? aFit + bFit - Math.abs(ability) * 0.8
-          : aFit * 1.2 + bFit * 0.7 + ability * 0.3) +
+        (source.evaluationVersion === 1 && partner.evaluationVersion === 1
+          ? mutual
+            ? aFit + bFit
+            : aFit * 1.2 + bFit * 0.7
+          : mutual
+            ? aFit + bFit - Math.abs(ability) * 0.8
+            : aFit * 1.2 + bFit * 0.7 + ability * 0.3) +
         strategicPotential(sourceStrategy, giveIds, receiveIds) +
         strategicPotential(partnerStrategy, receiveIds, giveIds);
       const candidate = {
@@ -634,7 +719,8 @@ export function suggestTrades(
   if (!limit || franchise.phase !== "offseason" || draftInProgress(franchise))
     return [];
   const ctx = context(franchise),
-    source = franchise.teams[0];
+    teams = evaluationTeams(franchise),
+    source = teams[0];
   if (!ctx.valid) return [];
   const size = options.packageSize ?? options.giveIds?.length ?? 1;
   if (
@@ -645,7 +731,7 @@ export function suggestTrades(
         !options.giveIds.every((id) => rosterIds(source).includes(id))))
   )
     return [];
-  const shortlist = franchise.teams
+  const shortlist = teams
     .filter(
       (team) =>
         team.id !== 0 &&
@@ -675,7 +761,10 @@ export function suggestTrades(
         rank:
           evaluation.userDelta +
           0.25 * (evaluation.userRivalGain ?? 0) +
-          (0.1 * (evaluation.incomingValue - evaluation.outgoingValue)) / size,
+          (source.evaluationVersion === 1
+            ? 0
+            : (0.1 * (evaluation.incomingValue - evaluation.outgoingValue)) /
+              size),
       });
   }
   return suggestions
@@ -708,14 +797,15 @@ export function cpuMarketTrades(
   )
     return { teams: franchise.teams, trades: [] };
   const shortlist: Candidate[] = [];
-  for (let first = 1; first < franchise.teams.length; first++)
-    for (let second = first + 1; second < franchise.teams.length; second++) {
+  const evaluated = evaluationTeams(franchise);
+  for (let first = 1; first < evaluated.length; first++)
+    for (let second = first + 1; second < evaluated.length; second++) {
       for (const size of [1, 2])
         shortlist.push(
           ...candidates(
             franchise,
-            franchise.teams[first],
-            franchise.teams[second],
+            evaluated[first],
+            evaluated[second],
             size,
             ctx,
             1,
@@ -774,7 +864,7 @@ export function cpuMarketTrades(
       giveIds: [...offer.giveIds],
       receiveIds: [...offer.receiveIds],
       source: "cpu",
-      reason: `Both coaches accept a ${offer.giveIds.length}-player package: ${franchise.teams[from].name} ${signed(partner.userDelta)} rotation rating, ${franchise.teams[offer.teamId].name} ${signed(source.userDelta)}. ${partner.profile.title} and ${source.profile.title.toLowerCase()} priorities both met.${source.userRivalGain !== undefined || partner.userRivalGain !== undefined ? ` Rival coverage: ${signed(partner.userRivalGain ?? 0)} / ${signed(source.userRivalGain ?? 0)}. ${strategy(live, live.teams[from]).explanation} ${strategy(live, live.teams[offer.teamId]).explanation}` : ""}`,
+      reason: `Both coaches accept a ${offer.giveIds.length}-player package: ${franchise.teams[from].name} ${signed(partner.userDelta)} ${franchise.teams[from].evaluationVersion === 1 ? "shared team value" : "rotation rating"}, ${franchise.teams[offer.teamId].name} ${signed(source.userDelta)}. ${partner.profile.title} and ${source.profile.title.toLowerCase()} priorities both met.${source.userRivalGain !== undefined || partner.userRivalGain !== undefined ? ` Rival coverage: ${signed(partner.userRivalGain ?? 0)} / ${signed(source.userRivalGain ?? 0)}. ${strategy(live, live.teams[from]).explanation} ${strategy(live, live.teams[offer.teamId]).explanation}` : ""}`,
     });
   }
   return { teams, trades };

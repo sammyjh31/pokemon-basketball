@@ -1,0 +1,32 @@
+import { expect, it } from 'vitest';
+import { createRun } from './draft';
+import { initialState, gameReducer } from './state';
+import { simulateSeason } from './season';
+import { simulatePlayoffs } from './playoffs';
+import { archiveFranchiseSeason, startFranchiseSeason } from './franchise';
+import { processOffseason } from './offseason';
+import { prepareGameLoad } from './persistence';
+
+it('restores a full modern coached season, development and trades and advances the franchise',async()=>{
+ const initial={...initialState(822),run:{...createRun('free',true,822),coach:{version:1 as const,id:'misty'},roster:{PG:65,SG:135,SF:149,PF:68,C:143,B1:121,B2:6,B3:131}}};
+ const result=simulateSeason(initial.run);
+ const season=gameReducer(initial,{type:'APPLY_SEASON',source:initial.run,result});
+ const playoffs=simulatePlayoffs(result.league!,initial.run.seasonSeed);
+ const archived=processOffseason(archiveFranchiseSeason({...season,run:{...season.run,playoffs}}));
+ expect(archived.franchise!.teams.every(t=>t.evaluationVersion===1)).toBe(true);
+ expect(archived.franchise!.offseasons![0].players.every(p=>p.training?.reasons.some(r=>r.includes('Shared team value')))).toBe(true);
+ const prepared=prepareGameLoad({getItem:()=>JSON.stringify(archived),setItem:()=>{}},822);
+ expect(prepared.notice).toBeNull();
+ const loaded=prepared.restore?await prepared.restore(()=>{},new AbortController().signal):prepared;
+ expect(loaded.notice).toBeNull();
+ expect(loaded.state.franchise!.history).toEqual(archived.franchise!.history);
+ expect(loaded.state.franchise!.offseasons).toEqual(archived.franchise!.offseasons);
+ expect(loaded.state.franchise!.trades).toEqual(archived.franchise!.trades);
+ const next=startFranchiseSeason(loaded.state,823);
+ expect(next.franchise!.year).toBe(2);
+ expect(next.run.evaluationVersion).toBe(1);
+ expect(next.franchise!.teams.every(t=>Object.values(t.roster).length===8)).toBe(true);
+ expect(new Set(next.franchise!.teams.flatMap(t=>Object.values(t.roster))).size).toBe(240);
+ const after=prepareGameLoad({getItem:()=>JSON.stringify(next),setItem:()=>{}},823);
+ expect(after.notice).toBeNull();
+},240000);

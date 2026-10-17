@@ -10,6 +10,11 @@ import { createRun } from "../game/draft";
 import { createLeague } from "../game/league";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { playerProfile } from "../game/playerProfile";
+import {
+  createEvaluationContext,
+  evaluatePlayer,
+} from "../game/teamEvaluation";
+import { clamp } from "../game/ratings";
 import * as arcadeSetup from "../game/arcade/setup";
 import { ArcadeMode } from "./ArcadeMode";
 vi.mock("../arcade/renderer", () => ({
@@ -83,6 +88,11 @@ describe("arcade exhibition flow", () => {
       opponentPlayer = opponent.roster.PG!;
     teams[0].development = { 65: { passing: 12 } };
     opponent.development = { [opponentPlayer]: { speed: -12 } };
+    opponent.coach = { version: 1, id: "brock" };
+    opponent.tactic = "interior";
+    opponent.defense = "zone";
+    // Exhibition rules follow the current run, even when its saved clubs are older.
+    for (const team of teams) delete team.evaluationVersion;
     const savedRun = { ...run, leagueTeams: teams },
       before = JSON.stringify(savedRun);
     render(<ArcadeMode run={savedRun} onExit={() => {}} />);
@@ -116,6 +126,15 @@ describe("arcade exhibition flow", () => {
       ),
     );
     expect(state.names[1]).toBe(opponent.name);
+    expect(state.evaluationVersion).toBe(1);
+    const context = createEvaluationContext({
+      ...opponent,
+      abilityVersion: 1,
+      engineRules: { abilities: true },
+    });
+    expect(awayPlayer.roleScores?.PG).toBeCloseTo(
+      clamp(evaluatePlayer(context, opponentPlayer, "PG").score),
+    );
     expect(JSON.stringify(savedRun)).toBe(before);
   });
 });

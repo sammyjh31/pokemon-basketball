@@ -1,3 +1,7 @@
+import {
+  createEvaluationContext,
+  evaluatePlayer,
+} from "../game/teamEvaluation";
 import { getCoach } from "../game/trainerCoaches";
 import { CoachPortrait } from "./CoachPortrait";
 import { coachGamePlan, coachRotationMinutes } from "../game/coachPolicy";
@@ -16,6 +20,13 @@ export function CoachSummary({
   const complete = Object.values(team.roster).every((id) => id !== null);
   const plan = coachGamePlan(team),
     minutes = complete ? coachRotationMinutes(team) : undefined;
+  const context =
+    team.evaluationVersion === 1 ? createEvaluationContext(team) : undefined;
+  const evaluations = context
+    ? Object.values(team.roster)
+        .flatMap((id) => (id == null ? [] : [evaluatePlayer(context, id)]))
+        .sort((a, b) => b.score - a.score)
+    : [];
   return (
     <section
       className="coach-summary"
@@ -49,6 +60,58 @@ export function CoachSummary({
           ? "Takes over at the next season boundary."
           : "Plans adjust for each opponent and during games."}
       </p>
+      {context && evaluations.length > 0 && (
+        <details className="coach-evaluation">
+          <summary>How your coach values this roster</summary>
+          <p className="coach-footnote">
+            Team value combines basketball talent, role fit, scheme, roster
+            needs and ability usefulness. The same assessment guides recruiting,
+            trades, minutes and training. It changes with your coach and roster;
+            OVR remains a separate rating. These values use each player’s
+            strongest role.
+          </p>
+          <p className="coach-evaluation-hint">Scroll across to see every contribution.</p>
+          <div
+            className="coach-evaluation-scroll"
+            role="region"
+            aria-label="Shared team evaluation"
+            tabIndex={0}
+          >
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Pokémon</th>
+                  <th scope="col">Role</th>
+                  <th scope="col">Team value</th>
+                  {evaluations[0].factors.map((f) => (
+                    <th scope="col" key={f.key}>
+                      {f.key === "role" ? "Role contribution" : f.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {evaluations.map((p) => (
+                  <tr key={p.pokemonId}>
+                    <th scope="row">{POKEMON_BY_ID.get(p.pokemonId)!.name}</th>
+                    <td>{p.role}</td>
+                    <td>
+                      <strong>{p.score.toFixed(1)}</strong>
+                    </td>
+                    {p.factors.map((f) => (
+                      <td key={f.key}>{f.contribution.toFixed(1)}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="coach-footnote">
+            Columns show contributions to team value. Actual playing time also
+            depends on stamina, matchups, fouls and game situation.
+          </p>
+        </details>
+      )}
       {minutes && (
         <details>
           <summary>Projected rotation · 240 minutes</summary>

@@ -1,18 +1,20 @@
-import type { Attributes, Position, Roster } from "../types";
-import type { PlayerDevelopment } from "../developmentTypes";
+import type { Attributes, Position, Tactic } from "../types";
 import type { AbilityActivations } from "../abilities";
+import type { EvaluationTeam } from "../teamEvaluation";
 export type Side = 0 | 1;
 export type Phase = "tipoff" | "live" | "inbound" | "break" | "final";
 export type PlayerAction =
   "idle" | "run" | "shoot" | "pass" | "dunk" | "block" | "steal" | "screen";
+export interface ArcadeTeam extends Omit<EvaluationTeam, "tactic"> {
+  name: string;
+  tactic?: Tactic;
+}
 export interface ArcadeSetup {
   abilityVersion?: 1;
+  evaluationVersion?: 1;
   typeMatchupsVersion?: 1;
   official?: boolean;
-  teams: [
-    { name: string; roster: Roster; development?: PlayerDevelopment },
-    { name: string; roster: Roster; development?: PlayerDevelopment },
-  ];
+  teams: [ArcadeTeam, ArcadeTeam];
   seed: number;
 }
 export interface ArcadeInput {
@@ -59,6 +61,8 @@ export interface ArcadePlayer {
   facing: number;
   energy: number;
   attributes: Attributes;
+  /** Frozen shared values for CPU substitution roles; absent in historical games. */
+  roleScores?: Record<Position, number>;
   action: PlayerAction;
   actionTime: number;
   cooldown: number;
@@ -111,6 +115,7 @@ export interface ArcadeEvent {
 }
 export interface ArcadeState {
   abilityVersion?: 1;
+  evaluationVersion?: 1;
   abilityPossession?: { transitionAt: number | null; secondChance: boolean };
   typeMatchupsVersion?: 1;
   official?: boolean;

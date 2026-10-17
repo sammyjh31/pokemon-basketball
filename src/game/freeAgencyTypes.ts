@@ -1,5 +1,6 @@
 import type { DevelopmentRatings } from "./developmentTypes";
 import type { Position } from "./types";
+import type { TradeFactor } from "./tradeTypes";
 
 export const MAX_FREE_AGENT_SIGNINGS = 100000;
 export interface FreeAgentSigning {
@@ -32,4 +33,6 @@ export interface FreeAgentEvaluation {
   teamAfter: number;
   fitChange: number;
   score: number;
+  /** Present for shared evaluation; before/after and score are contextual value. */
+  factors?: TradeFactor[];
 }

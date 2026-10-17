@@ -355,17 +355,25 @@ export function ArcadeMode({
       const state = createGame({
         teams: [
           {
+            ...user,
             name: user?.name ?? "Kanto Basketball Club",
             roster: { ...(official ? user!.roster : run.roster) },
             development: user?.development,
+            tactic: official ? user!.tactic : run.tactic,
+            defense: official ? user!.defense : run.defense,
+            coach: official ? user!.coach : run.coach,
           },
           {
+            ...opponent,
             name: opponent.name,
             roster: { ...opponent.roster },
             development: opponent.development,
           },
         ],
         seed: random[0],
+        ...((official ? user?.evaluationVersion : run.evaluationVersion) === 1
+          ? { evaluationVersion: 1 as const }
+          : {}),
         ...(!official || user?.typeMatchupsVersion === 1
           ? { typeMatchupsVersion: 1 as const }
           : {}),

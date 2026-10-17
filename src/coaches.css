@@ -385,3 +385,34 @@
 .coach-market .coach-cards {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
 }
+
+.coach-evaluation {
+  margin-top: 16px;
+}
+.coach-evaluation-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.coach-evaluation table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.coach-evaluation th,
+.coach-evaluation td {
+  padding: 10px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+}
+.coach-evaluation th:first-child {
+  text-align: left;
+  white-space: nowrap;
+}
+.coach-evaluation thead th {
+  color: var(--muted);
+  font-weight: 500;
+}
+.coach-evaluation-hint { display: none; }
+@media (max-width: 640px) {
+  .coach-evaluation .coach-evaluation-hint { display: block; font-size: 12px; }
+}

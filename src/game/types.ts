@@ -198,6 +198,8 @@ export interface Run {
   courtVersion?: 1;
   /** Species abilities. Absent on historical seasons for exact replay. */
   abilityVersion?: 1;
+  /** Shared team evaluation; absent on historical seasons for exact replay. */
+  evaluationVersion?: 1;
   id: string;
   mode: Mode;
   includeLegends: boolean;
@@ -257,6 +259,8 @@ export interface LeagueTeam {
   courtVersion?: 1;
   /** Species abilities. Absent on historical seasons for exact replay. */
   abilityVersion?: 1;
+  /** Shared team evaluation; absent on historical seasons for exact replay. */
+  evaluationVersion?: 1;
   id: number;
   name: string;
   roster: Roster;

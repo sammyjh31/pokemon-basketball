@@ -1,3 +1,9 @@
+import {
+  createEvaluationContext,
+  evaluatePlayer,
+  type EvaluationTeam,
+  type EvaluationFactor,
+} from "./teamEvaluation";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { playerProfile } from "./playerProfile";
 import {
@@ -17,6 +23,7 @@ export interface DraftRecommendation {
   alternatives: number[];
   scarceAlternatives: number;
   physical: string;
+  factors?: EvaluationFactor[];
 }
 /** Advice scores roster fit, not a forecast of a CPU's future picks. */
 export function recommendRosterPicks(
@@ -24,12 +31,56 @@ export function recommendRosterPicks(
   roster: Roster,
   tactic: Tactic,
   limit = 3,
+  team?: EvaluationTeam,
 ): DraftRecommendation[] {
   const used = new Set(Object.values(roster));
   const vacancies = ROSTER_SLOTS.filter((s) => roster[s] == null);
   if (!vacancies.length) return [];
   const starters = POSITIONS.filter((p) => roster[p] == null);
   const available = pool.filter((p) => !used.has(p.id));
+  if (team?.evaluationVersion === 1) {
+    const context = createEvaluationContext({ ...team, roster, tactic });
+    const positions = starters.length ? starters : [...POSITIONS];
+    const evaluations = new Map(
+      positions.map((position) => [
+        position,
+        available
+          .map((mon) => evaluatePlayer(context, mon.id, position))
+          .sort((a, b) => b.score - a.score || a.pokemonId - b.pokemonId),
+      ]),
+    );
+    return available
+      .map((mon) => {
+        const best = positions
+          .map((position) =>
+            evaluations.get(position)!.find((p) => p.pokemonId === mon.id)!,
+          )
+          .sort((a, b) => b.score - a.score)[0];
+        const rivals = evaluations
+          .get(best.role)!
+          .filter((p) => p.pokemonId !== mon.id);
+        const scarceAlternatives = rivals.filter(
+          (p) => p.score >= best.score - 4,
+        ).length;
+        return {
+          pokemonId: mon.id,
+          slot: starters.length ? best.role : vacancies[0],
+          fit: best.roleFit,
+          score: best.score,
+          factors: best.factors,
+          reasons: [
+            `Shared team value: ${best.score.toFixed(1)}; ${starters.length ? `${best.role} vacancy` : `bench depth at ${best.role}`}.`,
+            ...best.reasons,
+            `${scarceAlternatives} other available players are within 4 team-value points or better at ${best.role}.`,
+          ],
+          alternatives: rivals.slice(0, 2).map((p) => p.pokemonId),
+          scarceAlternatives,
+          physical: `${mon.heightM} m · ${mon.weightKg} kg. Size helps reach and contact; mobility and stamina still matter.`,
+        };
+      })
+      .sort((a, b) => b.score - a.score || a.pokemonId - b.pokemonId)
+      .slice(0, Math.max(0, Math.floor(limit)));
+  }
   const current = [...used]
     .flatMap((id) => (id == null ? [] : [POKEMON_BY_ID.get(id)!]))
     .filter(Boolean)

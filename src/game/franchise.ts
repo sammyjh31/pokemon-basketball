@@ -331,6 +331,7 @@ export function startFranchiseSeason(
     typeMatchupsVersion: 1 as const,
     typeTacticsVersion: 1 as const,
     abilityVersion: 1 as const,
+    evaluationVersion: 1 as const,
     courtVersion: 1 as const,
     matchupVersion: 1 as const,
     possessionVersion: 1 as const,
@@ -455,6 +456,12 @@ export function evaluateTrade(
   giveId: number,
   receiveId: number,
 ): TradeEvaluation {
+  if (franchise.teams[0]?.evaluationVersion === 1)
+    return evaluateTradePackage(franchise, {
+      teamId,
+      giveIds: [giveId],
+      receiveIds: [receiveId],
+    });
   const values = {
     outgoingValue: 0,
     incomingValue: 0,

@@ -525,3 +525,37 @@ it("recalculates locked lineups and clears stale previews without losing the sho
   );
   expect(card).toHaveTextContent("Best lineup found: PG");
 }, 20000);
+
+it("explains current coach and ability rules while keeping historical advice labels accurate", () => {
+  const state = draft();
+  state.coaching[0].coach = { version: 1, id: "brock" };
+  state.options!.engineRules.abilities = false;
+  const { rerender } = render(
+    <LocalLeagueDraft draft={state} onPick={() => {}} />,
+  );
+  useBestOpen();
+  fireEvent.click(screen.getByText(/^Draft recommendations for/));
+  expect(
+    screen.getAllByText(/interior offense \/ zone defense/).length,
+  ).toBeGreaterThan(0);
+  expect(
+    screen.getAllByText("Abilities are disabled for this league.").length,
+  ).toBeGreaterThan(0);
+  expect(
+    screen.getByText(
+      /These are universal team ratings; coach recommendations use contextual team value/,
+    ),
+  ).toBeInTheDocument();
+  rerender(
+    <LocalLeagueDraft
+      draft={{ ...state, evaluationVersion: undefined }}
+      onPick={() => {}}
+    />,
+  );
+  expect(
+    screen.queryByText(
+      /These are universal team ratings; coach recommendations use contextual team value/,
+    ),
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText(/Shared team value:/)).not.toBeInTheDocument();
+});

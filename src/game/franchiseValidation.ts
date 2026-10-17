@@ -312,10 +312,12 @@ export function validateLeagueTeams(
   const typeVersion = object(rows[0]).typeMatchupsVersion;
   if (typeVersion !== undefined && typeVersion !== 1) return fail();
   const abilityVersion = object(rows[0]).abilityVersion;
+  const evaluationVersion = object(rows[0]).evaluationVersion;
   const courtVersion = object(rows[0]).courtVersion;
   const matchupVersion = object(rows[0]).matchupVersion;
   const possessionVersion = object(rows[0]).possessionVersion;
   if (abilityVersion !== undefined && abilityVersion !== 1) return fail();
+  if (evaluationVersion !== undefined && evaluationVersion !== 1) return fail();
   if (courtVersion !== undefined && courtVersion !== 1) return fail();
   if (matchupVersion !== undefined && matchupVersion !== 1) return fail();
   if (possessionVersion !== undefined && possessionVersion !== 1) return fail();
@@ -343,6 +345,7 @@ export function validateLeagueTeams(
       row.simulationVersion !== simulationVersion ||
       row.typeMatchupsVersion !== typeVersion ||
       row.abilityVersion !== abilityVersion ||
+      row.evaluationVersion !== evaluationVersion ||
       row.courtVersion !== courtVersion ||
       row.matchupVersion !== matchupVersion ||
       row.possessionVersion !== possessionVersion ||
@@ -385,6 +388,7 @@ export function validateLeagueTeams(
       ...(typeVersion === 1 ? { typeMatchupsVersion: 1 as const } : {}),
       ...(tacticsVersion === 1 ? { typeTacticsVersion: 1 as const } : {}),
       ...(abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+      ...(evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
       ...(courtVersion === 1 ? { courtVersion: 1 as const } : {}),
       ...(matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
       ...(possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
@@ -1056,6 +1060,7 @@ export function validateFranchise(
       (team) =>
         team.typeTacticsVersion !== run.typeTacticsVersion ||
         team.abilityVersion !== run.abilityVersion ||
+        team.evaluationVersion !== run.evaluationVersion ||
         team.courtVersion !== run.courtVersion ||
         team.matchupVersion !== run.matchupVersion ||
         team.possessionVersion !== run.possessionVersion,

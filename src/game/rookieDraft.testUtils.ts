@@ -5,6 +5,8 @@ import { ROSTER_SLOTS, type GameState } from "./types";
 
 export function rookieFixture(): GameState {
   let run = createRun("free", false, 82);
+  // This fixture represents existing franchises; modern tests opt in explicitly.
+  delete run.evaluationVersion;
   [129, 25, 149, 68, 143, 9, 94, 59].forEach((id, index) => {
     run = placePokemon(run, id, ROSTER_SLOTS[index]);
   });

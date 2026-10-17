@@ -1,3 +1,4 @@
+import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
 import { getCoach } from "./trainerCoaches";
 import { coachPlayerPreference } from "./coachPolicy";
 import { matchupPreference, type BodyProfile } from "./bodyMatchups";
@@ -25,6 +26,42 @@ export interface Team {
   fouls: number;
   transition: number;
   counterSubstitutions?: number;
+  evaluation?: {
+    tactic: string;
+    defense: string;
+    scores: Map<number, number[]>;
+  };
+}
+/** Cache only within a match; refresh when an in-game scheme changes. */
+function roleValue(team: Team, player: Player, role: number): number {
+  if (team.config.evaluationVersion !== 1)
+    return player.profile.positions[POSITIONS[role]];
+  const { tactic, defense } = team.config;
+  if (
+    !team.evaluation ||
+    team.evaluation.tactic !== tactic ||
+    team.evaluation.defense !== defense
+  ) {
+    // Match config already contains the coach's current plan, including adjustments.
+    const context = createEvaluationContext({
+      ...team.config,
+      coach: undefined,
+    });
+    team.evaluation = {
+      tactic,
+      defense,
+      scores: new Map(
+        team.players.map((p) => [
+          p.box.pokemonId,
+          POSITIONS.map(
+            (position) =>
+              evaluatePlayer(context, p.box.pokemonId, position).score,
+          ),
+        ]),
+      ),
+    };
+  }
+  return team.evaluation.scores.get(player.box.pokemonId)![role];
 }
 const ROLE_ORDER = [0, 4, 1, 3, 2];
 
@@ -147,11 +184,11 @@ export function chooseLineup(
           : 0;
       const debt = p.target * phase - Math.min(p.box.minutes, 48);
       const basketballScore = close
-        ? p.profile.positions[POSITIONS[role]] * 0.85 +
+        ? roleValue(team, p, role) * 0.85 +
           p.energy * 0.42 +
           p.profile.attributes.composure * 0.12 -
           foulPenalty * 0.2
-        : p.profile.positions[POSITIONS[role]] * 0.5 +
+        : roleValue(team, p, role) * 0.5 +
           p.energy * 0.22 +
           p.target * 0.8 +
           debt * 5 -
@@ -160,7 +197,9 @@ export function chooseLineup(
       const score =
         basketballScore +
         (coach
-          ? coachPlayerPreference(coach, p.profile) -
+          ? (team.config.evaluationVersion === 1
+              ? 0
+              : coachPlayerPreference(coach, p.profile)) -
             (1 - p.energy / 100) * coach.rest * 8 -
             foulPenalty * coach.rest * 0.35
           : 0) +
@@ -194,10 +233,10 @@ export function replaceFoulOut(
     );
     available.sort(
       (a, b) =>
-        b.profile.positions[POSITIONS[role]] +
+        roleValue(team, b, role) +
         b.energy * 0.25 +
         (bonuses.get(b)?.[role] ?? 0) -
-        (a.profile.positions[POSITIONS[role]] +
+        (roleValue(team, a, role) +
           a.energy * 0.25 +
           (bonuses.get(a)?.[role] ?? 0)),
     );

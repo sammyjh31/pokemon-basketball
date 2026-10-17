@@ -39,9 +39,13 @@ export function chooseCpuSubstitution(
         out.energy < 40 && incoming.energy > out.energy + 15;
       if (coolingDown && !emergencyRest) continue;
       const score = (p: ArcadePlayer) =>
-        positionRatingFromAttributes(p.attributes, out.slot) * 0.75 +
+        (s.evaluationVersion === 1
+          ? (p.roleScores?.[out.slot] ??
+            positionRatingFromAttributes(p.attributes, out.slot))
+          : positionRatingFromAttributes(p.attributes, out.slot)) *
+          0.75 +
         p.energy * 0.35 +
-        (bonuses.get(p)?.[role] ?? 0);
+        (s.typeMatchupsVersion === 1 ? (bonuses.get(p)?.[role] ?? 0) : 0);
       const gain = score(incoming) - score(out);
       if (gain > bestGain) {
         bestGain = gain;

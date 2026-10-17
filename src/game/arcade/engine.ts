@@ -52,7 +52,7 @@ export function cancelSubstitution(s: ArcadeState, outId: number) {
   s.pendingSubs = s.pendingSubs.filter((q) => q.outId !== outId);
 }
 function applySubs(s: ArcadeState) {
-  if (s.typeMatchupsVersion === 1) {
+  if (s.typeMatchupsVersion === 1 || s.evaluationVersion === 1) {
     // Honor the human's queued lineup first, then let the CPU react to that five.
     commitSubs(s);
     const counter = chooseCpuSubstitution(s);

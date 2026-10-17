@@ -636,10 +636,15 @@ export function TradeCenter({
               <p>{evaluation.reason}</p>
               <div className="trade-value-summary">
                 <span>
-                  Your club fit <b>{signed(evaluation.userDelta)}</b>
+                  {franchise.teams[0]?.evaluationVersion === 1
+                    ? "Your shared team value"
+                    : "Your club fit"}{" "}
+                  <b>{signed(evaluation.userDelta)}</b>
                 </span>
                 <span>
-                  Partner club fit{" "}
+                  {franchise.teams[0]?.evaluationVersion === 1
+                    ? "Partner shared team value"
+                    : "Partner club fit"}{" "}
                   <b>
                     {evaluation.partnerBefore.toFixed(1)} →{" "}
                     {evaluation.partnerAfter.toFixed(1)}
@@ -812,7 +817,10 @@ export function TradeCenter({
                   <p>{suggestion.evaluation.reason}</p>
                   <div className="trade-suggestion-footer">
                     <span>
-                      Your club fit {signed(suggestion.evaluation.userDelta)}
+                      {franchise.teams[0]?.evaluationVersion === 1
+                        ? "Your shared team value"
+                        : "Your club fit"}{" "}
+                      {signed(suggestion.evaluation.userDelta)}
                     </span>
                     <button
                       type="button"

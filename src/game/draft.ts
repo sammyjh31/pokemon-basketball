@@ -1,3 +1,4 @@
+import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
 import { POKEMON, POKEMON_BY_ID, POKEMON_COUNT } from "../data/pokemon";
 import { nextRandom } from "./random";
 import {
@@ -34,6 +35,7 @@ export function createRun(
     typeMatchupsVersion: 1,
     typeTacticsVersion: 1,
     abilityVersion: 1,
+    evaluationVersion: 1,
     courtVersion: 1,
     matchupVersion: 1,
     possessionVersion: 1,
@@ -117,9 +119,18 @@ export function autoFillBench(run: Run): Run {
   const roster = { ...run.roster };
   for (const slot of BENCH_SLOTS) {
     if (roster[slot] !== null) continue;
-    const random = nextRandom(seed);
-    seed = random.seed;
-    const index = Math.floor(random.value * pool.length);
+    let index: number;
+    if (run.evaluationVersion === 1) {
+      const context = createEvaluationContext({ ...run, roster });
+      const ranked = pool
+        .map((mon) => evaluatePlayer(context, mon.id))
+        .sort((a, b) => b.score - a.score || a.pokemonId - b.pokemonId);
+      index = pool.findIndex((mon) => mon.id === ranked[0].pokemonId);
+    } else {
+      const random = nextRandom(seed);
+      seed = random.seed;
+      index = Math.floor(random.value * pool.length);
+    }
     roster[slot] = pool.splice(index, 1)[0].id;
   }
   return { ...run, roster, draftSeed: seed };

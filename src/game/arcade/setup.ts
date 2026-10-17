@@ -1,6 +1,8 @@
 import { POKEMON_BY_ID } from "../../data/pokemon";
 import { playerProfile } from "../playerProfile";
 import { emptyAbilityActivations } from "../abilities";
+import { clamp } from "../ratings";
+import { createEvaluationContext, evaluatePlayer } from "../teamEvaluation";
 import { POSITIONS, ROSTER_SLOTS } from "../types";
 import type {
   ArcadePlayer,
@@ -30,10 +32,21 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
     !setup ||
     setup.teams?.length !== 2 ||
     !Number.isFinite(setup.seed) ||
-    (setup.abilityVersion !== undefined && setup.abilityVersion !== 1)
+    (setup.abilityVersion !== undefined && setup.abilityVersion !== 1) ||
+    (setup.evaluationVersion !== undefined && setup.evaluationVersion !== 1)
   )
     throw new Error("Choose two complete teams to play.");
   setup.teams.forEach((team, side) => {
+    const evaluation =
+      setup.evaluationVersion === 1
+        ? createEvaluationContext({
+            ...team,
+            tactic: team.tactic ?? "balanced",
+            // Evaluate the abilities actually active on this court.
+            abilityVersion: setup.abilityVersion,
+            engineRules: { abilities: setup.abilityVersion === 1 },
+          })
+        : undefined;
     ROSTER_SLOTS.forEach((slot, i) => {
       const id = team.roster[slot],
         mon = id == null ? undefined : POKEMON_BY_ID.get(id);
@@ -57,6 +70,16 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
         facing: side === 0 ? 1 : -1,
         energy: 100,
         attributes: { ...profile.attributes },
+        ...(evaluation
+          ? {
+              roleScores: Object.fromEntries(
+                POSITIONS.map((role) => [
+                  role,
+                  clamp(evaluatePlayer(evaluation, mon.id, role).score),
+                ]),
+              ) as Record<(typeof POSITIONS)[number], number>,
+            }
+          : {}),
         action: "idle",
         actionTime: 0,
         cooldown: 0,
@@ -76,6 +99,7 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
   });
   const s: ArcadeState = {
     modelVersion: 1,
+    ...(setup.evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
     ...(setup.abilityVersion === 1
       ? {
           abilityVersion: 1 as const,

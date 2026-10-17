@@ -9,6 +9,12 @@ import {
 import type { FranchiseTrade } from "./franchiseTypes";
 import { CPU_TRADE_LIMIT, type PlayerDevelopment } from "./developmentTypes";
 import { nextRandom } from "./random";
+import {
+  compareTeamEvaluation,
+  createEvaluationContext,
+  evaluatePlayer,
+  evaluateTeam,
+} from "./teamEvaluation";
 
 /** Move skill development with the species; historical season snapshots are untouched. */
 export function exchangePlayers(
@@ -28,7 +34,10 @@ export function exchangePlayers(
     const slot = ROSTER_SLOTS.find((s) => team.roster[s] === from)!;
     const roster = { ...team.roster, [slot]: to };
     let development: PlayerDevelopment | undefined;
-    if (team.development) {
+    if (
+      team.development ||
+      (team.evaluationVersion === 1 && other.development)
+    ) {
       development = {
         ...team.development,
         [to]: { ...(other.development?.[to] ?? {}) },
@@ -76,6 +85,26 @@ export function cpuTrades(
       }),
     ),
   );
+  const sharedContexts = new Map(
+    teams
+      .filter((team) => team.evaluationVersion === 1)
+      .map((team) => [team.id, createEvaluationContext(team)]),
+  );
+  const sharedValues = new Map<string, number>();
+  const sharedValue = (team: LeagueTeam, id: number, slot: string) => {
+    const key = `${team.id}:${id}:${slot}`;
+    let value = sharedValues.get(key);
+    if (value === undefined) {
+      value = evaluatePlayer(
+        sharedContexts.get(team.id)!,
+        id,
+        POSITIONS.includes(slot as Position) ? (slot as Position) : undefined,
+        allDevelopment[id] ?? {},
+      ).score;
+      sharedValues.set(key, value);
+    }
+    return value;
+  };
   let seed = (seasonSeed ^ Math.imul(year, 0x51c8a361)) >>> 0;
   const roll = () => {
     const next = nextRandom(seed);
@@ -104,12 +133,14 @@ export function cpuTrades(
             ap = profiles.get(give)!,
             bp = profiles.get(receive)!;
           if (Math.abs(ap.best - bp.best) > 6) continue;
-          const fit = (id: number, slot: string) =>
-            POSITIONS.includes(slot as Position)
-              ? profiles.get(id)!.positions[slot as Position]
-              : profiles.get(id)!.best;
-          const aFit = fit(receive, aSlot) - fit(give, aSlot),
-            bFit = fit(give, bSlot) - fit(receive, bSlot);
+          const fit = (team: LeagueTeam, id: number, slot: string) =>
+            team.evaluationVersion === 1
+              ? sharedValue(team, id, slot)
+              : POSITIONS.includes(slot as Position)
+                ? profiles.get(id)!.positions[slot as Position]
+                : profiles.get(id)!.best;
+          const aFit = fit(a, receive, aSlot) - fit(a, give, aSlot),
+            bFit = fit(b, give, bSlot) - fit(b, receive, bSlot);
           options.push({ give, receive, potential: aFit + bFit });
         }
       // Shortlist the two strongest positional fits per club pair before the
@@ -121,15 +152,21 @@ export function cpuTrades(
       );
       for (const { give, receive } of options.slice(0, 2)) {
         const swapped = exchangePlayers(teams, first, second, give, receive);
-        const aGain = swapped[first].ratings.overall - a.ratings.overall,
-          bGain = swapped[second].ratings.overall - b.ratings.overall;
+        const aGain =
+            a.evaluationVersion === 1
+              ? compareTeamEvaluation(a, swapped[first]).delta
+              : swapped[first].ratings.overall - a.ratings.overall,
+          bGain =
+            b.evaluationVersion === 1
+              ? compareTeamEvaluation(b, swapped[second]).delta
+              : swapped[second].ratings.overall - b.ratings.overall;
         const ability = profiles.get(receive)!.best - profiles.get(give)!.best;
         if (
           aGain < 0.05 ||
           bGain < 0.05 ||
           aGain + bGain < 0.15 ||
-          ability + 2 * aGain < -2.5 ||
-          -ability + 2 * bGain < -2.5
+          (a.evaluationVersion !== 1 && ability + 2 * aGain < -2.5) ||
+          (b.evaluationVersion !== 1 && -ability + 2 * bGain < -2.5)
         )
           continue;
         candidates.push({
@@ -167,7 +204,11 @@ export function cpuTrades(
       giveId: give,
       receiveId: receive,
       source: "cpu",
-      reason: `Both clubs improve their rotation fit: ${teams[first].name} +${aGain.toFixed(1)}, ${teams[second].name} +${bGain.toFixed(1)} in roster rating.`,
+      reason:
+        teams[first].evaluationVersion === 1 &&
+        teams[second].evaluationVersion === 1
+          ? `Both clubs improve their shared team value: ${teams[first].name} +${aGain.toFixed(2)}, ${teams[second].name} +${bGain.toFixed(2)}.`
+          : `Both clubs improve their rotation fit: ${teams[first].name} +${aGain.toFixed(1)}, ${teams[second].name} +${bGain.toFixed(1)} in roster rating.`,
     });
   }
   return { teams: updated, trades };
@@ -234,17 +275,36 @@ export function exchangePackage(
           );
         return;
       }
-      const score = order.reduce((sum, id, index) => {
-        const slot = slots[index],
-          starter = POSITIONS.indexOf(slot as Position),
-          ratings = fits.get(id)!;
-        const minutes =
-          team.rotationPlan?.minutes[slot] ?? (starter >= 0 ? 34 : 23);
-        return (
-          sum +
-          (starter >= 0 ? ratings[starter] : Math.max(...ratings)) * minutes
-        );
-      }, 0);
+      const legacyScore = () =>
+        order.reduce((sum, id, index) => {
+          const slot = slots[index],
+            starter = POSITIONS.indexOf(slot as Position),
+            ratings = fits.get(id)!;
+          const minutes =
+            team.rotationPlan?.minutes[slot] ?? (starter >= 0 ? 34 : 23);
+          return (
+            sum +
+            (starter >= 0 ? ratings[starter] : Math.max(...ratings)) * minutes
+          );
+        }, 0);
+      const score =
+        team.evaluationVersion === 1
+          ? evaluateTeam({
+              ...team,
+              roster: {
+                ...team.roster,
+                ...Object.fromEntries(
+                  slots.map((slot, index) => [slot, order[index]]),
+                ),
+              },
+              development: {
+                ...team.development,
+                ...Object.fromEntries(
+                  incoming.map((id) => [id, other.development?.[id] ?? {}]),
+                ),
+              },
+            }).score
+          : legacyScore();
       if (score > bestScore + 1e-9) {
         best = order;
         bestScore = score;

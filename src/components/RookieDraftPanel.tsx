@@ -1,3 +1,4 @@
+import { EvaluationFactors } from "./EvaluationFactors";
 import { useMemo, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
@@ -186,6 +187,7 @@ function DraftRoom({
                       Based on ability, positional fit and your rotation's
                       needs.
                     </small>
+                    <EvaluationFactors factors={recommendation.factors} />
                     {recommendation.reason && (
                       <p className="muted">{recommendation.reason}</p>
                     )}

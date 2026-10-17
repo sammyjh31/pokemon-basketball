@@ -137,8 +137,24 @@ export function LocalLeagueDraft({
     [draft.positionLocks, roster, turn.teamId],
   );
   const advice = useMemo(
-    () => recommendRosterPicks(pool, roster, tactic, pool.length),
-    [pool, roster, tactic],
+    () =>
+      recommendRosterPicks(pool, roster, tactic, pool.length, {
+        roster,
+        ...draft.coaching[turn.teamId],
+        evaluationVersion: draft.evaluationVersion,
+        abilityVersion: draft.abilityVersion,
+        engineRules: draft.options?.engineRules,
+      }),
+    [
+      pool,
+      roster,
+      tactic,
+      draft.coaching,
+      draft.evaluationVersion,
+      draft.abilityVersion,
+      draft.options,
+      turn.teamId,
+    ],
   );
   const adviceById = useMemo(
     () => new Map(advice.map((pick) => [pick.pokemonId, pick])),
@@ -680,6 +696,8 @@ export function LocalLeagueDraft({
                 preserve those ranks. Equal displayed scores share a rank.
               </p>
               <p className="draft-ranking-method">
+                {draft.evaluationVersion === 1 &&
+                  "These are universal team ratings; coach recommendations use contextual team value. "}
                 Balanced offense + defense weights them equally. A negative
                 change lowers that average; a specialist may still fill a need.
                 Ratings are roster estimates, not predicted wins. Position and

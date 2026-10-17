@@ -1,6 +1,8 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { attributes, positionRating, teamRatings } from "./ratings";
 import { clubTradeProfile } from "./tradeMarket";
+import { compareTeamEvaluation } from "./teamEvaluation";
+import { projectedCoaches } from "./coachOffice";
 import type { DevelopmentRatings } from "./developmentTypes";
 import type { Franchise } from "./franchiseTypes";
 import {
@@ -35,7 +37,9 @@ export function freeAgentMarket(
   f: Franchise,
   includeLegends = true,
 ): FreeAgent[] {
-  let result = markets.get(f);
+  // Recheck ownership and developed offsets for modern edited snapshots.
+  const modern = f.teams.some((team) => team.evaluationVersion === 1);
+  let result = modern ? undefined : markets.get(f);
   if (!result) {
     const released = new Map<
       number,
@@ -89,7 +93,7 @@ export function freeAgentMarket(
         ];
       })
       .sort((a, b) => b.rating - a.rating || a.pokemonId - b.pokemonId);
-    markets.set(f, result);
+    if (!modern) markets.set(f, result);
   }
   return result.filter(
     (p) => includeLegends || !POKEMON_BY_ID.get(p.pokemonId)!.legendary,
@@ -184,7 +188,13 @@ export function evaluateFreeAgentSigning(
   releasedId: number,
   includeLegends = true,
 ): FreeAgentEvaluation {
-  const team = f.teams.find((t) => t.id === teamId);
+  const actualTeam = f.teams.find((t) => t.id === teamId);
+  const team =
+    actualTeam?.evaluationVersion === 1
+      ? projectedCoaches(f.teams, f.coachOffice, f.year).find(
+          (t) => t.id === teamId,
+        )
+      : actualTeam;
   const base = {
     teamBefore: team?.ratings.overall ?? 0,
     teamAfter: team?.ratings.overall ?? 0,
@@ -223,6 +233,29 @@ export function evaluateFreeAgentSigning(
   if (!agent)
     return reject("That Pokémon is no longer an available free agent.");
   const next = replacePlayer(team, slot, agent);
+  if (team.evaluationVersion === 1) {
+    const shared = compareTeamEvaluation(team, next);
+    return {
+      eligible: true,
+      teamBefore: shared.before,
+      teamAfter: shared.after,
+      fitChange:
+        shared.factors.find((factor) => factor.label === "Rotation role fit")
+          ?.change ?? 0,
+      score: shared.delta,
+      factors: shared.factors,
+      reason: `${POKEMON_BY_ID.get(pokemonId)!.name} replaces ${POKEMON_BY_ID.get(releasedId)!.name} at ${slot}. Shared team value ${shared.delta >= 0 ? "+" : ""}${shared.delta.toFixed(2)}. ${[
+        ...shared.factors,
+      ]
+        .sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution))
+        .slice(0, 2)
+        .map(
+          (factor) =>
+            `${factor.label} ${factor.contribution >= 0 ? "+" : ""}${factor.contribution.toFixed(2)}`,
+        )
+        .join("; ")}.`,
+    };
+  }
   const scored = fitScore(
     team,
     slot,
@@ -334,8 +367,12 @@ export function processCpuFreeAgency(state: GameState): GameState {
     .map((s) => s.teamId)
     .filter((id) => id !== 0);
   for (const teamId of order) {
-    const team = f.teams[teamId],
-      pool = freeAgentMarket(f, state.run.includeLegends);
+    const actualTeam = f.teams[teamId];
+    const team =
+      actualTeam.evaluationVersion === 1
+        ? projectedCoaches(f.teams, f.coachOffice, f.year)[teamId]
+        : actualTeam;
+    const pool = freeAgentMarket(f, state.run.includeLegends);
     const direction = clubTradeProfile(f, teamId);
     const outgoing = ROSTER_SLOTS.filter(
       (s) => !protectedRookies.has(team.roster[s]!),
@@ -353,7 +390,13 @@ export function processCpuFreeAgency(state: GameState): GameState {
         return outgoing.map((out) => ({
           agent,
           releasedId: out.id,
-          score: fitScore(team, out.slot, profile, out.profile).score,
+          score:
+            team.evaluationVersion === 1
+              ? compareTeamEvaluation(
+                  team,
+                  replacePlayer(team, out.slot, agent),
+                ).delta
+              : fitScore(team, out.slot, profile, out.profile).score,
         }));
       })
       .sort(
@@ -377,7 +420,7 @@ export function processCpuFreeAgency(state: GameState): GameState {
       .filter(
         (o) =>
           o.evaluation.eligible &&
-          o.evaluation.score >= 2 &&
+          o.evaluation.score >= (team.evaluationVersion === 1 ? 0.15 : 2) &&
           o.evaluation.teamAfter >= o.evaluation.teamBefore - 0.15,
       )
       .sort(

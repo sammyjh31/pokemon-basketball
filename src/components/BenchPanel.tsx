@@ -54,7 +54,8 @@ export function BenchPanel({
   onDefense: (defense: DefenseScheme) => void;
 }) {
   const minutes =
-      run.coach && ratings.complete
+      (run.coach || (run.evaluationVersion === 1 && !run.rotationPlan)) &&
+      ratings.complete
         ? coachRotationMinutes({
             ...run,
             id: 0,

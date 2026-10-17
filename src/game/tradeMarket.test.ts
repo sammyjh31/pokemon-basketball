@@ -8,6 +8,7 @@ import type { Franchise } from "./franchiseTypes";
 function fixture(): Franchise {
   const run: Run = {
     ...createRun("free", true, 47),
+    evaluationVersion: undefined,
     roster: Object.fromEntries(
       ROSTER_SLOTS.map((slot, i) => [
         slot,

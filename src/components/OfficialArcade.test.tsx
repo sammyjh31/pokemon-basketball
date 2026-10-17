@@ -15,6 +15,11 @@ import * as setup from "../game/arcade/setup";
 import type { ArcadeState } from "../game/arcade/types";
 import type { OfficialGame } from "../game/franchiseFeatures";
 import type { LeagueFixture } from "../game/types";
+import {
+  createEvaluationContext,
+  evaluatePlayer,
+} from "../game/teamEvaluation";
+import { clamp } from "../game/ratings";
 import { ArcadeMode } from "./ArcadeMode";
 import { OfficialArcadeResults } from "./OfficialArcade";
 
@@ -86,6 +91,51 @@ function completedGame(): ArcadeState {
 }
 
 describe("official arcade flow", () => {
+  it.each([false, true])(
+    "uses scheduled clubs' evaluation and ability settings rather than the run flag (modern: %s)",
+    async (modern) => {
+      vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+        setTransform: () => {},
+      } as unknown as CanvasRenderingContext2D);
+      const create = vi.spyOn(setup, "createGame");
+      const actualTeams = structuredClone(teams);
+      for (const team of actualTeams) {
+        team.evaluationVersion = modern ? 1 : undefined;
+        team.engineRules = {
+          version: 1,
+          abilities: false,
+          adaptiveCoaching: true,
+          familiarity: 0,
+        };
+      }
+      actualTeams[1].coach = { version: 1, id: "brock" };
+      actualTeams[1].development = {
+        [actualTeams[1].roster.PG!]: { passing: 20 },
+      };
+      render(
+        <ArcadeMode
+          run={{ ...run, evaluationVersion: modern ? undefined : 1 }}
+          onExit={() => {}}
+          official={{ ...official, teams: actualTeams }}
+        />,
+      );
+      const tipoff = screen.getByRole("button", {
+        name: "Tip off official game",
+      });
+      await waitFor(() => expect(tipoff).toBeEnabled());
+      fireEvent.click(tipoff);
+      const state = create.mock.results[0].value as ArcadeState;
+      expect(state.evaluationVersion).toBe(modern ? 1 : undefined);
+      expect(state).not.toHaveProperty("abilityVersion");
+      if (modern) {
+        const context = createEvaluationContext(actualTeams[1]);
+        expect(state.players[8].roleScores?.PG).toBeCloseTo(
+          clamp(evaluatePlayer(context, actualTeams[1].roster.PG!, "PG").score),
+        );
+      } else expect(state.players[8]).not.toHaveProperty("roleScores");
+    },
+  );
+
   it("starts only the scheduled away opponent with the fixture seed and explains unfinished exits", async () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
       setTransform: () => {},

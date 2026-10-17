@@ -1,3 +1,4 @@
+import { EvaluationFactors } from "./EvaluationFactors";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
@@ -386,7 +387,7 @@ function MarketRoom({
           {evaluation && (
             <div className="free-agent-evaluation" aria-live="polite">
               <p>
-                Team rating{" "}
+                {evaluation.factors ? "Shared team value" : "Team rating"}{" "}
                 <strong>
                   {evaluation.teamBefore.toFixed(1)} →{" "}
                   {evaluation.teamAfter.toFixed(1)}
@@ -396,6 +397,7 @@ function MarketRoom({
                 Roster fit <strong>{signed(evaluation.fitChange)}</strong>
               </p>
               <p>{evaluation.reason}</p>
+              <EvaluationFactors factors={evaluation.factors} />
             </div>
           )}
           <p className="free-agent-note">

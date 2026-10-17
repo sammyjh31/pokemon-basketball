@@ -16,6 +16,8 @@ const shooters = [12, 18, 22, 83, 107, 227, 279, 596];
 const finishers = [67, 68, 217, 277, 307, 308, 533, 534];
 const base = createLeague({
   ...createRun("free", true, 88),
+  // These fixtures lock the original species-ability policy before shared valuation.
+  evaluationVersion: undefined,
   roster: { PG: 65, SG: 135, SF: 149, PF: 68, C: 143, B1: 121, B2: 6, B3: 131 },
 })[0];
 function team(

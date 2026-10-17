@@ -1,3 +1,4 @@
+import { evaluationTrainingOptions } from "./teamEvaluation";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { abilitiesEnabled, speciesAbility } from "./abilities";
 import { coachAbilityFit } from "./coachPolicy";
@@ -72,6 +73,10 @@ export function coachTrainingPlans(
             ? 20
             : 3,
       };
+      const shared =
+        team.evaluationVersion === 1
+          ? evaluationTrainingOptions(team, mon.id, role)
+          : undefined;
       const candidates = (Object.keys(style) as Focus[])
         .map((focus) => {
           const skills = skillsFor(focus);
@@ -101,7 +106,13 @@ export function coachTrainingPlans(
             roleFit * 8 +
             headroom * 0.12 +
             synergy;
-          return { focus, skills, ability, need, score };
+          return {
+            focus,
+            skills,
+            ability,
+            need,
+            score: shared ? shared.find((p) => p.focus === focus)!.gain : score,
+          };
         })
         .sort((x, y) => y.score - x.score);
       const chosen = candidates[0];
@@ -143,6 +154,7 @@ export function coachTrainingPlans(
             ? `Stamina ${Math.round(a.stamina)}: steady work limits volatility.`
             : `${intensity === "aggressive" ? "Aggressive work accepts larger gains or setbacks" : intensity === "steady" ? "Steady work reduces volatility" : "Standard work balances growth and volatility"}, following the coach's risk and rest preferences.`,
       ];
+      if (shared) reasons.push(shared[0].reasons[0]);
       if (species)
         reasons.push(
           chosen.focus === species.training

@@ -1,3 +1,4 @@
+import { evaluateTeam } from "./teamEvaluation";
 import {
   COACHES,
   getCoach,
@@ -117,6 +118,13 @@ export function changeCoach(
   return next;
 }
 export function coachRosterFit(team: LeagueTeam, coach: TrainerCoach): number {
+  if (team.evaluationVersion === 1)
+    return (
+      Math.round(
+        evaluateTeam({ ...team, coach: { version: 1, id: coach.id } }).score *
+          10,
+      ) / 10
+    );
   const profiles = Object.values(team.roster).flatMap((id) => {
     const mon = POKEMON_BY_ID.get(id!);
     return mon ? [playerProfile(mon, team.development?.[mon.id])] : [];

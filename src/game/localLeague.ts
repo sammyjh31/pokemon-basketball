@@ -1,3 +1,4 @@
+import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
 import { validateCoach } from "./trainerCoaches";
 import {
   ALL_POKEMON,
@@ -52,6 +53,7 @@ export interface LocalLeague {
   typeMatchupsVersion?: 1;
   typeTacticsVersion?: 1;
   abilityVersion?: 1;
+  evaluationVersion?: 1;
   courtVersion?: 1;
   matchupVersion?: 1;
   possessionVersion?: 1;
@@ -141,6 +143,7 @@ export function createLocalLeague(
           typeMatchupsVersion: 1 as const,
           typeTacticsVersion: 1 as const,
           abilityVersion: 1 as const,
+          evaluationVersion: 1 as const,
           courtVersion: 1 as const,
           matchupVersion: 1 as const,
           possessionVersion: 1 as const,
@@ -309,6 +312,10 @@ export function advanceLocalCpu(source: LocalLeague): LocalLeague {
     );
     const vacancies = POSITIONS.filter((p) => !occupied.has(p));
     const tactic = draft.coaching[turn.teamId].tactic;
+    const context =
+      draft.evaluationVersion === 1
+        ? createEvaluationContext(localLeagueTeams(draft)[turn.teamId])
+        : undefined;
     const ranked = localLeaguePool(draft)
       .filter((p) => !taken.has(p.id) && (draft.includeLegends || !p.legendary))
       .map((mon) => {
@@ -333,7 +340,9 @@ export function advanceLocalCpu(source: LocalLeague): LocalLeague {
         return {
           id: mon.id,
           slot,
-          value: 0.85 * fits[position] + 0.15 * style,
+          value: context
+            ? evaluatePlayer(context, mon.id, position).score
+            : 0.85 * fits[position] + 0.15 * style,
         };
       })
       .sort((a, b) => b.value - a.value || a.id - b.id);
@@ -364,6 +373,9 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
         ? { typeMatchupsVersion: 1 as const }
         : {}),
       ...(draft.abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+      ...(draft.evaluationVersion === 1
+        ? { evaluationVersion: 1 as const }
+        : {}),
       ...(draft.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
       ...(draft.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
       ...(draft.possessionVersion === 1
@@ -399,6 +411,7 @@ export function localLeagueRun(draft: LocalLeague): Run {
   delete run.typeMatchupsVersion;
   delete run.typeTacticsVersion;
   delete run.abilityVersion;
+  delete run.evaluationVersion;
   delete run.courtVersion;
   delete run.matchupVersion;
   delete run.possessionVersion;
@@ -408,6 +421,9 @@ export function localLeagueRun(draft: LocalLeague): Run {
       ? { typeMatchupsVersion: 1 as const }
       : {}),
     ...(teams[0].abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+    ...(teams[0].evaluationVersion === 1
+      ? { evaluationVersion: 1 as const }
+      : {}),
     ...(draft.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
     ...(draft.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
     ...(draft.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
@@ -415,7 +431,14 @@ export function localLeagueRun(draft: LocalLeague): Run {
       ? { typeTacticsVersion: 1 as const }
       : {}),
     roster: { ...teams[0].roster },
-    ...draft.coaching[0],
+    ...(teams[0].evaluationVersion === 1
+      ? {
+          tactic: teams[0].tactic,
+          rotation: teams[0].rotation,
+          defense: teams[0].defense,
+          ...(teams[0].coach ? { coach: teams[0].coach } : {}),
+        }
+      : draft.coaching[0]),
     leagueTeams: teams,
     ...(draft.version === 2 ? { simulationVersion: 2 as const } : {}),
   };
@@ -521,6 +544,7 @@ export function parseLocalLeague(raw: string): LocalLeague {
   if (
     !value ||
     (value.abilityVersion !== undefined && value.abilityVersion !== 1) ||
+    (value.evaluationVersion !== undefined && value.evaluationVersion !== 1) ||
     (value.courtVersion !== undefined && value.courtVersion !== 1) ||
     (value.matchupVersion !== undefined && value.matchupVersion !== 1) ||
     (value.possessionVersion !== undefined && value.possessionVersion !== 1) ||
@@ -549,10 +573,12 @@ export function parseLocalLeague(raw: string): LocalLeague {
   delete draft.typeMatchupsVersion;
   delete draft.typeTacticsVersion;
   delete draft.abilityVersion;
+  delete draft.evaluationVersion;
   delete draft.courtVersion;
   delete draft.matchupVersion;
   delete draft.possessionVersion;
   if (value.abilityVersion === 1) draft.abilityVersion = 1;
+  if (value.evaluationVersion === 1) draft.evaluationVersion = 1;
   if (value.courtVersion === 1) draft.courtVersion = 1;
   if (value.matchupVersion === 1) draft.matchupVersion = 1;
   if (value.possessionVersion === 1) draft.possessionVersion = 1;

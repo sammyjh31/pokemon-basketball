@@ -1,4 +1,7 @@
 import { createRivalStrategy } from "./rivalRosterStrategy";
+import { compareTeamEvaluation } from "./teamEvaluation";
+import type { TradeFactor } from "./tradeTypes";
+import { projectedCoaches } from "./coachOffice";
 import {
   POKEMON_BY_ID,
   ROOKIE_GENERATIONS,
@@ -144,9 +147,19 @@ export function recommendedRookiePick(
   releasedId: number;
   rivalGain?: number;
   reason?: string;
+  sharedDelta?: number;
+  factors?: TradeFactor[];
 } | null {
   if (!ready(franchise) || currentDraft(franchise)?.complete) return null;
-  const team = franchise.teams.find((club) => club.id === teamId);
+  const actualTeam = franchise.teams.find((club) => club.id === teamId);
+  const team =
+    actualTeam?.evaluationVersion === 1
+      ? projectedCoaches(
+          franchise.teams,
+          franchise.coachOffice,
+          franchise.year,
+        ).find((club) => club.id === teamId)
+      : actualTeam;
   if (!team) return null;
   const strategy = createRivalStrategy(
     team,
@@ -161,6 +174,53 @@ export function recommendedRookiePick(
     return mon ? [{ slot, mon, profile: profile(mon, team.development) }] : [];
   });
   if (roster.length !== 8) return null;
+  if (team.evaluationVersion === 1) {
+    // Compare every eligible replacement. A legacy raw-skill shortlist could
+    // otherwise discard the best coach/ability fit before the shared model runs.
+    const choices = prospects
+      .flatMap((mon) =>
+        roster.map((row) => {
+          const evaluation = compareTeamEvaluation(
+            team,
+            replacedTeam(team, row.slot, mon.id),
+          );
+          const rivalGain = strategy.change([row.mon.id], [mon.id]);
+          return {
+            pokemonId: mon.id,
+            releasedId: row.mon.id,
+            evaluation,
+            rivalGain,
+            score: evaluation.delta + rivalGain,
+          };
+        }),
+      )
+      .sort(
+        (a, b) =>
+          b.score - a.score ||
+          a.pokemonId - b.pokemonId ||
+          a.releasedId - b.releasedId,
+      );
+    const best = choices[0];
+    return {
+      pokemonId: best.pokemonId,
+      releasedId: best.releasedId,
+      sharedDelta: best.evaluation.delta,
+      factors: best.evaluation.factors,
+      ...(strategy.active ? { rivalGain: best.rivalGain } : {}),
+      reason: `Shared team value ${best.evaluation.delta >= 0 ? "+" : ""}${best.evaluation.delta.toFixed(2)}. ${[
+        ...best.evaluation.factors,
+      ]
+        .sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution))
+        .slice(0, 2)
+        .map(
+          (factor) =>
+            `${factor.label} ${factor.contribution >= 0 ? "+" : ""}${factor.contribution.toFixed(2)}`,
+        )
+        .join(
+          "; ",
+        )}.${strategy.active ? ` ${strategy.explanation} Rival coverage change: ${best.rivalGain.toFixed(2)}.` : ""}`,
+    };
+  }
   const minutes = rotationMinutes(
     team.roster,
     team.rotation,

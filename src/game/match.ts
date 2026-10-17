@@ -109,17 +109,18 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   const planKey = config.rotationPlan
     ? `:${ROSTER_SLOTS.map((slot) => config.rotationPlan!.minutes[slot]).join(",")}:${config.rotationPlan.closing.join(",")}`
     : "";
-  const key = `${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
+  const key = `${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
   let targets = targetCache.get(key);
   if (!targets) {
-    targets = config.coach
-      ? coachRotationMinutes(config)
-      : rotationMinutes(
-          config.roster,
-          config.rotation,
-          config.development,
-          config.rotationPlan,
-        );
+    targets =
+      config.coach || (config.evaluationVersion === 1 && !config.rotationPlan)
+        ? coachRotationMinutes(config)
+        : rotationMinutes(
+            config.roster,
+            config.rotation,
+            config.development,
+            config.rotationPlan,
+          );
     // A bounded cache covers many seasons without retaining every custom roster.
     if (targetCache.size > 240) targetCache.clear();
     targetCache.set(key, targets);
@@ -279,6 +280,13 @@ export function simulateMatch(
   )
     throw new Error(
       "Both teams must use valid, matching species ability rules.",
+    );
+  if (
+    home.evaluationVersion !== away.evaluationVersion ||
+    (home.evaluationVersion !== undefined && home.evaluationVersion !== 1)
+  )
+    throw new Error(
+      "Both teams must use valid, matching team evaluation rules.",
     );
   const courtEnabled = home.courtVersion === 1;
   const bodyEnabled = home.matchupVersion === 1;

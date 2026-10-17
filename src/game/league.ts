@@ -1,3 +1,4 @@
+import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
 import { assignLeagueCoaches } from "./trainerCoaches";
 import { POKEMON } from "../data/pokemon";
 import { OPPONENTS } from "../data/opponents";
@@ -40,7 +41,7 @@ export function createLeague(run: Run): LeagueTeam[] {
     seed = r.seed;
     return r.value;
   };
-  const teams: LeagueTeam[] = [
+  let teams: LeagueTeam[] = [
     {
       id: 0,
       name: "Kanto Basketball Club",
@@ -60,6 +61,21 @@ export function createLeague(run: Run): LeagueTeam[] {
       ratings: teamRatings(emptyRoster()),
     })),
   ];
+  // Modern recruiting uses the coach who will actually lead this club.
+  // The historical path assigns trainers after drafting to preserve old seeds.
+  if (run.evaluationVersion === 1) {
+    teams = teams.map((team) => ({
+      ...team,
+      evaluationVersion: 1,
+      ...(run.abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+    }));
+    if (run.coach)
+      teams = assignLeagueCoaches(
+        teams,
+        run.seasonSeed,
+        new Map([[0, run.coach]]),
+      );
+  }
   const profiles = new Map(
     pool.map((mon) => [
       mon.id,
@@ -87,6 +103,10 @@ export function createLeague(run: Run): LeagueTeam[] {
       const vacancies = POSITIONS.filter(
         (position) => team.roster[position] === null,
       );
+      const context =
+        team.evaluationVersion === 1
+          ? createEvaluationContext(team)
+          : undefined;
       const ranked = pool
         .map((mon) => {
           const profile = profiles.get(mon.id)!,
@@ -101,6 +121,12 @@ export function createLeague(run: Run): LeagueTeam[] {
                     vacancies[0],
                   )
                 : profile.best;
+          if (context)
+            return {
+              mon,
+              pos,
+              value: evaluatePlayer(context, mon.id, pos).score,
+            };
           const style =
             team.tactic === "pace"
               ? (a.speed + a.stamina) / 2
@@ -127,11 +153,12 @@ export function createLeague(run: Run): LeagueTeam[] {
     if (run.typeMatchupsVersion === 1) team.typeMatchupsVersion = 1;
     if (run.typeTacticsVersion === 1) team.typeTacticsVersion = 1;
     if (run.abilityVersion === 1) team.abilityVersion = 1;
+    if (run.evaluationVersion === 1) team.evaluationVersion = 1;
     if (run.courtVersion === 1) team.courtVersion = 1;
     if (run.matchupVersion === 1) team.matchupVersion = 1;
     if (run.possessionVersion === 1) team.possessionVersion = 1;
   }
-  return run.coach
+  return run.coach && run.evaluationVersion !== 1
     ? assignLeagueCoaches(teams, run.seasonSeed, new Map([[0, run.coach]]))
     : teams;
 }

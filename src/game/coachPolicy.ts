@@ -1,3 +1,9 @@
+import { abilityUsefulness as coachAbilityFit } from "./abilityEvaluation";
+import {
+  createEvaluationContext,
+  evaluatePlayer,
+  evaluationGamePlan,
+} from "./teamEvaluation";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
   abilitiesEnabled,
@@ -5,7 +11,6 @@ import {
   type AbilityMechanic,
 } from "./abilities";
 import { playerProfile, type PlayerProfile } from "./playerProfile";
-import { clamp } from "./ratings";
 import { getCoach, type TrainerCoach } from "./trainerCoaches";
 import {
   ROSTER_SLOTS,
@@ -29,65 +34,7 @@ export interface CoachObservation {
   opponentRim: number;
 }
 
-/** Expected usefulness in the player's actual role, not just an ability-name match. */
-export function coachAbilityFit(pokemonId: number, p: PlayerProfile): number {
-  const a = p.attributes;
-  const shooting = (a.threePoint + a.midRange) / 2;
-  const creation = (a.passing + a.ballHandling + a.composure) / 3;
-  const scoring = (a.finishing + shooting) / 2;
-  const defense = (a.perimeterDefense + a.interiorDefense) / 2;
-  const quality: Record<AbilityMechanic, number> = {
-    surge: scoring,
-    aerial: (a.finishing * 2 + a.vertical) / 3,
-    intimidate: defense,
-    perimeter: (a.perimeterDefense * 2 + p.traits.closeout) / 3,
-    armor: (a.interiorDefense * 2 + a.block) / 3,
-    focus: shooting,
-    range: a.threePoint,
-    power: a.finishing,
-    tempo: (a.speed + a.ballHandling + a.finishing) / 3,
-    creator: creation,
-    support: creation,
-    cleanup: (a.offensiveRebound * 2 + a.finishing) / 3,
-    endurance: scoring,
-    clutch: (scoring + a.composure) / 2,
-    momentum: scoring,
-    counter: scoring,
-    craft: a.midRange,
-    evasion: (defense + a.stamina) / 2,
-    rhythm: scoring,
-    gamble: (shooting + p.traits.offBall) / 2,
-    fresh: (scoring + a.stamina) / 2,
-  };
-  const mechanic = speciesAbility(pokemonId).mechanic;
-  // Infrequent conditions receive less credit; creators and defenders use their
-  // own involvement skills rather than a scorer's usage.
-  const frequency: Partial<Record<AbilityMechanic, number>> = {
-    surge: 0.6,
-    endurance: 0.7,
-    clutch: 0.35,
-    momentum: 0.65,
-    counter: 0.65,
-    rhythm: 0.5,
-    fresh: 0.65,
-    cleanup: 0.75,
-  };
-  const involvement = [
-    "creator",
-    "support",
-    "intimidate",
-    "perimeter",
-    "armor",
-    "evasion",
-  ].includes(mechanic)
-    ? 1
-    : 0.7 + (p.traits.usage / 100) * 0.3;
-  return (
-    clamp((quality[mechanic] - 30) / 55, 0, 1) *
-    involvement *
-    (frequency[mechanic] ?? 1)
-  );
-}
+export { abilityUsefulness as coachAbilityFit } from "./abilityEvaluation";
 
 function rosterAbilityFits(team: LeagueTeam, coach: TrainerCoach) {
   return ROSTER_SLOTS.flatMap((slot) => {
@@ -148,10 +95,12 @@ export function coachGamePlan(
     }
   }
   fit[coach.tactic] += 22 - 12 * coach.adaptability;
-  const tactic = (Object.keys(fit) as Tactic[]).sort(
-    (a, b) => fit[b] - fit[a],
-  )[0];
-  let defense = coach.defense;
+  const sharedPlan =
+    team.evaluationVersion === 1 ? evaluationGamePlan(team) : undefined;
+  const tactic =
+    sharedPlan?.tactic ??
+    (Object.keys(fit) as Tactic[]).sort((a, b) => fit[b] - fit[a])[0];
+  let defense = sharedPlan?.defense ?? coach.defense;
   let threatReason = "";
   if (opponent && coach.adaptability >= 0.8) {
     const opponents = Object.values(opponent.roster).flatMap((id) => {
@@ -213,7 +162,7 @@ export function coachGamePlan(
     tactic,
     defense,
     rotation: coach.rotation,
-    reason: `${coach.name}: ${coach.style}. Roster fit favors ${tactic}; ${coach.rotation === "bench" ? "share the workload" : coach.rotation === "starters" ? "lean on the strongest rotation" : "balance starters and reserves"}.${abilityReason}${threatReason}`,
+    reason: `${sharedPlan ? sharedPlan.reason + " " : ""}${coach.name}: ${coach.style}. Roster fit favors ${tactic}; ${coach.rotation === "bench" ? "share the workload" : coach.rotation === "starters" ? "lean on the strongest rotation" : "balance starters and reserves"}.${abilityReason}${threatReason}`,
   };
 }
 /** Deterministic observations from play, never from optional reporting or future results. */
@@ -271,20 +220,31 @@ export function coachPlayerPreference(
 
 /** Allocate 240 minutes by ability, stamina and style, independent of roster-slot labels. */
 export function coachRotationMinutes(team: LeagueTeam) {
-  const coach = getCoach(team.coach!.id)!;
+  const coach = getCoach(team.coach?.id ?? "");
+  const rest =
+    coach?.rest ??
+    (team.rotation === "bench"
+      ? 0.8
+      : team.rotation === "starters"
+        ? 0.2
+        : 0.5);
   const abilityTactic = abilitiesEnabled(team)
     ? coachGamePlan(team).tactic
     : undefined;
+  const shared =
+    team.evaluationVersion === 1 ? createEvaluationContext(team) : undefined;
   const candidates = ROSTER_SLOTS.map((slot) => {
     const mon = POKEMON_BY_ID.get(team.roster[slot]!)!;
     const p = playerProfile(mon, team.development?.[mon.id]);
     return {
       slot,
       score:
-        Math.max(...Object.values(p.positions)) +
-        coachPlayerPreference(coach, p) +
+        (shared
+          ? evaluatePlayer(shared, mon.id).score
+          : Math.max(...Object.values(p.positions)) +
+            (coach ? coachPlayerPreference(coach, p) : 0)) +
         p.attributes.stamina * 0.08 +
-        (abilityTactic
+        (!shared && abilityTactic
           ? coachAbilityFit(mon.id, p) *
             (speciesAbility(mon.id).tactics.includes(abilityTactic) ? 5 : 1)
           : 0),
@@ -296,8 +256,8 @@ export function coachRotationMinutes(team: LeagueTeam) {
   >;
   const weights = candidates.map(
     (p, i) =>
-      (p.score / 75) ** (2.6 - coach.rest * 1.6) *
-      (i < 5 ? 1.3 - coach.rest * 0.15 : 0.75 + coach.rest * 0.35),
+      (p.score / 75) ** (2.6 - rest * 1.6) *
+      (i < 5 ? 1.3 - rest * 0.15 : 0.75 + rest * 0.35),
   );
   for (let n = 0; n < 240; n++) {
     let best = -1,

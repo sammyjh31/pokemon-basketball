@@ -1,3 +1,4 @@
+import { compareTeamEvaluation } from "./teamEvaluation";
 import {
   coachTrainingPlans,
   validateCoachTraining,
@@ -345,11 +346,16 @@ function appendRookie(
 export function recommendedLocalRookie(draft: LocalLeague) {
   const turn = currentLocalRookieTurn(draft);
   if (!turn) return null;
-  const team = draft.career!.teams[turn.teamId],
+  const career = draft.career!;
+  const teams =
+    career.teams[turn.teamId].evaluationVersion === 1
+      ? projectedCoaches(career.teams, career.coachOffice, career.year)
+      : career.teams;
+  const team = teams[turn.teamId],
     pool = localRookiePool(draft),
     strategy = createRivalStrategy(
       team,
-      draft.career!.teams,
+      teams,
       draft.career!.history,
       draft.career!.year,
     );
@@ -359,6 +365,7 @@ export function recommendedLocalRookie(draft: LocalLeague) {
     score: number;
     rivalGain?: number;
     reason?: string;
+    factors?: ReturnType<typeof compareTeamEvaluation>["factors"];
   } | null = null;
   for (const mon of pool)
     for (const slot of ROSTER_SLOTS) {
@@ -375,19 +382,35 @@ export function recommendedLocalRookie(draft: LocalLeague) {
           positionRating(outgoing, p, team.development?.[release]),
         ),
       );
+      const development = { ...team.development, [mon.id]: {} };
+      delete development[release];
+      const comparison =
+        team.evaluationVersion === 1
+          ? compareTeamEvaluation(team, {
+              ...team,
+              roster: { ...team.roster, [slot]: mon.id },
+              development,
+            })
+          : undefined;
       const rivalGain = strategy.change([release], [mon.id]),
-        score = incoming - previous + rivalGain;
+        score = (comparison?.delta ?? incoming - previous) + rivalGain;
       if (!best || score > best.score)
         best = {
           pokemonId: mon.id,
           releasedId: release,
           score,
-          ...(strategy.active
+          ...(comparison
             ? {
-                rivalGain,
-                reason: `${strategy.explanation} Rival coverage changes ${rivalGain >= 0 ? "+" : ""}${rivalGain.toFixed(1)}.`,
+                factors: comparison.factors,
+                reason: `Shared team value ${comparison.delta >= 0 ? "+" : ""}${comparison.delta.toFixed(1)}. ${comparison.factors.map((f) => `${f.label} ${f.contribution >= 0 ? "+" : ""}${f.contribution.toFixed(1)}`).join("; ")}.${strategy.active ? ` ${strategy.explanation} Rival coverage changes ${rivalGain >= 0 ? "+" : ""}${rivalGain.toFixed(1)}.` : ""}`,
+                ...(strategy.active ? { rivalGain } : {}),
               }
-            : {}),
+            : strategy.active
+              ? {
+                  rivalGain,
+                  reason: `${strategy.explanation} Rival coverage changes ${rivalGain >= 0 ? "+" : ""}${rivalGain.toFixed(1)}.`,
+                }
+              : {}),
         };
     }
   return best;
@@ -428,6 +451,8 @@ export function evaluateLocalTrade(
   requiresAcceptance: number[];
   fromRivalGain?: number;
   toRivalGain?: number;
+  fromFactors?: ReturnType<typeof compareTeamEvaluation>["factors"];
+  toFactors?: ReturnType<typeof compareTeamEvaluation>["factors"];
 } {
   const empty = {
     accepted: false,
@@ -443,7 +468,11 @@ export function evaluateLocalTrade(
     fromTeamId === teamId
   )
     return empty;
-  const teams = draft.career!.teams,
+  const career = draft.career!;
+  const teams =
+      career.teams[0].evaluationVersion === 1
+        ? projectedCoaches(career.teams, career.coachOffice, career.year)
+        : career.teams,
     from = teams.find((t) => t.id === fromTeamId),
     to = teams.find((t) => t.id === teamId);
   if (
@@ -454,8 +483,19 @@ export function evaluateLocalTrade(
   )
     return empty;
   const next = exchangePlayers(teams, fromTeamId, teamId, giveId, receiveId),
-    fromGain = next[fromTeamId].ratings.overall - from.ratings.overall,
-    toGain = next[teamId].ratings.overall - to.ratings.overall;
+    fromEvaluation =
+      from.evaluationVersion === 1
+        ? compareTeamEvaluation(from, next[fromTeamId])
+        : undefined,
+    toEvaluation =
+      to.evaluationVersion === 1
+        ? compareTeamEvaluation(to, next[teamId])
+        : undefined,
+    fromGain =
+      fromEvaluation?.delta ??
+      next[fromTeamId].ratings.overall - from.ratings.overall,
+    toGain =
+      toEvaluation?.delta ?? next[teamId].ratings.overall - to.ratings.overall;
   const ability = (team: LeagueTeam, id: number) =>
     Math.max(
       ...POSITIONS.map((p) =>
@@ -463,8 +503,7 @@ export function evaluateLocalTrade(
       ),
     );
   const difference = ability(to, receiveId) - ability(from, giveId);
-  const career = draft.career!,
-    fromStrategy = createRivalStrategy(
+  const fromStrategy = createRivalStrategy(
       from,
       teams,
       career.history,
@@ -476,13 +515,19 @@ export function evaluateLocalTrade(
   const isHuman = (id: number) => draft.managers.some((m) => m.teamId === id);
   const accepted =
     (isHuman(fromTeamId) ||
-      (fromGain >= -0.15 &&
-        (!fromStrategy.active || difference >= -5) &&
-        difference + 2 * fromGain + fromRivalGain >= -2.5)) &&
+      (fromEvaluation
+        ? fromGain >= -0.15 &&
+          difference >= -5 &&
+          fromGain + fromRivalGain >= -0.15
+        : fromGain >= -0.15 &&
+          (!fromStrategy.active || difference >= -5) &&
+          difference + 2 * fromGain + fromRivalGain >= -2.5)) &&
     (isHuman(teamId) ||
-      (toGain >= -0.15 &&
-        (!toStrategy.active || -difference >= -5) &&
-        -difference + 2 * toGain + toRivalGain >= -2.5));
+      (toEvaluation
+        ? toGain >= -0.15 && -difference >= -5 && toGain + toRivalGain >= -0.15
+        : toGain >= -0.15 &&
+          (!toStrategy.active || -difference >= -5) &&
+          -difference + 2 * toGain + toRivalGain >= -2.5));
   const rivalReason = [
     ...(fromStrategy.active
       ? [
@@ -496,16 +541,42 @@ export function evaluateLocalTrade(
       : []),
   ].join(" ");
   const reason = accepted
-    ? `Roster fit changes: ${from.name} ${fromGain >= 0 ? "+" : ""}${fromGain.toFixed(1)}, ${to.name} ${toGain >= 0 ? "+" : ""}${toGain.toFixed(1)}. Each friend must agree; CPU clubs protect roster fit and player value.`
-    : "A CPU club declined: this exchange loses too much roster fit or player value.";
+    ? `${fromEvaluation ? "Shared team value" : "Roster fit"} changes: ${from.name} ${fromGain >= 0 ? "+" : ""}${fromGain.toFixed(1)}, ${to.name} ${toGain >= 0 ? "+" : ""}${toGain.toFixed(1)}. Each friend must agree; CPU clubs protect roster fit and player value.`
+    : `A CPU club declined: this exchange loses too much ${fromEvaluation ? "Shared team value" : "roster fit"} or player value.`;
+  const sharedDetails =
+    fromEvaluation && toEvaluation
+      ? ([
+          [from, fromEvaluation],
+          [to, toEvaluation],
+        ] as const)
+      : undefined;
+  const factorReason = sharedDetails
+    ?.map(([team, evaluation]) => {
+      const factors = [...evaluation.factors]
+        .sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution))
+        .slice(0, 2)
+        .map(
+          (factor) =>
+            `${factor.label} ${factor.contribution >= 0 ? "+" : ""}${factor.contribution.toFixed(1)}`,
+        )
+        .join("; ");
+      return `${team.name}: ${evaluation.before.toFixed(1)} → ${evaluation.after.toFixed(1)} team value (${factors}).`;
+    })
+    .join(" ");
   return {
     accepted,
-    reason: rivalReason ? `${reason} ${rivalReason}` : reason,
+    reason: [reason, factorReason, rivalReason].filter(Boolean).join(" "),
     fromGain,
     toGain,
     requiresAcceptance: [fromTeamId, teamId].filter(isHuman),
     ...(fromStrategy.active ? { fromRivalGain } : {}),
     ...(toStrategy.active ? { toRivalGain } : {}),
+    ...(fromEvaluation
+      ? {
+          fromFactors: fromEvaluation.factors,
+          toFactors: toEvaluation!.factors,
+        }
+      : {}),
   };
 }
 export function applyLocalTrade(
@@ -516,13 +587,50 @@ export function applyLocalTrade(
   receiveId: number,
   acceptedByTeamIds: number[] = [],
 ): LocalLeague {
-  const evaluation = evaluateLocalTrade(
+  return recordLocalTrade(
     draft,
     fromTeamId,
     teamId,
     giveId,
     receiveId,
+    acceptedByTeamIds,
   );
+}
+
+function recordLocalTrade(
+  draft: LocalLeague,
+  fromTeamId: number,
+  teamId: number,
+  giveId: number,
+  receiveId: number,
+  acceptedByTeamIds: number[],
+  replay = false,
+): LocalLeague {
+  // The saved office has no transaction/appointment interleaving. Replaying a
+  // modern accepted trade checks legality and consent, not today's negotiation.
+  const preserveAccepted =
+    replay && draft.career?.teams[0].evaluationVersion === 1;
+  const valid =
+    archiveOf(draft) &&
+    !currentLocalRookieTurn(draft) &&
+    fromTeamId !== teamId &&
+    draft.career?.teams[fromTeamId] &&
+    draft.career?.teams[teamId] &&
+    Object.values(draft.career.teams[fromTeamId].roster).includes(giveId) &&
+    Object.values(draft.career.teams[teamId].roster).includes(receiveId);
+  if (!valid)
+    fail(
+      "Trades require two different clubs with the selected players after the rookie draft.",
+    );
+  const evaluation = preserveAccepted
+    ? {
+        accepted: true,
+        requiresAcceptance: [fromTeamId, teamId].filter((id) =>
+          draft.managers.some((m) => m.teamId === id),
+        ),
+        reason: "Recorded trade",
+      }
+    : evaluateLocalTrade(draft, fromTeamId, teamId, giveId, receiveId);
   if (!evaluation.accepted) fail(evaluation.reason);
   if (
     !Array.isArray(acceptedByTeamIds) ||
@@ -563,6 +671,7 @@ export function applyLocalTrade(
 function nextYearTeams(
   career: LocalCareer,
   adoptAbilities = true,
+  adoptEvaluation = true,
 ): LeagueTeam[] {
   const archived = career.history.at(-1)!;
   const appointed = projectedCoaches(
@@ -580,6 +689,7 @@ function nextYearTeams(
     return {
       ...team,
       ...(adoptAbilities ? { abilityVersion: 1 as const } : {}),
+      ...(adoptEvaluation ? { evaluationVersion: 1 as const } : {}),
       ...(team.engineRules
         ? {
             engineRules: {
@@ -766,6 +876,10 @@ function parseTeams(
     array(value, format.teamCount)[0],
   ).abilityVersion;
   if (abilityVersion !== undefined && abilityVersion !== 1) fail();
+  const evaluationVersion = object(
+    array(value, format.teamCount)[0],
+  ).evaluationVersion;
+  if (evaluationVersion !== undefined && evaluationVersion !== 1) fail();
   return array(value, format.teamCount).map((value, id) => {
     const row = object(value),
       rawRoster = object(row.roster),
@@ -778,6 +892,7 @@ function parseTeams(
       row.typeMatchupsVersion !== draft.typeMatchupsVersion ||
       row.typeTacticsVersion !== draft.typeTacticsVersion ||
       row.abilityVersion !== abilityVersion ||
+      row.evaluationVersion !== evaluationVersion ||
       row.courtVersion !== draft.courtVersion ||
       row.matchupVersion !== draft.matchupVersion ||
       row.possessionVersion !== draft.possessionVersion ||
@@ -837,6 +952,7 @@ function parseTeams(
         ? { typeMatchupsVersion: 1 as const }
         : {}),
       ...(abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+      ...(evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
       ...(draft.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
       ...(draft.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
       ...(draft.possessionVersion === 1
@@ -866,6 +982,7 @@ function sameRosterState(actual: LeagueTeam[], expected: LeagueTeam[]) {
       e = expected[i];
     if (
       a.abilityVersion !== e.abilityVersion ||
+      a.evaluationVersion !== e.evaluationVersion ||
       JSON.stringify(a.engineRules) !== JSON.stringify(e.engineRules) ||
       a.coach?.id !== e.coach?.id
     )
@@ -1145,13 +1262,14 @@ export function parseLocalCareer(
         t.acceptedByTeamIds.some((id: unknown) => !Number.isInteger(id))
       )
         fail();
-      replay = applyLocalTrade(
+      replay = recordLocalTrade(
         replay,
         integer(t.fromTeamId, 0, teams.length - 1),
         integer(t.teamId, 0, teams.length - 1),
         integer(t.giveId, 1, 1025),
         integer(t.receiveId, 1, 1025),
         t.acceptedByTeamIds,
+        true,
       );
     }
     history.push(replay.career!.history.at(-1)!);
@@ -1162,7 +1280,14 @@ export function parseLocalCareer(
       const nextVersion = object(
         array(nextRawTeams, draft.options.format.teamCount)[0],
       ).abilityVersion;
-      expected = nextYearTeams(replay.career!, nextVersion === 1);
+      const nextEvaluation = object(
+        array(nextRawTeams, draft.options.format.teamCount)[0],
+      ).evaluationVersion;
+      expected = nextYearTeams(
+        replay.career!,
+        nextVersion === 1,
+        nextEvaluation === 1,
+      );
     } else expected = replay.career!.teams;
   }
   const current = parseTeams(
