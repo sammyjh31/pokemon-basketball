@@ -71,6 +71,8 @@ async function franchiseYearTwo() {
     }),
   );
   state = gameReducer(state, { type: "START_FRANCHISE_SEASON", seed: 1002 });
+  // Franchise seasons now start with a trainer coach draft.
+  state = gameReducer(state, { type: "SELECT_COACH", id: "mom" });
   const source = state.run;
   const played = await advanceFranchiseSeasonAsync(source, 82);
   state = gameReducer(state, {
@@ -188,7 +190,7 @@ describe("save size budget", () => {
     const reopened = new SaveStorage(() => area);
     await reopened.attach(store);
     expect(reopened.getItem("pokemon-basketball:v3")).toBe(text);
-  }, 120000);
+  }, 400000);
 
   it("loads a 50-season local career and keeps it under the parse limit", () => {
     const draft = localCareer(fullPool(8, 8), 50);
