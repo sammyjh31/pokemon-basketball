@@ -3,6 +3,7 @@ import { retainMorale } from "./playerMorale";
 import { retainChemistry } from "./teammateChemistry";
 import { beforeAll, describe, expect, it } from "vitest";
 import { POKEMON_BY_ID } from "../data/pokemon";
+import { COURT_VERSION } from "./courtTypes";
 import { createRun, placePokemon } from "./draft";
 import {
   applyTrade,
@@ -212,8 +213,10 @@ describe("franchise lifecycle", () => {
     // Season boundaries opt every club in, while the completed season stays frozen.
     const historicalVersion = offseason.run.courtVersion;
     const next = startFranchiseSeason(offseason, 903);
-    expect(next.run.courtVersion).toBe(2);
-    expect(next.franchise!.teams.every((t) => t.courtVersion === 2)).toBe(true);
+    expect(next.run.courtVersion).toBe(COURT_VERSION);
+    expect(
+      next.franchise!.teams.every((t) => t.courtVersion === COURT_VERSION),
+    ).toBe(true);
     expect(offseason.run.courtVersion).toBe(historicalVersion);
     expect(next.franchise).toMatchObject({ year: 2, phase: "season" });
     expect(next.run).toMatchObject({

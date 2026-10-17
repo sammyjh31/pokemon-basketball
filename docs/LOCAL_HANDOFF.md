@@ -70,6 +70,18 @@ Validation: shared ability/simulation tests, lifecycle + local career/replay bas
 
 Basketball development uses the attached checkout `/Users/sam/.codex/worktrees/pokemon-matchup-engine/PokeBBall`, synchronized with `main` at `https://github.com/sammyjh31/pokemon-basketball.git`. The primary directory currently contains concurrent basketball draft work and a separate Grand Table project; do not reset, switch or clean it as part of basketball work.
 
+## Court version 3 balance pass
+
+`COURT_VERSION` is now 3 for new runs, new local leagues and the next season of an existing franchise. Versions 1 and 2 replay byte-identically: `src/game/courtVersion3.test.ts` pins version-2 match, development and honors fingerprints, verified against the unmodified version-2 commit, alongside the existing version-1 pin in `courtVersion2.test.ts`. Version 3 changes five things, each gated on the season's court version:
+
+1. **Size and rebounds** (`possessionModel.ts`, `bodyMatchups.ts`): pursuit exponent 1.3 (was 2), 30% loose-ball weight for non-crashers, saturating reach/mass, and a rebound body bonus capped at ±4. Year-1 top rebounder 21.9 → 14.1 RPG (legends 20.2 → 15.9); height/RPG correlation 0.63 → 0.56.
+2. **Development** (`development.ts`): the minutes effect is zero-sum around 30 MPG, a quarter of offsets regress yearly (was a tenth), a capped parity pull, and 75% shared camp form. The offseason report after a version-3 season is `modelVersion: 2`. Over eight seasons the rating SD stays at 11.1 (v2: 11.1 → 21.5); the year-8 top scorer averages 35.5 PPG (v2: 83.1).
+3. **Blowouts** (`match.ts`, `matchLineups.ts`): ±0.25 accuracy points per point of lead (capped at 3.5) and garbage-time benches, which also reach chemistry lineups. Over 600 games the margin goes 16.4 → 11.4, 20+ games 31.0% → 15.8%, overtime 2.0% → 2.5%.
+4. **Tiebreaks** (`playoffs.ts`, `leagueStats.ts`): head-to-head, point differential, then a coin flip seeded by the season seed for seeding; a seeded coin flip for award ties. Club 0 no longer wins every tie. Rookie-draft order ties (`rookieDraft.ts`) are unchanged and belong to the CPU-AI work.
+5. **Awards** (`leagueStats.ts`, `playoffs.ts`): Game Score for MVP, Sixth Player, All-League and Finals MVP; DPOY weighs stocks by club points allowed.
+
+Evidence: `docs/balance-v3-audit.json`, the tables in `docs/ENGINE_DEPTH.md`, and `node scripts/balance-metrics.mjs --court=3 --legends=true --seasons=8`. All numbers were measured on main e255fb7 with trainer coaches, abilities, chemistry, chemistry growth, morale, personalities and shared evaluation enabled for both court versions. This branch depends on the court-version-2 PR.
+
 ## Coaching office and career records
 
 Solo **Franchise → Coaches** and local **Coaches · hiring and career records** now support offseason release, direct replacement and rehiring from the available trainer pool. CPU review runs once per offseason and preserves all human clubs and both finalists; old local saves without Finals details conservatively retain CPU coaches for that one offseason. Available portraits/styles show roster fit and career records. Vacancies block the next year, including imported local saves.

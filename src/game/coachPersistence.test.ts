@@ -105,6 +105,7 @@ it("preserves local trainers through actual season, playoff, offseason and caree
         1,
         career.localSeasonSeed(d),
         row.training!.plan,
+        team.courtVersion === 3,
       ).changes,
     );
   }

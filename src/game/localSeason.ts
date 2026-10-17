@@ -214,7 +214,12 @@ export function localSeasonBuilder(
     }
   }
   function finish(): SeasonResult {
-    const honors = leagueHonors(players, standings, format.gamesPerTeam),
+    const honors = leagueHonors(
+        players,
+        standings,
+        format.gamesPerTeam,
+        inputs[0].courtVersion === 3 ? { balanced: true, seed } : undefined,
+      ),
       mvp = honors.awards.find((a) => a.id === "mvp");
     return {
       modelVersion: 6,

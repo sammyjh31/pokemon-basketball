@@ -38,6 +38,11 @@ const league: LeagueResult = {
   })),
 };
 const seed = run.seasonSeed;
+/** Court version 2 keeps the team-ID tiebreak and impact-score Finals MVP. */
+const legacyLeague: LeagueResult = {
+  ...league,
+  teams: teams.map((t) => ({ ...t, courtVersion: 2 as const })),
+};
 
 describe("best-of-seven postseason", () => {
   it("breaks mathematically tied Finals impact by Pokemon ID despite floating rounding", () => {
@@ -114,7 +119,7 @@ describe("best-of-seven postseason", () => {
     expect(p.finalsMvp).toBeNull();
   });
   it("breaks a qualification tie by differential and then stable team ID", () => {
-    const tied = structuredClone(league);
+    const tied = structuredClone(legacyLeague);
     for (const id of [14, 15, 16])
       Object.assign(tied.standings[id], { wins: 45, losses: 37 });
     tied.standings[16].pointsFor = 9100;
@@ -215,7 +220,7 @@ describe("best-of-seven postseason", () => {
     expect(simulatePlayoffs(league, seed, all)).toEqual(all);
   });
   it("derives playoff and Finals statistics from replayable game boxes and awards Finals-only impact", () => {
-    const p = simulatePlayoffs(league, seed);
+    const p = simulatePlayoffs(legacyLeague, seed);
     const sums = new Map(
       p.players.map((player) => [
         player.playerId,
@@ -229,8 +234,8 @@ describe("best-of-seven postseason", () => {
     for (const s of p.series)
       for (const game of s.games) {
         const match = simulateMatch(
-          teams.find((t) => t.id === game.homeTeamId)!,
-          teams.find((t) => t.id === game.awayTeamId)!,
+          legacyLeague.teams.find((t) => t.id === game.homeTeamId)!,
+          legacyLeague.teams.find((t) => t.id === game.awayTeamId)!,
           game.seed,
           {
             scouting: game.scouting,

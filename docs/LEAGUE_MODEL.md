@@ -24,7 +24,7 @@ Every side records exactly 240 regulation player-minutes plus 25 per overtime. I
 
 Each event updates both teams' player boxes. Season production and standings accumulate from those same games. All 240 players appear in the league tables, and any of the 1,230 games can be reconstructed from its seed. Game honors can go to a player on either team.
 
-All six season awards require at least 58 games. Sixth Player additionally requires starts in fewer than half the player's games. Each award shows its top three candidates. Ties resolve by team ID, then Pokédex ID. The two five-player selections are positionless.
+All six season awards require at least 58 games. Sixth Player additionally requires starts in fewer than half the player's games. Each award shows its top three candidates. Ties resolve by team ID, then Pokédex ID (court version 3 seasons use a seeded coin flip and Game Score; see below). The two five-player selections are positionless.
 
 - Raw impact per game = `(PTS + 1.2 REB + 1.5 AST + 3 STL + 3 BLK − 1.5 TOV − 0.4 missed FG − 0.4 missed FT) / GP`.
 - Winning factor = `0.9 + 0.2 × team wins / 82`; availability factor = `0.9 + 0.1 × GP / 82`.
@@ -70,7 +70,6 @@ In franchise models 1/2, only the active season keeps game summaries and full re
 
 Lifecycle actions enforce the same 1,000-year and 10,000-trade bounds as save validation. Browser storage capacity may be reached sooner; a failed save produces a visible notice rather than claiming progress was saved.
 
-
 ## Development and CPU trades (franchise model 2 / season model 5)
 
 Development runs once after a completed season is archived. Each of the 240 species keeps integer offsets for 17 primitive skills; shooting, playmaking and rebounding are recalculated summaries. Offsets are applied after the factual species/type baseline, without changing Pokémon facts. Annual changes are −10…+12, cumulative offsets −30…+30, and final skills 0…100. The match engine, rotations, advanced profiles, scouting, trade evaluation and arcade exhibitions all consume these skills.
@@ -82,7 +81,6 @@ Each skill adds shooting efficiency, assists/turnovers, steals, blocks, reboundi
 CPU negotiation excludes team 0. For each club pair, candidate players must be within six best-position rating points. The two swaps with the strongest combined positional fit receive full rotation evaluation. Both clubs must gain at least 0.05 overall, with a combined gain of at least 0.15, and each must satisfy `abilityChange + 2 × fitChange ≥ −2.5`. Candidates rank by combined fit gain plus seeded noise up to 0.35. At most six non-overlapping club pairs trade, with at most one transaction per CPU club; no acceptable candidate means no forced trade. Cumulative development moves with the species.
 
 New reports and CPU transaction metadata use franchise model 2. All 30 teams carry a development map owned by their eight players; offsets must reconstruct exactly from consecutive reports. A model-1 save starts development in its current offseason, without retroactively training older years. Active inputs use only prior offseasons, keeping this year's results frozen even after offseason training and trades. Developed fixed-roster inputs produce season model 5; no-offset model 3/4 and playoff model 1 retain their existing replay contract. Archived career totals and honors retain their existing attribution. Storage limits still apply and save failures are visible.
-
 
 ## Connected franchise play (franchise 3 / season 6 / played playoffs 2)
 
@@ -111,3 +109,15 @@ The legacy regular models 3/4/5, franchise models 1/2 and playoff model 1 remain
 **Free agency.** When a governed draft completes, the CPU pass runs immediately. Round 1 visits CPU clubs in seeded worst-record order and signs the best option scoring at least the club's bar (0.15 shared team value, or 2 on the legacy scale) with team overall ≥ −0.15 change; round 2 repeats the order and signs only options scoring at least twice that bar with team overall ≥ +0.1. Drafted rookies stay protected. The user may sign only after the CPU pass, at most two per offseason. Validation enforces, for governed years: CPU signings ≤ 2 per club, none after a user signing that year, user signings ≤ 2 and only in a year whose CPU pass is recorded.
 
 **Trades.** Under the rules, `evaluateTradePackage` asks `−0.5 + availability price (+0.55 contender / −0.15 developer)` instead of `−1.6 + …`; the same bar applies to user offers and CPU-to-CPU negotiation. Older offseasons keep −1.6. Measured on the draft fixture league (all 1,856 one-for-one offers from the user to every CPU club), offers the club accepts *and* that improve the user's team fell from 71 to 67, still spread across all 29 clubs. In a coached league on the shared evaluation the same 1,856 offers produced identical results (1,243 accepted, 37 user-improving) under either bar: the shared-value and talent-floor checks decide those offers first, so the firmer bar matters mainly for franchises on the legacy scale.
+
+## Court version 3 balance rules
+
+Seasons whose clubs carry `courtVersion: 3` (new solo runs, new local leagues and every franchise season started after this update) use the rules below. Seasons saved with court version 1, 2 or none keep every earlier formula in this document, so their results, seeding, honors and development replay byte-identically.
+
+- **Rebounds:** pursuit weights use exponent 1.3 instead of 2. Players who did not crash the offensive glass keep 30% weight for loose balls. Body reach/mass saturate around the neutral 1.5 m / 80 kg body, and the rebound body bonus is capped near ±4, because size already feeds each species' skills.
+- **Score state:** shot accuracy falls 0.25 percentage points per point of lead and rises by the same amount per point of deficit, capped at 3.5 points. Garbage time: once a club leads by 22+ after 36 minutes or 16+ after 42 minutes, both coaches play their lowest-target reserves.
+- **Playoff seeding:** equal records break by head-to-head win rate among all clubs on that record, then point differential, then a coin flip seeded by the season seed. Earlier models fell back to team ID, which always favoured club 0.
+- **Honors:** Game Score per game = `(PTS + 0.4 FGM − 0.7 FGA − 0.4 (FTA − FTM) + 0.7 OREB + 0.3 DREB + STL + 0.7 AST + 0.7 BLK − 0.4 PF − TOV) / GP`. League MVP, Sixth Player and All-League rank Game Score times the winning and availability factors; Finals MVP ranks Finals Game Score. Defensive Player and All-Defense rank `(1.5 STL + 1.5 BLK + 0.3 DREB − 0.3 PF) / GP` times availability and the square of the club's defense factor `clamp(league points allowed per game / club points allowed per game, 0.85, 1.15)`. Exact ties use a seeded coin flip, not team ID.
+- **Development** (offseason report model 2): opportunity is `clamp((MPG − 30) / 18, −1, 1)`, which averages zero across an eight-player, 240-minute rotation. Regression removes a quarter of each previous offset per year (was a tenth). Parity subtracts `clamp(0.08 × (ability − 57), −1, 2)` from every skill, where 57 is the average best-position rating of the 240 Gen I–II players. The camp form shared by all skills is scaled to 75%; per-skill noise and the annual/cumulative bounds are unchanged.
+
+Reproduce league-wide evidence with `node scripts/court-metrics.mjs --court=3 --games=600` and season/multi-season evidence with `node scripts/balance-metrics.mjs --court=3 --legends=true --seasons=8`.

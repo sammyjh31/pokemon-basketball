@@ -81,7 +81,10 @@ describe("one shared league", () => {
   });
   it("awards the entire league with qualified finalists and bench eligibility", () => {
     const league = result.league!,
-      honors = leagueHonors(league.players, league.standings);
+      // New runs use court version 3 honors: Game Score and seeded tiebreaks.
+      rules = { balanced: true as const, seed: run.seasonSeed },
+      honors = leagueHonors(league.players, league.standings, 82, rules);
+    expect(league.teams[0].courtVersion).toBe(3);
     expect(honors.awards).toEqual(league.awards);
     expect(league.awards).toHaveLength(6);
     for (const award of league.awards) {
@@ -103,7 +106,7 @@ describe("one shared league", () => {
       p.teamId === 1 ? { ...p, points: 10000, assists: 3000 } : p,
     );
     expect(
-      leagueHonors(boosted, league.standings).awards.find(
+      leagueHonors(boosted, league.standings, 82, rules).awards.find(
         (a) => a.id === "mvp",
       )!.teamId,
     ).toBe(1);

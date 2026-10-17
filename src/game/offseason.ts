@@ -39,6 +39,9 @@ export function processOffseason(state: GameState): GameState {
     {},
     ...teams.map((team) => coachTrainingPlans(team, league.players)),
   ) as ReturnType<typeof coachTrainingPlans>;
+  // The season that was just played decides the development rules (court version 3: balanced).
+  const balanced = league.teams[0]?.courtVersion === 3,
+    reportVersion = balanced ? (2 as const) : (1 as const);
   const players = league.players.map((player) => ({
     ...developPlayer(
       player,
@@ -47,6 +50,7 @@ export function processOffseason(state: GameState): GameState {
       state.run.seasonSeed,
       assignments[player.pokemonId]?.plan ??
         f.trainingPlans?.[player.pokemonId],
+      balanced,
     ),
     ...(assignments[player.pokemonId]
       ? { training: assignments[player.pokemonId] }
@@ -105,7 +109,7 @@ export function processOffseason(state: GameState): GameState {
             offseasons: [
               ...(f.offseasons ?? []),
               {
-                modelVersion: 1,
+                modelVersion: reportVersion,
                 year: f.year,
                 players,
                 ...(mastery.length ? { mastery } : {}),
@@ -127,7 +131,7 @@ export function processOffseason(state: GameState): GameState {
       offseasons: [
         ...(f.offseasons ?? []),
         {
-          modelVersion: 1,
+          modelVersion: reportVersion,
           year: f.year,
           players,
           ...(mastery.length ? { mastery } : {}),
