@@ -1,3 +1,5 @@
+import { coachTrainingPlans } from "./coachTraining";
+import { developPlayer } from "./development";
 import { appointLocalCoach, reviewLocalCoaches } from "./coachLocal";
 import { projectedCoaches } from "./coachOffice";
 import { COACHES } from "./trainerCoaches";
@@ -86,6 +88,40 @@ it("preserves local trainers through actual season, playoff, offseason and caree
   expect(loaded.career!.history[0].teams.map((t) => t.coach)).toEqual(
     result.league!.teams.map((t) => t.coach),
   );
+  const training = loaded.career!.history[0].development;
+  expect(training).toEqual(next.career!.history[0].development);
+  for (const row of training) {
+    const team = result.league!.teams[row.teamId];
+    const player = result.league!.players.find(
+      (p) => p.pokemonId === row.pokemonId,
+    )!;
+    expect(row.training).toEqual(
+      coachTrainingPlans(team, result.league!.players)[row.pokemonId],
+    );
+    expect(row.changes).toEqual(
+      developPlayer(
+        player,
+        {},
+        1,
+        career.localSeasonSeed(d),
+        row.training!.plan,
+      ).changes,
+    );
+  }
+  const malformedTraining = structuredClone(next);
+  malformedTraining.career!.history[0].development[0].training!.coachId =
+    "missing";
+  expect(() =>
+    local.parseLocalLeague(JSON.stringify(malformedTraining)),
+  ).toThrow();
+  const legacyTraining = structuredClone(next);
+  for (const row of legacyTraining.career!.history[0].development)
+    delete row.training;
+  expect(
+    local
+      .parseLocalLeague(JSON.stringify(legacyTraining))
+      .career!.history[0].development.every((row) => !row.training),
+  ).toBe(true);
   const historyBefore = JSON.stringify(loaded.career!.history);
   expect(reviewLocalCoaches(loaded)).toBe(loaded);
   const fired = appointLocalCoach(loaded, 1, null);

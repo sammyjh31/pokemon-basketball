@@ -69,7 +69,7 @@ export function validateTrainingPlans(
   return plans;
 }
 
-const FOCUS_SKILLS: Record<
+export const FOCUS_SKILLS: Record<
   Exclude<PlayerTrainingPlan["focus"], "balanced" | "position">,
   DevelopmentSkill[]
 > = {
@@ -84,7 +84,7 @@ const FOCUS_SKILLS: Record<
   playmaking: ["passing", "ballHandling", "composure"],
   conditioning: ["speed", "strength", "stamina", "vertical"],
 };
-const POSITION_SKILLS: Record<Position, DevelopmentSkill[]> = {
+export const POSITION_SKILLS: Record<Position, DevelopmentSkill[]> = {
   PG: ["passing", "ballHandling", "speed", "composure", "perimeterDefense"],
   SG: [
     "threePoint",

@@ -7,6 +7,7 @@ export type DevelopmentSkill = Exclude<
 export type DevelopmentRatings = Partial<Record<DevelopmentSkill, number>>;
 export type PlayerDevelopment = Partial<Record<number, DevelopmentRatings>>;
 export interface PlayerDevelopmentChange {
+  training?: import("./coachTraining").CoachTrainingAssignment;
   pokemonId: number;
   teamId: number;
   before: number;

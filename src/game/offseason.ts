@@ -1,3 +1,4 @@
+import { coachTrainingPlans } from "./coachTraining";
 import { cpuMarketTrades } from "./tradeMarket";
 import { developPlayer } from "./development";
 import {
@@ -33,15 +34,23 @@ export function processOffseason(state: GameState): GameState {
     {},
     ...teams.map((t) => t.development),
   );
-  const players = league.players.map((player) =>
-    developPlayer(
+  const assignments = Object.assign(
+    {},
+    ...teams.map((team) => coachTrainingPlans(team, league.players)),
+  ) as ReturnType<typeof coachTrainingPlans>;
+  const players = league.players.map((player) => ({
+    ...developPlayer(
       player,
       old[player.pokemonId] ?? {},
       f.year,
       state.run.seasonSeed,
-      f.trainingPlans?.[player.pokemonId],
+      assignments[player.pokemonId]?.plan ??
+        f.trainingPlans?.[player.pokemonId],
     ),
-  );
+    ...(assignments[player.pokemonId]
+      ? { training: assignments[player.pokemonId] }
+      : {}),
+  }));
   const next: PlayerDevelopment = {};
   for (const row of players) {
     const changes = { ...(old[row.pokemonId] ?? {}) };

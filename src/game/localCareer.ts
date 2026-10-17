@@ -1,4 +1,9 @@
 import {
+  coachTrainingPlans,
+  validateCoachTraining,
+  type CoachTrainingAssignment,
+} from "./coachTraining";
+import {
   projectedCoaches,
   validateCoachOffice,
   verifyCoachBaseline,
@@ -65,6 +70,7 @@ export interface LocalTrade {
   acceptedByTeamIds: number[];
 }
 export interface LocalDevelopment {
+  training?: CoachTrainingAssignment;
   teamId: number;
   pokemonId: number;
   changes: DevelopmentRatings;
@@ -244,6 +250,10 @@ export function beginLocalOffseason(
     (draft.playoffGames !== undefined && draft.playoffGames !== count)
   )
     fail("The championship does not match this season.");
+  const assignments = Object.assign(
+    {},
+    ...teams.map((team) => coachTrainingPlans(team, league.players)),
+  ) as ReturnType<typeof coachTrainingPlans>;
   const development: LocalDevelopment[] = league.players.map((player) => ({
     teamId: player.teamId,
     pokemonId: player.pokemonId,
@@ -252,7 +262,11 @@ export function beginLocalOffseason(
       teams[player.teamId].development?.[player.pokemonId] ?? {},
       year,
       localSeasonSeed(draft),
+      assignments[player.pokemonId]?.plan,
     ).changes,
+    ...(assignments[player.pokemonId]
+      ? { training: assignments[player.pokemonId] }
+      : {}),
   }));
   if (development.length !== draft.options.format.teamCount * 8) fail();
   const rivalScouting = captureRivalScouting(league, verified);
@@ -1033,7 +1047,19 @@ export function parseLocalCareer(
         )
           fail();
         seen.add(pokemonId);
-        return { teamId, pokemonId, changes: changes(d.changes, true) };
+        return {
+          teamId,
+          pokemonId,
+          changes: changes(d.changes, true),
+          ...(d.training !== undefined
+            ? {
+                training: validateCoachTraining(
+                  d.training,
+                  teams[teamId].coach?.id ?? null,
+                ),
+              }
+            : {}),
+        };
       },
     );
     if (

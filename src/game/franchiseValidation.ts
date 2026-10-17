@@ -1,3 +1,4 @@
+import { validateCoachTraining } from "./coachTraining";
 import { validateCoachOffice, verifyCoachChronology } from "./coachOffice";
 import { validateCoach } from "./trainerCoaches";
 import { captureRivalScouting, parseRivalScouting } from "./rivalScouting";
@@ -238,6 +239,16 @@ function reports(
           changes,
           outcome: player.outcome as PlayerDevelopmentChange["outcome"],
           reasons: player.reasons.map((reason) => text(reason)),
+          ...(player.training !== undefined
+            ? {
+                training: validateCoachTraining(
+                  player.training,
+                  archived.replay
+                    ? (archived.replay.teams[teamId].coach?.id ?? null)
+                    : undefined,
+                ),
+              }
+            : {}),
         };
       },
     );

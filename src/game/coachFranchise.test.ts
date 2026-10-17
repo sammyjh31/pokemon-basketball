@@ -1,3 +1,5 @@
+import { validateFranchise } from "./franchiseValidation";
+import { processOffseason } from "./offseason";
 import { expect, it } from "vitest";
 import { rookieFixture } from "./rookieDraft.testUtils";
 import { assignLeagueCoaches, COACHES } from "./trainerCoaches";
@@ -72,7 +74,9 @@ it("round-trips a completed coached franchise and next-season appointments throu
     result,
   });
   const completed = { ...season, run: { ...season.run, playoffs } };
-  const archived = reviewFranchiseCoaches(archiveFranchiseSeason(completed));
+  const archived = reviewFranchiseCoaches(
+    processOffseason(archiveFranchiseSeason(completed)),
+  );
   expect(archived.franchise?.history[0].replay).toBeDefined();
   const fired = appointFranchiseCoach(archived, null);
   const load = (state: typeof archived) =>
@@ -80,6 +84,25 @@ it("round-trips a completed coached franchise and next-season appointments throu
       { getItem: () => JSON.stringify(state), setItem: () => {} },
       999,
     );
+  expect(
+    archived.franchise!.offseasons![0].players.every((p) => p.training),
+  ).toBe(true);
+  const corruptTraining = structuredClone(fired);
+  corruptTraining.franchise!.offseasons![0].players[0].training!.coachId =
+    "missing";
+  expect(() =>
+    validateFranchise(corruptTraining.franchise, corruptTraining.run, true),
+  ).toThrow();
+  const legacyTraining = structuredClone(fired);
+  for (const row of legacyTraining.franchise!.offseasons![0].players)
+    delete row.training;
+  expect(
+    validateFranchise(
+      legacyTraining.franchise,
+      legacyTraining.run,
+      true,
+    ).offseasons![0].players.every((p) => !p.training),
+  ).toBe(true);
   const prepared = load(fired);
   expect(prepared.notice).toBeNull();
   expect(prepared.state.franchise?.coachOffice).toEqual(
@@ -90,6 +113,9 @@ it("round-trips a completed coached franchise and next-season appointments throu
     new AbortController().signal,
   );
   expect(restored.notice).toBeNull();
+  expect(restored.state.franchise!.offseasons).toEqual(
+    archived.franchise!.offseasons,
+  );
   expect(startFranchiseSeason(restored.state, 512)).toBe(restored.state);
   const available = COACHES.find(
     (c) =>
@@ -102,6 +128,7 @@ it("round-trips a completed coached franchise and next-season appointments throu
   )!;
   const hired = appointFranchiseCoach(restored.state, available.id);
   const next = startFranchiseSeason(hired, 512);
+  expect(next.franchise!.offseasons).toEqual(archived.franchise!.offseasons);
   const loaded = load(next);
   expect(loaded.notice).toBeNull();
   expect(loaded.state.run.coach?.id).toBe(available.id);
