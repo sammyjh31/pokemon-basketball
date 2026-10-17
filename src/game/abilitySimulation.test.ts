@@ -13,6 +13,7 @@ const teams = () => {
   run.roster = Object.fromEntries(
     ROSTER_SLOTS.map((slot, i) => [slot, [25, 92, 130, 1, 95, 81, 65, 143][i]]),
   ) as typeof run.roster;
+  delete run.moraleVersion;
   return createLeague(run);
 };
 it("enables species abilities for new solo teams and counts only recorded effects", () => {

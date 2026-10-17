@@ -1,3 +1,4 @@
+import { retainMorale } from "./playerMorale";
 import { retainChemistry } from "./teammateChemistry";
 import { beforeAll, describe, expect, it } from "vitest";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -26,6 +27,7 @@ beforeAll(() => {
   let run = createRun("free", true, 82);
   // Preserve the explicitly historical model-1/2 helper contract.
   delete run.chemistryGrowthVersion;
+  delete run.moraleVersion;
   [129, 150, 149, 68, 143, 9, 94, 59].forEach((id, index) => {
     run = placePokemon(run, id, ROSTER_SLOTS[index]);
   });
@@ -225,7 +227,7 @@ describe("franchise lifecycle", () => {
     expect(next.run.playoffs).toBeUndefined();
     expect(next.run.roster).toEqual(offseason.franchise!.teams[0].roster);
     expect(next.run.leagueTeams).toEqual(
-      offseason.franchise!.teams.map(retainChemistry),
+      offseason.franchise!.teams.map(retainChemistry).map(retainMorale),
     );
     expect(next.run.leagueTeams).not.toBe(offseason.franchise!.teams);
     expect(next.run.leagueTeams![0].roster).not.toBe(

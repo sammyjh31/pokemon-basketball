@@ -1,3 +1,4 @@
+import { snapshotMorale, teamsWithMorale } from "./playerMorale";
 import { snapshotChemistry, teamsWithChemistry } from "./teammateChemistry";
 import type { OfficialGame } from "./franchiseFeatures";
 import { leagueSchedule } from "./league";
@@ -26,15 +27,23 @@ export function nextFranchiseFixture(run: Run): LeagueFixture | null {
           run.seasonProgress?.playedGames ?? {},
         )
       : undefined);
-  const teams = teamsWithChemistry(
-    seasonTeams(run),
-    latest?.league?.chemistryBonds,
+  const teams = teamsWithMorale(
+    teamsWithChemistry(seasonTeams(run), latest?.league?.chemistryBonds),
+    latest?.league?.morale,
   );
   const chemistry = snapshotChemistry(
     teams[fixture.homeTeamId],
     teams[fixture.awayTeamId],
   );
-  return { ...fixture, ...(chemistry ? { chemistry } : {}) };
+  const morale = snapshotMorale(
+    teams[fixture.homeTeamId],
+    teams[fixture.awayTeamId],
+  );
+  return {
+    ...fixture,
+    ...(chemistry ? { chemistry } : {}),
+    ...(morale ? { morale } : {}),
+  };
 }
 
 export function replaySeasonProgress(

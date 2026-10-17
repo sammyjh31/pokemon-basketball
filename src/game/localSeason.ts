@@ -1,4 +1,10 @@
 import {
+  initialMoraleBanks,
+  recordMoraleGame,
+  snapshotMorale,
+  teamsWithMorale,
+} from "./playerMorale";
+import {
   initialChemistryBanks,
   recordChemistryGame,
   snapshotChemistry,
@@ -81,6 +87,7 @@ export function localSeasonBuilder(
     fixtures = localSchedule(format, seed),
     players = leaguePlayers(inputs);
   const chemistryBonds = initialChemistryBanks(inputs);
+  const morale = initialMoraleBanks(inputs);
   const byPlayer = new Map(players.map((p) => [p.playerId, p]));
   const standings: Standing[] = inputs.map((t) => ({
     teamId: t.id,
@@ -105,8 +112,12 @@ export function localSeasonBuilder(
       throw new Error(
         "Chemistry games must advance the schedule exactly once in order.",
       );
-    const currentTeams = teamsWithChemistry(inputs, chemistryBonds);
+    const currentTeams = teamsWithMorale(
+      teamsWithChemistry(inputs, chemistryBonds),
+      morale,
+    );
     const chemistry = snapshotChemistry(currentTeams[h], currentTeams[a]);
+    const moraleSnapshot = snapshotMorale(currentTeams[h], currentTeams[a]);
     const context = scouting ? scoutingForMatch(scouting, h, a) : undefined;
     const match = simulateMatch(
       currentTeams[h],
@@ -115,6 +126,7 @@ export function localSeasonBuilder(
       {
         scouting: context,
         chemistry,
+        morale: moraleSnapshot,
       },
     );
     if (scouting)
@@ -126,9 +138,11 @@ export function localSeasonBuilder(
         currentTeams[a],
         match,
       );
+    recordMoraleGame(morale, currentTeams[h], currentTeams[a], match);
     summaries.push({
       ...fixture,
       ...(chemistry ? { chemistry } : {}),
+      ...(moraleSnapshot ? { morale: moraleSnapshot } : {}),
       ...(context ? { scouting: context } : {}),
       homeScore: match.homeScore,
       awayScore: match.awayScore,
@@ -197,6 +211,7 @@ export function localSeasonBuilder(
         ...(chemistryBonds
           ? { chemistryBonds: structuredClone(chemistryBonds) }
           : {}),
+        ...(morale ? { morale: structuredClone(morale) } : {}),
         games: summaries,
         players,
         standings,

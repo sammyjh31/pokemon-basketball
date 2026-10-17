@@ -39,12 +39,16 @@ it("uses actual active-five chemistry in all simulated games and preserves compa
       ...h,
       chemistryVersion: undefined,
       chemistryGrowthVersion: undefined,
+      moraleVersion: undefined,
+      morale: undefined,
       chemistryBonds: undefined,
     },
     {
       ...a,
       chemistryVersion: undefined,
       chemistryGrowthVersion: undefined,
+      moraleVersion: undefined,
+      morale: undefined,
       chemistryBonds: undefined,
     },
     112,
@@ -81,7 +85,9 @@ it("keeps scheme-dependent chemistry separate when aggregating season lineups", 
     await import("./insightAnalysis.testUtils");
   const [h, a] = teams();
   delete h.chemistryGrowthVersion;
+  delete h.moraleVersion;
   delete a.chemistryGrowthVersion;
+  delete a.moraleVersion;
   const chemistry = simulateMatch(h, a, 11).insights!.lineups[0].chemistry!;
   const data = await buildSeasonInsights(insightLeague(2), {
     resolveMatch: () => {

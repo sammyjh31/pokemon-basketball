@@ -1,3 +1,4 @@
+import { applyMoraleSnapshot } from "./playerMorale";
 import { addSharedMinutes, applyChemistrySnapshot } from "./teammateChemistry";
 import { createRun } from "./draft";
 import { createLeague, leagueSchedule } from "./league";
@@ -34,6 +35,14 @@ export function finishedGame(
           ? applyChemistrySnapshot(team, fixture.chemistry!.away)
           : team,
     );
+  if (fixture.morale)
+    teams = teams.map((team) =>
+      team.id === fixture.homeTeamId
+        ? applyMoraleSnapshot(team, fixture.morale!.home)
+        : team.id === fixture.awayTeamId
+          ? applyMoraleSnapshot(team, fixture.morale!.away)
+          : team,
+    );
   const opponent = teams.find(
     (t) =>
       t.id ===
@@ -51,6 +60,7 @@ export function finishedGame(
     ...(teams[0].chemistryGrowthVersion === 1
       ? { chemistryGrowthVersion: 1 as const }
       : {}),
+    ...(teams[0].moraleVersion === 1 ? { moraleVersion: 1 as const } : {}),
     seed: fixture.seed,
     teams: [teams[0], opponent],
   });

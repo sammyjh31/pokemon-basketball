@@ -1,4 +1,10 @@
 import {
+  initialMoraleBanks,
+  recordMoraleGame,
+  snapshotMorale,
+  teamsWithMorale,
+} from "./playerMorale";
+import {
   initialChemistryBanks,
   recordChemistryGame,
   snapshotChemistry,
@@ -115,6 +121,13 @@ export function createPlayoffs(
     }
   return {
     modelVersion: 1,
+    ...((league.morale ?? initialMoraleBanks(league.teams))
+      ? {
+          morale: structuredClone(
+            league.morale ?? initialMoraleBanks(league.teams),
+          ),
+        }
+      : {}),
     ...((league.chemistryBonds ?? initialChemistryBanks(league.teams))
       ? {
           chemistryBonds: structuredClone(
@@ -259,6 +272,7 @@ export function resolvePlayoffMatch(
   return simulateMatch(home, away, fixture.seed, {
     scouting: fixture.scouting,
     chemistry: fixture.chemistry,
+    morale: fixture.morale,
   });
 }
 
@@ -267,10 +281,14 @@ function playOne(playoffs: Playoffs, league: LeagueResult, seasonSeed: number) {
   if (!next) return false;
   const { series, fixture } = next,
     { homeTeamId: homeId, awayTeamId: awayId, round } = fixture;
-  const teams = teamsWithChemistry(league.teams, playoffs.chemistryBonds);
+  const teams = teamsWithMorale(
+    teamsWithChemistry(league.teams, playoffs.chemistryBonds),
+    playoffs.morale,
+  );
   const home = teams.find((team) => team.id === homeId)!;
   const away = teams.find((team) => team.id === awayId)!;
   const chemistry = snapshotChemistry(home, away);
+  const morale = snapshotMorale(home, away);
   const context = playoffs.scouting
     ? scoutingForMatch(playoffs.scouting, homeId, awayId)
     : undefined;
@@ -279,6 +297,7 @@ function playOne(playoffs: Playoffs, league: LeagueResult, seasonSeed: number) {
       ...fixture,
       ...(context ? { scouting: context } : {}),
       ...(chemistry ? { chemistry } : {}),
+      ...(morale ? { morale } : {}),
     },
     teams,
     playoffs.playedGames,
@@ -292,9 +311,11 @@ function playOne(playoffs: Playoffs, league: LeagueResult, seasonSeed: number) {
     );
   if (playoffs.chemistryBonds)
     recordChemistryGame(playoffs.chemistryBonds, home, away, match);
+  recordMoraleGame(playoffs.morale, home, away, match);
   series.games.push({
     ...fixture,
     ...(chemistry ? { chemistry } : {}),
+    ...(morale ? { morale } : {}),
     ...(context ? { scouting: context } : {}),
     homeScore: match.homeScore,
     awayScore: match.awayScore,
@@ -501,14 +522,25 @@ function projectUserFixture(
     const next = nextPlayoffFixture(playoffs, seed);
     if (!next) return { playoffs, fixture: null };
     if ([next.fixture.homeTeamId, next.fixture.awayTeamId].includes(0)) {
-      const teams = teamsWithChemistry(league.teams, playoffs.chemistryBonds);
+      const teams = teamsWithMorale(
+        teamsWithChemistry(league.teams, playoffs.chemistryBonds),
+        playoffs.morale,
+      );
       const chemistry = snapshotChemistry(
+        teams.find((team) => team.id === next.fixture.homeTeamId)!,
+        teams.find((team) => team.id === next.fixture.awayTeamId)!,
+      );
+      const morale = snapshotMorale(
         teams.find((team) => team.id === next.fixture.homeTeamId)!,
         teams.find((team) => team.id === next.fixture.awayTeamId)!,
       );
       return {
         playoffs,
-        fixture: { ...next.fixture, ...(chemistry ? { chemistry } : {}) },
+        fixture: {
+          ...next.fixture,
+          ...(chemistry ? { chemistry } : {}),
+          ...(morale ? { morale } : {}),
+        },
       };
     }
     playOne(playoffs, league, seed);
@@ -537,7 +569,10 @@ export function submitPlayoffGame(
   const validated = validateOfficialGame(
     game,
     fixture,
-    teamsWithChemistry(league.teams, playoffs.chemistryBonds),
+    teamsWithMorale(
+      teamsWithChemistry(league.teams, playoffs.chemistryBonds),
+      playoffs.morale,
+    ),
   );
   playoffs.modelVersion = 2;
   playoffs.playedGames = { ...playoffs.playedGames, [fixture.id]: validated };

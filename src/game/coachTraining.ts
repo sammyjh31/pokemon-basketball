@@ -9,6 +9,7 @@ import { coachAbilityFit } from "./coachPolicy";
 import type { PlayerTrainingPlan } from "./franchiseFeatures";
 import type { DevelopmentSkill } from "./developmentTypes";
 import { playerProfile } from "./playerProfile";
+import { moraleAssessment } from "./playerMorale";
 import { ATTRIBUTE_LABELS } from "./ratings";
 import { getCoach } from "./trainerCoaches";
 import {
@@ -127,10 +128,22 @@ export function coachTrainingPlans(
         season && season.gamesPlayed > 0
           ? season.minutes / season.gamesPlayed
           : undefined;
+      const morale =
+        team.moraleVersion === 1 ? moraleAssessment(team, mon.id) : undefined;
+      const moraleCare =
+        !!morale &&
+        (morale.score < 40 ||
+          morale.recentMinutes >= 35 ||
+          morale.minuteAdjustment < 0 ||
+          morale.disruption < 0);
       const heavy = mpg !== undefined && mpg >= 35;
       const lowStamina = a.stamina < 52;
       const intensity: PlayerTrainingPlan["intensity"] =
-        heavy || lowStamina || coach.rest >= 0.75 || coach.risk < 0.3
+        moraleCare ||
+        heavy ||
+        lowStamina ||
+        coach.rest >= 0.75 ||
+        coach.risk < 0.3
           ? "steady"
           : coach.risk >= 0.7 && coach.rest < 0.55
             ? "aggressive"
@@ -152,11 +165,13 @@ export function coachTrainingPlans(
         chosen.need > 5
           ? `Team need: this skill group averages ${Math.round(teamAverage(chosen.skills))}; the roster needs more support here.`
           : `Team fit: this skill group averages ${Math.round(teamAverage(chosen.skills))}; reinforce a useful role in the rotation.`,
-        heavy
-          ? `Steady workload after ${mpg!.toFixed(1)} minutes per game; reduce development volatility.`
-          : lowStamina
-            ? `Stamina ${Math.round(a.stamina)}: steady work limits volatility.`
-            : `${intensity === "aggressive" ? "Aggressive work accepts larger gains or setbacks" : intensity === "steady" ? "Steady work reduces volatility" : "Standard work balances growth and volatility"}, following the coach's risk and rest preferences.`,
+        moraleCare
+          ? `Morale support: ${morale!.actionLabel}. Steady training supports confidence and recovery after ${morale!.recentMinutes.toFixed(1)} recent minutes per game; temporary execution is separate from permanent development.`
+          : heavy
+            ? `Steady workload after ${mpg!.toFixed(1)} minutes per game; reduce development volatility.`
+            : lowStamina
+              ? `Stamina ${Math.round(a.stamina)}: steady work limits volatility.`
+              : `${intensity === "aggressive" ? "Aggressive work accepts larger gains or setbacks" : intensity === "steady" ? "Steady work reduces volatility" : "Standard work balances growth and volatility"}, following the coach's risk and rest preferences.`,
       ];
       if (shared) reasons.push(shared[0].reasons[0]);
       if (shared && physicalAbilitiesEnabled(team))

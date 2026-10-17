@@ -30,6 +30,9 @@ vi.mock("../arcade/renderer", () => ({
 afterEach(() => vi.restoreAllMocks());
 const run = {
   ...createRun("free", false, 11),
+  // Synthetic completed games below predate persistent chemistry and morale.
+  chemistryGrowthVersion: undefined,
+  moraleVersion: undefined,
   roster: { PG: 65, SG: 135, SF: 149, PF: 68, C: 143, B1: 121, B2: 6, B3: 131 },
 };
 const teams = createLeague(run);
@@ -105,6 +108,7 @@ describe("official arcade flow", () => {
       for (const team of actualTeams) {
         team.evaluationVersion = modern ? 1 : undefined;
         team.chemistryVersion = modern ? 1 : undefined;
+        team.chemistryGrowthVersion = modern ? 1 : undefined;
         team.engineRules = {
           version: 1,
           abilities: false,

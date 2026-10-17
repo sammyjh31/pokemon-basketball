@@ -65,12 +65,14 @@ describe("recorded insight calculations", () => {
       defense: "man",
       abilities: false,
       bonds: {},
+      morale: Object.fromEntries(players.map((p) => [p.pokemonId, 30])),
     });
     const experienced = evaluateLineupChemistry(players, {
       tactic: "balanced",
       defense: "man",
       abilities: false,
       bonds: { "1:2": 600 },
+      morale: Object.fromEntries(players.map((p) => [p.pokemonId, 70])),
     });
     const matches = [fresh, experienced].map((chemistry, index) => {
       const match = insightMatch();
@@ -90,6 +92,8 @@ describe("recorded insight calculations", () => {
       45,
     );
     expect(data.lineups[0].chemistry?.continuity?.score).toBeCloseTo(3.75);
+    expect(data.lineups[0].chemistry?.morale?.score).toBeCloseTo(60);
+    expect(data.lineups[0].chemistry?.morale?.cohesionDelta).toBeCloseTo(0.8);
     expect(
       data.lineups[0].chemistry?.continuity?.pairs.find(
         (pair) => pair.pokemonIds.join(":") === "1:2",

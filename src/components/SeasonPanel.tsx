@@ -1,3 +1,4 @@
+import { currentMoraleBanks } from "../game/currentMorale";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { OPPONENTS, SCHEDULE } from "../data/opponents";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -337,6 +338,7 @@ export function SeasonPanel({
           {done && league && (
             <LeaguePanel
               league={league}
+              morale={currentMoraleBanks(run)}
               playedGames={run.seasonProgress?.playedGames}
             />
           )}

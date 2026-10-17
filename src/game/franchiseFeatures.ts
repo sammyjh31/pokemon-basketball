@@ -37,6 +37,8 @@ export interface OfficialGame {
   /** Active-five basketball chemistry; independent of the ability switch. */
   chemistryVersion?: 1;
   chemistryGrowthVersion?: 1;
+  moraleVersion?: 1;
+  morale?: import("./playerMorale").MoraleFixture;
   chemistry?: import("./teammateChemistry").ChemistryFixture;
   fixtureId: string;
   match: LeagueMatch;

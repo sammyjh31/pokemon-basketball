@@ -1,4 +1,5 @@
 import { AbilityStats } from "./AbilityStats";
+import { GameMoraleReport } from "./MoralePanel";
 import { useEffect, useId, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { GameInsightsPanel } from "./GameInsightsPanel";
@@ -174,8 +175,17 @@ export function LeagueBoxScore({
       simulateMatch(home, away, game.seed, {
         scouting: game.scouting,
         chemistry: game.chemistry,
+        morale: game.morale,
       }),
-    [home, away, game.seed, game.scouting, game.chemistry, providedMatch],
+    [
+      home,
+      away,
+      game.seed,
+      game.scouting,
+      game.chemistry,
+      game.morale,
+      providedMatch,
+    ],
   );
   const dialog = useRef<HTMLDivElement>(null),
     titleId = useId(),
@@ -314,6 +324,7 @@ export function LeagueBoxScore({
             </tbody>
           </table>
         </div>
+        <GameMoraleReport report={match.moraleReport} home={home} away={away} />
         <GameAnalytics match={match} home={home} away={away} />
         <GameInsightsPanel match={match} home={home} away={away} />
         <TeamBox team={away} players={match.awayBox} />

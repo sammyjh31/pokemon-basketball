@@ -1,3 +1,5 @@
+import { currentMoraleBanks } from "../game/currentMorale";
+import { teamsWithMorale } from "../game/playerMorale";
 import { useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { createLeague } from "../game/league";
@@ -28,7 +30,10 @@ export function prepareArcadeTeams(run: Run): {
         "Your roster needs eight distinct Pokémon. Return to the roster and review your lineup.",
     };
   try {
-    const existing = run.leagueTeams ?? run.result?.league?.teams;
+    const existing =
+      run.leagueTeams ??
+      run.result?.league?.teams ??
+      run.seasonProgress?.result?.league?.teams;
     if (existing?.some((team) => team.id !== 0)) {
       const used = new Set(Object.values(run.roster));
       const valid = existing.every((team) => {
@@ -44,9 +49,16 @@ export function prepareArcadeTeams(run: Run): {
         }
         return true;
       });
-      if (valid) return { teams: existing, error: null };
+      if (valid)
+        return {
+          teams: teamsWithMorale(existing, currentMoraleBanks(run)),
+          error: null,
+        };
     }
-    return { teams: createLeague(run), error: null };
+    return {
+      teams: teamsWithMorale(createLeague(run), currentMoraleBanks(run)),
+      error: null,
+    };
   } catch (error) {
     return {
       teams: [],

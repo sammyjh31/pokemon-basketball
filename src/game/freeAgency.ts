@@ -1,3 +1,4 @@
+import { withRosterMorale } from "./playerMorale";
 import { withKnownBonds } from "./teammateChemistry";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { attributes, positionRating, teamRatings } from "./ratings";
@@ -121,20 +122,25 @@ function replacePlayer(
       ];
     }),
   );
-  return withKnownBonds(
-    {
-      ...team,
-      roster,
-      development,
-      ratings: teamRatings(
+  return withRosterMorale(
+    withKnownBonds(
+      {
+        ...team,
         roster,
-        team.tactic,
-        team.rotation,
         development,
-        team.rotationPlan,
-      ),
-    },
+        ratings: teamRatings(
+          roster,
+          team.tactic,
+          team.rotation,
+          development,
+          team.rotationPlan,
+        ),
+      },
+      sources,
+    ),
+    team,
     sources,
+    "free-agent",
   );
 }
 function skillProfile(id: number, offsets: DevelopmentRatings = {}) {

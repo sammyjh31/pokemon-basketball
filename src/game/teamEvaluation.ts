@@ -9,6 +9,12 @@ import {
 } from "./developmentTypes";
 import type { PlayerTrainingPlan } from "./franchiseFeatures";
 import { playerProfile, type PlayerProfile } from "./playerProfile";
+import {
+  moraleProfile,
+  moraleScores,
+  moraleState,
+  type MoraleRoster,
+} from "./playerMorale";
 import { clamp } from "./ratings";
 import { getCoach, type CoachAssignment } from "./trainerCoaches";
 import { trainingSkillAdjustment } from "./training";
@@ -43,6 +49,8 @@ export interface EvaluationTeam {
   chemistryVersion?: 1;
   chemistryGrowthVersion?: 1;
   chemistryBonds?: PairBonds;
+  moraleVersion?: 1;
+  morale?: MoraleRoster;
   rotationPlan?: RotationPlan;
   engineRules?: { abilities: boolean; familiarity?: number };
 }
@@ -61,6 +69,7 @@ export interface EvaluationContext {
   abilities: boolean;
   physicalAbilities?: boolean;
   development: PlayerDevelopment;
+  morale?: Pick<EvaluationTeam, "roster" | "moraleVersion" | "morale">;
   needs: Record<NeedSkill, { average: number; weight: number }>;
 }
 export interface EvaluationFactor {
@@ -120,7 +129,17 @@ function rosterProfiles(
   return ROSTER_SLOTS.flatMap((slot) => {
     const mon = POKEMON_BY_ID.get(team.roster[slot]!);
     return mon && !excludedSet.has(mon.id)
-      ? [{ slot, mon, p: playerProfile(mon, team.development?.[mon.id]) }]
+      ? [
+          {
+            slot,
+            mon,
+            p: moraleProfile(
+              playerProfile(mon, team.development?.[mon.id]),
+              team,
+              mon.id,
+            ),
+          },
+        ]
       : [];
   });
 }
@@ -196,6 +215,7 @@ function projectedUnit(
           defense,
           abilities: abilitiesEnabled(team),
           familiarity: team.engineRules?.familiarity,
+          ...(team.moraleVersion === 1 ? { morale: moraleScores(team) } : {}),
           ...(team.chemistryGrowthVersion === 1
             ? { bonds: team.chemistryBonds ?? {} }
             : {}),
@@ -275,7 +295,7 @@ export function evaluationGamePlan(team: EvaluationTeam) {
   return {
     tactic,
     defense,
-    reason: `${coach.name}: shared roster evaluation favors ${tactic} offense and ${defense} defense, balancing coaching style, developed skills and enabled abilities.${physical ? " Physical movement, screens, rebounding and energy effects inform the plan." : ""}${chemistryEnabled(team) ? " Projected five-player chemistry and active partnerships inform the plan." : ""}`,
+    reason: `${coach.name}: shared roster evaluation favors ${tactic} offense and ${defense} defense, balancing coaching style, developed skills and enabled abilities.${physical ? " Physical movement, screens, rebounding and energy effects inform the plan." : ""}${chemistryEnabled(team) ? " Projected five-player chemistry and active partnerships inform the plan." : ""}${team.moraleVersion === 1 ? " Current morale supplies a bounded temporary execution adjustment." : ""}`,
   };
 }
 export function createEvaluationContext(
@@ -289,6 +309,19 @@ export function createEvaluationContext(
     defense: plan.defense,
     abilities: abilitiesEnabled(team),
     ...(physicalAbilitiesEnabled(team) ? { physicalAbilities: true } : {}),
+    ...(team.moraleVersion === 1
+      ? {
+          morale: {
+            roster: { ...team.roster },
+            moraleVersion: 1 as const,
+            morale: Object.fromEntries(
+              Object.values(team.roster).flatMap((id) =>
+                id === null ? [] : [[id, { ...moraleState(team, id) }]],
+              ),
+            ),
+          },
+        }
+      : {}),
     development: Object.fromEntries(
       Object.entries(team.development ?? {}).map(([id, offsets]) => [
         id,
@@ -411,12 +444,33 @@ export function evaluatePlayer(
 ): PlayerEvaluation {
   const mon = POKEMON_BY_ID.get(pokemonId);
   if (!mon) throw new Error("Cannot evaluate an unknown Pokémon.");
-  return scoreProfile(
+  const raw = playerProfile(mon, offsets ?? context.development[pokemonId]);
+  const base = scoreProfile(context, pokemonId, raw, role);
+  if (!context.morale) return base;
+  const effective = scoreProfile(
     context,
     pokemonId,
-    playerProfile(mon, offsets ?? context.development[pokemonId]),
-    role,
+    moraleProfile(raw, context.morale, pokemonId),
+    base.role,
   );
+  const contribution = effective.score - base.score;
+  return {
+    ...base,
+    score: effective.score,
+    factors: [
+      ...base.factors,
+      {
+        key: "morale",
+        label: "Temporary morale execution",
+        value: moraleState(context.morale, pokemonId).score,
+        contribution,
+      },
+    ],
+    reasons: [
+      ...base.reasons,
+      `Current morale adds ${contribution >= 0 ? "+" : ""}${contribution.toFixed(1)} temporary team-value points; base talent and permanent development stay unchanged.`,
+    ],
+  };
 }
 export function evaluateTeam(team: EvaluationTeam) {
   const context = createEvaluationContext(team),
@@ -435,6 +489,7 @@ export function evaluateTeam(team: EvaluationTeam) {
     "needs",
     "ability",
     ...(context.physicalAbilities ? ["physical"] : []),
+    ...(context.morale ? ["morale"] : []),
   ];
   const factors: EvaluationFactor[] = keys.map((key) => ({
     key,
@@ -577,7 +632,14 @@ export function evaluationTrainingOptions(
             team,
             chemistryPlayers.map((player) =>
               player.mon.id === pokemonId
-                ? { ...player, p: playerProfile(player.mon, projected) }
+                ? {
+                    ...player,
+                    p: moraleProfile(
+                      playerProfile(player.mon, projected),
+                      team,
+                      player.mon.id,
+                    ),
+                  }
                 : player,
             ),
             context.tactic,

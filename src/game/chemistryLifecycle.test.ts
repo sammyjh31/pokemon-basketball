@@ -73,6 +73,7 @@ it("opts new solo and local clubs into one chemistry version, rejecting mixed an
   ).toBe(1);
   delete draft.chemistryVersion;
   delete draft.chemistryGrowthVersion;
+  delete draft.moraleVersion;
   expect(
     local.parseLocalLeague(JSON.stringify(draft)).chemistryVersion,
   ).toBeUndefined();
@@ -96,6 +97,7 @@ it("preserves absent chemistry flags through saves and archives and rejects inva
       ...run(),
       chemistryVersion: version,
       chemistryGrowthVersion: undefined,
+      moraleVersion: undefined,
     };
     saveGame(storage, { ...initialState(22), run: r });
     const loaded = loadGame(storage, 22);
@@ -151,6 +153,7 @@ it("restores historical local chemistry per season without rewriting the origina
   );
   delete draft.chemistryVersion;
   delete draft.chemistryGrowthVersion;
+  delete draft.moraleVersion;
   while (local.currentLocalTurn(draft)) {
     draft = local.advanceLocalCpu(draft);
     const turn = local.currentLocalTurn(draft);
@@ -191,7 +194,9 @@ it("restores historical local chemistry per season without rewriting the origina
   historicSecond.career!.teams.forEach((t) => {
     delete t.chemistryVersion;
     delete t.chemistryGrowthVersion;
+    delete t.moraleVersion;
     delete t.chemistryBonds;
+    delete t.morale;
   });
   expect(
     local

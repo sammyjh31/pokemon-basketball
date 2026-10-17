@@ -1,3 +1,4 @@
+import { applyMoraleSnapshot } from "../game/playerMorale";
 import { applyChemistrySnapshot } from "../game/teammateChemistry";
 import { useEffect, useRef, useState } from "react";
 import { ArcadeInputController } from "../arcade/input";
@@ -268,7 +269,7 @@ export function ArcadeMode({
     requestedOfficial
       ? {
           ...requestedOfficial,
-          fixture: { ...requestedOfficial.fixture },
+          fixture: structuredClone(requestedOfficial.fixture),
           teams: structuredClone(requestedOfficial.teams),
         }
       : undefined,
@@ -359,6 +360,17 @@ export function ArcadeMode({
     }
     if (!ready || !opponent) return;
     try {
+      if (official?.fixture.morale && user) {
+        const userHome = official.fixture.homeTeamId === 0;
+        user = applyMoraleSnapshot(
+          user,
+          official.fixture.morale[userHome ? "home" : "away"],
+        );
+        opponent = applyMoraleSnapshot(
+          opponent,
+          official.fixture.morale[userHome ? "away" : "home"],
+        );
+      }
       const random = new Uint32Array(1);
       if (official) random[0] = official.fixture.seed;
       else if (typeof crypto?.getRandomValues === "function")
@@ -408,6 +420,9 @@ export function ArcadeMode({
           ? user?.chemistryGrowthVersion
           : run.chemistryGrowthVersion) === 1
           ? { chemistryGrowthVersion: 1 as const }
+          : {}),
+        ...((official ? user?.moraleVersion : run.moraleVersion) === 1
+          ? { moraleVersion: 1 as const }
           : {}),
         ...(official ? { official: true } : {}),
       });

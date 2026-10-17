@@ -1,3 +1,4 @@
+import { retainMorale } from "./playerMorale";
 import { describe, expect, it } from "vitest";
 import { FRANCHISE_POKEMON } from "../data/pokemon";
 import { ROSTER_SLOTS } from "./types";
@@ -188,6 +189,14 @@ describe("configurable local careers", () => {
       offseason.career!.teams.map((team) => team.chemistryBonds),
     );
     const second = career.startNextLocalSeason(offseason);
+    expect(second.career!.teams.map((team) => team.morale)).toEqual(
+      offseason.career!.teams.map((team) => retainMorale(team).morale),
+    );
+    expect(
+      second.career!.teams.every(
+        (team) => Object.keys(team.morale!).length === 8,
+      ),
+    ).toBe(true);
     for (const team of second.career!.teams) {
       expect(team.chemistryGrowthVersion).toBe(1);
       for (const [key, minutes] of Object.entries(beforeBonds[team.id]!))
@@ -251,6 +260,18 @@ describe("configurable local careers", () => {
       return () => local.parseLocalLeague(JSON.stringify(copy));
     };
     expect(mutate((v) => (v.career!.year = 3))).toThrow();
+    expect(
+      mutate((v) => {
+        v.career!.teams[0].morale![v.career!.teams[0].roster.PG!].score += 1;
+      }),
+    ).toThrow();
+    expect(
+      mutate((v) => {
+        v.career!.history[0].teams[0].morale![
+          v.career!.history[0].teams[0].roster.PG!
+        ].games += 1;
+      }),
+    ).toThrow();
     expect(mutate((v) => (v.career!.history[0].year = 2))).toThrow();
     expect(
       mutate(

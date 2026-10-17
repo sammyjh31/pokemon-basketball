@@ -9,6 +9,9 @@ import { nextUserPlayoffFixture } from "./game/playoffs";
 import { seasonTeams } from "./game/season";
 import { teamsWithChemistry } from "./game/teammateChemistry";
 import { currentChemistryBanks } from "./game/currentChemistry";
+import { currentMoraleBanks } from "./game/currentMorale";
+import { teamsWithMorale } from "./game/playerMorale";
+import { MoralePanel } from "./components/MoralePanel";
 import type { OfficialArcadeProps } from "./components/ArcadeMode";
 import { lazy, Suspense, useState, useMemo } from "react";
 import { POKEMON_BY_ID } from "./data/pokemon";
@@ -68,16 +71,20 @@ export default function App({
   const coachTeam = {
     ...(state.franchise?.phase === "offseason"
       ? state.franchise.teams[0]
-      : teamsWithChemistry(
-          run.leagueTeams ??
-            run.result?.league?.teams ??
-            run.seasonProgress?.result?.league?.teams ??
-            [],
-          currentChemistryBanks(run),
+      : teamsWithMorale(
+          teamsWithChemistry(
+            run.leagueTeams ??
+              run.result?.league?.teams ??
+              run.seasonProgress?.result?.league?.teams ??
+              [],
+            currentChemistryBanks(run),
+          ),
+          currentMoraleBanks(run),
         )[0]),
     ...(state.franchise?.phase !== "offseason"
       ? {
           chemistryVersion: run.chemistryVersion,
+          moraleVersion: run.moraleVersion,
           chemistryGrowthVersion: run.chemistryGrowthVersion,
           abilityVersion: run.abilityVersion,
           physicalAbilityVersion: run.physicalAbilityVersion,
@@ -189,6 +196,11 @@ export default function App({
           ...run,
           roster: state.franchise.teams[0].roster,
           leagueTeams: state.franchise.teams,
+          // The current offseason roster already includes retained transaction state.
+          // Completed-season banks refer to the archived roster.
+          result: null,
+          seasonProgress: undefined,
+          playoffs: undefined,
         }
       : run;
   const playoffFixture = useMemo(
@@ -216,9 +228,12 @@ export default function App({
     if (!fixture) return;
     setOfficialGame({
       fixture,
-      teams: teamsWithChemistry(
-        league?.teams ?? seasonTeams(run),
-        currentChemistryBanks(run),
+      teams: teamsWithMorale(
+        teamsWithChemistry(
+          league?.teams ?? seasonTeams(run),
+          currentChemistryBanks(run),
+        ),
+        currentMoraleBanks(run),
       ),
       label: `Year ${state.franchise.year} · ${league ? "Playoffs" : `Game ${(run.seasonProgress?.completedRounds ?? 0) + 1} of 82`}`,
       onComplete: (game) =>
@@ -419,6 +434,7 @@ export default function App({
                   onChoose={(id) => dispatch({ type: "SELECT_COACH", id })}
                 />
               )}
+              {!coachTeam.coach && <MoralePanel team={coachTeam} />}
               {coachTeam.coach && (
                 <CoachSummary
                   team={coachTeam}

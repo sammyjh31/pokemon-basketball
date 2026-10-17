@@ -1,0 +1,117 @@
+.morale-panel {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid var(--line, #282e36);
+  border-radius: 12px;
+  background: var(--panel, #0e1217);
+  color: inherit;
+  min-width: 0;
+}
+.morale-heading,
+.morale-player-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.morale-heading h3 {
+  margin: 0;
+}
+.morale-heading > span {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.morale-panel > p,
+.morale-player p {
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+.morale-note {
+  color: var(--muted, #a6adb7);
+}
+.morale-roster {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0;
+  margin: 16px 0 0;
+  list-style: none;
+}
+.morale-player {
+  min-width: 0;
+  border: 1px solid var(--line, #282e36);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--bg, #080b0f);
+}
+.morale-player-heading > strong {
+  font-size: 0.92rem;
+}
+.morale-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.72rem;
+  padding: 4px 7px;
+  border-radius: 5px;
+  background: #242d37;
+  color: #d5dce4;
+}
+.morale-low {
+  background: #3c2b16;
+  color: #ffd38a;
+}
+.morale-high {
+  background: #183a2c;
+  color: #a8e8be;
+}
+.morale-response {
+  margin: 9px 0;
+}
+.morale-panel summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 650;
+  padding: 5px 0;
+  line-height: 1.5;
+}
+.morale-panel summary:focus-visible {
+  outline: 2px solid var(--gold, #ebc64e);
+  outline-offset: 3px;
+}
+.morale-factors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  font-size: 0.78rem;
+  margin: 12px 0;
+}
+.morale-factors dt {
+  color: var(--muted, #a6adb7);
+}
+.morale-factors dd {
+  margin: 3px 0 0;
+  font-weight: 700;
+}
+.morale-reasons {
+  padding-left: 16px;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+.morale-game > details {
+  border-top: 1px solid var(--line, #282e36);
+  margin-top: 12px;
+  padding-top: 9px;
+}
+.morale-game-change {
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 680px) {
+  .morale-panel {
+    padding: 12px;
+  }
+  .morale-roster {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

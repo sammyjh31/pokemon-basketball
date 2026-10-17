@@ -1,3 +1,4 @@
+import { retainMorale } from "./playerMorale";
 import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
 import { assignLeagueCoaches } from "./trainerCoaches";
 import { POKEMON } from "../data/pokemon";
@@ -164,6 +165,11 @@ export function createLeague(run: Run): LeagueTeam[] {
         throw new Error("Chemistry growth requires lineup chemistry.");
       team.chemistryGrowthVersion = 1;
       team.chemistryBonds = {};
+    }
+    if (run.moraleVersion === 1) {
+      if (run.chemistryGrowthVersion !== 1)
+        throw new Error("Player morale requires teammate chemistry growth.");
+      Object.assign(team, retainMorale(team));
     }
     if (run.evaluationVersion === 1) team.evaluationVersion = 1;
     if (run.courtVersion === 1) team.courtVersion = 1;

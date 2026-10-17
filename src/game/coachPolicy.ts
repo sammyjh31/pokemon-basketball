@@ -11,6 +11,7 @@ import {
   type AbilityMechanic,
 } from "./abilities";
 import { playerProfile, type PlayerProfile } from "./playerProfile";
+import { moraleAssessment, moraleProfile } from "./playerMorale";
 import { getCoach, type TrainerCoach } from "./trainerCoaches";
 import {
   ROSTER_SLOTS,
@@ -40,7 +41,11 @@ function rosterAbilityFits(team: LeagueTeam, coach: TrainerCoach) {
   return ROSTER_SLOTS.flatMap((slot) => {
     const mon = POKEMON_BY_ID.get(team.roster[slot]!);
     if (!mon) return [];
-    const p = playerProfile(mon, team.development?.[mon.id]);
+    const p = moraleProfile(
+      playerProfile(mon, team.development?.[mon.id]),
+      team,
+      mon.id,
+    );
     // Estimate involvement from the same skill/rest preferences as the rotation;
     // a weak reserve contributes less than an effective rotation player.
     const weight =
@@ -71,7 +76,15 @@ export function coachGamePlan(
     };
   const profiles = ROSTER_SLOTS.flatMap((slot) => {
     const mon = POKEMON_BY_ID.get(team.roster[slot]!);
-    return mon ? [playerProfile(mon, team.development?.[mon.id])] : [];
+    return mon
+      ? [
+          moraleProfile(
+            playerProfile(mon, team.development?.[mon.id]),
+            team,
+            mon.id,
+          ),
+        ]
+      : [];
   });
   const avg = (key: keyof PlayerProfile["attributes"]) =>
     profiles.reduce((n, p) => n + p.attributes[key], 0) /
@@ -237,7 +250,11 @@ export function coachRotationMinutes(team: LeagueTeam) {
     team.evaluationVersion === 1 ? createEvaluationContext(team) : undefined;
   const candidates = ROSTER_SLOTS.map((slot) => {
     const mon = POKEMON_BY_ID.get(team.roster[slot]!)!;
-    const p = playerProfile(mon, team.development?.[mon.id]);
+    const p = moraleProfile(
+      playerProfile(mon, team.development?.[mon.id]),
+      team,
+      mon.id,
+    );
     return {
       slot,
       score:
@@ -273,5 +290,36 @@ export function coachRotationMinutes(team: LeagueTeam) {
     });
     minutes[candidates[best].slot]++;
   }
-  return minutes;
+  if (team.moraleVersion !== 1) return minutes;
+  // Morale support shifts a small part of the skill-based rotation. Allocate
+  // against target gaps so the exact 240-minute budget and 40-minute cap hold.
+  const baseline = { ...minutes };
+  const targets = candidates.map(({ slot }) => ({
+    slot,
+    target: Math.max(
+      0,
+      Math.min(
+        40,
+        baseline[slot] +
+          moraleAssessment(team, team.roster[slot]!).minuteAdjustment,
+      ),
+    ),
+  }));
+  const allocated = Object.fromEntries(
+    ROSTER_SLOTS.map((slot) => [slot, Math.max(0, baseline[slot] - 4)]),
+  ) as typeof minutes;
+  const remaining =
+    240 - Object.values(allocated).reduce((sum, value) => sum + value, 0);
+  for (let n = 0; n < remaining; n++) {
+    const next = targets
+      .filter(({ slot }) => allocated[slot] < Math.min(40, baseline[slot] + 4))
+      .reduce((best, candidate) =>
+        candidate.target - allocated[candidate.slot] >
+        best.target - allocated[best.slot]
+          ? candidate
+          : best,
+      );
+    allocated[next.slot]++;
+  }
+  return allocated;
 }

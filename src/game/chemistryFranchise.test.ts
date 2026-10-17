@@ -50,7 +50,11 @@ it("restores chemistry season, playoff and career totals, lineup reports and fro
     result.league!.teams[firstFixture.homeTeamId],
     result.league!.teams[firstFixture.awayTeamId],
     firstFixture.seed,
-    { scouting: firstFixture.scouting, chemistry: firstFixture.chemistry },
+    {
+      scouting: firstFixture.scouting,
+      chemistry: firstFixture.chemistry,
+      morale: firstFixture.morale,
+    },
   );
   expect(firstMatch.insights!.lineups.length).toBeGreaterThan(0);
   expect(

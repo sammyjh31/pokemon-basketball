@@ -1,3 +1,4 @@
+import { neutralMorale } from "./playerMorale";
 import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
 import { validateCoach } from "./trainerCoaches";
 import {
@@ -58,6 +59,7 @@ export interface LocalLeague {
   /** Active-five basketball chemistry; independent of the ability switch. */
   chemistryVersion?: 1;
   chemistryGrowthVersion?: 1;
+  moraleVersion?: 1;
   evaluationVersion?: 1;
   courtVersion?: 1;
   matchupVersion?: 1;
@@ -151,6 +153,7 @@ export function createLocalLeague(
           physicalAbilityVersion: 1 as const,
           chemistryVersion: 1 as const,
           chemistryGrowthVersion: 1 as const,
+          moraleVersion: 1 as const,
           evaluationVersion: 1 as const,
           courtVersion: 1 as const,
           matchupVersion: 1 as const,
@@ -385,6 +388,16 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
         ? { physicalAbilityVersion: 1 as const }
         : {}),
       ...(draft.chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
+      ...(draft.moraleVersion === 1
+        ? {
+            moraleVersion: 1 as const,
+            morale: Object.fromEntries(
+              Object.values(roster)
+                .filter((id): id is number => id !== null)
+                .map((id) => [id, neutralMorale()]),
+            ),
+          }
+        : {}),
       ...(draft.chemistryGrowthVersion === 1
         ? { chemistryGrowthVersion: 1 as const, chemistryBonds: {} }
         : {}),
@@ -429,6 +442,7 @@ export function localLeagueRun(draft: LocalLeague): Run {
   delete run.physicalAbilityVersion;
   delete run.chemistryVersion;
   delete run.chemistryGrowthVersion;
+  delete run.moraleVersion;
   delete run.evaluationVersion;
   delete run.courtVersion;
   delete run.matchupVersion;
@@ -442,6 +456,7 @@ export function localLeagueRun(draft: LocalLeague): Run {
     ...(teams[0].physicalAbilityVersion === 1
       ? { physicalAbilityVersion: 1 as const }
       : {}),
+    ...(teams[0].moraleVersion === 1 ? { moraleVersion: 1 as const } : {}),
     ...(teams[0].chemistryGrowthVersion === 1
       ? { chemistryGrowthVersion: 1 as const }
       : {}),
@@ -581,6 +596,8 @@ export function parseLocalLeague(
     (value.chemistryGrowthVersion !== undefined &&
       value.chemistryGrowthVersion !== 1) ||
     (value.chemistryGrowthVersion === 1 && value.chemistryVersion !== 1) ||
+    (value.moraleVersion !== undefined && value.moraleVersion !== 1) ||
+    (value.moraleVersion === 1 && value.chemistryGrowthVersion !== 1) ||
     (value.evaluationVersion !== undefined && value.evaluationVersion !== 1) ||
     (value.courtVersion !== undefined && value.courtVersion !== 1) ||
     (value.matchupVersion !== undefined && value.matchupVersion !== 1) ||
@@ -613,6 +630,7 @@ export function parseLocalLeague(
   delete draft.physicalAbilityVersion;
   delete draft.chemistryVersion;
   delete draft.chemistryGrowthVersion;
+  delete draft.moraleVersion;
   delete draft.evaluationVersion;
   delete draft.courtVersion;
   delete draft.matchupVersion;
@@ -621,6 +639,7 @@ export function parseLocalLeague(
   if (value.physicalAbilityVersion === 1) draft.physicalAbilityVersion = 1;
   if (value.chemistryVersion === 1) draft.chemistryVersion = 1;
   if (value.chemistryGrowthVersion === 1) draft.chemistryGrowthVersion = 1;
+  if (value.moraleVersion === 1) draft.moraleVersion = 1;
   if (value.evaluationVersion === 1) draft.evaluationVersion = 1;
   if (value.courtVersion === 1) draft.courtVersion = 1;
   if (value.matchupVersion === 1) draft.matchupVersion = 1;

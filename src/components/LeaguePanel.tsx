@@ -1,3 +1,5 @@
+import { MoralePanel } from "./MoralePanel";
+import { teamsWithMorale, type MoraleBanks } from "../game/playerMorale";
 import { AbilityStats } from "./AbilityStats";
 import { getCoach } from "../game/trainerCoaches";
 import { CoachPortrait } from "./CoachPortrait";
@@ -651,13 +653,15 @@ function Rosters({
   league,
   teamId,
   setTeamId,
+  morale,
 }: {
   league: LeagueResult;
   teamId: string;
   setTeamId: (id: string) => void;
+  morale?: MoraleBanks;
 }) {
-  const team =
-    league.teams.find((t) => String(t.id) === teamId) ?? league.teams[0];
+  const teams = teamsWithMorale(league.teams, morale ?? league.morale);
+  const team = teams.find((t) => String(t.id) === teamId) ?? teams[0];
   if (!team) return null;
   const coach = getCoach(team.coach?.id ?? "");
   return (
@@ -706,6 +710,7 @@ function Rosters({
           </span>
         </div>
       </div>
+      <MoralePanel team={team} />
       <div
         className="results-table-wrap"
         role="region"
@@ -1098,9 +1103,11 @@ const sections = [
 export function LeaguePanel({
   league,
   playedGames,
+  morale,
 }: {
   league: LeagueResult;
   playedGames?: Record<string, OfficialGame>;
+  morale?: MoraleBanks;
 }) {
   const [section, setSection] =
       useState<(typeof sections)[number]>("Standings"),
@@ -1114,7 +1121,11 @@ export function LeaguePanel({
         league.teams.find((t) => t.id === game.homeTeamId)!,
         league.teams.find((t) => t.id === game.awayTeamId)!,
         game.seed,
-        { scouting: game.scouting, chemistry: game.chemistry },
+        {
+          scouting: game.scouting,
+          chemistry: game.chemistry,
+          morale: game.morale,
+        },
       ),
     [league, playedGames],
   );
@@ -1164,7 +1175,12 @@ export function LeaguePanel({
           <SeasonInsightsPanel league={league} resolveMatch={resolveMatch} />
         )}
         {section === "Team rosters" && (
-          <Rosters league={league} teamId={teamId} setTeamId={setTeamId} />
+          <Rosters
+            league={league}
+            teamId={teamId}
+            setTeamId={setTeamId}
+            morale={morale}
+          />
         )}
         {section === "League games" && (
           <Games league={league} onGame={setGame} />

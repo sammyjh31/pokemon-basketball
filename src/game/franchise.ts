@@ -1,3 +1,4 @@
+import { retainMorale, teamsWithMorale } from "./playerMorale";
 import {
   retainChemistry,
   syncTeamBonds,
@@ -266,9 +267,12 @@ export function enterOffseason(state: GameState): GameState {
   let teams: LeagueTeam[];
   try {
     teams = validateLeagueTeams(
-      teamsWithChemistry(
-        league.teams,
-        run.playoffs?.chemistryBonds ?? league.chemistryBonds,
+      teamsWithMorale(
+        teamsWithChemistry(
+          league.teams,
+          run.playoffs?.chemistryBonds ?? league.chemistryBonds,
+        ),
+        run.playoffs?.morale ?? league.morale,
       ),
       run.includeLegends,
     );
@@ -340,7 +344,7 @@ export function startFranchiseSeason(
   }
   // Type rules roll forward only at the season boundary. Historical teams stay frozen.
   teams = syncTeamBonds(teams).map((team) => ({
-    ...retainChemistry(team),
+    ...retainMorale(retainChemistry(team)),
     typeMatchupsVersion: 1 as const,
     typeTacticsVersion: 1 as const,
     abilityVersion: 1 as const,

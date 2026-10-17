@@ -1,3 +1,4 @@
+import { moraleScores, type MoraleRoster } from "./playerMorale";
 import { abilitiesEnabled } from "./abilities";
 import {
   chemistryEnabled,
@@ -9,6 +10,7 @@ interface Cache {
   context: string;
   bonds?: import("./teammateChemistry").PairBonds;
   lineups: Map<string, LineupChemistry>;
+  morale?: MoraleRoster;
 }
 // Profiles are immutable for a match. Coaching can change the scheme, so that
 // context is invalidated independently of the active-five cache.
@@ -25,10 +27,19 @@ export function getMatchChemistry(
     team.config.chemistryGrowthVersion === 1
       ? (team.config.chemistryBonds ?? EMPTY_BONDS)
       : undefined;
+  const morale =
+    team.config.moraleVersion === 1
+      ? (team.config.morale ?? EMPTY_BONDS)
+      : undefined;
   const context = `${team.config.tactic}:${team.config.defense}:${abilities}:${familiarity}`;
   let stored = cache.get(team);
-  if (!stored || stored.context !== context || stored.bonds !== bonds) {
-    stored = { context, bonds, lineups: new Map() };
+  if (
+    !stored ||
+    stored.context !== context ||
+    stored.bonds !== bonds ||
+    stored.morale !== morale
+  ) {
+    stored = { context, bonds, morale, lineups: new Map() };
     cache.set(team, stored);
   }
   const key = floor
@@ -45,6 +56,9 @@ export function getMatchChemistry(
         abilities,
         familiarity,
         ...(bonds ? { bonds } : {}),
+        ...(team.config.moraleVersion === 1
+          ? { morale: moraleScores(team.config) }
+          : {}),
       },
     );
     stored.lineups.set(key, result);

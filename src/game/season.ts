@@ -1,4 +1,10 @@
 import {
+  initialMoraleBanks,
+  recordMoraleGame,
+  snapshotMorale,
+  teamsWithMorale,
+} from "./playerMorale";
+import {
   initialChemistryBanks,
   recordChemistryGame,
   snapshotChemistry,
@@ -97,6 +103,7 @@ export function seasonBuilder(
       validateOfficialGame(game, fixture, teams);
   }
   const chemistryBonds = initialChemistryBanks(teams);
+  const morale = initialMoraleBanks(teams);
   const byPlayer = new Map(players.map((p) => [p.playerId, p]));
   const standings: Standing[] = teams.map((t) => ({
     teamId: t.id,
@@ -120,14 +127,19 @@ export function seasonBuilder(
       throw new Error(
         "Chemistry games must advance the schedule exactly once in order.",
       );
-    const currentTeams = teamsWithChemistry(teams, chemistryBonds);
+    const currentTeams = teamsWithMorale(
+      teamsWithChemistry(teams, chemistryBonds),
+      morale,
+    );
     const chemistry = snapshotChemistry(currentTeams[h], currentTeams[a]);
+    const moraleSnapshot = snapshotMorale(currentTeams[h], currentTeams[a]);
     const context = scouting ? scoutingForMatch(scouting, h, a) : undefined;
     const match = resolveSeasonMatch(
       {
         ...fixture,
         ...(context ? { scouting: context } : {}),
         ...(chemistry ? { chemistry } : {}),
+        ...(moraleSnapshot ? { morale: moraleSnapshot } : {}),
       },
       currentTeams,
       playedGames,
@@ -141,9 +153,11 @@ export function seasonBuilder(
         currentTeams[a],
         match,
       );
+    recordMoraleGame(morale, currentTeams[h], currentTeams[a], match);
     summaries.push({
       ...fixture,
       ...(chemistry ? { chemistry } : {}),
+      ...(moraleSnapshot ? { morale: moraleSnapshot } : {}),
       ...(context ? { scouting: context } : {}),
       homeScore: match.homeScore,
       awayScore: match.awayScore,
@@ -226,6 +240,7 @@ export function seasonBuilder(
         ...(chemistryBonds
           ? { chemistryBonds: structuredClone(chemistryBonds) }
           : {}),
+        ...(morale ? { morale: structuredClone(morale) } : {}),
         games: summaries,
         players,
         standings,
@@ -276,5 +291,6 @@ export function resolveSeasonMatch(
   return simulateMatch(home, away, fixture.seed, {
     scouting: fixture.scouting,
     chemistry: fixture.chemistry,
+    morale: fixture.morale,
   });
 }

@@ -139,6 +139,17 @@ function averageRecordedChemistry(
     ...previous,
     score: average(previous.score, incoming.score),
     value: average(previous.value, incoming.value),
+    ...(previous.morale && incoming.morale
+      ? {
+          morale: {
+            score: average(previous.morale.score, incoming.morale.score),
+            cohesionDelta: average(
+              previous.morale.cohesionDelta,
+              incoming.morale.cohesionDelta,
+            ),
+          },
+        }
+      : {}),
     ...(previous.skillScore !== undefined && incoming.skillScore !== undefined
       ? { skillScore: average(previous.skillScore, incoming.skillScore) }
       : {}),
@@ -223,6 +234,7 @@ export async function buildSeasonInsights(
         : simulateMatch(home, away, game.seed, {
             scouting: game.scouting,
             chemistry: game.chemistry,
+            morale: game.morale,
           });
       if (
         match &&

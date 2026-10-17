@@ -1,3 +1,9 @@
+import type {
+  MoraleRoster,
+  MoraleBanks,
+  MoraleFixture,
+  MoraleGameReport,
+} from "./playerMorale";
 import type { PairBonds, ChemistryFixture } from "./teammateChemistry";
 import type { AbilityActivations } from "./abilities";
 import type { CoachAssignment } from "./trainerCoaches";
@@ -205,6 +211,8 @@ export interface Run {
   chemistryVersion?: 1;
   /** Earned shared court minutes; absent on historical seasons. */
   chemistryGrowthVersion?: 1;
+  /** Persistent player morale; requires earned teammate chemistry. */
+  moraleVersion?: 1;
   /** Shared team evaluation; absent on historical seasons for exact replay. */
   evaluationVersion?: 1;
   id: string;
@@ -253,6 +261,7 @@ export type PlayType =
   "transition" | "pickRoll" | "isolation" | "post" | "spotUp";
 export interface LeagueTeam {
   chemistryBonds?: PairBonds;
+  morale?: MoraleRoster;
   coach?: CoachAssignment;
   engineRules?: EngineRules;
   simulationVersion?: 2;
@@ -273,6 +282,8 @@ export interface LeagueTeam {
   chemistryVersion?: 1;
   /** Earned shared court minutes; absent on historical seasons. */
   chemistryGrowthVersion?: 1;
+  /** Persistent player morale; requires earned teammate chemistry. */
+  moraleVersion?: 1;
   /** Shared team evaluation; absent on historical seasons for exact replay. */
   evaluationVersion?: 1;
   id: number;
@@ -288,6 +299,7 @@ export interface LeagueTeam {
 }
 export interface LeagueFixture {
   chemistry?: ChemistryFixture;
+  morale?: MoraleFixture;
   id: string;
   round: number;
   homeTeamId: number;
@@ -312,6 +324,7 @@ export interface LeagueGameSummary extends LeagueFixture {
   overtimePeriods: number;
 }
 export interface LeagueMatch {
+  moraleReport?: MoraleGameReport;
   chemistryMinutes?: { home: PairBonds; away: PairBonds };
   typeTactics?: TypeTacticsReport;
   insights?: MatchInsights;
@@ -370,6 +383,7 @@ export interface LeagueAward extends SeasonAward {
   }[];
 }
 export interface LeagueResult {
+  morale?: MoraleBanks;
   chemistryBonds?: Record<number, PairBonds>;
   scouting?: ScoutingMemory;
   format?: import("./localFormat").LocalFormat;

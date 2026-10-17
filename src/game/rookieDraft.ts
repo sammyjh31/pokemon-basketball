@@ -1,3 +1,4 @@
+import { withRosterMorale } from "./playerMorale";
 import { createRivalStrategy } from "./rivalRosterStrategy";
 import { compareTeamEvaluation } from "./teamEvaluation";
 import type { TradeFactor } from "./tradeTypes";
@@ -123,18 +124,23 @@ function replacedTeam(
       id === pokemonId ? {} : { ...(team.development?.[id!] ?? {}) },
     ]),
   );
-  return {
-    ...team,
-    roster,
-    development,
-    ratings: teamRatings(
+  return withRosterMorale(
+    {
+      ...team,
       roster,
-      team.tactic,
-      team.rotation,
       development,
-      team.rotationPlan,
-    ),
-  };
+      ratings: teamRatings(
+        roster,
+        team.tactic,
+        team.rotation,
+        development,
+        team.rotationPlan,
+      ),
+    },
+    team,
+    [team],
+    "rookie",
+  );
 }
 
 /** A deterministic shortlist combines ability, vacant-slot fit, coaching and rotation needs. */

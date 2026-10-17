@@ -23,6 +23,16 @@ export function ChemistryDetails({
     continuity?.pairs.filter((pair) => pair.minutes > 0).length ?? 0;
   return (
     <div className="chemistry-details">
+      {chemistry.morale && (
+        <p className="chemistry-morale">
+          <strong>
+            Active-five morale {chemistry.morale.score.toFixed(0)} / 100
+          </strong>{" "}
+          · {chemistry.morale.cohesionDelta > 0 ? "+" : ""}
+          {chemistry.morale.cohesionDelta.toFixed(1)} temporary cohesion points.
+          Earned shared minutes stay unchanged.
+        </p>
+      )}
       {continuity && (
         <div className="chemistry-familiarity">
           <strong>

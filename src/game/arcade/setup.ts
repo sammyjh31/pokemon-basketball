@@ -5,6 +5,12 @@ import { clamp } from "../ratings";
 import { createEvaluationContext, evaluatePlayer } from "../teamEvaluation";
 import { POSITIONS, ROSTER_SLOTS } from "../types";
 import { snapshotChemistry, validatePairBonds } from "../teammateChemistry";
+import {
+  moraleProfile,
+  moraleScores,
+  snapshotMorale,
+  validateMoraleRoster,
+} from "../playerMorale";
 import { refreshArcadeChemistry } from "./chemistry";
 import type {
   ArcadePlayer,
@@ -37,12 +43,30 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
     (setup.chemistryVersion !== undefined && setup.chemistryVersion !== 1) ||
     (setup.chemistryGrowthVersion !== undefined &&
       (setup.chemistryGrowthVersion !== 1 || setup.chemistryVersion !== 1)) ||
+    (setup.moraleVersion !== undefined &&
+      (setup.moraleVersion !== 1 ||
+        setup.chemistryGrowthVersion !== 1 ||
+        setup.teams[0].moraleVersion !== setup.teams[1].moraleVersion ||
+        setup.teams.some(
+          (team) =>
+            team.moraleVersion !== undefined && team.moraleVersion !== 1,
+        ))) ||
     (setup.abilityVersion !== undefined && setup.abilityVersion !== 1) ||
     (setup.physicalAbilityVersion !== undefined &&
       setup.physicalAbilityVersion !== 1) ||
     (setup.evaluationVersion !== undefined && setup.evaluationVersion !== 1)
   )
     throw new Error("Choose two complete teams to play.");
+  const moraleTeams =
+    setup.moraleVersion === 1
+      ? setup.teams.map((team) => ({
+          ...team,
+          moraleVersion: 1 as const,
+          ...(team.morale === undefined
+            ? {}
+            : { morale: validateMoraleRoster(team.morale, team) }),
+        }))
+      : undefined;
   const bonds =
     setup.chemistryGrowthVersion === 1
       ? setup.teams.map((team) => {
@@ -69,6 +93,7 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
             chemistryVersion: setup.chemistryVersion,
             chemistryGrowthVersion: setup.chemistryGrowthVersion,
             chemistryBonds: bonds?.[side],
+            moraleVersion: setup.moraleVersion,
             engineRules: {
               ...team.engineRules,
               abilities: setup.abilityVersion === 1,
@@ -81,7 +106,10 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
       if (!mon || used.has(mon.id))
         throw new Error("Both teams need eight distinct Pokémon.");
       used.add(mon.id);
-      const profile = playerProfile(mon, team.development?.[mon.id]);
+      const rawProfile = playerProfile(mon, team.development?.[mon.id]);
+      const profile = moraleTeams
+        ? moraleProfile(rawProfile, moraleTeams[side], mon.id)
+        : rawProfile;
       players.push({
         id: players.length,
         pokemonId: mon.id,
@@ -137,6 +165,7 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
             tactic: team.tactic ?? "balanced",
             defense: team.defense ?? "man",
             ...(bonds ? { bonds: bonds[side] } : {}),
+            ...(moraleTeams ? { morale: moraleScores(moraleTeams[side]) } : {}),
             ...(team.engineRules?.familiarity === undefined
               ? {}
               : { familiarity: team.engineRules.familiarity }),
@@ -159,6 +188,12 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
             },
           ),
           chemistryMinutes: { home: {}, away: {} },
+        }
+      : {}),
+    ...(moraleTeams
+      ? {
+          moraleVersion: 1 as const,
+          moraleInitial: snapshotMorale(moraleTeams[0], moraleTeams[1]),
         }
       : {}),
     ...(setup.physicalAbilityVersion === 1

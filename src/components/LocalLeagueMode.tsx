@@ -5,6 +5,8 @@ import { localCoachRecords } from "../game/coachCareers";
 import { appointLocalCoach, reviewLocalCoaches } from "../game/coachLocal";
 import { CoachDraft } from "./CoachDraft";
 import { CoachSummary } from "./CoachSummary";
+import { MoralePanel } from "./MoralePanel";
+import { teamsWithMorale, type MoraleBanks } from "../game/playerMorale";
 import { ProjectedChemistrySummary } from "./ChemistrySummary";
 import { teamsWithChemistry, type PairBonds } from "../game/teammateChemistry";
 import { localCoachTurn, selectLocalCoach } from "../game/coachSelection";
@@ -52,11 +54,13 @@ function ReviewTeams({
   change,
   disabled,
   chemistryBonds,
+  morale,
 }: {
   draft: LocalLeague;
   change: (next: (draft: LocalLeague) => LocalLeague) => void;
   disabled: boolean;
   chemistryBonds?: Record<number, PairBonds>;
+  morale?: MoraleBanks;
 }) {
   const [teamId, setTeamId] = useState(draft.managers[0].teamId);
   const teams = useMemo(
@@ -67,8 +71,11 @@ function ReviewTeams({
             draft.career.coachOffice,
             draft.career.year,
           )
-        : teamsWithChemistry(localLeagueTeams(draft), chemistryBonds),
-    [draft, chemistryBonds],
+        : teamsWithMorale(
+            teamsWithChemistry(localLeagueTeams(draft), chemistryBonds),
+            morale,
+          ),
+    [draft, chemistryBonds, morale],
   );
   const team = teams[teamId];
   return (
@@ -155,7 +162,12 @@ function ReviewTeams({
             continuity. Keeping teammates together builds familiarity each year.
           </p>
         )}
-        {!team.coach && <ProjectedChemistrySummary team={team} plan={team} />}
+        {!team.coach && (
+          <>
+            <ProjectedChemistrySummary team={team} plan={team} />
+            <MoralePanel team={team} />
+          </>
+        )}
         {team.coach ? (
           <>
             <CoachSummary
@@ -481,6 +493,7 @@ export function LocalLeagueMode({
                     chemistryBonds={
                       playoffs?.chemistryBonds ?? league.chemistryBonds
                     }
+                    morale={playoffs?.morale ?? league.morale}
                   />
                 </details>
               )}
@@ -589,7 +602,10 @@ export function LocalLeagueMode({
                 simulating={busy}
                 progress={progress}
               />
-              <LeaguePanel league={league} />
+              <LeaguePanel
+                league={league}
+                morale={playoffs?.morale ?? league.morale}
+              />
             </>
           )}
           {draft?.career && <LocalCareerHistory draft={draft} />}

@@ -38,6 +38,7 @@ beforeAll(() => {
   let state = initialState(51);
   // These hand-built model-2 capsules predate earned teammate history.
   delete state.run.chemistryGrowthVersion;
+  delete state.run.moraleVersion;
   for (const position of ROSTER_SLOTS)
     state = gameReducer(state, {
       type: "PLACE",
@@ -133,6 +134,7 @@ beforeAll(() => {
     run: {
       ...createRun("spin", true, 67),
       chemistryGrowthVersion: undefined,
+      moraleVersion: undefined,
       includeLegends: processed.run.includeLegends,
       roster: { ...user.roster },
       offerIds: [],

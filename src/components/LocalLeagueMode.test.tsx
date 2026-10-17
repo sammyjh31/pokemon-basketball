@@ -71,6 +71,7 @@ describe("local league pass-and-play", () => {
       ...draft,
       chemistryVersion: undefined,
       chemistryGrowthVersion: undefined,
+      moraleVersion: undefined,
     };
     const view = render(
       <LocalLeagueMode

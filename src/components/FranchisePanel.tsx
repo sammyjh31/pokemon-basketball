@@ -1,3 +1,5 @@
+import { currentMoraleBanks } from "../game/currentMorale";
+import { teamsWithMorale } from "../game/playerMorale";
 import { AbilityStats } from "./AbilityStats";
 import { CoachTrainingPanel } from "./CoachTrainingPanel";
 import { CoachOfficePanel } from "./CoachOfficePanel";
@@ -1392,7 +1394,16 @@ export function FranchisePanel({
           franchise.coachOffice,
           franchise.year,
         )[0]
-      : { ...(run.leagueTeams?.[0] ?? franchise.teams[0]), roster: run.roster };
+      : {
+          ...teamsWithMorale(
+            run.leagueTeams ??
+              run.result?.league?.teams ??
+              run.seasonProgress?.result?.league?.teams ??
+              franchise.teams,
+            currentMoraleBanks(run),
+          )[0],
+          roster: run.roster,
+        };
   const trainingCoach = trainingTeam.coach ?? franchise.pendingCoach;
   const automaticTraining = !!(trainingCoach || franchise.teams[0].coach);
   return (

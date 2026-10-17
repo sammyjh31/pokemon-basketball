@@ -28,6 +28,14 @@ Open [the local game](http://127.0.0.1:5173/). In a cloud workspace, bind the se
 
 All game data and portraits are bundled locally. Gameplay needs no external API, accounts, database, or secrets. LocalStorage keeps a versioned save in the current browser; clearing site data clears progress. If saving is unavailable, play continues in memory with a notice. This is not a multiplayer leaderboard or an anti-cheat system.
 
+## Player morale and automatic support
+
+New games track morale for every roster Pokémon. Actual playing time relative to a talent-based role expectation, recent wins and losses, trainer fit and roster changes shape confidence gradually. Coaches automatically balance extra opportunities, newcomer support, encouragement and recovery; they also moderate training intensity for distressed or overworked players. Rotation budgets remain 240 minutes with a 40-minute target cap.
+
+Morale supplies at most ±3 temporary execution skill points and ±4 active-five cohesion points. It does not change permanent ratings, physical dimensions or earned shared minutes. Coaching, lineup plans and shared team evaluation use these effects. **Player morale** in coaching/roster views shows each score, contributing factors and automatic response. Historical box scores include **Morale through this game**, with frozen pregame factors and before/after scores.
+
+Trade packages carry each incoming Pokémon’s current state, apply adaptation stress and mildly unsettle remaining teammates. Rookies begin with neutral confidence and an adjustment period; free-agent signings start a fresh opportunity. Offseasons carry half the distance from neutral, while played games and simulated games use the same update from actual minutes (normalized for overtime). Current previews read the latest regular-season/playoff state. Existing active seasons keep their original engine and replay; existing franchises adopt neutral morale at the next season boundary.
+
 ## Team chemistry and ability partnerships
 
 New games evaluate the actual five Pokémon sharing the court. Complementary creators, shooters, finishers and defenders improve coordination; poor balance can reduce it. Named ability partnerships include **Creator + finisher**, **Screen + space**, **Pressure + anchor**, **Rebound + outlet**, **Second wind**, and **Plus / Minus**. Partners affect passing, movement, screen contact/navigation, rebounding, defensive coordination and energy drain in simulated and playable games. Benched players contribute no effects, and each player/effect uses its strongest partnership contribution rather than stacking every eligible partner.

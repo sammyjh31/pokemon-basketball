@@ -9,6 +9,7 @@ import { POKEMON_BY_ID } from "../data/pokemon";
 import { TACTIC_LABELS, DEFENSE_LABELS, type LeagueTeam } from "../game/types";
 import "../coaches.css";
 import { ProjectedChemistrySummary } from "./ChemistrySummary";
+import { MoralePanel } from "./MoralePanel";
 export function CoachSummary({
   team,
   nextSeason = false,
@@ -62,6 +63,7 @@ export function CoachSummary({
           : "Plans adjust for each opponent and during games."}
       </p>
       <ProjectedChemistrySummary team={team} plan={plan} />
+      <MoralePanel team={team} />
       {context && evaluations.length > 0 && (
         <details className="coach-evaluation">
           <summary>How your coach values this roster</summary>

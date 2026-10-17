@@ -1,4 +1,11 @@
 import {
+  applyMoraleSnapshot,
+  moraleGameReport,
+  moraleProfile,
+  validateMoraleRoster,
+  type MoraleFixture,
+} from "./playerMorale";
+import {
   addSharedMinutes,
   finishPairMinutes,
   applyChemistrySnapshot,
@@ -123,7 +130,7 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   const planKey = config.rotationPlan
     ? `:${ROSTER_SLOTS.map((slot) => config.rotationPlan!.minutes[slot]).join(",")}:${config.rotationPlan.closing.join(",")}`
     : "";
-  const key = `${config.chemistryGrowthVersion === 1 ? `growth1:${JSON.stringify(config.chemistryBonds ?? {})}:` : ""}${chemistryEnabled(config) ? `chemistry1:${config.engineRules?.familiarity ?? 0}:` : ""}${physicalAbilitiesEnabled(config) ? "physical1:" : ""}${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
+  const key = `${config.moraleVersion === 1 ? `morale1:${JSON.stringify(config.morale ?? {})}:` : ""}${config.chemistryGrowthVersion === 1 ? `growth1:${JSON.stringify(config.chemistryBonds ?? {})}:` : ""}${chemistryEnabled(config) ? `chemistry1:${config.engineRules?.familiarity ?? 0}:` : ""}${physicalAbilitiesEnabled(config) ? "physical1:" : ""}${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
   let targets = targetCache.get(key);
   if (!targets) {
     targets =
@@ -151,9 +158,13 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
           ? bodyProfile(POKEMON_BY_ID.get(pokemonId)!)
           : undefined,
       typeEdges: new Map(),
-      profile: playerProfile(
-        POKEMON_BY_ID.get(pokemonId)!,
-        config.development?.[pokemonId],
+      profile: moraleProfile(
+        playerProfile(
+          POKEMON_BY_ID.get(pokemonId)!,
+          config.development?.[pokemonId],
+        ),
+        config,
+        pokemonId,
       ),
       depth: config.engineRules
         ? engineProfile(POKEMON_BY_ID.get(pokemonId)!)
@@ -258,8 +269,25 @@ export function simulateMatch(
     collectInsights?: boolean;
     scouting?: MatchScouting;
     chemistry?: ChemistryFixture;
+    morale?: MoraleFixture;
   } = {},
 ): LeagueMatch {
+  if (
+    home.moraleVersion !== away.moraleVersion ||
+    (home.moraleVersion !== undefined && home.moraleVersion !== 1) ||
+    (home.moraleVersion === 1 &&
+      (home.chemistryGrowthVersion !== 1 || away.chemistryGrowthVersion !== 1))
+  )
+    throw new Error(
+      "Both teams must use matching morale rules and teammate growth.",
+    );
+  if (options.morale) {
+    home = applyMoraleSnapshot(home, options.morale.home);
+    away = applyMoraleSnapshot(away, options.morale.away);
+  }
+  for (const team of [home, away])
+    if (team.moraleVersion === 1 && team.morale !== undefined)
+      validateMoraleRoster(team.morale, team);
   if (
     home.chemistryGrowthVersion !== away.chemistryGrowthVersion ||
     (home.chemistryGrowthVersion !== undefined &&
@@ -2365,5 +2393,7 @@ export function simulateMatch(
           "Read the help rotation and pass to the uncovered shooter.",
         );
     }
+  if (home.moraleVersion === 1)
+    result.moraleReport = moraleGameReport(home, away, result);
   return result;
 }

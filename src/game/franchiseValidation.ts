@@ -1,3 +1,5 @@
+import { validateMoraleRoster } from "./playerMorale";
+import { verifyMoraleChronology } from "./moraleChronology";
 import { verifyChemistryChronology } from "./chemistryChronology";
 import { validatePairBonds } from "./teammateChemistry";
 import {
@@ -317,6 +319,12 @@ export function validateLeagueTeams(
   const physicalAbilityVersion = object(rows[0]).physicalAbilityVersion;
   const chemistryVersion = object(rows[0]).chemistryVersion;
   const chemistryGrowthVersion = object(rows[0]).chemistryGrowthVersion;
+  const moraleVersion = object(rows[0]).moraleVersion;
+  if (
+    (moraleVersion !== undefined && moraleVersion !== 1) ||
+    (moraleVersion === 1 && chemistryGrowthVersion !== 1)
+  )
+    return fail();
   if (
     (chemistryGrowthVersion !== undefined && chemistryGrowthVersion !== 1) ||
     (chemistryGrowthVersion === 1 && chemistryVersion !== 1)
@@ -364,6 +372,8 @@ export function validateLeagueTeams(
       row.physicalAbilityVersion !== physicalAbilityVersion ||
       row.chemistryVersion !== chemistryVersion ||
       row.chemistryGrowthVersion !== chemistryGrowthVersion ||
+      row.moraleVersion !== moraleVersion ||
+      (moraleVersion !== 1 && row.morale !== undefined) ||
       (chemistryGrowthVersion !== 1 && row.chemistryBonds !== undefined) ||
       row.evaluationVersion !== evaluationVersion ||
       row.courtVersion !== courtVersion ||
@@ -412,6 +422,12 @@ export function validateLeagueTeams(
         ? { physicalAbilityVersion: 1 as const }
         : {}),
       ...(chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
+      ...(moraleVersion === 1
+        ? {
+            moraleVersion: 1 as const,
+            morale: validateMoraleRoster(row.morale, { roster }),
+          }
+        : {}),
       ...(chemistryGrowthVersion === 1
         ? {
             chemistryGrowthVersion: 1 as const,
@@ -1104,6 +1120,7 @@ export function validateFranchise(
         team.physicalAbilityVersion !== run.physicalAbilityVersion ||
         team.chemistryVersion !== run.chemistryVersion ||
         team.chemistryGrowthVersion !== run.chemistryGrowthVersion ||
+        team.moraleVersion !== run.moraleVersion ||
         team.evaluationVersion !== run.evaluationVersion ||
         team.courtVersion !== run.courtVersion ||
         team.matchupVersion !== run.matchupVersion ||
@@ -1282,6 +1299,15 @@ export function validateFranchise(
     row.phase,
     developmentHistory?.reports,
     freeAgency,
+  );
+  verifyMoraleChronology(
+    run,
+    teams,
+    history,
+    trades,
+    drafts,
+    freeAgency,
+    row.phase,
   );
   verifyChemistryChronology(
     run,

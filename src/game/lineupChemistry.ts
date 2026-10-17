@@ -14,6 +14,8 @@ export interface ChemistryContext {
   abilities: boolean;
   familiarity?: number;
   bonds?: PairBonds;
+  /** Frozen pregame scores; only members of this active five contribute. */
+  morale?: Record<number, number>;
 }
 export interface ChemistryEffects {
   passing: number;
@@ -31,6 +33,7 @@ export interface ChemistryLink {
   description: string;
 }
 export interface LineupChemistry {
+  morale?: { score: number; cohesionDelta: number };
   skillScore?: number;
   continuity?: {
     score: number;
@@ -160,7 +163,23 @@ export function evaluateLineupChemistry(
         pairs,
       }
     : undefined;
-  const score = clamp(skillScore + learnedFamiliarity * 6, 0, 100);
+  const morale =
+    context.morale === undefined
+      ? undefined
+      : {
+          score: average(
+            players.map((p) =>
+              clamp(context.morale?.[p.pokemonId] ?? 50, 0, 100),
+            ),
+          ),
+          cohesionDelta: 0,
+        };
+  if (morale) morale.cohesionDelta = clamp((morale.score - 50) * 0.08, -4, 4);
+  const score = clamp(
+    skillScore + learnedFamiliarity * 6 + (morale?.cohesionDelta ?? 0),
+    0,
+    100,
+  );
   const coordination = clamp((score - 60) / 40, -1, 1);
   const base: ChemistryEffects = {
     ...NEUTRAL_CHEMISTRY_EFFECTS,
@@ -383,6 +402,7 @@ export function evaluateLineupChemistry(
   );
   return {
     score,
+    ...(morale ? { morale } : {}),
     ...(continuity ? { skillScore, continuity } : {}),
     value: clamp(
       coordination * 2 + synergyValue + learnedFamiliarity * 1.5,

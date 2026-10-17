@@ -144,6 +144,11 @@ function validate(
     (raw.chemistryGrowthVersion === 1 && raw.chemistryVersion !== 1)
   )
     return fail();
+  if (
+    (raw.moraleVersion !== undefined && raw.moraleVersion !== 1) ||
+    (raw.moraleVersion === 1 && raw.chemistryGrowthVersion !== 1)
+  )
+    return fail();
   if (raw.evaluationVersion !== undefined && raw.evaluationVersion !== 1)
     return fail();
   if (raw.courtVersion !== undefined && raw.courtVersion !== 1) return fail();
@@ -183,6 +188,7 @@ function validate(
       ? { physicalAbilityVersion: 1 as const }
       : {}),
     ...(raw.chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
+    ...(raw.moraleVersion === 1 ? { moraleVersion: 1 as const } : {}),
     ...(raw.chemistryGrowthVersion === 1
       ? { chemistryGrowthVersion: 1 as const }
       : {}),
@@ -232,6 +238,7 @@ function validate(
           team.physicalAbilityVersion !== run.physicalAbilityVersion ||
           team.chemistryVersion !== run.chemistryVersion ||
           team.chemistryGrowthVersion !== run.chemistryGrowthVersion ||
+          team.moraleVersion !== run.moraleVersion ||
           team.evaluationVersion !== run.evaluationVersion ||
           team.courtVersion !== run.courtVersion ||
           team.matchupVersion !== run.matchupVersion ||

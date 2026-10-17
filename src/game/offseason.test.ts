@@ -1,3 +1,4 @@
+import { retainMorale } from "./playerMorale";
 import { retainChemistry } from "./teammateChemistry";
 import { beforeAll, describe, expect, it } from "vitest";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -21,6 +22,7 @@ const run = (): Run => ({
   ...createRun("free", true, 47),
   // This suite exercises the historical model-2 development capsule.
   chemistryGrowthVersion: undefined,
+  moraleVersion: undefined,
   roster: Object.fromEntries(
     ROSTER_SLOTS.map((s, i) => [s, [65, 150, 149, 68, 143, 9, 94, 59][i]]),
   ) as Run["roster"],
@@ -320,7 +322,7 @@ describe("the league offseason", () => {
       seed: 88,
     });
     expect(next.run.leagueTeams).toEqual(
-      entered.franchise!.teams.map(retainChemistry),
+      entered.franchise!.teams.map(retainChemistry).map(retainMorale),
     );
     expect(next.franchise!.year).toBe(2);
     expect(next.run.result).toBeNull();
