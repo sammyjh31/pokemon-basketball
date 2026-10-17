@@ -7,6 +7,7 @@ it("preserves morale-enabled release e8681b9", () => {
   const run = {
     ...createRun("free", true, 22),
     coach: { version: 1 as const, id: "misty" },
+    courtVersion: 1 as const,
     roster: {
       PG: 65,
       SG: 135,
