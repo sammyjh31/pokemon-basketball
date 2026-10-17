@@ -11,6 +11,7 @@ import {
   projectedLineupChemistry,
   type EvaluationTeam,
 } from "./teamEvaluation";
+import { teamLeadership } from "./playerPersonality";
 const team = (): EvaluationTeam => ({
   roster: { PG: 65, SG: 135, SF: 149, PF: 68, C: 143, B1: 121, B2: 6, B3: 131 },
   tactic: "balanced",
@@ -19,6 +20,46 @@ const team = (): EvaluationTeam => ({
   abilityVersion: 1,
 });
 describe("shared evaluation", () => {
+  it("passes the appointed captain into projections and gives a benched captain no court bonus", () => {
+    const current: EvaluationTeam = {
+      ...team(),
+      chemistryVersion: 1,
+      chemistryGrowthVersion: 1,
+      moraleVersion: 1,
+      personalityVersion: 1,
+    };
+    const captain = teamLeadership(current)!;
+    expect(captain).toBeDefined();
+    const projection = projectedLineupChemistry(current)!;
+    expect(projection.chemistry.leadership?.captainId).toBe(captain.captainId);
+    const eligible = Object.entries(current.roster)
+      .filter(([, id]) => id !== captain.captainId)
+      .slice(0, 6)
+      .map(([slot]) => slot);
+    current.rotationPlan = {
+      closing: eligible.slice(0, 5),
+      minutes: Object.fromEntries(
+        Object.keys(current.roster).map((slot) => [
+          slot,
+          eligible.includes(slot) ? 40 : 0,
+        ]),
+      ),
+    } as EvaluationTeam["rotationPlan"];
+    const benched = projectedLineupChemistry(current)!;
+    expect(benched.players.some((p) => p.pokemonId === captain.captainId)).toBe(
+      false,
+    );
+    expect(benched.chemistry.leadership).toMatchObject({
+      captainId: captain.captainId,
+      active: false,
+      cohesionDelta: 0,
+    });
+    expect(
+      projectedLineupChemistry({ ...current, personalityVersion: undefined })!
+        .chemistry.leadership,
+    ).toBeUndefined();
+  });
+
   it("lets a practiced connection decide a close projected lineup choice", () => {
     const fresh: EvaluationTeam = {
       ...team(),

@@ -1,3 +1,4 @@
+import { teamLeadership } from "./playerPersonality";
 import { abilityUsefulness as coachAbilityFit } from "./abilityEvaluation";
 import {
   createEvaluationContext,
@@ -294,6 +295,7 @@ export function coachRotationMinutes(team: LeagueTeam) {
   // Morale support shifts a small part of the skill-based rotation. Allocate
   // against target gaps so the exact 240-minute budget and 40-minute cap hold.
   const baseline = { ...minutes };
+  const leadership = teamLeadership(team);
   const targets = candidates.map(({ slot }) => ({
     slot,
     target: Math.max(
@@ -301,7 +303,8 @@ export function coachRotationMinutes(team: LeagueTeam) {
       Math.min(
         40,
         baseline[slot] +
-          moraleAssessment(team, team.roster[slot]!).minuteAdjustment,
+          moraleAssessment(team, team.roster[slot]!, leadership)
+            .minuteAdjustment,
       ),
     ),
   }));

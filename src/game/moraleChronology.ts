@@ -19,7 +19,12 @@ function sameBanks(actual: LeagueTeam[], expected: LeagueTeam[]) {
   if (actual.length !== expected.length) fail();
   for (const team of actual) {
     const wanted = expected.find((other) => other.id === team.id);
-    if (!wanted || team.moraleVersion !== wanted.moraleVersion) return fail();
+    if (
+      !wanted ||
+      team.moraleVersion !== wanted.moraleVersion ||
+      team.personalityVersion !== wanted.personalityVersion
+    )
+      return fail();
     if (
       team.moraleVersion === 1 &&
       JSON.stringify(validateMoraleRoster(team.morale, team)) !==
@@ -88,12 +93,26 @@ export function verifyMoraleChronology(
     replace(item.teamId, receive, give, "trade", sources);
   };
   const boundary = (initial: LeagueTeam[]): LeagueTeam[] => {
+    const personalityVersion = initial[0].personalityVersion;
+    if (
+      (personalityVersion !== undefined && personalityVersion !== 1) ||
+      initial.some((team) => team.personalityVersion !== personalityVersion) ||
+      (personalityVersion === 1 && initial[0].moraleVersion !== 1) ||
+      (personalityVersion !== 1 &&
+        expected?.some((team) => team.personalityVersion === 1))
+    )
+      fail();
     if (initial[0].moraleVersion !== 1) {
       if (expected?.some((team) => team.moraleVersion === 1)) fail();
       return initial;
     }
     return expected
-      ? expected.map(retainMorale)
+      ? expected.map((team) => ({
+          ...retainMorale(team),
+          ...(personalityVersion === 1
+            ? { personalityVersion: 1 as const }
+            : {}),
+        }))
       : initial.map((team) =>
           retainMorale({
             ...team,

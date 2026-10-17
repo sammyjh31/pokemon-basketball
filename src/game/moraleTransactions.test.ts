@@ -17,6 +17,7 @@ import {
 const teams = () =>
   createLeague({
     ...createRun("free", true, 973),
+    personalityVersion: undefined,
     roster: {
       PG: 65,
       SG: 135,

@@ -1,3 +1,8 @@
+import {
+  playerPersonality,
+  personalityReactions,
+  teamLeadership,
+} from "./playerPersonality";
 import { evaluationTrainingOptions } from "./teamEvaluation";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { abilitiesEnabled, speciesAbility } from "./abilities";
@@ -42,6 +47,7 @@ export function coachTrainingPlans(
 ): Record<number, CoachTrainingAssignment> {
   const coach = getCoach(team.coach?.id ?? "");
   if (!coach) return {};
+  const leadership = teamLeadership(team);
   const roster = ROSTER_SLOTS.flatMap((slot) => {
     const mon = POKEMON_BY_ID.get(team.roster[slot]!);
     if (!mon) return [];
@@ -129,23 +135,40 @@ export function coachTrainingPlans(
           ? season.minutes / season.gamesPlayed
           : undefined;
       const morale =
-        team.moraleVersion === 1 ? moraleAssessment(team, mon.id) : undefined;
+        team.moraleVersion === 1
+          ? moraleAssessment(team, mon.id, leadership)
+          : undefined;
       const moraleCare =
         !!morale &&
         (morale.score < 40 ||
           morale.recentMinutes >= 35 ||
           morale.minuteAdjustment < 0 ||
           morale.disruption < 0);
+      const personality =
+        team.personalityVersion === 1 ? playerPersonality(mon.id) : undefined;
+      const compatibility = personality
+        ? personalityReactions(team, mon.id).coachCompatibility
+        : 50;
+      const personalityCare =
+        !!personality && (personality.resilience < 45 || compatibility < 50);
+      const personalityChallenge =
+        !!personality &&
+        personality.ambition >= 65 &&
+        personality.resilience >= 45 &&
+        compatibility >= 65;
       const heavy = mpg !== undefined && mpg >= 35;
       const lowStamina = a.stamina < 52;
       const intensity: PlayerTrainingPlan["intensity"] =
         moraleCare ||
+        personalityCare ||
         heavy ||
         lowStamina ||
         coach.rest >= 0.75 ||
         coach.risk < 0.3
           ? "steady"
-          : coach.risk >= 0.7 && coach.rest < 0.55
+          : coach.risk >= 0.7 &&
+              coach.rest < 0.55 &&
+              (!personality || personalityChallenge)
             ? "aggressive"
             : "standard";
       const strongest = [...chosen.skills].sort((x, y) => a[y] - a[x])[0];
@@ -173,6 +196,14 @@ export function coachTrainingPlans(
               ? `Stamina ${Math.round(a.stamina)}: steady work limits volatility.`
               : `${intensity === "aggressive" ? "Aggressive work accepts larger gains or setbacks" : intensity === "steady" ? "Steady work reduces volatility" : "Standard work balances growth and volatility"}, following the coach's risk and rest preferences.`,
       ];
+      if (personality)
+        reasons.push(
+          personalityCare
+            ? `Personality support: ${personality.archetype.toLowerCase()} with resilience ${personality.resilience}/100 and trainer compatibility ${compatibility.toFixed(0)}/100 benefits from steady, predictable practice.`
+            : personalityChallenge && intensity === "aggressive"
+              ? `Personality challenge: ambition ${personality.ambition}/100 and trainer compatibility ${compatibility.toFixed(0)}/100 support demanding practice within the coach's workload limits.`
+              : `Personality balance: ${personality.archetype.toLowerCase()} receives ${intensity} practice; recovery, stamina and the coach's rest preferences still set workload limits.`,
+        );
       if (shared) reasons.push(shared[0].reasons[0]);
       if (shared && physicalAbilitiesEnabled(team))
         reasons.push(

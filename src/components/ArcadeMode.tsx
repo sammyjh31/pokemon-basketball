@@ -424,6 +424,9 @@ export function ArcadeMode({
         ...((official ? user?.moraleVersion : run.moraleVersion) === 1
           ? { moraleVersion: 1 as const }
           : {}),
+        ...((official ? user?.personalityVersion : run.personalityVersion) === 1
+          ? { personalityVersion: 1 as const }
+          : {}),
         ...(official ? { official: true } : {}),
       });
       if (!audio.current) audio.current = new ArcadeAudio();

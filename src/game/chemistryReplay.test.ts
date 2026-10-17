@@ -22,6 +22,7 @@ it("preserves the evaluation and physical enabled coached draft and matches from
   delete (run as { chemistryVersion?: 1 }).chemistryVersion;
   delete (run as { chemistryGrowthVersion?: 1 }).chemistryGrowthVersion;
   delete run.moraleVersion;
+  delete run.personalityVersion;
   const teams = createLeague(run);
   const value = {
     teams,

@@ -43,7 +43,7 @@ it("starts an away official game with the fixture's frozen morale and scheduled 
   const morale = snapshotMorale(frozen[1], frozen[0])!;
   render(
     <ArcadeMode
-      run={{ ...run, moraleVersion: undefined }}
+      run={{ ...run, moraleVersion: undefined, personalityVersion: undefined }}
       onExit={() => {}}
       official={{
         teams,
@@ -67,6 +67,7 @@ it("starts an away official game with the fixture's frozen morale and scheduled 
     typeof setup.createGame
   >;
   expect(state.moraleVersion).toBe(1);
+  expect(state.personalityVersion).toBe(1);
   expect(state.moraleInitial).toEqual({ home: morale.away, away: morale.home });
   expect(state.players.find((p) => p.pokemonId === 65)!.attributes).toEqual(
     moraleProfile(playerProfile(POKEMON_BY_ID.get(65)!), frozen[0], 65)
@@ -99,6 +100,7 @@ it("uses the latest playoff bank for exhibition while keeping season-start clubs
     typeof setup.createGame
   >;
   expect(state.moraleVersion).toBe(1);
+  expect(state.personalityVersion).toBe(1);
   expect(state.players.find((p) => p.pokemonId === 65)!.attributes).toEqual(
     moraleProfile(playerProfile(POKEMON_BY_ID.get(65)!), current, 65)
       .attributes,

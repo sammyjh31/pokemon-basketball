@@ -25,3 +25,19 @@ describe("the full scouting report", () => {
     expect(screen.getByText(/9.2 m · 400 kg/)).toBeInTheDocument();
   });
 });
+
+it("shows stable personality traits in enabled scouting and keeps legacy reports unchanged", () => {
+  const mon = POKEMON_BY_ID.get(59)!;
+  const view = render(<ScoutReport mon={mon} personalityVersion={1} />);
+  const personality = screen.getByRole("region", {
+    name: "Basketball personality",
+  });
+  expect(personality).toHaveTextContent("Steady professional");
+  expect(personality).toHaveTextContent("Challenger");
+  expect(within(personality).getAllByRole("term")).toHaveLength(5);
+  expect(personality).toHaveTextContent(/stable basketball adaptation/i);
+  view.rerender(<ScoutReport mon={mon} />);
+  expect(
+    screen.queryByRole("region", { name: "Basketball personality" }),
+  ).not.toBeInTheDocument();
+});

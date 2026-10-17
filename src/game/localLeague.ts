@@ -60,6 +60,8 @@ export interface LocalLeague {
   chemistryVersion?: 1;
   chemistryGrowthVersion?: 1;
   moraleVersion?: 1;
+  /** Stable species personalities and automatic captains; requires player morale. */
+  personalityVersion?: 1;
   evaluationVersion?: 1;
   courtVersion?: 1;
   matchupVersion?: 1;
@@ -154,6 +156,7 @@ export function createLocalLeague(
           chemistryVersion: 1 as const,
           chemistryGrowthVersion: 1 as const,
           moraleVersion: 1 as const,
+          personalityVersion: 1 as const,
           evaluationVersion: 1 as const,
           courtVersion: 1 as const,
           matchupVersion: 1 as const,
@@ -388,6 +391,9 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
         ? { physicalAbilityVersion: 1 as const }
         : {}),
       ...(draft.chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
+      ...(draft.personalityVersion === 1
+        ? { personalityVersion: 1 as const }
+        : {}),
       ...(draft.moraleVersion === 1
         ? {
             moraleVersion: 1 as const,
@@ -443,6 +449,7 @@ export function localLeagueRun(draft: LocalLeague): Run {
   delete run.chemistryVersion;
   delete run.chemistryGrowthVersion;
   delete run.moraleVersion;
+  delete run.personalityVersion;
   delete run.evaluationVersion;
   delete run.courtVersion;
   delete run.matchupVersion;
@@ -455,6 +462,9 @@ export function localLeagueRun(draft: LocalLeague): Run {
     ...(teams[0].abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
     ...(teams[0].physicalAbilityVersion === 1
       ? { physicalAbilityVersion: 1 as const }
+      : {}),
+    ...(teams[0].personalityVersion === 1
+      ? { personalityVersion: 1 as const }
       : {}),
     ...(teams[0].moraleVersion === 1 ? { moraleVersion: 1 as const } : {}),
     ...(teams[0].chemistryGrowthVersion === 1
@@ -596,6 +606,9 @@ export function parseLocalLeague(
     (value.chemistryGrowthVersion !== undefined &&
       value.chemistryGrowthVersion !== 1) ||
     (value.chemistryGrowthVersion === 1 && value.chemistryVersion !== 1) ||
+    (value.personalityVersion !== undefined &&
+      value.personalityVersion !== 1) ||
+    (value.personalityVersion === 1 && value.moraleVersion !== 1) ||
     (value.moraleVersion !== undefined && value.moraleVersion !== 1) ||
     (value.moraleVersion === 1 && value.chemistryGrowthVersion !== 1) ||
     (value.evaluationVersion !== undefined && value.evaluationVersion !== 1) ||
@@ -631,6 +644,7 @@ export function parseLocalLeague(
   delete draft.chemistryVersion;
   delete draft.chemistryGrowthVersion;
   delete draft.moraleVersion;
+  delete draft.personalityVersion;
   delete draft.evaluationVersion;
   delete draft.courtVersion;
   delete draft.matchupVersion;
@@ -639,6 +653,7 @@ export function parseLocalLeague(
   if (value.physicalAbilityVersion === 1) draft.physicalAbilityVersion = 1;
   if (value.chemistryVersion === 1) draft.chemistryVersion = 1;
   if (value.chemistryGrowthVersion === 1) draft.chemistryGrowthVersion = 1;
+  if (value.personalityVersion === 1) draft.personalityVersion = 1;
   if (value.moraleVersion === 1) draft.moraleVersion = 1;
   if (value.evaluationVersion === 1) draft.evaluationVersion = 1;
   if (value.courtVersion === 1) draft.courtVersion = 1;

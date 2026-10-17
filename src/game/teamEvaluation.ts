@@ -1,3 +1,4 @@
+import { teamLeadership } from "./playerPersonality";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { abilitiesEnabled, speciesAbility } from "./abilities";
 import {
@@ -50,6 +51,7 @@ export interface EvaluationTeam {
   chemistryGrowthVersion?: 1;
   chemistryBonds?: PairBonds;
   moraleVersion?: 1;
+  personalityVersion?: 1;
   morale?: MoraleRoster;
   rotationPlan?: RotationPlan;
   engineRules?: { abilities: boolean; familiarity?: number };
@@ -206,6 +208,7 @@ function projectedUnit(
         );
       }),
   ];
+  const leadership = teamLeadership(team);
   return candidates
     .map((unit) => {
       const chemistry = evaluateLineupChemistry(
@@ -215,6 +218,7 @@ function projectedUnit(
           defense,
           abilities: abilitiesEnabled(team),
           familiarity: team.engineRules?.familiarity,
+          ...(leadership ? { leadership } : {}),
           ...(team.moraleVersion === 1 ? { morale: moraleScores(team) } : {}),
           ...(team.chemistryGrowthVersion === 1
             ? { bonds: team.chemistryBonds ?? {} }

@@ -202,6 +202,24 @@ describe("frozen arcade player morale", () => {
     expect(state.chemistryContexts![0]).not.toHaveProperty("morale");
   });
 
+  it("preserves the e8681b9 morale replay exactly without personalities", () => {
+    const source = moraleSetup(80);
+    source.personalityVersion = undefined;
+    for (const team of source.teams) team.personalityVersion = undefined;
+    const state = createGame(source);
+    for (let tick = 0; tick < 1000; tick++)
+      stepGame(state, {
+        ...NO_INPUT,
+        moveX: tick % 60 < 30 ? 1 : -1,
+        shoot: tick % 70 < 38,
+        pass: tick % 90 === 0,
+        turbo: tick % 4 === 0,
+      });
+    expect(
+      createHash("sha256").update(JSON.stringify(state)).digest("hex"),
+    ).toBe("e1a68a76f29ed9df552e6a57d321c4549027cacdaca6bb1b89ec806083dbd59f");
+  });
+
   it("preserves the historical chemistry replay exactly without morale", () => {
     const state = createGame(setup());
     for (let tick = 0; tick < 1000; tick++)

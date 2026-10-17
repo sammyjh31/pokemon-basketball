@@ -3,6 +3,7 @@ import { speciesAbility, type AbilityMechanic } from "./abilities";
 import type { PlayerProfile } from "./playerProfile";
 import { clamp } from "./ratings";
 import type { DefenseScheme, Tactic } from "./types";
+import type { TeamLeadership } from "./playerPersonality";
 
 export interface ChemistryPlayer {
   pokemonId: number;
@@ -16,6 +17,7 @@ export interface ChemistryContext {
   bonds?: PairBonds;
   /** Frozen pregame scores; only members of this active five contribute. */
   morale?: Record<number, number>;
+  leadership?: TeamLeadership;
 }
 export interface ChemistryEffects {
   passing: number;
@@ -33,6 +35,12 @@ export interface ChemistryLink {
   description: string;
 }
 export interface LineupChemistry {
+  leadership?: {
+    captainId: number;
+    style: TeamLeadership["style"];
+    active: boolean;
+    cohesionDelta: number;
+  };
   morale?: { score: number; cohesionDelta: number };
   skillScore?: number;
   continuity?: {
@@ -175,8 +183,24 @@ export function evaluateLineupChemistry(
           cohesionDelta: 0,
         };
   if (morale) morale.cohesionDelta = clamp((morale.score - 50) * 0.08, -4, 4);
+  const captainActive =
+    context.leadership !== undefined &&
+    players.some((p) => p.pokemonId === context.leadership!.captainId);
+  const leadership = context.leadership
+    ? {
+        captainId: context.leadership.captainId,
+        style: context.leadership.style,
+        active: captainActive,
+        cohesionDelta: captainActive
+          ? clamp(context.leadership.cohesionBonus, -2, 2)
+          : 0,
+      }
+    : undefined;
   const score = clamp(
-    skillScore + learnedFamiliarity * 6 + (morale?.cohesionDelta ?? 0),
+    skillScore +
+      learnedFamiliarity * 6 +
+      (morale?.cohesionDelta ?? 0) +
+      (leadership?.cohesionDelta ?? 0),
     0,
     100,
   );
@@ -403,6 +427,7 @@ export function evaluateLineupChemistry(
   return {
     score,
     ...(morale ? { morale } : {}),
+    ...(leadership ? { leadership } : {}),
     ...(continuity ? { skillScore, continuity } : {}),
     value: clamp(
       coordination * 2 + synergyValue + learnedFamiliarity * 1.5,

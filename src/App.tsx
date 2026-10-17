@@ -85,6 +85,7 @@ export default function App({
       ? {
           chemistryVersion: run.chemistryVersion,
           moraleVersion: run.moraleVersion,
+          personalityVersion: run.personalityVersion,
           chemistryGrowthVersion: run.chemistryGrowthVersion,
           abilityVersion: run.abilityVersion,
           physicalAbilityVersion: run.physicalAbilityVersion,

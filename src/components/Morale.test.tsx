@@ -1,6 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import { expect, it } from "vitest";
 import App from "../App";
+import { GameMoraleReport, MoralePanel } from "./MoralePanel";
+import { moraleAssessment } from "../game/playerMorale";
 import { CoachSummary } from "./CoachSummary";
 import { LeagueBoxScore } from "./LeagueBoxScore";
 import { snapshotMorale } from "../game/playerMorale";
@@ -74,7 +76,10 @@ it("reads the latest completed morale bank in the current coach preview", () => 
   const storage = { getItem: () => null, setItem: () => {} };
   const view = render(<App initial={state} storage={storage} />);
   const panel = screen.getByRole("region", { name: "Player morale" });
-  expect(within(panel).getAllByText("72 / 100")).toHaveLength(8);
+  expect(
+    within(panel).getAllByText("72 / 100", { selector: ".morale-status b" }),
+  ).toHaveLength(8);
+  expect(panel).toHaveTextContent("Appointed captain");
   expect(Object.values(t.morale!).every((p) => p.score === 25)).toBe(true);
   const playoffMorale = {
     0: Object.fromEntries(
@@ -106,6 +111,7 @@ it("reads the latest completed morale bank in the current coach preview", () => 
   expect(
     within(screen.getByRole("region", { name: "Player morale" })).getAllByText(
       "81 / 100",
+      { selector: ".morale-status b" },
     ),
   ).toHaveLength(8);
 });
@@ -162,4 +168,44 @@ it("replays historical morale from the fixture and refreshes changed snapshots",
     />,
   );
   expect(report).toHaveTextContent("95 / 100");
+});
+
+it("shows the appointed captain and distinct personality reactions without manual controls", () => {
+  render(<MoralePanel team={{ ...team(), personalityVersion: 1 }} />);
+  const panel = screen.getByRole("region", { name: "Player morale" });
+  expect(panel).toHaveTextContent("Appointed captain");
+  expect(panel).toHaveTextContent("Ambition");
+  expect(panel).toHaveTextContent("Loyalty");
+  expect(panel).toHaveTextContent("Resilience");
+  expect(panel).toHaveTextContent("Coachability");
+  expect(panel).toHaveTextContent("Leadership");
+  expect(panel).toHaveTextContent(/minutes.*results.*transition/i);
+  expect(within(panel).queryByRole("button")).not.toBeInTheDocument();
+});
+it("reads historical captain identity and support only from the frozen report", () => {
+  const t = team();
+  const row = { ...moraleAssessment(t, 1), before: 25, after: 28 };
+  const captain = {
+    captainId: 2,
+    score: 77,
+    style: "Encourager" as const,
+    moraleSupport: 1.5,
+    cohesionBonus: 1,
+    reasons: ["Trusted by these teammates before tipoff."],
+  };
+  render(
+    <GameMoraleReport
+      home={t}
+      away={insightTeams[1]}
+      report={{
+        home: [row],
+        away: [],
+        captains: { home: captain, away: { ...captain, captainId: 9 } },
+      }}
+    />,
+  );
+  const report = screen.getByRole("region", { name: "Game morale report" });
+  expect(report).toHaveTextContent("Appointed captain: Ivysaur");
+  expect(report).toHaveTextContent("Trusted by these teammates before tipoff.");
+  expect(report).toHaveTextContent("+1.5");
 });

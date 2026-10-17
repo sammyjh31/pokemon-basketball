@@ -28,6 +28,7 @@ beforeAll(() => {
   // Preserve the explicitly historical model-1/2 helper contract.
   delete run.chemistryGrowthVersion;
   delete run.moraleVersion;
+  delete run.personalityVersion;
   [129, 150, 149, 68, 143, 9, 94, 59].forEach((id, index) => {
     run = placePokemon(run, id, ROSTER_SLOTS[index]);
   });
@@ -227,7 +228,10 @@ describe("franchise lifecycle", () => {
     expect(next.run.playoffs).toBeUndefined();
     expect(next.run.roster).toEqual(offseason.franchise!.teams[0].roster);
     expect(next.run.leagueTeams).toEqual(
-      offseason.franchise!.teams.map(retainChemistry).map(retainMorale),
+      offseason
+        .franchise!.teams.map(retainChemistry)
+        .map(retainMorale)
+        .map((team) => ({ ...team, personalityVersion: 1 as const })),
     );
     expect(next.run.leagueTeams).not.toBe(offseason.franchise!.teams);
     expect(next.run.leagueTeams![0].roster).not.toBe(

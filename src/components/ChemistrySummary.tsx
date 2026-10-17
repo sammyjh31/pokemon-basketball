@@ -33,6 +33,23 @@ export function ChemistryDetails({
           Earned shared minutes stay unchanged.
         </p>
       )}
+      {chemistry.leadership && (
+        <p className="chemistry-leadership">
+          <strong>Captain {name(chemistry.leadership.captainId)}</strong> ·{" "}
+          {chemistry.leadership.style} ·{" "}
+          {chemistry.leadership.active ? (
+            <>
+              in the active five:{" "}
+              {chemistry.leadership.cohesionDelta > 0 ? "+" : ""}
+              {chemistry.leadership.cohesionDelta.toFixed(1)} temporary cohesion
+              points.
+            </>
+          ) : (
+            "off court: no captain cohesion bonus."
+          )}{" "}
+          Shared minutes are earned separately.
+        </p>
+      )}
       {continuity && (
         <div className="chemistry-familiarity">
           <strong>

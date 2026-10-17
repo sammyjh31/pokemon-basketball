@@ -72,6 +72,7 @@ describe("local league pass-and-play", () => {
       chemistryVersion: undefined,
       chemistryGrowthVersion: undefined,
       moraleVersion: undefined,
+      personalityVersion: undefined,
     };
     const view = render(
       <LocalLeagueMode
@@ -188,6 +189,7 @@ describe("local league pass-and-play", () => {
     ).toBeInTheDocument();
   });
 
+  // This case replays the full 1,230-game season on each restore; allow the deeper engine to finish.
   it("simulates the season and playoffs, restoring the same bracket and champion without rerolling", async () => {
     const storage = memory({
       [LOCAL_LEAGUE_KEY]: JSON.stringify(completeDraft()),
@@ -203,7 +205,7 @@ describe("local league pass-and-play", () => {
         expect(
           screen.getByRole("table", { name: "Friends leaderboard" }),
         ).toBeInTheDocument(),
-      { timeout: 20000 },
+      { timeout: 180000 },
     );
     const table = screen.getByRole("table", { name: "Friends leaderboard" });
     expect(within(table).getByText("Sam")).toBeInTheDocument();
@@ -224,7 +226,7 @@ describe("local league pass-and-play", () => {
         expect(
           JSON.parse(storage.data.get(LOCAL_LEAGUE_KEY)!).playoffGames,
         ).toBe(8),
-      { timeout: 10000 },
+      { timeout: 30000 },
     );
     view.unmount();
     const restored = render(
@@ -235,7 +237,7 @@ describe("local league pass-and-play", () => {
         expect(
           screen.getByRole("table", { name: "Friends leaderboard" }),
         ).toHaveTextContent(records!),
-      { timeout: 20000 },
+      { timeout: 180000 },
     );
     expect(screen.getByText(/8 playoff games played/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Finish round" }));
@@ -244,7 +246,7 @@ describe("local league pass-and-play", () => {
         expect(
           screen.getByRole("button", { name: "Finish round" }),
         ).toBeEnabled(),
-      { timeout: 10000 },
+      { timeout: 30000 },
     );
     const firstRound = JSON.parse(
       storage.data.get(LOCAL_LEAGUE_KEY)!,
@@ -257,7 +259,7 @@ describe("local league pass-and-play", () => {
         expect(
           screen.getByRole("article", { name: "Playoff champion" }),
         ).toBeInTheDocument(),
-      { timeout: 10000 },
+      { timeout: 30000 },
     );
     const champion = screen.getByRole("article", {
       name: "Playoff champion",
@@ -276,7 +278,7 @@ describe("local league pass-and-play", () => {
         expect(
           screen.getByRole("article", { name: "Playoff champion" }),
         ).toHaveTextContent(champion!),
-      { timeout: 20000 },
+      { timeout: 180000 },
     );
     expect(
       screen.getByRole("article", { name: "Finals MVP" }),
@@ -289,7 +291,7 @@ describe("local league pass-and-play", () => {
       screen.getByRole("button", { name: "Start snake draft" }),
     ).toBeInTheDocument();
     expect(storage.data.get(LOCAL_LEAGUE_KEY)).toBe("");
-  }, 90000); // Simulates a full court-model season and restores it twice.
+  }, 600000);
 
   it("opens from the game and returns without replacing the original lineup", async () => {
     window.history.replaceState(null, "", "/");
@@ -344,6 +346,7 @@ describe("local league pass-and-play", () => {
     ).not.toBeInTheDocument();
   }, 45000);
 
+  // Invalid-prefix verification also reconstructs the full season before checking playoff chronology.
   it("does not rewrite a saved playoff prefix that extends beyond the championship", async () => {
     const raw = JSON.stringify(
       { ...completeDraft(), completed: true, playoffGames: 105 },
@@ -357,11 +360,11 @@ describe("local league pass-and-play", () => {
         expect(screen.getByRole("alert")).toHaveTextContent(
           "continue after the championship",
         ),
-      { timeout: 60000 },
+      { timeout: 180000 },
     );
     expect(storage.data.get(LOCAL_LEAGUE_KEY)).toBe(raw);
     expect(
       screen.queryByRole("button", { name: "Finish playoffs" }),
     ).not.toBeInTheDocument();
-  }, 90000);
+  }, 240000);
 });

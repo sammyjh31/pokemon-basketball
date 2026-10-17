@@ -28,6 +28,14 @@ Open [the local game](http://127.0.0.1:5173/). In a cloud workspace, bind the se
 
 All game data and portraits are bundled locally. Gameplay needs no external API, accounts, database, or secrets. LocalStorage keeps a versioned save in the current browser; clearing site data clears progress. If saving is unavailable, play continues in memory with a notice. This is not a multiplayer leaderboard or an anti-cheat system.
 
+## Player personalities and captains
+
+New games give every Pokémon a stable basketball personality: ambition, loyalty, resilience, coachability and leadership, plus a readable archetype. Personalities stay with the species across roster moves and seasons. They change minutes expectations, reactions to winning and losing, trade adjustment, compatibility with trainers and automatic training intensity. These are game adaptations, not canonical Pokémon personality claims.
+
+Coaches automatically appoint a captain using leadership, composure, coaching compatibility, experience and earned teammate relationships. Bench players can be captains. Leadership style and confidence shape how each teammate responds: morale target support is capped at ±3, with no self-boost. Captains add up to ±2 active-five cohesion only while on court. Existing fatigue, rotation budgets and permanent development still apply. The shared lineup evaluation includes captain influence in coaching and recruitment decisions.
+
+See **Player morale** in the coaching/roster views for the captain, selection reasons, personality traits and each player’s response. Scouting exposes personalities before recruiting. Historical box scores freeze captain identity and influence; lineup reports show whether the captain was actually playing. Simulated games and playable games use the same model. Existing active seasons keep their original rules; solo and local franchises adopt personalities at the next season boundary.
+
 ## Player morale and automatic support
 
 New games track morale for every roster Pokémon. Actual playing time relative to a talent-based role expectation, recent wins and losses, trainer fit and roster changes shape confidence gradually. Coaches automatically balance extra opportunities, newcomer support, encouragement and recovery; they also moderate training intensity for distressed or overworked players. Rotation budgets remain 240 minutes with a 40-minute target cap.

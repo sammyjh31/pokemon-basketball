@@ -9,6 +9,7 @@ import { prepareGameLoad } from "./persistence";
 import { resolveArchivedMatch } from "./archive";
 import { retainMorale } from "./playerMorale";
 import { replaySeasonProgress } from "./interactiveSeason";
+import { teamLeadership, playerPersonality } from "./playerPersonality";
 it("carries all 240 morale records from a complete season and postseason into a saved second franchise year", async () => {
   const initial = {
     ...initialState(822),
@@ -41,6 +42,8 @@ it("carries all 240 morale records from a complete season and postseason into a 
   const fixture = league.games[200],
     box = resolveSeasonMatch(fixture, league.teams);
   expect(box.homeScore).toBe(fixture.homeScore);
+  expect(box.moraleReport?.captains?.home).toBeDefined();
+  expect(box.moraleReport?.home.every((p) => p.personality)).toBe(true);
   const playoffs = simulatePlayoffs(league, initial.run.seasonSeed);
   const season = gameReducer(initial, {
     type: "APPLY_SEASON",
@@ -56,6 +59,13 @@ it("carries all 240 morale records from a complete season and postseason into a 
   const developed = processOffseason(offseason),
     next = startFranchiseSeason(developed, 823);
   expect(next.franchise!.year).toBe(2);
+  expect(next.run.personalityVersion).toBe(1);
+  for (const t of next.franchise!.teams) {
+    expect(t.personalityVersion).toBe(1);
+    expect(Object.values(t.roster)).toContain(teamLeadership(t)!.captainId);
+    for (const id of Object.values(t.roster))
+      expect(playerPersonality(id!).pokemonId).toBe(id);
+  }
   for (const t of next.franchise!.teams)
     expect(t.morale).toEqual(
       retainMorale(developed.franchise!.teams[t.id]).morale,

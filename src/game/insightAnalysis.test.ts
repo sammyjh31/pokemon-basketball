@@ -101,6 +101,52 @@ describe("recorded insight calculations", () => {
     ).toBeCloseTo(450);
     expect(JSON.stringify(matches)).toBe(before);
   });
+  it("weights recorded captain influence by court time and keeps different captains separate", async () => {
+    const chemistry = evaluateLineupChemistry(
+      [1, 2, 3, 4, 5].map((pokemonId) => ({
+        pokemonId,
+        profile: playerProfile(POKEMON_BY_ID.get(pokemonId)!),
+      })),
+      { tactic: "balanced", defense: "man", abilities: false, bonds: {} },
+    );
+    const matches = [
+      { captainId: 1, cohesionDelta: 0.5, seconds: 60 },
+      { captainId: 1, cohesionDelta: 1.5, seconds: 180 },
+      { captainId: 2, cohesionDelta: 2, seconds: 120 },
+    ].map(({ captainId, cohesionDelta, seconds }) => {
+      const match = insightMatch();
+      match.insights!.lineups[0] = {
+        ...match.insights!.lineups[0],
+        seconds,
+        chemistry: {
+          ...chemistry,
+          leadership: {
+            captainId,
+            style: "Organizer",
+            active: true,
+            cohesionDelta,
+          },
+        },
+      };
+      return match;
+    });
+    const before = JSON.stringify(matches);
+    const data = await buildSeasonInsights(insightLeague(3), {
+      resolveMatch: (game) => matches[game.round],
+    });
+    expect(data.lineups).toHaveLength(2);
+    const first = data.lineups.find(
+      (row) => row.chemistry?.leadership?.captainId === 1,
+    )!;
+    expect(first.seconds).toBe(240);
+    expect(first.games).toBe(2);
+    expect(first.chemistry?.leadership?.cohesionDelta).toBeCloseTo(1.25);
+    expect(
+      data.lineups.find((row) => row.chemistry?.leadership?.captainId === 2)
+        ?.seconds,
+    ).toBe(120);
+    expect(JSON.stringify(matches)).toBe(before);
+  });
   it("separates official attempts from shooting-foul events and includes their expectation", () => {
     expect(shotSummary(insightMatch().insights!.shots)).toMatchObject({
       events: 3,

@@ -23,6 +23,7 @@ const run = (): Run => ({
   // This suite exercises the historical model-2 development capsule.
   chemistryGrowthVersion: undefined,
   moraleVersion: undefined,
+  personalityVersion: undefined,
   roster: Object.fromEntries(
     ROSTER_SLOTS.map((s, i) => [s, [65, 150, 149, 68, 143, 9, 94, 59][i]]),
   ) as Run["roster"],
@@ -322,7 +323,10 @@ describe("the league offseason", () => {
       seed: 88,
     });
     expect(next.run.leagueTeams).toEqual(
-      entered.franchise!.teams.map(retainChemistry).map(retainMorale),
+      entered
+        .franchise!.teams.map(retainChemistry)
+        .map(retainMorale)
+        .map((team) => ({ ...team, personalityVersion: 1 as const })),
     );
     expect(next.franchise!.year).toBe(2);
     expect(next.run.result).toBeNull();

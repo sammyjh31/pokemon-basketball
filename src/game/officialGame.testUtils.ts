@@ -60,6 +60,9 @@ export function finishedGame(
     ...(teams[0].chemistryGrowthVersion === 1
       ? { chemistryGrowthVersion: 1 as const }
       : {}),
+    ...(teams[0].personalityVersion === 1
+      ? { personalityVersion: 1 as const }
+      : {}),
     ...(teams[0].moraleVersion === 1 ? { moraleVersion: 1 as const } : {}),
     seed: fixture.seed,
     teams: [teams[0], opponent],

@@ -181,6 +181,22 @@ describe("configurable local careers", () => {
     expect(() => career.startNextLocalSeason(offseason)).toThrow();
     offseason = finishRookies(offseason);
     expect(offseason.career!.history[0].rookiePicks).toHaveLength(8);
+    const tradedTeams = local.localLeagueTeams(offseason);
+    const outgoing = tradedTeams[1].roster.PG!;
+    const incoming = tradedTeams[3].roster.PG!;
+    offseason = career.applyLocalTrade(
+      offseason,
+      1,
+      3,
+      outgoing,
+      incoming,
+      [1, 3],
+    );
+    expect(offseason.career!.teams[1].roster.PG).toBe(incoming);
+    expect(offseason.career!.teams[3].roster.PG).toBe(outgoing);
+    expect(
+      offseason.career!.teams.every((team) => team.personalityVersion === 1),
+    ).toBe(true);
     expect(JSON.stringify(offseason.career!.history[0].teams)).toBe(archived);
     expect(local.parseLocalLeague(JSON.stringify(offseason))).toEqual(
       offseason,
@@ -204,6 +220,9 @@ describe("configurable local careers", () => {
           Math.round((Math.round(minutes * 100) * 9) / 10) / 100,
         );
     }
+    expect(
+      second.career!.teams.every((team) => team.personalityVersion === 1),
+    ).toBe(true);
     expect(second.career?.year).toBe(2);
     expect(second.completed).toBe(false);
     expect(career.currentLocalRookieTurn(second)).toBeNull();
@@ -517,3 +536,64 @@ it("rejects invented or repeated manager approvals instead of cleaning them out 
     career.applyLocalTrade(source, 1, 3, give, receive, [1, 3, 3]),
   ).toThrow();
 });
+
+it("keeps an old local season and offseason unchanged, then upgrades personalities at the next season boundary", () => {
+  const old = drafted("full-pool");
+  delete old.personalityVersion;
+  const result = simulateLocalSeason(old);
+  const playoffs = simulatePlayoffs(
+    result.league!,
+    career.localSeasonSeed(old),
+  );
+  let offseason = career.beginLocalOffseason(
+    { ...old, completed: true, playoffGames: playoffGameCount(playoffs) },
+    result,
+    playoffs,
+  );
+  expect(
+    offseason.career!.teams.every(
+      (team) => team.personalityVersion === undefined,
+    ),
+  ).toBe(true);
+  const teams = local.localLeagueTeams(offseason);
+  offseason = career.applyLocalTrade(
+    offseason,
+    1,
+    3,
+    teams[1].roster.PG!,
+    teams[3].roster.PG!,
+    [1, 3],
+  );
+  expect(local.parseLocalLeague(JSON.stringify(offseason))).toEqual(offseason);
+  const next = career.startNextLocalSeason(offseason);
+  expect(
+    next.career!.teams.every((team) => team.personalityVersion === 1),
+  ).toBe(true);
+  expect(
+    next.career!.history[0].teams.every(
+      (team) => team.personalityVersion === undefined,
+    ),
+  ).toBe(true);
+  expect(local.parseLocalLeague(JSON.stringify(next))).toEqual(next);
+  const secondResult = simulateLocalSeason(next);
+  const secondPlayoffs = simulatePlayoffs(
+    secondResult.league!,
+    career.localSeasonSeed(next),
+  );
+  const secondOffseason = career.beginLocalOffseason(
+    {
+      ...next,
+      completed: true,
+      playoffGames: playoffGameCount(secondPlayoffs),
+    },
+    secondResult,
+    secondPlayoffs,
+  );
+  expect(local.parseLocalLeague(JSON.stringify(secondOffseason))).toEqual(
+    secondOffseason,
+  );
+  expect(career.replayLocalHistory(secondOffseason, 1).result).toEqual(result);
+  const downgraded = career.startNextLocalSeason(secondOffseason);
+  for (const team of downgraded.career!.teams) delete team.personalityVersion;
+  expect(() => local.parseLocalLeague(JSON.stringify(downgraded))).toThrow();
+}, 120000);

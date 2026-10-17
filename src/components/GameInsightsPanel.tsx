@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import {
   gameDrivers,
   lineupMetrics,
+  lineupContextKey,
   shotSummary,
 } from "../game/insightAnalysis";
 import type {
@@ -84,15 +85,25 @@ export function LineupInsightsTable({
                 {visible.map((row) => {
                   const metric = lineupMetrics(row);
                   return (
-                    <tr
-                      key={`${row.teamId}:${[...row.playerIds].sort().join("|")}${row.chemistryContext ? `:${row.chemistryContext.tactic}:${row.chemistryContext.defense}` : ""}`}
-                    >
+                    <tr key={lineupContextKey(row)}>
                       <th scope="row">
                         <small>
                           {teams.find((team) => team.id === row.teamId)?.name ??
                             `Team ${row.teamId}`}
                         </small>
                         {row.playerIds.map(insightPlayerName).join(" · ")}
+                        {row.chemistry?.leadership && (
+                          <small>
+                            Captain{" "}
+                            {insightPlayerName(
+                              `${row.teamId}:${row.chemistry.leadership.captainId}`,
+                            )}{" "}
+                            ·{" "}
+                            {row.chemistry.leadership.active
+                              ? "on court"
+                              : "off court"}
+                          </small>
+                        )}
                       </th>
                       <td>{row.games ?? 1}</td>
                       <td>{insightNumber(metric.minutes)}</td>

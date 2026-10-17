@@ -706,6 +706,7 @@ function nextYearTeams(
   adoptChemistry = true,
   adoptChemistryGrowth = true,
   adoptMorale = true,
+  adoptPersonality = true,
 ): LeagueTeam[] {
   const archived = career.history.at(-1)!;
   const appointed = projectedCoaches(
@@ -723,6 +724,7 @@ function nextYearTeams(
     const growth = adoptChemistryGrowth ? retainChemistry(team) : team;
     return {
       ...(adoptMorale ? retainMorale(growth) : growth),
+      ...(adoptPersonality ? { personalityVersion: 1 as const } : {}),
       ...(adoptAbilities ? { abilityVersion: 1 as const } : {}),
       ...(adoptPhysicalAbilities ? { physicalAbilityVersion: 1 as const } : {}),
       ...(adoptChemistry ? { chemistryVersion: 1 as const } : {}),
@@ -934,6 +936,14 @@ function parseTeams(
   )
     fail();
   const moraleVersion = object(array(value, format.teamCount)[0]).moraleVersion;
+  const personalityVersion = object(
+    array(value, format.teamCount)[0],
+  ).personalityVersion;
+  if (
+    (personalityVersion !== undefined && personalityVersion !== 1) ||
+    (personalityVersion === 1 && moraleVersion !== 1)
+  )
+    return fail();
   if (
     (moraleVersion !== undefined && moraleVersion !== 1) ||
     (moraleVersion === 1 && chemistryGrowthVersion !== 1)
@@ -959,6 +969,7 @@ function parseTeams(
       row.chemistryVersion !== chemistryVersion ||
       row.chemistryGrowthVersion !== chemistryGrowthVersion ||
       row.moraleVersion !== moraleVersion ||
+      row.personalityVersion !== personalityVersion ||
       (moraleVersion !== 1 && row.morale !== undefined) ||
       (chemistryGrowthVersion !== 1 && row.chemistryBonds !== undefined) ||
       row.evaluationVersion !== evaluationVersion ||
@@ -1025,6 +1036,7 @@ function parseTeams(
         ? { physicalAbilityVersion: 1 as const }
         : {}),
       ...(chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
+      ...(personalityVersion === 1 ? { personalityVersion: 1 as const } : {}),
       ...(moraleVersion === 1
         ? {
             moraleVersion: 1 as const,
@@ -1071,6 +1083,7 @@ function sameRosterState(actual: LeagueTeam[], expected: LeagueTeam[]) {
       a.chemistryVersion !== e.chemistryVersion ||
       a.chemistryGrowthVersion !== e.chemistryGrowthVersion ||
       a.moraleVersion !== e.moraleVersion ||
+      a.personalityVersion !== e.personalityVersion ||
       JSON.stringify(a.morale) !== JSON.stringify(e.morale) ||
       JSON.stringify(a.chemistryBonds) !== JSON.stringify(e.chemistryBonds) ||
       a.evaluationVersion !== e.evaluationVersion ||
@@ -1411,6 +1424,8 @@ export function parseLocalCareer(
           .chemistryGrowthVersion === 1,
         object(array(nextRawTeams, draft.options.format.teamCount)[0])
           .moraleVersion === 1,
+        object(array(nextRawTeams, draft.options.format.teamCount)[0])
+          .personalityVersion === 1,
       );
     } else expected = replay.career!.teams;
     onProgress?.(i + 1, rawHistory.length);

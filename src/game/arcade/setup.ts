@@ -11,6 +11,7 @@ import {
   snapshotMorale,
   validateMoraleRoster,
 } from "../playerMorale";
+import { teamLeadership } from "../playerPersonality";
 import { refreshArcadeChemistry } from "./chemistry";
 import type {
   ArcadePlayer,
@@ -51,6 +52,16 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
           (team) =>
             team.moraleVersion !== undefined && team.moraleVersion !== 1,
         ))) ||
+    (setup.personalityVersion !== undefined &&
+      (setup.personalityVersion !== 1 ||
+        setup.moraleVersion !== 1 ||
+        setup.teams[0].personalityVersion !==
+          setup.teams[1].personalityVersion ||
+        setup.teams.some(
+          (team) =>
+            team.personalityVersion !== undefined &&
+            team.personalityVersion !== 1,
+        ))) ||
     (setup.abilityVersion !== undefined && setup.abilityVersion !== 1) ||
     (setup.physicalAbilityVersion !== undefined &&
       setup.physicalAbilityVersion !== 1) ||
@@ -62,6 +73,8 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
       ? setup.teams.map((team) => ({
           ...team,
           moraleVersion: 1 as const,
+          // Court rules are authoritative for historical and practice setups.
+          personalityVersion: setup.personalityVersion,
           ...(team.morale === undefined
             ? {}
             : { morale: validateMoraleRoster(team.morale, team) }),
@@ -81,6 +94,12 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
           );
         })
       : undefined;
+  const leadership =
+    setup.personalityVersion === 1
+      ? moraleTeams!.map((team, side) =>
+          teamLeadership({ ...team, chemistryBonds: bonds![side] }),
+        )
+      : undefined;
   setup.teams.forEach((team, side) => {
     const evaluation =
       setup.evaluationVersion === 1
@@ -94,6 +113,7 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
             chemistryGrowthVersion: setup.chemistryGrowthVersion,
             chemistryBonds: bonds?.[side],
             moraleVersion: setup.moraleVersion,
+            personalityVersion: setup.personalityVersion,
             engineRules: {
               ...team.engineRules,
               abilities: setup.abilityVersion === 1,
@@ -166,6 +186,7 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
             defense: team.defense ?? "man",
             ...(bonds ? { bonds: bonds[side] } : {}),
             ...(moraleTeams ? { morale: moraleScores(moraleTeams[side]) } : {}),
+            ...(leadership ? { leadership: leadership[side] } : {}),
             ...(team.engineRules?.familiarity === undefined
               ? {}
               : { familiarity: team.engineRules.familiarity }),
@@ -195,6 +216,9 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
           moraleVersion: 1 as const,
           moraleInitial: snapshotMorale(moraleTeams[0], moraleTeams[1]),
         }
+      : {}),
+    ...(setup.personalityVersion === 1
+      ? { personalityVersion: 1 as const }
       : {}),
     ...(setup.physicalAbilityVersion === 1
       ? { physicalAbilityVersion: 1 as const }

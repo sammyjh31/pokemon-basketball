@@ -19,6 +19,7 @@ it("preserves the pre-morale release 02b6586", () => {
     },
   };
   delete (run as { moraleVersion?: 1 }).moraleVersion;
+  delete run.personalityVersion;
   const teams = createLeague(run);
   const value = {
     teams,

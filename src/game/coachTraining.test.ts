@@ -35,6 +35,42 @@ const alter = (
 });
 
 describe("automatic coach training", () => {
+  it("supports fragile personalities while challenging resilient ambitious players within coach workload limits", () => {
+    const modern = {
+      ...team("ash"),
+      evaluationVersion: 1 as const,
+      chemistryVersion: 1 as const,
+      chemistryGrowthVersion: 1 as const,
+      physicalAbilityVersion: 1 as const,
+      moraleVersion: 1 as const,
+      personalityVersion: 1 as const,
+    };
+    const plans = coachTrainingPlans(modern);
+    expect(plans[68].plan.intensity).toBe("steady");
+    expect(plans[68].reasons.join(" ")).toMatch(/personality.*support/i);
+    expect(plans[59].plan.intensity).toBe("aggressive");
+    expect(plans[59].reasons.join(" ")).toMatch(/personality.*challenge/i);
+    expect(
+      coachTrainingPlans({ ...modern, coach: { version: 1, id: "mom" } })[59]
+        .plan.intensity,
+    ).toBe("steady");
+    const players = leaguePlayers([modern]).map((p) => ({
+      ...p,
+      gamesPlayed: 82,
+      minutes: 82 * 40,
+    }));
+    expect(coachTrainingPlans(modern, players)[59].plan.intensity).toBe(
+      "steady",
+    );
+    for (const assignment of Object.values(plans))
+      expect(validateCoachTraining(assignment)).toEqual(assignment);
+    const legacy = coachTrainingPlans({
+      ...modern,
+      personalityVersion: undefined,
+    });
+    expect(legacy[68].plan.intensity).toBe("aggressive");
+    expect(legacy[68].reasons.join(" ")).not.toMatch(/personality/i);
+  });
   it("assigns valid, deterministic plans to all eight players without mutating the roster", () => {
     const t = team(),
       before = JSON.stringify(t),

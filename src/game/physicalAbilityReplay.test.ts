@@ -23,6 +23,7 @@ it("preserves the evaluation-enabled draft and matches from release 84925c0", ()
   delete run.chemistryVersion;
   delete run.chemistryGrowthVersion;
   delete run.moraleVersion;
+  delete run.personalityVersion;
   const teams = createLeague(run);
   const value = {
     teams,

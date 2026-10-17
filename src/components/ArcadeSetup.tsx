@@ -1,3 +1,5 @@
+import { currentChemistryBanks } from "../game/currentChemistry";
+import { teamsWithChemistry } from "../game/teammateChemistry";
 import { currentMoraleBanks } from "../game/currentMorale";
 import { teamsWithMorale } from "../game/playerMorale";
 import { useState } from "react";
@@ -51,12 +53,18 @@ export function prepareArcadeTeams(run: Run): {
       });
       if (valid)
         return {
-          teams: teamsWithMorale(existing, currentMoraleBanks(run)),
+          teams: teamsWithMorale(
+            teamsWithChemistry(existing, currentChemistryBanks(run)),
+            currentMoraleBanks(run),
+          ),
           error: null,
         };
     }
     return {
-      teams: teamsWithMorale(createLeague(run), currentMoraleBanks(run)),
+      teams: teamsWithMorale(
+        teamsWithChemistry(createLeague(run), currentChemistryBanks(run)),
+        currentMoraleBanks(run),
+      ),
       error: null,
     };
   } catch (error) {

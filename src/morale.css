@@ -115,3 +115,23 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+.morale-captain {
+  margin: 14px 0;
+  border-left: 3px solid var(--gold, #ebc64e);
+  padding: 12px 14px;
+  background: var(--bg, #080b0f);
+  border-radius: 0 8px 8px 0;
+}
+.morale-captain p,
+.personality-details p {
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+.morale-captain .morale-player-heading > span,
+.morale-personality-summary {
+  color: var(--muted, #a6adb7);
+  font-size: 0.76rem;
+}
+.personality-traits {
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+}

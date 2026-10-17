@@ -27,6 +27,7 @@ function fixture() {
       B3: 131,
     },
   };
+  delete run.personalityVersion;
   const teams = createLeague(run).slice(0, 3),
     banks = initialMoraleBanks(teams)!;
   banks[0][65] = {
@@ -201,4 +202,102 @@ describe("morale chronological provenance", () => {
       ),
     ).toThrow();
   });
+});
+
+it("adopts the recorded personality version at a season boundary and never allows a later downgrade", () => {
+  const { run, history, final } = fixture();
+  const modern = final.map((team) => ({
+    ...retainMorale(team),
+    personalityVersion: 1 as const,
+  }));
+  const current = {
+    ...run,
+    personalityVersion: 1 as const,
+    leagueTeams: modern,
+  };
+  expect(() =>
+    verifyMoraleChronology(
+      current,
+      modern,
+      history,
+      [],
+      undefined,
+      undefined,
+      "season",
+    ),
+  ).not.toThrow();
+  const upgradedHistory = [
+    ...history,
+    {
+      year: 2,
+      replay: {
+        teams: modern,
+        playoffs: { morale: initialMoraleBanks(modern) },
+      },
+    },
+  ] as unknown as FranchiseSeason[];
+  const after = modern.map(retainMorale);
+  expect(() =>
+    verifyMoraleChronology(
+      { ...current, leagueTeams: after },
+      after,
+      upgradedHistory,
+      [],
+      undefined,
+      undefined,
+      "season",
+    ),
+  ).not.toThrow();
+  const downgrade = after.map(({ personalityVersion: _, ...team }) => team);
+  expect(() =>
+    verifyMoraleChronology(
+      { ...run, leagueTeams: downgrade },
+      downgrade,
+      upgradedHistory,
+      [],
+      undefined,
+      undefined,
+      "season",
+    ),
+  ).toThrow();
+  expect(() =>
+    verifyMoraleChronology(
+      current,
+      modern,
+      history,
+      [],
+      undefined,
+      undefined,
+      "offseason",
+    ),
+  ).toThrow();
+});
+
+it("accepts a personality-enabled first archive after summary-only history without changing its five-field bank", () => {
+  const { run, teams } = fixture();
+  const modern = teams.map((team) => ({
+    ...team,
+    personalityVersion: 1 as const,
+  }));
+  const history = [
+    { year: 1 },
+    {
+      year: 2,
+      replay: {
+        teams: modern,
+        playoffs: { morale: initialMoraleBanks(modern) },
+      },
+    },
+  ] as unknown as FranchiseSeason[];
+  expect(() =>
+    verifyMoraleChronology(
+      { ...run, personalityVersion: 1, leagueTeams: modern },
+      modern,
+      history,
+      [],
+      undefined,
+      undefined,
+      "offseason",
+    ),
+  ).not.toThrow();
 });

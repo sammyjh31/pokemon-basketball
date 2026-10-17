@@ -23,6 +23,7 @@ it("preserves the pre-evaluation coached ability draft and matches", () => {
   delete run.chemistryVersion;
   delete run.chemistryGrowthVersion;
   delete run.moraleVersion;
+  delete run.personalityVersion;
   const teams = createLeague(run);
   const value = {
     teams,

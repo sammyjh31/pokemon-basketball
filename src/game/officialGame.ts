@@ -6,6 +6,7 @@ import {
 } from "./playerMorale";
 import {
   snapshotChemistry,
+  applyChemistrySnapshot,
   validatePairBonds,
   type ChemistryFixture,
   type PairBonds,
@@ -145,6 +146,22 @@ function officialMoraleVersion(
     return fail();
   return version;
 }
+function officialPersonalityVersion(
+  fixture: LeagueFixture,
+  teams: LeagueTeam[],
+): 1 | undefined {
+  const home = teams.find((team) => team.id === fixture.homeTeamId);
+  const away = teams.find((team) => team.id === fixture.awayTeamId);
+  if (!home || !away) return fail();
+  const version = home.personalityVersion;
+  if (
+    (version !== undefined && version !== 1) ||
+    version !== away.personalityVersion ||
+    (version === 1 && officialMoraleVersion(fixture, teams) !== 1)
+  )
+    return fail();
+  return version;
+}
 function officialMorale(
   fixture: LeagueFixture,
   teams: LeagueTeam[],
@@ -187,8 +204,13 @@ function officialMoraleReport(
   match: LeagueMatch,
 ) {
   const snapshot = officialMorale(fixture, teams);
-  const home = teams.find((team) => team.id === fixture.homeTeamId)!;
-  const away = teams.find((team) => team.id === fixture.awayTeamId)!;
+  const chemistry = officialChemistry(fixture, teams);
+  let home = teams.find((team) => team.id === fixture.homeTeamId)!;
+  let away = teams.find((team) => team.id === fixture.awayTeamId)!;
+  if (chemistry) {
+    home = applyChemistrySnapshot(home, chemistry.home);
+    away = applyChemistrySnapshot(away, chemistry.away);
+  }
   return moraleGameReport(
     snapshot ? applyMoraleSnapshot(home, snapshot.home) : home,
     snapshot ? applyMoraleSnapshot(away, snapshot.away) : away,
@@ -218,6 +240,7 @@ export function officialGameFromArcade(
     state.chemistryVersion !== officialChemistryVersion(fixture, teams) ||
     state.chemistryGrowthVersion !== officialGrowthVersion(fixture, teams) ||
     state.moraleVersion !== officialMoraleVersion(fixture, teams) ||
+    state.personalityVersion !== officialPersonalityVersion(fixture, teams) ||
     (state.abilityVersion !== undefined && state.abilityVersion !== 1) ||
     (state.abilityVersion === 1) !==
       abilitiesEnabled(teams.find((team) => team.id === 0) ?? {}) ||
@@ -431,6 +454,9 @@ export function officialGameFromArcade(
         ? { physicalAbilityVersion: 1 as const }
         : {}),
       ...(state.chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
+      ...(state.personalityVersion === 1
+        ? { personalityVersion: 1 as const }
+        : {}),
       ...(state.moraleVersion === 1
         ? { moraleVersion: 1 as const, morale }
         : {}),
@@ -457,6 +483,7 @@ export function validateOfficialGame(
     value.chemistryVersion !== officialChemistryVersion(fixture, teams) ||
     value.chemistryGrowthVersion !== officialGrowthVersion(fixture, teams) ||
     value.moraleVersion !== officialMoraleVersion(fixture, teams) ||
+    value.personalityVersion !== officialPersonalityVersion(fixture, teams) ||
     !sameMorale(value.morale, officialMorale(fixture, teams), fixture, teams) ||
     !sameChemistry(value.chemistry, officialChemistry(fixture, teams)) ||
     (value.abilityVersion !== undefined && value.abilityVersion !== 1) ||

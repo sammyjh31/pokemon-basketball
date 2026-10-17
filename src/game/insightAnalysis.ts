@@ -31,6 +31,10 @@ export function shotSummary(shots: ShotEvent[]) {
     fieldGoalPercent: ratio(made * 100, attempts),
   };
 }
+/** A captain change is a different recorded context, even for the same five. */
+export function lineupContextKey(row: LineupSummary): string {
+  return `${row.teamId}|${[...row.playerIds].sort().join("|")}${row.chemistryContext ? `:${row.chemistryContext.tactic}:${row.chemistryContext.defense}` : ""}${row.chemistry?.leadership ? `:captain:${row.chemistry.leadership.captainId}:${row.chemistry.leadership.style}:${row.chemistry.leadership.active}` : ""}`;
+}
 export function lineupMetrics(lineup: LineupSummary) {
   return {
     minutes: lineup.seconds / 60,
@@ -146,6 +150,17 @@ function averageRecordedChemistry(
             cohesionDelta: average(
               previous.morale.cohesionDelta,
               incoming.morale.cohesionDelta,
+            ),
+          },
+        }
+      : {}),
+    ...(previous.leadership && incoming.leadership
+      ? {
+          leadership: {
+            ...previous.leadership,
+            cohesionDelta: average(
+              previous.leadership.cohesionDelta,
+              incoming.leadership.cohesionDelta,
             ),
           },
         }
@@ -286,7 +301,7 @@ export async function buildSeasonInsights(
       if (row.playerIds.length !== 5 || new Set(row.playerIds).size !== 5)
         continue;
       const playerIds = [...row.playerIds].sort(),
-        key = `${row.teamId}|${playerIds.join("|")}${row.chemistryContext ? `:${row.chemistryContext.tactic}:${row.chemistryContext.defense}` : ""}`;
+        key = lineupContextKey(row);
       const total = lineups.get(key) ?? {
         ...row,
         playerIds,

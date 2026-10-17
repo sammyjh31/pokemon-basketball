@@ -213,6 +213,8 @@ export interface Run {
   chemistryGrowthVersion?: 1;
   /** Persistent player morale; requires earned teammate chemistry. */
   moraleVersion?: 1;
+  /** Stable species personalities and automatic captains; requires player morale. */
+  personalityVersion?: 1;
   /** Shared team evaluation; absent on historical seasons for exact replay. */
   evaluationVersion?: 1;
   id: string;
@@ -284,6 +286,8 @@ export interface LeagueTeam {
   chemistryGrowthVersion?: 1;
   /** Persistent player morale; requires earned teammate chemistry. */
   moraleVersion?: 1;
+  /** Stable species personalities and automatic captains; requires player morale. */
+  personalityVersion?: 1;
   /** Shared team evaluation; absent on historical seasons for exact replay. */
   evaluationVersion?: 1;
   id: number;

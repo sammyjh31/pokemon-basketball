@@ -55,6 +55,9 @@ export function archivedSeasonRun(season: FranchiseSeason): Run {
       ? { physicalAbilityVersion: 1 as const }
       : {}),
     ...(user.chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
+    ...(user.personalityVersion === 1
+      ? { personalityVersion: 1 as const }
+      : {}),
     ...(user.moraleVersion === 1 ? { moraleVersion: 1 as const } : {}),
     ...(user.chemistryGrowthVersion === 1
       ? { chemistryGrowthVersion: 1 as const }

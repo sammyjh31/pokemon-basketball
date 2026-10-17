@@ -3,6 +3,15 @@ import { playerProfile, type PlayerProfile } from "./playerProfile";
 import { getCoach } from "./trainerCoaches";
 import { clamp } from "./ratings";
 import type { LeagueTeam, LeagueBox, Attributes } from "./types";
+import type { PairBonds } from "./teammateChemistry";
+import {
+  playerPersonality,
+  personalityReactions,
+  teamLeadership,
+  captainMoraleSupport,
+  type PlayerPersonality,
+  type TeamLeadership,
+} from "./playerPersonality";
 
 /** Current feelings travel with a species; they are never attached to a roster slot. */
 export interface PlayerMorale {
@@ -24,6 +33,8 @@ export interface MoraleTeam {
   development?: LeagueTeam["development"];
   moraleVersion?: 1;
   morale?: MoraleRoster;
+  personalityVersion?: 1;
+  chemistryBonds?: PairBonds;
 }
 export type MoraleAction =
   | "settling-in"
@@ -46,6 +57,10 @@ export interface MoraleAssessment {
   minuteAdjustment: number;
   skillDelta: number;
   reasons: string[];
+  personality?: PlayerPersonality;
+  coachCompatibility?: number;
+  captainSupport?: number;
+  captainId?: number;
 }
 export interface MoralePlayerReport extends MoraleAssessment {
   before: number;
@@ -54,6 +69,7 @@ export interface MoralePlayerReport extends MoraleAssessment {
 export interface MoraleGameReport {
   home: MoralePlayerReport[];
   away: MoralePlayerReport[];
+  captains?: { home: TeamLeadership; away: TeamLeadership };
 }
 type Box = Pick<LeagueBox, "pokemonId" | "minutes">;
 type MoraleMatch = {
@@ -158,7 +174,10 @@ function expectations(team: MoraleTeam, id: number): number {
     })
     .sort((a, b) => b.value - a.value || a.id - b.id);
   const rank = ranked.findIndex((p) => p.id === id);
-  return [34, 32, 30, 28, 26, 20, 16, 12][Math.max(0, rank)] ?? 12;
+  const base = [34, 32, 30, 28, 26, 20, 16, 12][Math.max(0, rank)] ?? 12;
+  return round(
+    clamp(base + personalityReactions(team, id).expectedMinutesDelta, 9, 37),
+  );
 }
 function coachFit(team: MoraleTeam, id: number): number {
   const coach = getCoach(team.coach?.id ?? ""),
@@ -191,10 +210,12 @@ function coachFit(team: MoraleTeam, id: number): number {
 export function moraleAssessment(
   team: MoraleTeam,
   id: number,
+  leadership = teamLeadership(team),
 ): MoraleAssessment {
+  const reaction = personalityReactions(team, id);
   const state = moraleState(team, id),
     expected = expectations(team, id),
-    fit = coachFit(team, id);
+    fit = round(clamp(coachFit(team, id) + reaction.coachFitDelta));
   const coach = getCoach(team.coach?.id ?? ""),
     mon = POKEMON_BY_ID.get(id);
   const stamina = mon
@@ -218,7 +239,9 @@ export function moraleAssessment(
   } else if (state.games && ratio < 0.8) {
     action = "role-support";
     actionLabel = "Create more opportunities in the rotation";
-    minuteAdjustment = round(clamp((1 - ratio) * 4, 1, 3));
+    minuteAdjustment = round(
+      clamp((1 - ratio) * 4 * reaction.minutesSensitivity, 1, 3),
+    );
   } else if (state.success < 42 || state.score < 42) {
     action = "encouragement";
     actionLabel = "Rebuild confidence with a steady role";
@@ -240,6 +263,21 @@ export function moraleAssessment(
       ? `Roster changes: ${state.disruption.toFixed(1)} adjustment pressure, easing as games are played.`
       : "The roster situation is settled.",
   ];
+  if (team.personalityVersion === 1) {
+    reasons.push(
+      `${playerPersonality(id).archetype}: role expectations and reactions reflect this player's personality.`,
+    );
+    if (coach)
+      reasons.push(
+        `Personality compatibility with ${coach.name}: ${reaction.coachCompatibility.toFixed(0)}/100.`,
+      );
+    if (leadership)
+      reasons.push(
+        id === leadership.captainId
+          ? `Team captain: ${leadership.style.toLowerCase()} leadership; influence depends on confidence and teammates' personalities.`
+          : `Captain's support: ${captainMoraleSupport(team, id, leadership).toFixed(1)} to the postgame morale target.`,
+      );
+  }
   return {
     pokemonId: id,
     score: state.score,
@@ -259,6 +297,14 @@ export function moraleAssessment(
     minuteAdjustment,
     skillDelta: moraleSkillDelta(team, id),
     reasons,
+    ...(team.personalityVersion === 1
+      ? {
+          personality: playerPersonality(id),
+          coachCompatibility: reaction.coachCompatibility,
+          captainSupport: captainMoraleSupport(team, id, leadership),
+          ...(leadership ? { captainId: leadership.captainId } : {}),
+        }
+      : {}),
   };
 }
 /** Complete a fixture once; overtime is normalized so extra periods don't inflate role satisfaction. */
@@ -283,11 +329,13 @@ export function advanceMorale(
     )
   )
     throw new Error("Invalid morale game minutes.");
-  const coach = getCoach(team.coach?.id ?? "");
+  const coach = getCoach(team.coach?.id ?? ""),
+    leadership = teamLeadership(team);
   return Object.fromEntries(
     ids.map((id) => {
       const prior = moraleState(team, id),
-        assessment = moraleAssessment(team, id);
+        assessment = moraleAssessment(team, id, leadership),
+        reaction = personalityReactions(team, id);
       const actual = clamp(
         (boxes.find((b) => b.pokemonId === id)!.minutes * 48) /
           (48 + 5 * overtimePeriods),
@@ -311,7 +359,16 @@ export function advanceMorale(
           : 2.5 + coach.adaptability
         : 0;
       const target = clamp(
-        50 + time + (success - 50) * 0.2 + fit + prior.disruption + support,
+        50 +
+          time * reaction.minutesSensitivity +
+          (success - 50) * 0.2 * reaction.resultsSensitivity +
+          fit +
+          prior.disruption +
+          support *
+            (team.personalityVersion === 1
+              ? 0.7 + reaction.coachCompatibility * 0.006
+              : 1) +
+          (assessment.captainSupport ?? 0),
         20,
         85,
       );
@@ -319,12 +376,27 @@ export function advanceMorale(
         id,
         {
           score: round(
-            clamp(prior.score + (target - prior.score) * 0.15, 20, 85),
+            clamp(
+              prior.score + (target - prior.score) * reaction.updateRate,
+              20,
+              85,
+            ),
           ),
           minutes,
           success,
           disruption: round(
-            prior.disruption * (coach && prior.disruption < -2 ? 0.7 : 0.85),
+            prior.disruption *
+              (team.personalityVersion === 1
+                ? clamp(
+                    reaction.adaptationRate -
+                      (coach?.adaptability ?? 0) * 0.08 -
+                      Math.max(0, assessment.captainSupport ?? 0) * 0.01,
+                    0.55,
+                    0.88,
+                  )
+                : coach && prior.disruption < -2
+                  ? 0.7
+                  : 0.85),
           ),
           games: Math.min(10000, prior.games + 1),
         },
@@ -340,17 +412,25 @@ export function moraleGameReport(
   if (home.moraleVersion !== away.moraleVersion)
     throw new Error("Mixed morale rules.");
   if (home.moraleVersion !== 1) return undefined;
+  if (home.personalityVersion !== away.personalityVersion)
+    throw new Error("Mixed personality rules.");
   const side = (team: MoraleTeam, boxes: Box[], won: boolean) => {
     const next = advanceMorale(team, boxes, won, match.overtimePeriods);
+    const leadership = teamLeadership(team);
     return fullRoster(team).map((id) => ({
-      ...moraleAssessment(team, id),
+      ...moraleAssessment(team, id, leadership),
       before: moraleState(team, id).score,
       after: next[id].score,
     }));
   };
+  const homeCaptain = teamLeadership(home),
+    awayCaptain = teamLeadership(away);
   return {
     home: side(home, match.homeBox, match.homeScore > match.awayScore),
     away: side(away, match.awayBox, match.awayScore > match.homeScore),
+    ...(homeCaptain && awayCaptain
+      ? { captains: { home: homeCaptain, away: awayCaptain } }
+      : {}),
   };
 }
 export function validateMoraleRoster(
@@ -504,14 +584,19 @@ export function withRosterMorale<T extends MoraleTeam>(
   if (!departures && ids.every((id) => old.includes(id))) return team;
   const morale = Object.fromEntries(
     ids.map((id) => {
+      const sensitivity = personalityReactions(team, id).tradeSensitivity;
       if (old.includes(id)) {
         const state = moraleState(previous, id);
         return [
           id,
           {
             ...state,
-            score: round(clamp(state.score - departures * 0.5, 0, 100)),
-            disruption: round(clamp(state.disruption - departures, -10, 10)),
+            score: round(
+              clamp(state.score - departures * 0.5 * sensitivity, 0, 100),
+            ),
+            disruption: round(
+              clamp(state.disruption - departures * sensitivity, -10, 10),
+            ),
           },
         ];
       }
@@ -524,11 +609,18 @@ export function withRosterMorale<T extends MoraleTeam>(
         id,
         {
           ...state,
-          score: round(clamp(state.score - (kind === "trade" ? 4 : 0), 0, 100)),
+          score: round(
+            clamp(
+              state.score - (kind === "trade" ? 4 : 0) * sensitivity,
+              0,
+              100,
+            ),
+          ),
           disruption: round(
             clamp(
               state.disruption -
-                (kind === "trade" ? 6 : kind === "rookie" ? 4 : 2),
+                (kind === "trade" ? 6 : kind === "rookie" ? 4 : 2) *
+                  sensitivity,
               -10,
               10,
             ),

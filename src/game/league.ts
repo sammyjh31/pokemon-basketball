@@ -171,6 +171,11 @@ export function createLeague(run: Run): LeagueTeam[] {
         throw new Error("Player morale requires teammate chemistry growth.");
       Object.assign(team, retainMorale(team));
     }
+    if (run.personalityVersion === 1) {
+      if (run.moraleVersion !== 1)
+        throw new Error("Player personalities require player morale.");
+      team.personalityVersion = 1;
+    }
     if (run.evaluationVersion === 1) team.evaluationVersion = 1;
     if (run.courtVersion === 1) team.courtVersion = 1;
     if (run.matchupVersion === 1) team.matchupVersion = 1;

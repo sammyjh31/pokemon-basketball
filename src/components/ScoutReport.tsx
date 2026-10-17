@@ -1,3 +1,6 @@
+import { playerPersonality } from "../game/playerPersonality";
+import { PersonalityDetails } from "./PersonalityDetails";
+import "../morale.css";
 import { SpeciesAbility } from "./SpeciesAbility";
 import type { DevelopmentRatings } from "../game/developmentTypes";
 import {
@@ -81,9 +84,11 @@ function SkillRows({
 export function ScoutReport({
   mon,
   development,
+  personalityVersion,
 }: {
   mon: Pokemon;
   development?: DevelopmentRatings;
+  personalityVersion?: 1;
 }) {
   const a = attributes(mon, development),
     best = bestPosition(mon, development),
@@ -136,6 +141,15 @@ export function ScoutReport({
       </p>
       <p className="scout-summary">{profile.scouting}</p>
       <SpeciesAbility pokemonId={mon.id} />
+      {personalityVersion === 1 && (
+        <section
+          className="scout-personality"
+          aria-label="Basketball personality"
+        >
+          <h4>Basketball personality</h4>
+          <PersonalityDetails personality={playerPersonality(mon.id)} />
+        </section>
+      )}
       <details className="scout-details">
         <summary>
           Full scouting report{" "}

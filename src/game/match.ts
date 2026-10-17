@@ -130,7 +130,7 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   const planKey = config.rotationPlan
     ? `:${ROSTER_SLOTS.map((slot) => config.rotationPlan!.minutes[slot]).join(",")}:${config.rotationPlan.closing.join(",")}`
     : "";
-  const key = `${config.moraleVersion === 1 ? `morale1:${JSON.stringify(config.morale ?? {})}:` : ""}${config.chemistryGrowthVersion === 1 ? `growth1:${JSON.stringify(config.chemistryBonds ?? {})}:` : ""}${chemistryEnabled(config) ? `chemistry1:${config.engineRules?.familiarity ?? 0}:` : ""}${physicalAbilitiesEnabled(config) ? "physical1:" : ""}${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
+  const key = `${config.personalityVersion === 1 ? "personality1:" : ""}${config.moraleVersion === 1 ? `morale1:${JSON.stringify(config.morale ?? {})}:` : ""}${config.chemistryGrowthVersion === 1 ? `growth1:${JSON.stringify(config.chemistryBonds ?? {})}:` : ""}${chemistryEnabled(config) ? `chemistry1:${config.engineRules?.familiarity ?? 0}:` : ""}${physicalAbilitiesEnabled(config) ? "physical1:" : ""}${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
   let targets = targetCache.get(key);
   if (!targets) {
     targets =
@@ -272,6 +272,15 @@ export function simulateMatch(
     morale?: MoraleFixture;
   } = {},
 ): LeagueMatch {
+  if (
+    home.personalityVersion !== away.personalityVersion ||
+    (home.personalityVersion !== undefined && home.personalityVersion !== 1) ||
+    (home.personalityVersion === 1 &&
+      (home.moraleVersion !== 1 || away.moraleVersion !== 1))
+  )
+    throw new Error(
+      "Both teams must use matching personality rules with morale enabled.",
+    );
   if (
     home.moraleVersion !== away.moraleVersion ||
     (home.moraleVersion !== undefined && home.moraleVersion !== 1) ||

@@ -261,7 +261,10 @@ export function DraftPanel({
               </button>
             ))}
           </div>
-          <ScoutReport mon={chosen} />
+          <ScoutReport
+            mon={chosen}
+            personalityVersion={run.personalityVersion}
+          />
           <div className="attribute-list">
             {ATTRIBUTE_KEYS.map((key) => (
               <span key={key}>
@@ -273,7 +276,10 @@ export function DraftPanel({
         </div>
       )}
       {!pending && inspectId && POKEMON_BY_ID.has(inspectId) && (
-        <ScoutReport mon={POKEMON_BY_ID.get(inspectId)!} />
+        <ScoutReport
+          mon={POKEMON_BY_ID.get(inspectId)!}
+          personalityVersion={run.personalityVersion}
+        />
       )}
       <SpriteControls value={spriteStyle} onChange={onSpriteStyle} />
       <dl className="personal-records">

@@ -31,6 +31,7 @@ beforeAll(() => {
   // Preserve the explicitly historical model-1/2 helper contract.
   delete run.chemistryGrowthVersion;
   delete run.moraleVersion;
+  delete run.personalityVersion;
   [129, 150, 149, 68, 143, 9, 94, 59].forEach((id, index) => {
     run = placePokemon(run, id, ROSTER_SLOTS[index]);
   });

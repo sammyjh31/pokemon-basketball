@@ -898,7 +898,10 @@ export function LocalLeagueDraft({
             </p>
             <details className="local-scout">
               <summary>Full scouting & physical profile</summary>
-              <ScoutReport mon={mon} />
+              <ScoutReport
+                mon={mon}
+                personalityVersion={draft.personalityVersion}
+              />
               {draft.options && (
                 <DepthScouting
                   mon={mon}

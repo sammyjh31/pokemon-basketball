@@ -108,3 +108,37 @@ describe("arcade setup", () => {
     expect(JSON.stringify(franchiseRun)).toBe(before);
   });
 });
+
+it("uses current chemistry alongside current morale when preparing an exhibition", () => {
+  const run = {
+    ...createRun("free", false, 11),
+    roster: {
+      PG: 65,
+      SG: 135,
+      SF: 149,
+      PF: 68,
+      C: 143,
+      B1: 121,
+      B2: 6,
+      B3: 131,
+    },
+  };
+  const teams = createLeague(run);
+  const original = JSON.stringify(teams);
+  const prepared = prepareArcadeTeams({
+    ...run,
+    leagueTeams: teams,
+    playoffs: {
+      modelVersion: 2,
+      seeds: [],
+      series: [],
+      players: [],
+      finalsPlayers: [],
+      championId: null,
+      finalsMvp: null,
+      chemistryBonds: { 0: { "65:68": 600 } },
+    },
+  });
+  expect(prepared.teams[0].chemistryBonds?.["65:68"]).toBe(600);
+  expect(JSON.stringify(teams)).toBe(original);
+});

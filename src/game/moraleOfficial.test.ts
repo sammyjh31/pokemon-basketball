@@ -1,4 +1,6 @@
 import { expect, it } from "vitest";
+import { teamLeadership } from "./playerPersonality";
+import { applyChemistrySnapshot, snapshotChemistry } from "./teammateChemistry";
 import { finishedGame, officialFixture } from "./officialGame.testUtils";
 import {
   officialGameFromArcade,
@@ -104,4 +106,77 @@ it("credits each official game once and freezes the latest bank into the next fi
   expect(next.morale).toEqual(
     snapshotMorale(current[next.homeTeamId], current[next.awayTeamId]),
   );
+});
+
+it("requires matching personality versions and freezes captains in home/away orientation", () => {
+  const { fixture, teams } = officialFixture(true);
+  const state = finishedGame(fixture, teams);
+  const game = officialGameFromArcade(state, fixture, teams);
+  expect(game.personalityVersion).toBe(1);
+  const captains = game.match.moraleReport!.captains!;
+  expect(captains.away.captainId).toBeDefined();
+  expect(Object.values(teams[0].roster)).toContain(captains.away.captainId);
+  expect(Object.values(teams[fixture.homeTeamId].roster)).toContain(
+    captains.home.captainId,
+  );
+  expect(validateStoredOfficialGame(game, fixture, teams)).toEqual(game);
+  for (const mutate of [
+    (g: typeof game) => {
+      delete g.personalityVersion;
+    },
+    (g: typeof game) => {
+      delete g.match.moraleReport!.captains;
+    },
+    (g: typeof game) => {
+      g.match.moraleReport!.captains = {
+        home: captains.away,
+        away: captains.home,
+      };
+    },
+    (g: typeof game) => {
+      g.match.moraleReport!.captains!.away.moraleSupport += 0.01;
+    },
+  ]) {
+    const bad = structuredClone(game);
+    mutate(bad);
+    expect(() => validateOfficialGame(bad, fixture, teams)).toThrow();
+  }
+  const missing = structuredClone(state);
+  delete missing.personalityVersion;
+  expect(() => officialGameFromArcade(missing, fixture, teams)).toThrow();
+  const mixed = structuredClone(teams);
+  delete mixed[fixture.homeTeamId].personalityVersion;
+  expect(() => validateOfficialGame(game, fixture, mixed)).toThrow();
+});
+
+it("derives official captain reports from the frozen chemistry and morale snapshots", () => {
+  const { fixture, teams } = officialFixture(true);
+  const chemistry = snapshotChemistry(
+    teams[fixture.homeTeamId],
+    teams[fixture.awayTeamId],
+  )!;
+  chemistry.home.fill(6000);
+  chemistry.away.fill(6000);
+  const morale = snapshotMorale(
+    teams[fixture.homeTeamId],
+    teams[fixture.awayTeamId],
+  )!;
+  for (const side of ["home", "away"] as const)
+    for (let i = 0; i < 40; i += 5) morale[side][i] = 80;
+  const frozen = { ...fixture, chemistry, morale };
+  const game = officialGameFromArcade(
+    finishedGame(frozen, teams),
+    frozen,
+    teams,
+  );
+  const expected = teamLeadership(
+    applyMoraleSnapshot(
+      applyChemistrySnapshot(teams[0], chemistry.away),
+      morale.away,
+    ),
+  );
+  expect(game.match.moraleReport!.captains!.away).toEqual(expected);
+  expect(expected!.score).toBeGreaterThan(teamLeadership(teams[0])!.score);
+  expect(game.morale!.away).toHaveLength(40);
+  expect(validateStoredOfficialGame(game, fixture, teams)).toEqual(game);
 });

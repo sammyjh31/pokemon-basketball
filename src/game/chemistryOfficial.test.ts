@@ -69,6 +69,7 @@ it("preserves missing chemistry on historical official games", () => {
     delete team.chemistryVersion;
     delete team.chemistryGrowthVersion;
     delete team.moraleVersion;
+    delete team.personalityVersion;
     delete team.chemistryBonds;
     delete team.morale;
   });

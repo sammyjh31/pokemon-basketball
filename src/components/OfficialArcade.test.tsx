@@ -33,6 +33,7 @@ const run = {
   // Synthetic completed games below predate persistent chemistry and morale.
   chemistryGrowthVersion: undefined,
   moraleVersion: undefined,
+  personalityVersion: undefined,
   roster: { PG: 65, SG: 135, SF: 149, PF: 68, C: 143, B1: 121, B2: 6, B3: 131 },
 };
 const teams = createLeague(run);

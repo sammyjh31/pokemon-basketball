@@ -345,6 +345,7 @@ export function startFranchiseSeason(
   // Type rules roll forward only at the season boundary. Historical teams stay frozen.
   teams = syncTeamBonds(teams).map((team) => ({
     ...retainMorale(retainChemistry(team)),
+    personalityVersion: 1 as const,
     typeMatchupsVersion: 1 as const,
     typeTacticsVersion: 1 as const,
     abilityVersion: 1 as const,

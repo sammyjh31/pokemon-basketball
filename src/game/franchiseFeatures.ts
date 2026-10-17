@@ -38,6 +38,8 @@ export interface OfficialGame {
   chemistryVersion?: 1;
   chemistryGrowthVersion?: 1;
   moraleVersion?: 1;
+  /** Stable species personalities and automatic captains; requires player morale. */
+  personalityVersion?: 1;
   morale?: import("./playerMorale").MoraleFixture;
   chemistry?: import("./teammateChemistry").ChemistryFixture;
   fixtureId: string;

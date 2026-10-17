@@ -21,6 +21,7 @@ export interface ArcadeSetup {
   chemistryVersion?: 1;
   chemistryGrowthVersion?: 1;
   moraleVersion?: 1;
+  personalityVersion?: 1;
   abilityVersion?: 1;
   physicalAbilityVersion?: 1;
   evaluationVersion?: 1;
@@ -133,6 +134,7 @@ export interface ArcadeState {
   chemistryVersion?: 1;
   chemistryGrowthVersion?: 1;
   moraleVersion?: 1;
+  personalityVersion?: 1;
   /** Frozen pregame roster state; home is arcade side 0, away is side 1. */
   moraleInitial?: MoraleFixture;
   /** Frozen pregame roster-pair snapshot; home is arcade side 0, away is side 1. */
