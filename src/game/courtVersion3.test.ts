@@ -21,8 +21,8 @@ const roster = {
   B3: 131,
 };
 /**
- * `current: false` reproduces version-1/2 saves made before abilities, chemistry and
- * evaluation; comparisons between court versions keep every other current flag on.
+ * `current: false` reproduces version-1/2 saves made before abilities, chemistry,
+ * evaluation, chemistry growth, morale and personalities; comparisons between court versions keep every other current flag on.
  */
 const clubs = (
   seed: number,
@@ -35,6 +35,9 @@ const clubs = (
     delete run.physicalAbilityVersion;
     delete run.chemistryVersion;
     delete run.evaluationVersion;
+    delete run.chemistryGrowthVersion;
+    delete run.moraleVersion;
+    delete run.personalityVersion;
   }
   return createLeague(run).map((t) => ({ ...t, courtVersion }));
 };
