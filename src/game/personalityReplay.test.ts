@@ -20,6 +20,7 @@ it("preserves morale-enabled release e8681b9", () => {
     },
   };
   delete (run as { personalityVersion?: 1 }).personalityVersion;
+  delete (run as { gameFlowVersion?: 1 }).gameFlowVersion;
   const teams = createLeague(run);
   for (const [i, p] of Object.values(teams[0].morale!).entries())
     Object.assign(p, {
