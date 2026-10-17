@@ -389,6 +389,9 @@ export function ArcadeMode({
         )
           ? { physicalAbilityVersion: 1 as const }
           : {}),
+        ...((official ? user?.chemistryVersion : run.chemistryVersion) === 1
+          ? { chemistryVersion: 1 as const }
+          : {}),
         ...(official ? { official: true } : {}),
       });
       if (!audio.current) audio.current = new ArcadeAudio();

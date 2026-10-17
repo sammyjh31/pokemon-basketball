@@ -52,6 +52,7 @@ function completedGame(): ArcadeState {
     teams: [teams[0], teams[1]],
     seed: fixture.seed,
     official: true,
+    chemistryVersion: 1,
     ...(abilitiesEnabled(teams[0])
       ? { abilityVersion: 1 as const, physicalAbilityVersion: 1 as const }
       : {}),
@@ -103,6 +104,7 @@ describe("official arcade flow", () => {
       const actualTeams = structuredClone(teams);
       for (const team of actualTeams) {
         team.evaluationVersion = modern ? 1 : undefined;
+        team.chemistryVersion = modern ? 1 : undefined;
         team.engineRules = {
           version: 1,
           abilities: false,
@@ -116,7 +118,11 @@ describe("official arcade flow", () => {
       };
       render(
         <ArcadeMode
-          run={{ ...run, evaluationVersion: modern ? undefined : 1 }}
+          run={{
+            ...run,
+            evaluationVersion: modern ? undefined : 1,
+            chemistryVersion: modern ? undefined : 1,
+          }}
           onExit={() => {}}
           official={{ ...official, teams: actualTeams }}
         />,
@@ -128,6 +134,7 @@ describe("official arcade flow", () => {
       fireEvent.click(tipoff);
       const state = create.mock.results[0].value as ArcadeState;
       expect(state.evaluationVersion).toBe(modern ? 1 : undefined);
+      expect(state.chemistryVersion).toBe(modern ? 1 : undefined);
       expect(state).not.toHaveProperty("abilityVersion");
       expect(state).not.toHaveProperty("physicalAbilityVersion");
       if (modern) {

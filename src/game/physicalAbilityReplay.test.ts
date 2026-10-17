@@ -20,6 +20,7 @@ it("preserves the evaluation-enabled draft and matches from release 84925c0", ()
     },
   };
   delete (run as { physicalAbilityVersion?: 1 }).physicalAbilityVersion;
+  delete run.chemistryVersion;
   const teams = createLeague(run);
   const value = {
     teams,

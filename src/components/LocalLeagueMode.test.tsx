@@ -20,6 +20,7 @@ import { POKEMON } from "../data/pokemon";
 import { ROSTER_SLOTS } from "../game/types";
 import type { StorageLike } from "../game/persistence";
 import { initialState } from "../game/state";
+import { LOCAL_DEFAULT_OPTIONS } from "../game/localFormat";
 
 function memory(seed: Record<string, string> = {}) {
   const data = new Map(Object.entries(seed));
@@ -57,6 +58,41 @@ function completeDraft(version: 1 | 2 = 2) {
 }
 
 describe("local league pass-and-play", () => {
+  it("shows unit chemistry for current leagues and preserves the historical passing-bonus explanation", () => {
+    const draft = {
+      ...completeDraft(),
+      options: {
+        ...LOCAL_DEFAULT_OPTIONS,
+        mode: "full-pool" as const,
+        format: { ...LOCAL_DEFAULT_OPTIONS.format, teamCount: 30 as const },
+      },
+    };
+    const legacy = { ...draft, chemistryVersion: undefined };
+    const view = render(
+      <LocalLeagueMode
+        onExit={() => {}}
+        storage={memory({ [LOCAL_LEAGUE_KEY]: JSON.stringify(legacy) })}
+      />,
+    );
+    expect(
+      screen.getByText(/percentage points on passing plays/),
+    ).toBeInTheDocument();
+    view.unmount();
+    render(
+      <LocalLeagueMode
+        onExit={() => {}}
+        storage={memory({
+          [LOCAL_LEAGUE_KEY]: JSON.stringify({ ...draft, chemistryVersion: 1 }),
+        })}
+      />,
+    );
+    expect(
+      screen.queryByText(/percentage points on passing plays/),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Projected five-player chemistry" }),
+    ).toHaveTextContent("Cohesion");
+  });
   it("sets up friends, confirms a human pick, then resumes the next turn from its own save", async () => {
     const storage = memory({ "pokemon-basketball:v3": "existing franchise" });
     const view = render(

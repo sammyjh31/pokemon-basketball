@@ -25,6 +25,8 @@ import {
 import { abilityUsefulness } from "./abilityEvaluation";
 import { physicalAbilitiesEnabled } from "./physicalAbilities";
 import { physicalAbilityValue } from "./physicalAbilityEvaluation";
+import { chemistryEnabled, evaluateLineupChemistry } from "./lineupChemistry";
+import type { RotationPlan } from "./franchiseFeatures";
 export { abilityUsefulness } from "./abilityEvaluation";
 
 /** Deliberately independent of consumers and save formats. Context is a fresh snapshot. */
@@ -37,7 +39,9 @@ export interface EvaluationTeam {
   abilityVersion?: 1;
   physicalAbilityVersion?: 1;
   evaluationVersion?: 1;
-  engineRules?: { abilities: boolean };
+  chemistryVersion?: 1;
+  rotationPlan?: RotationPlan;
+  engineRules?: { abilities: boolean; familiarity?: number };
 }
 const NEED_SKILLS = [
   "threePoint",
@@ -117,6 +121,107 @@ function rosterProfiles(
       : [];
   });
 }
+
+/** Four meaningful projected units at most; safe to reuse in market evaluations.
+ * The expensive in-game subset search is deliberately confined to matchLineups.
+ */
+function projectedUnit(
+  team: EvaluationTeam,
+  players: ReturnType<typeof rosterProfiles>,
+  tactic: Tactic,
+  defense: DefenseScheme,
+) {
+  if (!chemistryEnabled(team)) return undefined;
+  const active = team.rotationPlan
+    ? players.filter(({ slot }) => team.rotationPlan!.minutes[slot] > 0)
+    : players;
+  const pool =
+    active.length >= 5
+      ? active
+      : [
+          ...active,
+          ...players
+            .filter((p) => !active.includes(p))
+            .slice(0, 5 - active.length),
+        ];
+  if (pool.length < 5) return undefined;
+  const scores = new Map(
+    pool.map(
+      (player) =>
+        [
+          player,
+          POSITIONS.map(
+            (role) =>
+              player.p.positions[role] +
+              offenseFit(player.p, tactic) * 0.1 +
+              defenseFit(player.p, defense) * 0.1,
+          ),
+        ] as const,
+    ),
+  );
+  const assign = (options: typeof pool) => {
+    const unit: typeof pool = [];
+    for (const role of [0, 4, 1, 3, 2]) {
+      const best = options
+        .filter((p) => !unit.includes(p))
+        .sort((a, b) => scores.get(b)![role] - scores.get(a)![role])[0];
+      unit[role] = best;
+    }
+    return unit;
+  };
+  const baseline = assign(pool);
+  const candidates = [
+    baseline,
+    ...pool
+      .filter((p) => !baseline.includes(p))
+      .map((reserve) => {
+        const replace = POSITIONS.map((_, role) => ({
+          role,
+          gain: scores.get(reserve)![role] - scores.get(baseline[role])![role],
+        })).sort((a, b) => b.gain - a.gain)[0].role;
+        return assign(
+          baseline.map((p, role) => (role === replace ? reserve : p)),
+        );
+      }),
+  ];
+  return candidates
+    .map((unit) => {
+      const chemistry = evaluateLineupChemistry(
+        unit.map(({ mon, p }) => ({ pokemonId: mon.id, profile: p })),
+        {
+          tactic,
+          defense,
+          abilities: abilitiesEnabled(team),
+          familiarity: team.engineRules?.familiarity,
+        },
+      );
+      return {
+        players: unit.map(({ mon }, role) => ({
+          pokemonId: mon.id,
+          role: POSITIONS[role],
+        })),
+        chemistry,
+        score:
+          mean(unit.map((p, role) => scores.get(p)![role])) + chemistry.value,
+      };
+    })
+    .sort((a, b) => b.score - a.score)[0];
+}
+
+export function projectedLineupChemistry(
+  team: EvaluationTeam,
+  plan?: { tactic: Tactic; defense: DefenseScheme },
+) {
+  if (!chemistryEnabled(team)) return undefined;
+  const scheme = plan ?? evaluationGamePlan(team);
+  return projectedUnit(
+    team,
+    rosterProfiles(team),
+    scheme.tactic,
+    scheme.defense,
+  );
+}
+
 export function evaluationGamePlan(team: EvaluationTeam) {
   const coach = getCoach(team.coach?.id ?? "");
   if (!coach)
@@ -143,7 +248,10 @@ export function evaluationGamePlan(team: EvaluationTeam) {
               ? physicalAbilityValue(mon.id, p, tactic, team.defense ?? "man")
               : 0),
         ),
-      ) + (tactic === coach.tactic ? 18 - 10 * coach.adaptability : 0),
+      ) +
+      (tactic === coach.tactic ? 18 - 10 * coach.adaptability : 0) +
+      (projectedUnit(team, players, tactic, team.defense ?? "man")?.chemistry
+        .value ?? 0),
   })).sort((a, b) => b.score - a.score)[0].tactic;
   const defense = DEFENSE_SCHEMES.map((defense) => ({
     defense,
@@ -154,12 +262,14 @@ export function evaluationGamePlan(team: EvaluationTeam) {
             defenseFit(p, defense) +
             (physical ? physicalAbilityValue(mon.id, p, tactic, defense) : 0),
         ),
-      ) + (defense === coach.defense ? 18 - 10 * coach.adaptability : 0),
+      ) +
+      (defense === coach.defense ? 18 - 10 * coach.adaptability : 0) +
+      (projectedUnit(team, players, tactic, defense)?.chemistry.value ?? 0),
   })).sort((a, b) => b.score - a.score)[0].defense;
   return {
     tactic,
     defense,
-    reason: `${coach.name}: shared roster evaluation favors ${tactic} offense and ${defense} defense, balancing coaching style, developed skills and enabled abilities.${physical ? " Physical movement, screens, rebounding and energy effects inform the plan." : ""}`,
+    reason: `${coach.name}: shared roster evaluation favors ${tactic} offense and ${defense} defense, balancing coaching style, developed skills and enabled abilities.${physical ? " Physical movement, screens, rebounding and energy effects inform the plan." : ""}${chemistryEnabled(team) ? " Projected five-player chemistry and active partnerships inform the plan." : ""}`,
   };
 }
 export function createEvaluationContext(
@@ -354,6 +464,19 @@ export function evaluateTeam(team: EvaluationTeam) {
     value: depth,
     contribution: depth * 0.15,
   });
+  const projected = projectedUnit(
+    team,
+    players,
+    context.tactic,
+    context.defense,
+  );
+  if (projected)
+    factors.push({
+      key: "chemistry",
+      label: "Projected five-player chemistry",
+      value: projected.chemistry.score,
+      contribution: projected.chemistry.value,
+    });
   return {
     score: factors.reduce((n, f) => n + f.contribution, 0),
     factors,
@@ -393,6 +516,13 @@ export function evaluationTrainingOptions(
   const context = createEvaluationContext(team, [pokemonId]);
   const before = evaluatePlayer(context, pokemonId, role),
     offsets = team.development?.[pokemonId] ?? {};
+  const chemistryPlayers = chemistryEnabled(team)
+    ? rosterProfiles(team)
+    : undefined;
+  const chemistryBefore = chemistryPlayers
+    ? (projectedUnit(team, chemistryPlayers, context.tactic, context.defense)
+        ?.chemistry.value ?? 0)
+    : 0;
   const current = playerProfile(
     POKEMON_BY_ID.get(pokemonId)!,
     offsets,
@@ -428,8 +558,21 @@ export function evaluationTrainingOptions(
           ),
         ]),
       ) as DevelopmentRatings;
-      const after = evaluatePlayer(context, pokemonId, before.role, projected),
-        gain = after.score - before.score;
+      const after = evaluatePlayer(context, pokemonId, before.role, projected);
+      const chemistryAfter = chemistryPlayers
+        ? (projectedUnit(
+            team,
+            chemistryPlayers.map((player) =>
+              player.mon.id === pokemonId
+                ? { ...player, p: playerProfile(player.mon, projected) }
+                : player,
+            ),
+            context.tactic,
+            context.defense,
+          )?.chemistry.value ?? 0)
+        : 0;
+      const gain =
+        after.score - before.score + chemistryAfter - chemistryBefore;
       return {
         focus,
         role: before.role,
@@ -437,6 +580,11 @@ export function evaluationTrainingOptions(
         reasons: [
           `Shared team value: ${gain >= 0 ? "+" : ""}${gain.toFixed(2)} projected from this practice focus; this is a planning estimate, not a promised rating gain.`,
           ...before.reasons.slice(0, 2),
+          ...(chemistryPlayers
+            ? [
+                "Practice value includes its effect on the projected five's chemistry and partnerships.",
+              ]
+            : []),
         ],
       };
     })

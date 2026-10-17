@@ -31,7 +31,13 @@ const basket = { x: 0, y: 5.25 };
 const distance = (a: CourtPoint, b: CourtPoint) =>
   Math.hypot(a.x - b.x, a.y - b.y);
 const skill = (p: Player, key: keyof Player["profile"]["attributes"]) =>
-  p.profile.attributes[key] * (0.72 + p.energy * 0.0028);
+  p.profile.attributes[key] *
+  (0.72 + p.energy * 0.0028) *
+  (key === "passing"
+    ? (p.chemistry?.passing ?? 1)
+    : key === "perimeterDefense" || key === "interiorDefense"
+      ? (p.chemistry?.defense ?? 1)
+      : 1);
 const mobility = (p: Player) =>
   clamp(8 + skill(p, "speed") * 0.13 - (p.body?.inertia ?? 0.5) * 5, 5, 21);
 const bounded = (p: CourtPoint): CourtPoint => ({
@@ -45,7 +51,7 @@ export function moveToward(
   seconds: number,
 ): CourtPoint {
   const span = distance(from, to),
-    speed = mobility(player),
+    speed = mobility(player) * (player.chemistry?.movement ?? 1),
     boost = physicalPlayerEffects(player).movement,
     fraction = Math.min(1, (speed * boost * seconds) / Math.max(0.001, span));
   const point = bounded({
@@ -199,10 +205,18 @@ export function chooseScreenCoverage(c: CourtContext): {
       (60 - decision) * 0.045 -
       (skill(c.screener, "passing") - 60) * 0.045,
   };
-  const handlerAbility = physicalPlayerEffects(c.handler),
-    screenerAbility = physicalPlayerEffects(c.screener),
-    guardAbility = physicalPlayerEffects(guard),
-    bigAbility = physicalPlayerEffects(big);
+  const courtEffects = (player: Player) => {
+    const own = physicalPlayerEffects(player);
+    return {
+      movement: own.movement * (player.chemistry?.movement ?? 1),
+      screen: own.screen * (player.chemistry?.screen ?? 1),
+      navigation: own.navigation * (player.chemistry?.navigation ?? 1),
+    };
+  };
+  const handlerAbility = courtEffects(c.handler),
+    screenerAbility = courtEffects(c.screener),
+    guardAbility = courtEffects(guard),
+    bigAbility = courtEffects(big);
   // Strong contact favors avoiding the screen; quick bigs can show and recover.
   // These are planning scores, separate from the contact resolved below.
   scores.switch +=
@@ -255,7 +269,9 @@ export function applyScreenCoverage(
   const contactAdjustment = (base: number) => {
     const screen = physicalPlayerEffects(c.screener).screen,
       navigation = physicalPlayerEffects(guard).navigation;
-    const gap = (base * screen) / navigation;
+    const gap =
+      (((base * screen) / navigation) * (c.screener.chemistry?.screen ?? 1)) /
+      (guard.chemistry?.navigation ?? 1);
     if (screen !== 1) recordPhysicalAbility(c.screener.box, "screens");
     if (navigation !== 1) recordPhysicalAbility(guard.box, "screens");
     return gap - base;

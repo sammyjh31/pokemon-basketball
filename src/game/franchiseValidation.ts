@@ -313,6 +313,8 @@ export function validateLeagueTeams(
   if (typeVersion !== undefined && typeVersion !== 1) return fail();
   const abilityVersion = object(rows[0]).abilityVersion;
   const physicalAbilityVersion = object(rows[0]).physicalAbilityVersion;
+  const chemistryVersion = object(rows[0]).chemistryVersion;
+  if (chemistryVersion !== undefined && chemistryVersion !== 1) return fail();
   const evaluationVersion = object(rows[0]).evaluationVersion;
   const courtVersion = object(rows[0]).courtVersion;
   const matchupVersion = object(rows[0]).matchupVersion;
@@ -352,6 +354,7 @@ export function validateLeagueTeams(
       row.typeMatchupsVersion !== typeVersion ||
       row.abilityVersion !== abilityVersion ||
       row.physicalAbilityVersion !== physicalAbilityVersion ||
+      row.chemistryVersion !== chemistryVersion ||
       row.evaluationVersion !== evaluationVersion ||
       row.courtVersion !== courtVersion ||
       row.matchupVersion !== matchupVersion ||
@@ -398,6 +401,7 @@ export function validateLeagueTeams(
       ...(physicalAbilityVersion === 1
         ? { physicalAbilityVersion: 1 as const }
         : {}),
+      ...(chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
       ...(evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
       ...(courtVersion === 1 ? { courtVersion: 1 as const } : {}),
       ...(matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
@@ -1082,6 +1086,7 @@ export function validateFranchise(
         team.typeTacticsVersion !== run.typeTacticsVersion ||
         team.abilityVersion !== run.abilityVersion ||
         team.physicalAbilityVersion !== run.physicalAbilityVersion ||
+        team.chemistryVersion !== run.chemistryVersion ||
         team.evaluationVersion !== run.evaluationVersion ||
         team.courtVersion !== run.courtVersion ||
         team.matchupVersion !== run.matchupVersion ||

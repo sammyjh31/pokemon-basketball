@@ -8,6 +8,7 @@ export function rookieFixture(): GameState {
   // This fixture represents existing franchises; modern tests opt in explicitly.
   delete run.evaluationVersion;
   delete run.physicalAbilityVersion;
+  delete run.chemistryVersion;
   [129, 25, 149, 68, 143, 9, 94, 59].forEach((id, index) => {
     run = placePokemon(run, id, ROSTER_SLOTS[index]);
   });

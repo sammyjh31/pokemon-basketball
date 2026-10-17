@@ -1,3 +1,5 @@
+import { chemistryEnabled } from "./lineupChemistry";
+import { getMatchChemistry, refreshLineupChemistry } from "./matchChemistry";
 import {
   physicalAbilitiesEnabled,
   physicalPlayerEffects,
@@ -115,7 +117,7 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   const planKey = config.rotationPlan
     ? `:${ROSTER_SLOTS.map((slot) => config.rotationPlan!.minutes[slot]).join(",")}:${config.rotationPlan.closing.join(",")}`
     : "";
-  const key = `${physicalAbilitiesEnabled(config) ? "physical1:" : ""}${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
+  const key = `${chemistryEnabled(config) ? `chemistry1:${config.engineRules?.familiarity ?? 0}:` : ""}${physicalAbilitiesEnabled(config) ? "physical1:" : ""}${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
   let targets = targetCache.get(key);
   if (!targets) {
     targets =
@@ -212,8 +214,14 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
 }
 
 const skill = (p: Player, key: keyof Attributes) => {
+  const cooperation =
+    key === "passing"
+      ? (p.chemistry?.passing ?? 1)
+      : key === "perimeterDefense" || key === "interiorDefense"
+        ? (p.chemistry?.defense ?? 1)
+        : 1;
   if (!p.depth || p.body)
-    return p.profile.attributes[key] * (0.72 + p.energy * 0.0028);
+    return p.profile.attributes[key] * (0.72 + p.energy * 0.0028) * cooperation;
   const physical = p.depth.physical;
   const addition =
     key === "speed"
@@ -227,7 +235,8 @@ const skill = (p: Player, key: keyof Attributes) => {
             : 0;
   return (
     clamp(p.profile.attributes[key] + addition, 1, 100) *
-    (0.72 + p.energy * 0.0028)
+    (0.72 + p.energy * 0.0028) *
+    cooperation
   );
 };
 const average = (players: Player[], get: (p: Player) => number) =>
@@ -306,6 +315,11 @@ export function simulateMatch(
     throw new Error(
       "Both teams must use valid, matching physical ability rules.",
     );
+  if (
+    home.chemistryVersion !== away.chemistryVersion ||
+    (home.chemistryVersion !== undefined && home.chemistryVersion !== 1)
+  )
+    throw new Error("Both teams must use valid, matching chemistry rules.");
   const courtEnabled = home.courtVersion === 1;
   const bodyEnabled = home.matchupVersion === 1;
   const possessionDepth = home.possessionVersion === 1;
@@ -364,6 +378,8 @@ export function simulateMatch(
     for (const t of [h, a])
       for (const p of t.players) p.box.started = t.floor.includes(p);
   }
+  refreshLineupChemistry(h);
+  refreshLineupChemistry(a);
   const result: LeagueMatch = {
     ...(typed
       ? {
@@ -559,7 +575,7 @@ export function simulateMatch(
   let activeMatchup: MatchupEvidence | undefined;
   const chemistryMap = new Map<string, number>();
   const chemistry = (team: Team) => {
-    if (!team.config.engineRules) return 0;
+    if (chemistryEnabled(team.config) || !team.config.engineRules) return 0;
     const key = `${team.config.id}:${team.floor
       .map((p) => p.box.pokemonId)
       .sort()
@@ -579,13 +595,22 @@ export function simulateMatch(
     result.insights?.defense.map((d) => [d.playerId, d]),
   );
   const lineup = (team: Team) => {
-    const playerIds = team.floor.map((p) => p.box.playerId).sort(),
-      key = playerIds.join("|");
+    const playerIds = team.floor.map((p) => p.box.playerId).sort();
+    const chemistry = getMatchChemistry(team);
+    const chemistryContext = chemistry
+      ? { tactic: team.config.tactic, defense: team.config.defense }
+      : undefined;
+    const key =
+      playerIds.join("|") +
+      (chemistryContext
+        ? `:${chemistryContext.tactic}:${chemistryContext.defense}`
+        : "");
     let entry = lineupMap.get(key);
     if (!entry) {
       entry = {
         teamId: team.config.id,
         playerIds,
+        ...(chemistry ? { chemistry, chemistryContext } : {}),
         seconds: 0,
         possessions: 0,
         pointsFor: 0,
@@ -890,8 +915,11 @@ export function simulateMatch(
     if (possessionDepth) {
       const profile = (p: Player) => ({
         id: p.box.playerId,
-        ...(p.physicalAbilities
-          ? { abilityRebound: physicalPlayerEffects(p).rebound }
+        ...(p.physicalAbilities || p.chemistry
+          ? {
+              abilityRebound:
+                physicalPlayerEffects(p).rebound * (p.chemistry?.rebound ?? 1),
+            }
           : {}),
         ...(p.body ? { body: p.body } : {}),
         offense: skill(p, "offensiveRebound"),
@@ -939,7 +967,9 @@ export function simulateMatch(
       return battle.offensive;
     }
     const pursuit = (p: Player, key: "offensiveRebound" | "defensiveRebound") =>
-      skill(p, key) * physicalPlayerEffects(p).rebound;
+      skill(p, key) *
+      physicalPlayerEffects(p).rebound *
+      (p.chemistry?.rebound ?? 1);
     for (const p of [...offense.floor, ...defense.floor])
       if (physicalPlayerEffects(p).rebound !== 1)
         recordPhysicalAbility(p.box, "rebounds");
@@ -1017,7 +1047,7 @@ export function simulateMatch(
     const changed = abilityEnergyChange(
       player.box.pokemonId,
       player.energy,
-      delta,
+      delta < 0 ? delta * (player.chemistry?.drain ?? 1) : delta,
       player.physicalAbilities === true,
       floor,
     );
@@ -1059,6 +1089,8 @@ export function simulateMatch(
     tickInPeriod = courtSecondsInPeriod / 7.5;
   };
   const possession = (offense: Team, defense: Team) => {
+    refreshLineupChemistry(offense);
+    refreshLineupChemistry(defense);
     if (result.insights) lineup(offense).possessions++;
     let secondChance = false;
     const origin = origins.get(offense);
@@ -1083,6 +1115,8 @@ export function simulateMatch(
     let shotClock = 24;
     let firstAction = true;
     for (;;) {
+      refreshLineupChemistry(offense);
+      refreshLineupChemistry(defense);
       if (courtEnabled && periodTicks * 7.5 - courtSecondsInPeriod < 0.000001)
         return;
       activeCourt = undefined;
@@ -1111,7 +1145,8 @@ export function simulateMatch(
         (p) =>
           Math.pow(
             (p.profile.traits.screening + (p.depth?.physical.screening ?? 0)) *
-              physicalPlayerEffects(p).screen,
+              physicalPlayerEffects(p).screen *
+              (p.chemistry?.screen ?? 1),
             3,
           ) *
           (bodyEnabled ? 0.75 + screenLeverage(p, guards!.get(handler)!) : 1) *

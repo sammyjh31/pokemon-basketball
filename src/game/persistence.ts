@@ -136,6 +136,8 @@ function validate(
     (raw.physicalAbilityVersion === 1 && raw.abilityVersion !== 1)
   )
     return fail();
+  if (raw.chemistryVersion !== undefined && raw.chemistryVersion !== 1)
+    return fail();
   if (raw.evaluationVersion !== undefined && raw.evaluationVersion !== 1)
     return fail();
   if (raw.courtVersion !== undefined && raw.courtVersion !== 1) return fail();
@@ -174,6 +176,7 @@ function validate(
     ...(raw.physicalAbilityVersion === 1
       ? { physicalAbilityVersion: 1 as const }
       : {}),
+    ...(raw.chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
     ...(raw.evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
     ...(raw.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
     ...(raw.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
@@ -218,6 +221,7 @@ function validate(
           team.typeTacticsVersion !== run.typeTacticsVersion ||
           team.abilityVersion !== run.abilityVersion ||
           team.physicalAbilityVersion !== run.physicalAbilityVersion ||
+          team.chemistryVersion !== run.chemistryVersion ||
           team.evaluationVersion !== run.evaluationVersion ||
           team.courtVersion !== run.courtVersion ||
           team.matchupVersion !== run.matchupVersion ||

@@ -1,0 +1,92 @@
+.projected-chemistry {
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-width: 0;
+}
+.chemistry-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chemistry-heading h3 {
+  margin: 0;
+}
+.chemistry-heading > strong {
+  color: var(--gold);
+}
+.chemistry-five {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
+.chemistry-five li {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.chemistry-five small,
+.chemistry-links span,
+.chemistry-links small {
+  display: block;
+}
+.chemistry-five small,
+.chemistry-note,
+.chemistry-scheme,
+.chemistry-links small {
+  color: var(--muted);
+}
+.chemistry-details {
+  text-align: left;
+  white-space: normal;
+}
+.chemistry-details p,
+.chemistry-note {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.chemistry-links {
+  padding-left: 18px;
+}
+.chemistry-links li {
+  margin: 10px 0;
+}
+.chemistry-links span {
+  margin: 3px 0;
+}
+.lineup-chemistry {
+  min-width: 200px;
+  max-width: 360px;
+  text-align: left;
+  white-space: normal;
+}
+.lineup-chemistry summary {
+  cursor: pointer;
+}
+.lineup-chemistry > p {
+  font-size: 12px;
+  line-height: 1.6;
+}
+@media (max-width: 640px) {
+  .projected-chemistry {
+    padding: 12px;
+  }
+  .chemistry-five {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.insight-lineups tbody th,
+.insight-lineups td {
+  vertical-align: top;
+}
+@media (max-width: 640px) {
+  /* Let the complete partnership detail scroll into view on narrow screens. */
+  .results-table.insight-lineups th:first-child {
+    position: static;
+  }
+}

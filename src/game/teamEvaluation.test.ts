@@ -7,6 +7,8 @@ import {
   evaluateTeam,
   compareTeamEvaluation,
   evaluationTrainingOptions,
+  evaluationGamePlan,
+  projectedLineupChemistry,
   type EvaluationTeam,
 } from "./teamEvaluation";
 const team = (): EvaluationTeam => ({
@@ -17,6 +19,80 @@ const team = (): EvaluationTeam => ({
   abilityVersion: 1,
 });
 describe("shared evaluation", () => {
+  it("chooses the more complementary trade when raw team value favors another player", () => {
+    const paired: EvaluationTeam = {
+      abilityVersion: 1,
+      tactic: "balanced",
+      defense: "man",
+      roster: {
+        PG: 311,
+        SG: 312,
+        SF: 65,
+        PF: 68,
+        C: 95,
+        B1: null,
+        B2: null,
+        B3: null,
+      },
+    };
+    const unpaired = { ...paired, roster: { ...paired.roster, SG: 34 } };
+    expect(compareTeamEvaluation(unpaired, paired).delta).toBeLessThan(0);
+    expect(
+      compareTeamEvaluation(
+        { ...unpaired, chemistryVersion: 1 },
+        { ...paired, chemistryVersion: 1 },
+      ).delta,
+    ).toBeGreaterThan(0);
+    const disabled = {
+      ...paired,
+      chemistryVersion: 1 as const,
+      engineRules: { abilities: false },
+    };
+    const projection = projectedLineupChemistry(disabled)!;
+    expect(projection.chemistry.links).toEqual([]);
+    expect(projection.chemistry.score).toBeGreaterThan(0);
+    expect(
+      evaluateTeam(disabled).factors.find((f) => f.key === "chemistry")?.value,
+    ).toBeGreaterThan(0);
+  });
+
+  it("lets complete-unit partnerships change a close automatic game-plan decision", () => {
+    const t = {
+      ...team(),
+      coach: { version: 1 as const, id: "oak" },
+      development: Object.fromEntries(
+        Object.values(team().roster).map((id) => [id, { threePoint: 29.1 }]),
+      ),
+    };
+    expect(evaluationGamePlan(t).tactic).toBe("perimeter");
+    expect(evaluationGamePlan({ ...t, chemistryVersion: 1 }).tactic).toBe(
+      "balanced",
+    );
+  });
+
+  it("credits practice that improves a creator's contribution to the projected five", () => {
+    const t = { ...team(), coach: undefined };
+    const gain = (chemistryVersion?: 1) =>
+      evaluationTrainingOptions({ ...t, chemistryVersion }, 65, "PG").find(
+        (plan) => plan.focus === "playmaking",
+      )!.gain;
+    expect(gain(1)).toBeGreaterThan(gain());
+  });
+
+  it("values the projected five together only under the chemistry rules", () => {
+    const legacy = team();
+    const current = { ...legacy, chemistryVersion: 1 as const };
+    const result = evaluateTeam(current);
+    const factor = result.factors.find((f) => f.key === "chemistry");
+    expect(factor?.value).toBeGreaterThan(0);
+    expect(factor?.contribution).toBeGreaterThan(0);
+    expect(
+      evaluateTeam(legacy).factors.some((f) => f.key === "chemistry"),
+    ).toBe(false);
+    expect(
+      result.factors.reduce((sum, f) => sum + f.contribution, 0),
+    ).toBeCloseTo(result.score, 10);
+  });
   it("is deterministic, finite for empty rosters, and explains the complete score", () => {
     const t = team(),
       before = JSON.stringify(t);

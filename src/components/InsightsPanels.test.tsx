@@ -15,6 +15,43 @@ import {
 } from "../game/insightAnalysis.testUtils";
 import { GameInsightsPanel } from "./GameInsightsPanel";
 import { SeasonInsightsPanel } from "./SeasonInsightsPanel";
+import { LineupInsightsTable } from "./GameInsightsPanel";
+
+it("shows recorded chemistry partners and leaves historical chemistry unavailable", () => {
+  const historical = insightMatch().insights!.lineups[0];
+  const recorded = {
+    ...historical,
+    playerIds: ["0:311", "0:312", "0:3", "0:4", "0:5"],
+    chemistryContext: { tactic: "balanced" as const, defense: "zone" as const },
+    chemistry: {
+      score: 82,
+      value: 2,
+      strengths: ["Spacing"],
+      weaknesses: ["Interior coverage"],
+      effects: {},
+      links: [
+        {
+          id: "plus-minus",
+          label: "Plus / Minus",
+          pokemonIds: [311, 312],
+          description: "The pair coordinates off-ball movement.",
+        },
+      ],
+    },
+  };
+  render(
+    <LineupInsightsTable rows={[historical, recorded]} teams={insightTeams} />,
+  );
+  const table = screen.getByRole("table", { name: "Five-player lineups" });
+  expect(table).toHaveTextContent("COHESION");
+  const rows = within(table).getAllByRole("row");
+  expect(rows[1]).toHaveTextContent("—");
+  expect(rows[2]).toHaveTextContent("82");
+  expect(rows[2]).toHaveTextContent("Plus / Minus");
+  expect(rows[2]).toHaveTextContent("Plusle + Minun");
+  expect(rows[2]).toHaveTextContent("Balanced");
+  expect(rows[2]).toHaveTextContent("Protect the paint");
+});
 
 describe("game insights", () => {
   it("filters recorded shots by player and exposes results beyond chart color", () => {

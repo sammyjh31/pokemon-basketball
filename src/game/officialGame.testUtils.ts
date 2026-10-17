@@ -36,6 +36,9 @@ export function finishedGame(
     ...(abilitiesEnabled(teams[0]) && teams[0].physicalAbilityVersion === 1
       ? { physicalAbilityVersion: 1 as const }
       : {}),
+    ...(teams[0].chemistryVersion === 1
+      ? { chemistryVersion: 1 as const }
+      : {}),
     seed: fixture.seed,
     teams: [teams[0], opponent],
   });

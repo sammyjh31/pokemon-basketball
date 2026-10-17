@@ -1,15 +1,22 @@
 import type { Attributes, Position, Tactic } from "../types";
 import type { AbilityActivations } from "../abilities";
 import type { EvaluationTeam } from "../teamEvaluation";
+import type { PlayerProfile } from "../playerProfile";
+import type { ChemistryContext, LineupChemistry } from "../lineupChemistry";
 export type Side = 0 | 1;
 export type Phase = "tipoff" | "live" | "inbound" | "break" | "final";
 export type PlayerAction =
   "idle" | "run" | "shoot" | "pass" | "dunk" | "block" | "steal" | "screen";
-export interface ArcadeTeam extends Omit<EvaluationTeam, "tactic"> {
+export interface ArcadeTeam extends Omit<
+  EvaluationTeam,
+  "tactic" | "engineRules"
+> {
   name: string;
   tactic?: Tactic;
+  engineRules?: { abilities: boolean; familiarity?: number };
 }
 export interface ArcadeSetup {
+  chemistryVersion?: 1;
   abilityVersion?: 1;
   physicalAbilityVersion?: 1;
   evaluationVersion?: 1;
@@ -64,6 +71,8 @@ export interface ArcadePlayer {
   /** Neutral velocity used to measure actual movement added by physical abilities. */
   physicalNeutralVelocity?: { x: number; y: number };
   attributes: Attributes;
+  /** Developed profile captured for this game; ratings are never modified by chemistry. */
+  chemistryProfile?: PlayerProfile;
   /** Frozen shared values for CPU substitution roles; absent in historical games. */
   roleScores?: Record<Position, number>;
   action: PlayerAction;
@@ -117,6 +126,15 @@ export interface ArcadeEvent {
   time: number;
 }
 export interface ArcadeState {
+  chemistryVersion?: 1;
+  chemistryContexts?: [
+    Omit<ChemistryContext, "abilities">,
+    Omit<ChemistryContext, "abilities">,
+  ];
+  chemistryLineups?: [
+    { key: string; lineup: LineupChemistry },
+    { key: string; lineup: LineupChemistry },
+  ];
   abilityVersion?: 1;
   physicalAbilityVersion?: 1;
   /** Opposing screen contacts remain one encounter until the players separate. */

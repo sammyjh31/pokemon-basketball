@@ -128,6 +128,7 @@ describe("arcade exhibition flow", () => {
     expect(state.names[1]).toBe(opponent.name);
     expect(state.evaluationVersion).toBe(1);
     expect(state.physicalAbilityVersion).toBe(1);
+    expect(state.chemistryVersion).toBe(1);
     const context = createEvaluationContext({
       ...opponent,
       abilityVersion: 1,

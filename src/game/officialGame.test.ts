@@ -136,6 +136,7 @@ describe("official arcade boxes", () => {
         }
       const state = createGame({
         official: true,
+        chemistryVersion: 1,
         ...(enabled
           ? { abilityVersion: 1 as const, physicalAbilityVersion: 1 as const }
           : {}),

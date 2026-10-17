@@ -96,7 +96,9 @@ export function coachGamePlan(
   }
   fit[coach.tactic] += 22 - 12 * coach.adaptability;
   const sharedPlan =
-    team.evaluationVersion === 1 ? evaluationGamePlan(team) : undefined;
+    team.evaluationVersion === 1 || team.chemistryVersion === 1
+      ? evaluationGamePlan(team)
+      : undefined;
   const tactic =
     sharedPlan?.tactic ??
     (Object.keys(fit) as Tactic[]).sort((a, b) => fit[b] - fit[a])[0];

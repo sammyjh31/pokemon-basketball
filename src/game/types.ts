@@ -200,6 +200,8 @@ export interface Run {
   abilityVersion?: 1;
   /** Physical species abilities; absent on historical seasons for exact replay. */
   physicalAbilityVersion?: 1;
+  /** Active-five basketball chemistry; independent of the ability switch. */
+  chemistryVersion?: 1;
   /** Shared team evaluation; absent on historical seasons for exact replay. */
   evaluationVersion?: 1;
   id: string;
@@ -263,6 +265,8 @@ export interface LeagueTeam {
   abilityVersion?: 1;
   /** Physical species abilities; absent on historical seasons for exact replay. */
   physicalAbilityVersion?: 1;
+  /** Active-five basketball chemistry; independent of the ability switch. */
+  chemistryVersion?: 1;
   /** Shared team evaluation; absent on historical seasons for exact replay. */
   evaluationVersion?: 1;
   id: number;

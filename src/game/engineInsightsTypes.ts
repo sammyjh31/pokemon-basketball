@@ -46,6 +46,12 @@ export interface ShotEvent {
   y: number;
 }
 export interface LineupSummary {
+  /** Actual on-court unit and scheme; absent for historical engine versions. */
+  chemistry?: import("./lineupChemistry").LineupChemistry;
+  chemistryContext?: {
+    tactic: import("./types").Tactic;
+    defense: import("./types").DefenseScheme;
+  };
   teamId: number;
   /** Five unique team:species IDs, sorted for grouping, not position ordering. */
   playerIds: string[];

@@ -332,6 +332,7 @@ export function startFranchiseSeason(
     typeTacticsVersion: 1 as const,
     abilityVersion: 1 as const,
     physicalAbilityVersion: 1 as const,
+    chemistryVersion: 1 as const,
     evaluationVersion: 1 as const,
     courtVersion: 1 as const,
     matchupVersion: 1 as const,

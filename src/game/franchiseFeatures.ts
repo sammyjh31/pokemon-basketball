@@ -34,6 +34,8 @@ export interface OfficialGame {
   abilityVersion?: 1;
   /** Physical species abilities; absent on historical seasons for exact replay. */
   physicalAbilityVersion?: 1;
+  /** Active-five basketball chemistry; independent of the ability switch. */
+  chemistryVersion?: 1;
   fixtureId: string;
   match: LeagueMatch;
   courtScore: [number, number];

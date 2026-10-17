@@ -48,6 +48,22 @@ function officialPhysicalVersion(
   return version === 1 && abilitiesEnabled(home) ? 1 : undefined;
 }
 
+function officialChemistryVersion(
+  fixture: LeagueFixture,
+  teams: LeagueTeam[],
+): 1 | undefined {
+  const home = teams.find((team) => team.id === fixture.homeTeamId);
+  const away = teams.find((team) => team.id === fixture.awayTeamId);
+  if (!home || !away) return fail();
+  const version = home.chemistryVersion;
+  if (
+    (version !== undefined && version !== 1) ||
+    version !== away.chemistryVersion
+  )
+    return fail();
+  return version;
+}
+
 /** Stored scores and courtScore are always home/away; arcade side zero is always the coach. */
 export function officialGameFromArcade(
   state: ArcadeState,
@@ -57,6 +73,7 @@ export function officialGameFromArcade(
   if (
     !state.official ||
     state.physicalAbilityVersion !== officialPhysicalVersion(fixture, teams) ||
+    state.chemistryVersion !== officialChemistryVersion(fixture, teams) ||
     (state.abilityVersion !== undefined && state.abilityVersion !== 1) ||
     (state.abilityVersion === 1) !==
       abilitiesEnabled(teams.find((team) => team.id === 0) ?? {}) ||
@@ -240,6 +257,7 @@ export function officialGameFromArcade(
       ...(state.physicalAbilityVersion === 1
         ? { physicalAbilityVersion: 1 as const }
         : {}),
+      ...(state.chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
     },
     fixture,
     teams,
@@ -257,6 +275,7 @@ export function validateOfficialGame(
     value.fixtureId !== fixture.id ||
     value.scale !== SCALE ||
     value.physicalAbilityVersion !== officialPhysicalVersion(fixture, teams) ||
+    value.chemistryVersion !== officialChemistryVersion(fixture, teams) ||
     (value.abilityVersion !== undefined && value.abilityVersion !== 1) ||
     (value.abilityVersion === 1) !==
       abilitiesEnabled(teams.find((team) => team.id === 0) ?? {}) ||

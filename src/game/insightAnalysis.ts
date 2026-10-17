@@ -209,7 +209,7 @@ export async function buildSeasonInsights(
       if (row.playerIds.length !== 5 || new Set(row.playerIds).size !== 5)
         continue;
       const playerIds = [...row.playerIds].sort(),
-        key = `${row.teamId}|${playerIds.join("|")}`;
+        key = `${row.teamId}|${playerIds.join("|")}${row.chemistryContext ? `:${row.chemistryContext.tactic}:${row.chemistryContext.defense}` : ""}`;
       const total = lineups.get(key) ?? {
         ...row,
         playerIds,

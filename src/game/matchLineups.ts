@@ -6,8 +6,11 @@ import type { EngineProfile } from "./engineDepth";
 import type { PlayerProfile } from "./playerProfile";
 import { typeLineupBonuses } from "./typeCoaching";
 import { POSITIONS, type LeagueBox, type LeagueTeam } from "./types";
+import { chemistryEnabled, type ChemistryEffects } from "./lineupChemistry";
+import { getMatchChemistry, refreshLineupChemistry } from "./matchChemistry";
 type Side = "home" | "away";
 export interface Player {
+  chemistry?: ChemistryEffects;
   physicalAbilities?: true;
   depth?: EngineProfile;
   body?: BodyProfile;
@@ -155,6 +158,10 @@ export function chooseLineup(
   close: boolean,
   opponents: readonly Player[] = [],
 ): void {
+  if (chemistryEnabled(team.config)) {
+    chooseChemistryLineup(team, minute, close, opponents);
+    return;
+  }
   const coach = getCoach(team.config.coach?.id ?? "");
   const pool = eligiblePlayers(team),
     chosen: Player[] = [];
@@ -218,6 +225,102 @@ export function chooseLineup(
   if (minute > 0) recordCounters(team, previous, bonuses, opponents);
 }
 
+/** Score each player/role once, then compare at most C(8, 5) complete units. */
+function chooseChemistryLineup(
+  team: Team,
+  minute: number,
+  close: boolean,
+  opponents: readonly Player[],
+) {
+  const coach = getCoach(team.config.coach?.id ?? "");
+  const pool = eligiblePlayers(team),
+    bonuses = scoutLineup(team, opponents);
+  const closers =
+    close && team.config.rotationPlan
+      ? pool.filter((p) =>
+          team.config.rotationPlan!.closing.includes(p.box.slot),
+        )
+      : [];
+  const phase = Math.min(minute / 48, 1);
+  const scores = new Map(
+    pool.map((p) => {
+      const threshold = minute < 12 ? 2 : minute < 24 ? 3 : minute < 36 ? 4 : 5;
+      const foulPenalty =
+        minute < 43 && p.box.fouls >= threshold
+          ? 14 + (p.box.fouls - threshold) * 9
+          : 0;
+      const debt = p.target * phase - Math.min(p.box.minutes, 48);
+      return [
+        p,
+        POSITIONS.map((_, role) => {
+          const basketball = close
+            ? roleValue(team, p, role) * 0.85 +
+              p.energy * 0.42 +
+              p.profile.attributes.composure * 0.12 -
+              foulPenalty * 0.2
+            : roleValue(team, p, role) * 0.5 +
+              p.energy * 0.22 +
+              p.target * 0.8 +
+              debt * 5 -
+              foulPenalty -
+              Math.max(0, p.consecutive - 7) * 1.2;
+          return (
+            basketball +
+            (coach
+              ? (team.config.evaluationVersion === 1
+                  ? 0
+                  : coachPlayerPreference(coach, p.profile)) -
+                (1 - p.energy / 100) * coach.rest * 8 -
+                foulPenalty * coach.rest * 0.35
+              : 0) +
+            (bonuses.get(p)?.[role] ?? 0) +
+            (bonuses.size && team.floor[role] === p ? 1.5 : 0)
+          );
+        }),
+      ] as const;
+    }),
+  );
+  let bestScore = -Infinity,
+    best = team.floor;
+  const visit = (start: number, unit: Player[]) => {
+    if (unit.length === 5) {
+      if (closers.some((p) => !unit.includes(p))) return;
+      const floor: Player[] = [];
+      let score = 0;
+      for (const role of ROLE_ORDER) {
+        let selected: Player | undefined,
+          value = -Infinity;
+        for (const p of unit) {
+          if (floor.includes(p)) continue;
+          const candidate = scores.get(p)![role];
+          if (candidate > value) {
+            value = candidate;
+            selected = p;
+          }
+        }
+        floor[role] = selected!;
+        score += value;
+      }
+      score += (getMatchChemistry(team, floor)?.value ?? 0) * 5;
+      if (score > bestScore) {
+        bestScore = score;
+        best = floor;
+      }
+      return;
+    }
+    for (let i = start; i <= pool.length - (5 - unit.length); i++) {
+      unit.push(pool[i]);
+      visit(i + 1, unit);
+      unit.pop();
+    }
+  };
+  visit(0, []);
+  const previous = team.floor;
+  team.floor = best;
+  refreshLineupChemistry(team);
+  if (minute > 0) recordCounters(team, previous, bonuses, opponents);
+}
+
 export function replaceFoulOut(
   team: Team,
   opponents: readonly Player[] = [],
@@ -236,12 +339,25 @@ export function replaceFoulOut(
       (a, b) =>
         roleValue(team, b, role) +
         b.energy * 0.25 +
-        (bonuses.get(b)?.[role] ?? 0) -
+        (bonuses.get(b)?.[role] ?? 0) +
+        (chemistryEnabled(team.config)
+          ? (getMatchChemistry(
+              team,
+              team.floor.map((p, i) => (i === role ? b : p)),
+            )?.value ?? 0) * 5
+          : 0) -
         (roleValue(team, a, role) +
           a.energy * 0.25 +
-          (bonuses.get(a)?.[role] ?? 0)),
+          (bonuses.get(a)?.[role] ?? 0) +
+          (chemistryEnabled(team.config)
+            ? (getMatchChemistry(
+                team,
+                team.floor.map((p, i) => (i === role ? a : p)),
+              )?.value ?? 0) * 5
+            : 0)),
     );
     team.floor[role] = available[0];
   });
   recordCounters(team, previous, bonuses, opponents);
+  refreshLineupChemistry(team);
 }

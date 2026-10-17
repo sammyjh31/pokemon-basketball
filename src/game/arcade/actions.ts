@@ -22,6 +22,7 @@ import {
   physicalAbilitiesEnabled,
   physicalAbilityEffects,
 } from "../physicalAbilities";
+import { arcadeChemistryEffects, refreshArcadeChemistry } from "./chemistry";
 const typesOf = (p: ArcadePlayer) =>
   POKEMON_BY_ID.get(p.pokemonId)?.types ?? [p.type];
 
@@ -95,7 +96,12 @@ export function makePass(
     start: { x: p.x, y: p.y, z: 1 },
     end: lead,
     travel: 0,
-    duration: Math.max(0.15, d / (12 + p.attributes.passing * 0.07)),
+    duration: Math.max(
+      0.15,
+      d /
+        ((12 + p.attributes.passing * 0.07) *
+          arcadeChemistryEffects(s, p).passing),
+    ),
     rimContact: false,
     lastTouch: p.team,
     lob: lob && distance(target, basket(s, p.team)) < 3.4,
@@ -130,7 +136,8 @@ export function releaseShot(
     (sum, e) =>
       sum +
       (Math.max(0, 2.3 - distance(e, p)) / 2.3) *
-        (0.14 + e.attributes.perimeterDefense * 0.0013),
+        (0.14 + e.attributes.perimeterDefense * 0.0013) *
+        arcadeChemistryEffects(s, e).defense,
     0,
   );
   const chance = clamp(
@@ -252,6 +259,7 @@ export function advanceBall(
   s: ArcadeState,
   dt: number,
 ): "score" | "miss" | null {
+  refreshArcadeChemistry(s);
   const b = s.ball;
   if (b.mode === "held") {
     const p = b.owner === null ? null : s.players[b.owner];
@@ -288,8 +296,12 @@ export function advanceBall(
           random(s) <
             clamp(
               0.18 +
-                candidate.attributes.steal * 0.004 -
-                from.attributes.passing * 0.002 +
+                candidate.attributes.steal *
+                  0.004 *
+                  arcadeChemistryEffects(s, candidate).defense -
+                from.attributes.passing *
+                  0.002 *
+                  arcadeChemistryEffects(s, from).passing +
                 (s.typeMatchupsVersion === 1
                   ? typeMatchup(typesOf(candidate), typesOf(from)).edge * 0.02
                   : 0),
@@ -336,7 +348,11 @@ export function advanceBall(
     if (t >= 1) {
       if (b.mode === "pass") {
         const receiver = b.target === null ? undefined : s.players[b.target];
-        if (receiver?.active && distance(receiver, b) < 2.2) {
+        if (
+          receiver?.active &&
+          distance(receiver, b) <
+            2.2 * arcadeChemistryEffects(s, receiver).passing
+        ) {
           const lob = b.lob;
           giveBall(s, receiver);
           s.lastPass = from
@@ -410,10 +426,15 @@ export function advanceBall(
       );
       const physicalRebound =
         b.reboundOf !== null && physicalAbilitiesEnabled(s);
+      const chemistryRebound = (p: ArcadePlayer) =>
+        b.reboundOf !== null ? arcadeChemistryEffects(s, p).rebound : 1;
+      const chemistryBonus = (p: ArcadePlayer) =>
+        p.attributes.rebounding * 0.002 * (chemistryRebound(p) - 1);
       const reboundBonus = (p: ArcadePlayer) =>
         physicalRebound
           ? p.attributes.rebounding *
             0.002 *
+            chemistryRebound(p) *
             (physicalAbilityEffects(p.pokemonId, p.energy).rebound - 1)
           : 0;
       candidates.sort(
@@ -422,6 +443,8 @@ export function advanceBall(
           distance(c, b) -
           (a.z - c.z) * 0.2 -
           (a.attributes.rebounding - c.attributes.rebounding) * 0.002 -
+          chemistryBonus(a) +
+          chemistryBonus(c) -
           reboundBonus(a) +
           reboundBonus(c),
       );

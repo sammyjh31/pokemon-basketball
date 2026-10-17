@@ -8,6 +8,7 @@ import { coachGamePlan, coachRotationMinutes } from "../game/coachPolicy";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { TACTIC_LABELS, DEFENSE_LABELS, type LeagueTeam } from "../game/types";
 import "../coaches.css";
+import { ProjectedChemistrySummary } from "./ChemistrySummary";
 export function CoachSummary({
   team,
   nextSeason = false,
@@ -60,6 +61,7 @@ export function CoachSummary({
           ? "Takes over at the next season boundary."
           : "Plans adjust for each opponent and during games."}
       </p>
+      <ProjectedChemistrySummary team={team} plan={plan} />
       {context && evaluations.length > 0 && (
         <details className="coach-evaluation">
           <summary>How your coach values this roster</summary>

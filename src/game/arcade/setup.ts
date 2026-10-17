@@ -4,6 +4,7 @@ import { emptyAbilityActivations } from "../abilities";
 import { clamp } from "../ratings";
 import { createEvaluationContext, evaluatePlayer } from "../teamEvaluation";
 import { POSITIONS, ROSTER_SLOTS } from "../types";
+import { refreshArcadeChemistry } from "./chemistry";
 import type {
   ArcadePlayer,
   ArcadeSetup,
@@ -32,6 +33,7 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
     !setup ||
     setup.teams?.length !== 2 ||
     !Number.isFinite(setup.seed) ||
+    (setup.chemistryVersion !== undefined && setup.chemistryVersion !== 1) ||
     (setup.abilityVersion !== undefined && setup.abilityVersion !== 1) ||
     (setup.physicalAbilityVersion !== undefined &&
       setup.physicalAbilityVersion !== 1) ||
@@ -47,7 +49,11 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
             // Evaluate the abilities actually active on this court.
             abilityVersion: setup.abilityVersion,
             physicalAbilityVersion: setup.physicalAbilityVersion,
-            engineRules: { abilities: setup.abilityVersion === 1 },
+            chemistryVersion: setup.chemistryVersion,
+            engineRules: {
+              ...team.engineRules,
+              abilities: setup.abilityVersion === 1,
+            },
           })
         : undefined;
     ROSTER_SLOTS.forEach((slot, i) => {
@@ -73,6 +79,9 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
         facing: side === 0 ? 1 : -1,
         energy: 100,
         attributes: { ...profile.attributes },
+        ...(setup.chemistryVersion === 1
+          ? { chemistryProfile: structuredClone(profile) }
+          : {}),
         ...(evaluation
           ? {
               roleScores: Object.fromEntries(
@@ -102,6 +111,18 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
   });
   const s: ArcadeState = {
     modelVersion: 1,
+    ...(setup.chemistryVersion === 1
+      ? {
+          chemistryVersion: 1 as const,
+          chemistryContexts: setup.teams.map((team) => ({
+            tactic: team.tactic ?? "balanced",
+            defense: team.defense ?? "man",
+            ...(team.engineRules?.familiarity === undefined
+              ? {}
+              : { familiarity: team.engineRules.familiarity }),
+          })) as NonNullable<ArcadeState["chemistryContexts"]>,
+        }
+      : {}),
     ...(setup.physicalAbilityVersion === 1
       ? { physicalAbilityVersion: 1 as const }
       : {}),
@@ -165,5 +186,6 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
     aiTimer: 0,
     tipTiming: null,
   };
+  refreshArcadeChemistry(s);
   return s;
 }

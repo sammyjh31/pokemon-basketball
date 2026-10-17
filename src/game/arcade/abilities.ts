@@ -11,6 +11,7 @@ import {
 } from "../physicalAbilities";
 import type { ArcadePlayer, ArcadeState } from "./types";
 import { clamp, distance, other } from "./helpers";
+import { arcadeChemistryEffects } from "./chemistry";
 
 /** Apply energy at its actual resolution point so caps cannot invent savings. */
 export function changeArcadeEnergy(
@@ -21,7 +22,7 @@ export function changeArcadeEnergy(
   const result = abilityEnergyChange(
     player.pokemonId,
     player.energy,
-    delta,
+    delta < 0 ? delta * arcadeChemistryEffects(state, player).drain : delta,
     physicalAbilitiesEnabled(state),
   );
   player.energy = result.energy;

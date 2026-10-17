@@ -13,8 +13,14 @@ import type {
   LineupSummary,
   ShotEvent,
 } from "../game/engineInsightsTypes";
-import type { LeagueMatch, LeagueTeam } from "../game/types";
+import {
+  DEFENSE_LABELS,
+  TACTIC_LABELS,
+  type LeagueMatch,
+  type LeagueTeam,
+} from "../game/types";
 import "../insights.css";
+import { ChemistryDetails } from "./ChemistrySummary";
 
 export { insightPlayerName, insightNumber } from "./insightFormat";
 import { insightPlayerName, insightNumber } from "./insightFormat";
@@ -38,7 +44,8 @@ export function LineupInsightsTable({
       <p>
         Minutes and scoring while these five shared the court. PTS/100 uses
         offensive possessions started by the group; a foul-out substitution can
-        occur before a possession ends. Small samples are noisy.
+        occur before a possession ends. Small samples are noisy. Scroll across
+        for cohesion and expand an entry to see its combinations.
       </p>
       {!rows.length ? (
         <p>No recorded five-player lineup samples.</p>
@@ -63,6 +70,7 @@ export function LineupInsightsTable({
                     "PTS AGAINST",
                     "+/−",
                     "PTS/100",
+                    "COHESION",
                   ].map((label) => (
                     <th key={label} scope="col">
                       {label}
@@ -75,7 +83,7 @@ export function LineupInsightsTable({
                   const metric = lineupMetrics(row);
                   return (
                     <tr
-                      key={`${row.teamId}:${[...row.playerIds].sort().join("|")}`}
+                      key={`${row.teamId}:${[...row.playerIds].sort().join("|")}${row.chemistryContext ? `:${row.chemistryContext.tactic}:${row.chemistryContext.defense}` : ""}`}
                     >
                       <th scope="row">
                         <small>
@@ -91,6 +99,32 @@ export function LineupInsightsTable({
                       <td>{row.pointsAgainst}</td>
                       <td>{signed(metric.plusMinus)}</td>
                       <td>{insightNumber(metric.pointsPer100)}</td>
+                      <td>
+                        {row.chemistry ? (
+                          <details className="lineup-chemistry">
+                            <summary>
+                              {row.chemistry.score.toFixed(0)} / 100 ·{" "}
+                              {row.chemistry.links.length} combinations
+                            </summary>
+                            {row.chemistryContext && (
+                              <p>
+                                {TACTIC_LABELS[row.chemistryContext.tactic]} ·{" "}
+                                {DEFENSE_LABELS[row.chemistryContext.defense]}
+                              </p>
+                            )}
+                            <p>
+                              Lineup opportunities and coordination modifiers
+                              while these five shared the floor. They do not
+                              attribute scored points to a partnership.
+                            </p>
+                            <ChemistryDetails chemistry={row.chemistry} />
+                          </details>
+                        ) : (
+                          <span title="Chemistry was not recorded for this lineup">
+                            —
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}

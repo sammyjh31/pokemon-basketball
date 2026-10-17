@@ -16,6 +16,7 @@ import {
   physicalAbilityEffects,
 } from "../physicalAbilities";
 import { changeArcadeEnergy } from "./abilities";
+import { arcadeChemistryEffects, refreshArcadeChemistry } from "./chemistry";
 export interface Motion {
   x: number;
   y: number;
@@ -158,6 +159,7 @@ export function movePlayers(
 ): boolean {
   let out = false;
   const physical = physicalAbilitiesEnabled(s);
+  refreshArcadeChemistry(s);
   for (const p of s.players) {
     p.cooldown = Math.max(0, p.cooldown - dt);
     p.actionTime = Math.max(0, p.actionTime - dt);
@@ -179,11 +181,20 @@ export function movePlayers(
     const magnitude = Math.hypot(motion.x, motion.y);
     const scale = magnitude > 1 ? 1 / magnitude : 1;
     const turbo = motion.turbo && p.energy > 1 && magnitude > 0.1;
+    const chemistry = arcadeChemistryEffects(s, p);
+    const coordination =
+      s.ball.mode === "loose" && s.ball.reboundOf !== null
+        ? chemistry.rebound
+        : s.possession !== p.team
+          ? chemistry.defense
+          : 1;
     const speed =
       (3.5 + p.attributes.speed * 0.02) *
       (turbo ? 1.45 : 1) *
       (0.8 + p.energy * 0.002) *
-      (p.charge !== null ? 0.35 : 1);
+      (p.charge !== null ? 0.35 : 1) *
+      chemistry.movement *
+      coordination;
     const movement = physical
       ? physicalAbilityEffects(p.pokemonId, p.energy).movement
       : 1;
@@ -244,7 +255,7 @@ export function movePlayers(
         min = 0.84;
       const contact = `${a.id}:${b.id}`;
       const screen =
-        physical &&
+        (physical || s.chemistryVersion === 1) &&
         a.team !== b.team &&
         (a.action === "screen" || b.action === "screen");
       // A little separation hysteresis prevents adjacent physics frames from recounting a screen.
@@ -263,14 +274,23 @@ export function movePlayers(
         if (screen) {
           const screener = a.action === "screen" ? a : b;
           const navigator = screener === a ? b : a;
-          const contactEffect = physicalAbilityEffects(
-            screener.pokemonId,
-            screener.energy,
-          ).screen;
-          const navigation = physicalAbilityEffects(
-            navigator.pokemonId,
-            navigator.energy,
+          const chemistryScreen = arcadeChemistryEffects(s, screener).screen;
+          const chemistryNavigation = arcadeChemistryEffects(
+            s,
+            navigator,
           ).navigation;
+          const contactEffect =
+            chemistryScreen *
+            (physical
+              ? physicalAbilityEffects(screener.pokemonId, screener.energy)
+                  .screen
+              : 1);
+          const navigation =
+            chemistryNavigation *
+            (physical
+              ? physicalAbilityEffects(navigator.pokemonId, navigator.energy)
+                  .navigation
+              : 1);
           const resolve = (contactFactor: number, navigationFactor: number) =>
             clamp(
               screener === a
@@ -281,12 +301,16 @@ export function movePlayers(
             );
           if (contactEffect !== 1 || navigation !== 1)
             weight = resolve(contactEffect, navigation);
-          if (weight !== baseWeight) {
+          const chemistryWeight =
+            chemistryScreen !== 1 || chemistryNavigation !== 1
+              ? resolve(chemistryScreen, chemistryNavigation)
+              : baseWeight;
+          if (physical && weight !== chemistryWeight) {
             remainingContacts.add(contact);
             if (!contacts.has(contact)) {
-              if (weight !== resolve(1, navigation))
+              if (weight !== resolve(chemistryScreen, navigation))
                 recordPhysicalAbility(screener.stats, "screens");
-              if (weight !== resolve(contactEffect, 1))
+              if (weight !== resolve(contactEffect, chemistryNavigation))
                 recordPhysicalAbility(navigator.stats, "screens");
             }
           }

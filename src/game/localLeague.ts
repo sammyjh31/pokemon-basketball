@@ -55,6 +55,8 @@ export interface LocalLeague {
   abilityVersion?: 1;
   /** Physical species abilities; absent on historical seasons for exact replay. */
   physicalAbilityVersion?: 1;
+  /** Active-five basketball chemistry; independent of the ability switch. */
+  chemistryVersion?: 1;
   evaluationVersion?: 1;
   courtVersion?: 1;
   matchupVersion?: 1;
@@ -146,6 +148,7 @@ export function createLocalLeague(
           typeTacticsVersion: 1 as const,
           abilityVersion: 1 as const,
           physicalAbilityVersion: 1 as const,
+          chemistryVersion: 1 as const,
           evaluationVersion: 1 as const,
           courtVersion: 1 as const,
           matchupVersion: 1 as const,
@@ -379,6 +382,7 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
       ...(draft.physicalAbilityVersion === 1
         ? { physicalAbilityVersion: 1 as const }
         : {}),
+      ...(draft.chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
       ...(draft.evaluationVersion === 1
         ? { evaluationVersion: 1 as const }
         : {}),
@@ -418,6 +422,7 @@ export function localLeagueRun(draft: LocalLeague): Run {
   delete run.typeTacticsVersion;
   delete run.abilityVersion;
   delete run.physicalAbilityVersion;
+  delete run.chemistryVersion;
   delete run.evaluationVersion;
   delete run.courtVersion;
   delete run.matchupVersion;
@@ -430,6 +435,9 @@ export function localLeagueRun(draft: LocalLeague): Run {
     ...(teams[0].abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
     ...(teams[0].physicalAbilityVersion === 1
       ? { physicalAbilityVersion: 1 as const }
+      : {}),
+    ...(teams[0].chemistryVersion === 1
+      ? { chemistryVersion: 1 as const }
       : {}),
     ...(teams[0].evaluationVersion === 1
       ? { evaluationVersion: 1 as const }
@@ -557,6 +565,7 @@ export function parseLocalLeague(raw: string): LocalLeague {
     (value.physicalAbilityVersion !== undefined &&
       value.physicalAbilityVersion !== 1) ||
     (value.physicalAbilityVersion === 1 && value.abilityVersion !== 1) ||
+    (value.chemistryVersion !== undefined && value.chemistryVersion !== 1) ||
     (value.evaluationVersion !== undefined && value.evaluationVersion !== 1) ||
     (value.courtVersion !== undefined && value.courtVersion !== 1) ||
     (value.matchupVersion !== undefined && value.matchupVersion !== 1) ||
@@ -587,12 +596,14 @@ export function parseLocalLeague(raw: string): LocalLeague {
   delete draft.typeTacticsVersion;
   delete draft.abilityVersion;
   delete draft.physicalAbilityVersion;
+  delete draft.chemistryVersion;
   delete draft.evaluationVersion;
   delete draft.courtVersion;
   delete draft.matchupVersion;
   delete draft.possessionVersion;
   if (value.abilityVersion === 1) draft.abilityVersion = 1;
   if (value.physicalAbilityVersion === 1) draft.physicalAbilityVersion = 1;
+  if (value.chemistryVersion === 1) draft.chemistryVersion = 1;
   if (value.evaluationVersion === 1) draft.evaluationVersion = 1;
   if (value.courtVersion === 1) draft.courtVersion = 1;
   if (value.matchupVersion === 1) draft.matchupVersion = 1;

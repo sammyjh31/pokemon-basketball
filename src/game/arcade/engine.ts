@@ -22,6 +22,7 @@ import {
 import { aiDecisions, movePlayers } from "./ai";
 import { chooseCpuSubstitution } from "./coaching";
 import { changeArcadeEnergy } from "./abilities";
+import { refreshArcadeChemistry } from "./chemistry";
 export { activePlayers, attackDirection, basket, passTarget } from "./helpers";
 export function setPaused(s: ArcadeState, paused: boolean) {
   s.paused = paused;
@@ -53,7 +54,11 @@ export function cancelSubstitution(s: ArcadeState, outId: number) {
   s.pendingSubs = s.pendingSubs.filter((q) => q.outId !== outId);
 }
 function applySubs(s: ArcadeState) {
-  if (s.typeMatchupsVersion === 1 || s.evaluationVersion === 1) {
+  if (
+    s.typeMatchupsVersion === 1 ||
+    s.evaluationVersion === 1 ||
+    s.chemistryVersion === 1
+  ) {
     // Honor the human's queued lineup first, then let the CPU react to that five.
     commitSubs(s);
     const counter = chooseCpuSubstitution(s);
@@ -94,6 +99,7 @@ function commitSubs(s: ArcadeState) {
   }
   s.pendingSubs = [];
   s.passTarget = null;
+  refreshArcadeChemistry(s);
 }
 function formation(s: ArcadeState, team: Side) {
   const dir = attackDirection(s, team),

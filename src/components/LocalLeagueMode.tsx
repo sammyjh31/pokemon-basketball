@@ -5,6 +5,7 @@ import { localCoachRecords } from "../game/coachCareers";
 import { appointLocalCoach, reviewLocalCoaches } from "../game/coachLocal";
 import { CoachDraft } from "./CoachDraft";
 import { CoachSummary } from "./CoachSummary";
+import { ProjectedChemistrySummary } from "./ChemistrySummary";
 import { localCoachTurn, selectLocalCoach } from "../game/coachSelection";
 import { useMemo, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -131,7 +132,7 @@ function ReviewTeams({
             );
           })}
         </div>
-        {team.engineRules && (
+        {team.engineRules && team.chemistryVersion !== 1 && (
           <p className="stat-legend">
             Starting lineup chemistry: up to{" "}
             {(
@@ -151,6 +152,7 @@ function ReviewTeams({
             continuity. Keeping teammates together builds familiarity each year.
           </p>
         )}
+        {!team.coach && <ProjectedChemistrySummary team={team} plan={team} />}
         {team.coach ? (
           <>
             <CoachSummary

@@ -28,6 +28,14 @@ Open [the local game](http://127.0.0.1:5173/). In a cloud workspace, bind the se
 
 All game data and portraits are bundled locally. Gameplay needs no external API, accounts, database, or secrets. LocalStorage keeps a versioned save in the current browser; clearing site data clears progress. If saving is unavailable, play continues in memory with a notice. This is not a multiplayer leaderboard or an anti-cheat system.
 
+## Team chemistry and ability partnerships
+
+New games evaluate the actual five Pokémon sharing the court. Complementary creators, shooters, finishers and defenders improve coordination; poor balance can reduce it. Named ability partnerships include **Creator + finisher**, **Screen + space**, **Pressure + anchor**, **Rebound + outlet**, **Second wind**, and **Plus / Minus**. Partners affect passing, movement, screen contact/navigation, rebounding, defensive coordination and energy drain in simulated and playable games. Benched players contribute no effects, and each player/effect uses its strongest partnership contribution rather than stacking every eligible partner.
+
+Coaches compare complete five-player units while respecting fatigue, fouls, minutes and closers. Game plans, recruiting and individual training use the same chemistry model. The coaching panel shows a projected five, cohesion, strengths, gaps and named partners. Game and season **Five-player lineups** reports show the actual unit’s combinations alongside minutes and scoring; expand its cohesion entry for details. Cohesion is a basketball-fit score, not a predicted win percentage, and partnership opportunities do not claim points scored or individual ability activations.
+
+Turning abilities off removes ability partnerships while retaining ordinary basketball chemistry. Existing active seasons and archived games keep their original results; existing solo and local franchises adopt chemistry when starting the next season. Chemistry currently measures lineup fit plus the local league’s existing familiarity setting; it does not introduce new persistent player relationships.
+
 ## Physical species abilities
 
 New games extend species abilities beyond shot probability. Levitate improves movement, screen navigation and rebound pursuit; Guts strengthens screens and rebounding; Pickup improves rebound contests; Natural Cure reduces energy drain and accelerates recovery. Conditional abilities such as Overgrow only boost movement when the player is tired. Body size, skills, typing, energy and positioning still determine the underlying matchup.
