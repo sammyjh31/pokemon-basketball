@@ -77,10 +77,20 @@ export interface FranchiseTrade {
   source?: "cpu";
   reason?: string;
 }
+/**
+ * CPU front-office rules. Absent on franchises saved before version 1; those
+ * adopt it when their next offseason begins, and every earlier offseason keeps
+ * the rules it was played under. `since` is the first governed offseason year.
+ */
+export interface CpuRules {
+  modelVersion: 1;
+  since: number;
+}
 export interface Franchise {
   coachOffice?: import("./coachOffice").CoachOffice;
   pendingCoach?: import("./trainerCoaches").CoachAssignment;
   modelVersion: 1 | 2 | 3;
+  cpuRules?: CpuRules;
   year: number;
   phase: "season" | "offseason";
   teams: LeagueTeam[];

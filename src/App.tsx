@@ -329,6 +329,7 @@ export default function App({
       onPickRookie={(pokemonId, releasedId) =>
         dispatch({ type: "PICK_ROOKIE", pokemonId, releasedId })
       }
+      onPassRookie={() => dispatch({ type: "PASS_ROOKIE_PICK" })}
       onTrade={(teamId, giveId, receiveId) =>
         dispatch({ type: "TRADE", teamId, giveId, receiveId })
       }

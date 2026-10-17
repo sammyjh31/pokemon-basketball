@@ -290,6 +290,7 @@ export function enterOffseason(state: GameState): GameState {
     ...(previous?.coachOffice ? { coachOffice: previous.coachOffice } : {}),
     modelVersion:
       run.chemistryGrowthVersion === 1 ? 3 : (previous?.modelVersion ?? 1),
+    cpuRules: previous?.cpuRules ?? { modelVersion: 1, since: year },
     year,
     phase: "offseason",
     teams,

@@ -53,6 +53,7 @@ export interface FranchisePanelProps {
   onBeginDraft?: () => void;
   onAdvanceDraft?: () => void;
   onPickRookie?: (pokemonId: number, releasedId: number) => void;
+  onPassRookie?: () => void;
   onSignFreeAgent?: (pokemonId: number, releasedId: number) => void;
   onCpuFreeAgency?: () => void;
 }
@@ -90,6 +91,7 @@ function Offseason({
   onBeginDraft,
   onAdvanceDraft,
   onPickRookie,
+  onPassRookie,
   onSignFreeAgent,
   onCpuFreeAgency,
 }: Pick<
@@ -104,6 +106,7 @@ function Offseason({
   | "onBeginDraft"
   | "onAdvanceDraft"
   | "onPickRookie"
+  | "onPassRookie"
   | "onSignFreeAgent"
   | "onCpuFreeAgency"
 > & {
@@ -292,6 +295,7 @@ function Offseason({
             onBegin={onBeginDraft}
             onAdvance={onAdvanceDraft}
             onPick={onPickRookie}
+            onPass={onPassRookie}
           />
         )}
       {activeWorkspace === "free-agents" &&

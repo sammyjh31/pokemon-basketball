@@ -11,6 +11,7 @@ import type {
 } from "./franchiseTypes";
 import type { RookieDraft, RookiePick } from "./rookieDraftTypes";
 import type { FreeAgency } from "./freeAgencyTypes";
+import { lotteryOrder, recordOrder } from "./draftLottery";
 
 const fail = (): never => {
   throw new Error("Invalid saved franchise transactions");
@@ -54,6 +55,7 @@ export function validateRosterTransactions(
   phase: Franchise["phase"],
   reports: OffseasonReport[] | undefined,
   freeAgency?: FreeAgency,
+  cpuSince?: number,
 ): { drafts?: RookieDraft[]; expected: number[][] } {
   const hasDrafts = value !== undefined;
   if (
@@ -66,37 +68,49 @@ export function validateRosterTransactions(
   const drafts: RookieDraft[] = rawDrafts.map((value, index) => {
     const row = object(value),
       draftYear = integer(row.year, 1, history.length);
+    // Offseasons under CPU rules v1 hold model-2 (lottery) drafts only.
+    const lottery = cpuSince !== undefined && draftYear >= cpuSince;
     if (
-      row.modelVersion !== 1 ||
+      row.modelVersion !== (lottery ? 2 : 1) ||
+      Object.hasOwn(row, "passes") !== lottery ||
       typeof row.complete !== "boolean" ||
       row.generation !== (ROOKIE_GENERATIONS[index] ?? 0) ||
       (previousYear !== undefined && draftYear !== previousYear + 1)
     )
       return fail();
     previousYear = draftYear;
-    const expectedOrder = [...history[draftYear - 1].standings]
-      .sort(
-        (a, b) =>
-          a.wins - b.wins ||
-          a.pointsFor - a.pointsAgainst - (b.pointsFor - b.pointsAgainst) ||
-          a.teamId - b.teamId,
-      )
-      .map((standing) => standing.teamId);
+    const season = history[draftYear - 1];
+    const expectedOrder = lottery
+      ? lotteryOrder(season.standings, season.seasonSeed)
+      : recordOrder(season.standings);
+    const passes = lottery
+      ? (Array.isArray(row.passes) ? row.passes : fail()).map((turn) =>
+          integer(turn, 1, 60),
+        )
+      : [];
     if (
       !Array.isArray(row.order) ||
       row.order.length !== 30 ||
       row.order.some((id, index) => id !== expectedOrder[index]) ||
       !Array.isArray(row.picks) ||
-      row.picks.length > 60 ||
+      row.picks.length + passes.length > 60 ||
+      passes.some((turn, index) => index > 0 && turn <= passes[index - 1]) ||
       (Object.hasOwn(row, "exhausted") && typeof row.exhausted !== "boolean")
     )
       return fail();
+    // Pick numbers and passed turns interleave to cover turns 1..n exactly.
+    const turns = row.picks.length + passes.length;
+    const pickTurns = Array.from({ length: turns }, (_, index) => index + 1)
+      .filter((turn) => !passes.includes(turn))
+      .slice(0, row.picks.length);
+    if (passes.length && passes.at(-1)! > turns) return fail();
     const picks: RookiePick[] = row.picks.map((value, index) => {
-      const pick = object(value);
+      const pick = object(value),
+        turn = pickTurns[index] - 1;
       if (
-        pick.pick !== index + 1 ||
-        pick.round !== (index < 30 ? 1 : 2) ||
-        pick.teamId !== expectedOrder[index % 30]
+        pick.pick !== turn + 1 ||
+        pick.round !== (turn < 30 ? 1 : 2) ||
+        pick.teamId !== expectedOrder[turn % 30]
       )
         return fail();
       const pokemonId = integer(pick.pokemonId, 1, 1025),
@@ -104,9 +118,9 @@ export function validateRosterTransactions(
       if (!POKEMON_BY_ID.has(pokemonId) || !POKEMON_BY_ID.has(releasedId))
         return fail();
       return {
-        pick: index + 1,
-        round: index < 30 ? 1 : 2,
-        teamId: expectedOrder[index % 30],
+        pick: turn + 1,
+        round: turn < 30 ? 1 : 2,
+        teamId: expectedOrder[turn % 30],
         pokemonId,
         releasedId,
       };
@@ -116,12 +130,12 @@ export function validateRosterTransactions(
       (draftYear !== year ||
         phase !== "offseason" ||
         index !== rawDrafts.length - 1 ||
-        picks.length >= 60 ||
+        turns >= 60 ||
         row.exhausted)
     )
       return fail();
     return {
-      modelVersion: 1,
+      modelVersion: lottery ? 2 : 1,
       year: draftYear,
       generation: row.generation as number,
       order: expectedOrder,
@@ -131,6 +145,7 @@ export function validateRosterTransactions(
       ...(Object.hasOwn(row, "exhausted")
         ? { exhausted: row.exhausted as boolean }
         : {}),
+      ...(lottery ? { passes } : {}),
     };
   });
   if (
@@ -207,7 +222,7 @@ export function validateRosterTransactions(
       );
       if (draft.complete) {
         if (
-          draft.picks.length === 60
+          draft.picks.length + (draft.passes?.length ?? 0) === 60
             ? draft.exhausted === true
             : !draft.exhausted || remaining
         )

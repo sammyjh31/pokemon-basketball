@@ -7,6 +7,7 @@ import { processCpuFreeAgency, signFreeAgent } from "./freeAgency";
 import {
   beginRookieDraft,
   advanceRookieDraft,
+  passRookiePick,
   selectRookie,
 } from "./rookieDraft";
 import type { TradePackage } from "./tradeTypes";
@@ -58,6 +59,7 @@ export type GameAction =
   | { type: "TRADE_PACKAGE"; offer: TradePackage }
   | { type: "BEGIN_ROOKIE_DRAFT" }
   | { type: "ADVANCE_ROOKIE_DRAFT" }
+  | { type: "PASS_ROOKIE_PICK" }
   | { type: "PICK_ROOKIE"; pokemonId: number; releasedId: number }
   | { type: "OFFSEASON_ROSTER"; settings: OffseasonRosterSettings }
   | { type: "ROTATION_PLAN"; plan: RotationPlan | undefined }
@@ -117,6 +119,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   if (action.type === "BEGIN_ROOKIE_DRAFT")
     return beginRookieDraft(processOffseason(state));
   if (action.type === "ADVANCE_ROOKIE_DRAFT") return advanceRookieDraft(state);
+  if (action.type === "PASS_ROOKIE_PICK") return passRookiePick(state);
   if (action.type === "PICK_ROOKIE")
     return selectRookie(state, action.pokemonId, action.releasedId);
   if (action.type === "OFFSEASON_ROSTER")
