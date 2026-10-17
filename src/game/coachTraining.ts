@@ -1,4 +1,6 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
+import { abilitiesEnabled, speciesAbility } from "./abilities";
+import { coachAbilityFit } from "./coachPolicy";
 import type { PlayerTrainingPlan } from "./franchiseFeatures";
 import type { DevelopmentSkill } from "./developmentTypes";
 import { playerProfile } from "./playerProfile";
@@ -46,6 +48,10 @@ export function coachTrainingPlans(
   return Object.fromEntries(
     roster.map(({ mon, profile, role }) => {
       const a = profile.attributes;
+      const species = abilitiesEnabled(team)
+        ? speciesAbility(mon.id)
+        : undefined;
+      const abilityFit = species ? coachAbilityFit(mon.id, profile) : 0;
       const skillsFor = (focus: Focus) =>
         focus === "position" ? POSITION_SKILLS[role] : FOCUS_SKILLS[focus];
       const style: Record<Focus, number> = {
@@ -77,13 +83,24 @@ export function coachTrainingPlans(
             skills.length;
           // Keep enough upside to avoid drilling capped skills. Role fit prevents irrelevant repairs.
           const headroom = mean(skills.map((s) => 100 - a[s]));
+          // At most twelve points: an ability can break a close decision, while
+          // urgent team needs, useful role repairs and capped skills still matter.
+          const synergy =
+            species?.training === focus
+              ? 12 *
+                (0.5 + abilityFit * 0.5) *
+                Math.min(1, headroom / 30) *
+                (0.8 + roleFit * 0.2) *
+                (species.tactics.includes(coach.tactic) ? 1 : 0.9)
+              : 0;
           const score =
             style[focus] * (1 - coach.adaptability * 0.45) +
             need * (0.65 + coach.adaptability * 1.1) +
             repairs * (0.35 + roleFit * 0.4) +
             ability * roleFit * 0.12 +
             roleFit * 8 +
-            headroom * 0.12;
+            headroom * 0.12 +
+            synergy;
           return { focus, skills, ability, need, score };
         })
         .sort((x, y) => y.score - x.score);
@@ -126,6 +143,12 @@ export function coachTrainingPlans(
             ? `Stamina ${Math.round(a.stamina)}: steady work limits volatility.`
             : `${intensity === "aggressive" ? "Aggressive work accepts larger gains or setbacks" : intensity === "steady" ? "Steady work reduces volatility" : "Standard work balances growth and volatility"}, following the coach's risk and rest preferences.`,
       ];
+      if (species)
+        reasons.push(
+          chosen.focus === species.training
+            ? `${species.name}: ${species.description} ${focusName} develops the skills needed to use this ability in the ${role} role, with room for improvement.`
+            : `${species.name}: ${species.description} Its ${TRAINING_FOCUS_LABELS[species.training].toLowerCase()} synergy was considered; current team needs, role fit and development headroom favor ${focusName}.`,
+        );
       return [
         mon.id,
         {

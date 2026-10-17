@@ -1,10 +1,12 @@
 import type { Attributes, Position, Roster } from "../types";
 import type { PlayerDevelopment } from "../developmentTypes";
+import type { AbilityActivations } from "../abilities";
 export type Side = 0 | 1;
 export type Phase = "tipoff" | "live" | "inbound" | "break" | "final";
 export type PlayerAction =
   "idle" | "run" | "shoot" | "pass" | "dunk" | "block" | "steal" | "screen";
 export interface ArcadeSetup {
+  abilityVersion?: 1;
   typeMatchupsVersion?: 1;
   official?: boolean;
   teams: [
@@ -22,6 +24,7 @@ export interface ArcadeInput {
   turbo: boolean;
 }
 export interface ArcadeStats {
+  abilityActivations?: AbilityActivations;
   rimFgm?: number;
   rimFga?: number;
   midFgm?: number;
@@ -107,6 +110,8 @@ export interface ArcadeEvent {
   time: number;
 }
 export interface ArcadeState {
+  abilityVersion?: 1;
+  abilityPossession?: { transitionAt: number | null; secondChance: boolean };
   typeMatchupsVersion?: 1;
   official?: boolean;
   officialSeed?: number;

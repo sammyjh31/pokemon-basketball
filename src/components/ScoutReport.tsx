@@ -1,3 +1,4 @@
+import { SpeciesAbility } from "./SpeciesAbility";
 import type { DevelopmentRatings } from "../game/developmentTypes";
 import {
   ATTRIBUTE_KEYS,
@@ -134,6 +135,7 @@ export function ScoutReport({
           .join(" · ")}
       </p>
       <p className="scout-summary">{profile.scouting}</p>
+      <SpeciesAbility pokemonId={mon.id} />
       <details className="scout-details">
         <summary>
           Full scouting report{" "}

@@ -1,3 +1,4 @@
+import { AbilityStats } from "./AbilityStats";
 import { CoachTrainingPanel } from "./CoachTrainingPanel";
 import { CoachOfficePanel } from "./CoachOfficePanel";
 import { projectedCoaches } from "../game/coachOffice";
@@ -1083,6 +1084,16 @@ function Careers({ franchise, run }: { franchise: Franchise; run: Run }) {
           </tbody>
         </table>
       </div>
+      <AbilityStats
+        label={`${playoffs ? "Playoff" : "Regular-season"} career ability activations`}
+        rows={rows.map((player) => ({
+          key: player.pokemonId,
+          label: playerName(player.pokemonId),
+          pokemonId: player.pokemonId,
+          abilityActivations: (playoffs ? player.playoffs : player.regular)
+            .abilityActivations,
+        }))}
+      />
       {!rows.length && (
         <p className="league-empty">No players match these filters.</p>
       )}

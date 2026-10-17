@@ -1,0 +1,57 @@
+.species-ability {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.85rem 1rem;
+  margin: 0.8rem 0;
+  border: 1px solid #315346;
+  border-left: 3px solid #387665;
+  border-radius: 6px;
+  background: #13221d;
+  color: #e3f0e9;
+}
+.species-ability p,
+.species-ability small {
+  margin: 0;
+  line-height: 1.5;
+}
+.species-ability small {
+  color: #a9c3b5;
+}
+.ability-stats {
+  margin-top: 1.2rem;
+}
+.ability-stats h4 {
+  margin: 0 0 0.4rem;
+}
+.ability-stats-table {
+  width: 100%;
+  min-width: 630px;
+}
+.ability-stats-table th:first-child {
+  min-width: 135px;
+}
+.ability-unavailable {
+  color: var(--muted);
+  text-align: left;
+  white-space: normal;
+}
+.arcade-results .ability-stats .stat-legend,
+.arcade-results .ability-unavailable {
+  color: #a8b4bd;
+}
+
+.arcade-shell .ability-stats-table tbody th {
+  display: table-cell;
+  padding: 10px 12px;
+}
+
+.ability-scroll-hint {
+  display: none;
+  color: var(--muted);
+  font-size: 11px;
+}
+@media (max-width: 680px) {
+  .ability-scroll-hint {
+    display: block;
+  }
+}

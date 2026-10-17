@@ -555,6 +555,7 @@ export function LocalLeagueDraft({
                       position={comparePosition}
                       onPosition={setComparePosition}
                       abilities={draft.options?.engineRules.abilities ?? false}
+                      abilityVersion={draft.abilityVersion}
                       onScout={(id) => {
                         setCompareOpen(false);
                         choose(id);
@@ -881,6 +882,7 @@ export function LocalLeagueDraft({
                 <DepthScouting
                   mon={mon}
                   abilities={draft.options.engineRules.abilities}
+                  abilityVersion={draft.abilityVersion}
                 />
               )}
             </details>

@@ -56,7 +56,7 @@ describe("local franchise configuration", () => {
       target: { value: "4" },
     });
     expect(screen.getByLabelText("Friend 2 team")).toHaveValue("1");
-    fireEvent.click(screen.getByLabelText("Signature abilities"));
+    fireEvent.click(screen.getByLabelText("Species abilities"));
     fireEvent.click(screen.getByRole("button", { name: "Start snake draft" }));
     expect(draft?.options?.mode).toBe("full-pool");
     expect(draft?.options?.engineRules.abilities).toBe(false);

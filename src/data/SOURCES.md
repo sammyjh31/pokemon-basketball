@@ -52,3 +52,18 @@ contain those species. No runtime network request is needed to load these images
 Reproduce the separate import with `python3 scripts/import-rookies.py --assets`.
 Verified HTTPS stays enabled, existing rookie images are checked against their
 manifest, and the script never writes the original 251 facts or asset manifests.
+
+# Species ability catalog
+
+`species-abilities.json` contains the first non-hidden normal ability for each
+species 1–1025, independently of frozen ratings data. The source is PokéAPI's
+[pinned CSV database](https://github.com/PokeAPI/pokeapi/tree/5ee47a9a9c1229632ec4b473a9c1c53026e005dd/data/v2/csv)
+(`pokemon_abilities.csv`, `abilities.csv`, and English `ability_names.csv`).
+`ability-source-manifest.json` records the revision, selection rule and response
+SHA-256 hashes. Reproduce it with `python3 scripts/import-abilities.py`.
+
+Canonical ability names and species assignments are source facts. Their 21
+conditional basketball adaptations, training affinities and tactical roles in
+`src/game/abilities.ts` are original game rules, not canonical Pokémon battle
+mechanics. Alternate abilities, hidden abilities and alternate forms are not
+randomly selected. Version 1 uses this fixed catalog without runtime networking.

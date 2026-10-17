@@ -1,0 +1,18 @@
+{
+  "revision": "5ee47a9a9c1229632ec4b473a9c1c53026e005dd",
+  "selection": "Default species form, non-hidden ability slot 1",
+  "sources": {
+    "abilities.csv": {
+      "url": "https://raw.githubusercontent.com/PokeAPI/pokeapi/5ee47a9a9c1229632ec4b473a9c1c53026e005dd/data/v2/csv/abilities.csv",
+      "sha256": "74c3588ad48e08e54ff01f432899a4028c3e91508bbd53201df85e1f6b9e9ef3"
+    },
+    "ability_names.csv": {
+      "url": "https://raw.githubusercontent.com/PokeAPI/pokeapi/5ee47a9a9c1229632ec4b473a9c1c53026e005dd/data/v2/csv/ability_names.csv",
+      "sha256": "8acb80c42210f86ae747dc3347b060d69cd2574a9dbfaf74774ae632ca6348da"
+    },
+    "pokemon_abilities.csv": {
+      "url": "https://raw.githubusercontent.com/PokeAPI/pokeapi/5ee47a9a9c1229632ec4b473a9c1c53026e005dd/data/v2/csv/pokemon_abilities.csv",
+      "sha256": "4a79ee53d386a8ad3a89657483ddfd31594e05a5d52400fe131e5e4dfd7ec04a"
+    }
+  }
+}

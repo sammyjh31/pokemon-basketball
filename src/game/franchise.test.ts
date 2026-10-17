@@ -52,7 +52,10 @@ function partnerPlayer(franchise: Franchise, strongest: boolean) {
     )
     .sort((a, b) => (strongest ? -1 : 1) * (ability(a.id) - ability(b.id)))[0];
 }
-function totalsMatch(actual: Record<string, number>, source: LeaguePlayer) {
+function totalsMatch(
+  actual: Pick<LeaguePlayer, (typeof CAREER_KEYS)[number]>,
+  source: LeaguePlayer,
+) {
   for (const key of CAREER_KEYS) expect(actual[key], key).toBe(source[key]);
 }
 

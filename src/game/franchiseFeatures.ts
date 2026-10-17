@@ -31,6 +31,7 @@ export interface PlayerTrainingPlan {
 }
 export type TrainingPlans = Partial<Record<number, PlayerTrainingPlan>>;
 export interface OfficialGame {
+  abilityVersion?: 1;
   fixtureId: string;
   match: LeagueMatch;
   courtScore: [number, number];

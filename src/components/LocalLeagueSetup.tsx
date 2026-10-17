@@ -266,12 +266,13 @@ export function LocalLeagueSetup({
             checked={abilities}
             onChange={(e) => setAbilities(e.target.checked)}
           />{" "}
-          Signature abilities
+          Species abilities
         </label>
         <p className="stat-legend">
           Every trainer automatically manages their team throughout the season.
-          Signature abilities add small situational bonuses. Physical matchups,
-          player tendencies and complementary lineups also affect new leagues.
+          Species abilities apply small, conditional basketball effects.
+          Physical matchups, player tendencies and complementary lineups also
+          affect new leagues.
         </p>
         <div className="local-format">
           <strong>

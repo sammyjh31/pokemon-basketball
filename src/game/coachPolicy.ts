@@ -1,5 +1,11 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
+import {
+  abilitiesEnabled,
+  speciesAbility,
+  type AbilityMechanic,
+} from "./abilities";
 import { playerProfile, type PlayerProfile } from "./playerProfile";
+import { clamp } from "./ratings";
 import { getCoach, type TrainerCoach } from "./trainerCoaches";
 import {
   ROSTER_SLOTS,
@@ -21,6 +27,88 @@ export interface CoachObservation {
   opponentAttempts: number;
   opponentThrees: number;
   opponentRim: number;
+}
+
+/** Expected usefulness in the player's actual role, not just an ability-name match. */
+export function coachAbilityFit(pokemonId: number, p: PlayerProfile): number {
+  const a = p.attributes;
+  const shooting = (a.threePoint + a.midRange) / 2;
+  const creation = (a.passing + a.ballHandling + a.composure) / 3;
+  const scoring = (a.finishing + shooting) / 2;
+  const defense = (a.perimeterDefense + a.interiorDefense) / 2;
+  const quality: Record<AbilityMechanic, number> = {
+    surge: scoring,
+    aerial: (a.finishing * 2 + a.vertical) / 3,
+    intimidate: defense,
+    perimeter: (a.perimeterDefense * 2 + p.traits.closeout) / 3,
+    armor: (a.interiorDefense * 2 + a.block) / 3,
+    focus: shooting,
+    range: a.threePoint,
+    power: a.finishing,
+    tempo: (a.speed + a.ballHandling + a.finishing) / 3,
+    creator: creation,
+    support: creation,
+    cleanup: (a.offensiveRebound * 2 + a.finishing) / 3,
+    endurance: scoring,
+    clutch: (scoring + a.composure) / 2,
+    momentum: scoring,
+    counter: scoring,
+    craft: a.midRange,
+    evasion: (defense + a.stamina) / 2,
+    rhythm: scoring,
+    gamble: (shooting + p.traits.offBall) / 2,
+    fresh: (scoring + a.stamina) / 2,
+  };
+  const mechanic = speciesAbility(pokemonId).mechanic;
+  // Infrequent conditions receive less credit; creators and defenders use their
+  // own involvement skills rather than a scorer's usage.
+  const frequency: Partial<Record<AbilityMechanic, number>> = {
+    surge: 0.6,
+    endurance: 0.7,
+    clutch: 0.35,
+    momentum: 0.65,
+    counter: 0.65,
+    rhythm: 0.5,
+    fresh: 0.65,
+    cleanup: 0.75,
+  };
+  const involvement = [
+    "creator",
+    "support",
+    "intimidate",
+    "perimeter",
+    "armor",
+    "evasion",
+  ].includes(mechanic)
+    ? 1
+    : 0.7 + (p.traits.usage / 100) * 0.3;
+  return (
+    clamp((quality[mechanic] - 30) / 55, 0, 1) *
+    involvement *
+    (frequency[mechanic] ?? 1)
+  );
+}
+
+function rosterAbilityFits(team: LeagueTeam, coach: TrainerCoach) {
+  return ROSTER_SLOTS.flatMap((slot) => {
+    const mon = POKEMON_BY_ID.get(team.roster[slot]!);
+    if (!mon) return [];
+    const p = playerProfile(mon, team.development?.[mon.id]);
+    // Estimate involvement from the same skill/rest preferences as the rotation;
+    // a weak reserve contributes less than an effective rotation player.
+    const weight =
+      ((Math.max(...Object.values(p.positions)) + p.attributes.stamina * 0.08) /
+        75) **
+      (2.6 - coach.rest * 1.6);
+    return [
+      {
+        ability: speciesAbility(mon.id),
+        profile: p,
+        fit: coachAbilityFit(mon.id, p),
+        weight,
+      },
+    ];
+  });
 }
 export function coachGamePlan(
   team: LeagueTeam,
@@ -48,11 +136,23 @@ export function coachGamePlan(
     interior: (avg("finishing") + avg("strength") + avg("rebounding")) / 3,
     defense: (avg("perimeterDefense") + avg("interiorDefense")) / 2,
   };
+  const abilityFits = abilitiesEnabled(team)
+    ? rosterAbilityFits(team, coach)
+    : [];
+  const totalWeight = abilityFits.reduce((n, p) => n + p.weight, 0) || 1;
+  for (const p of abilityFits) {
+    for (const tactic of p.ability.tactics) {
+      fit[tactic] +=
+        ((20 * p.fit * p.weight) / totalWeight) *
+        (0.65 + coach.adaptability * 0.35);
+    }
+  }
   fit[coach.tactic] += 22 - 12 * coach.adaptability;
   const tactic = (Object.keys(fit) as Tactic[]).sort(
     (a, b) => fit[b] - fit[a],
   )[0];
   let defense = coach.defense;
+  let threatReason = "";
   if (opponent && coach.adaptability >= 0.8) {
     const opponents = Object.values(opponent.roster).flatMap((id) => {
       const m = POKEMON_BY_ID.get(id!);
@@ -64,11 +164,56 @@ export function coachGamePlan(
     if (shooting > 75 && avg("speed") > 55) defense = "switch";
     else if (avg("speed") < 48 && defense === "press") defense = "zone";
   }
+  if (
+    abilityFits.length &&
+    opponent &&
+    abilitiesEnabled(opponent) &&
+    coach.adaptability >= 0.65
+  ) {
+    const threats = rosterAbilityFits(
+      opponent,
+      getCoach(opponent.coach?.id ?? "") ?? coach,
+    );
+    const weight = threats.reduce((n, p) => n + p.weight, 0) || 1;
+    const threat = (
+      mechanics: AbilityMechanic[],
+      skill: "threePoint" | "finishing",
+    ) =>
+      threats.reduce(
+        (n, p) =>
+          n +
+          (mechanics.includes(p.ability.mechanic) &&
+          p.profile.attributes[skill] >= 58
+            ? p.fit * p.weight
+            : 0),
+        0,
+      ) / weight;
+    const perimeter = threat(["range", "focus", "gamble"], "threePoint");
+    const rim = threat(["power", "aerial", "cleanup"], "finishing");
+    const shooting =
+      threats.reduce((n, p) => n + p.profile.attributes.threePoint, 0) /
+      Math.max(1, threats.length);
+    if (perimeter > 0.25 && perimeter > rim + 0.08 && avg("speed") > 55) {
+      defense = "switch";
+      threatReason =
+        " Opponent shooting abilities favor staying attached to shooters.";
+    } else if (rim > 0.25 && rim > perimeter + 0.08 && shooting <= 75) {
+      defense = "zone";
+      threatReason =
+        " Opponent finishing abilities favor protecting the paint.";
+    }
+  }
+  const supporting = abilityFits
+    .filter((p) => p.fit > 0 && p.ability.tactics.includes(tactic))
+    .sort((a, b) => b.fit * b.weight - a.fit * a.weight);
+  const abilityReason = supporting.length
+    ? ` Ability fit: ${[...new Set(supporting.map((p) => p.ability.name))].slice(0, 3).join(", ")} support ${tactic} through effective rotation roles.`
+    : "";
   return {
     tactic,
     defense,
     rotation: coach.rotation,
-    reason: `${coach.name}: ${coach.style}. Roster fit favors ${tactic}; ${coach.rotation === "bench" ? "share the workload" : coach.rotation === "starters" ? "lean on the strongest rotation" : "balance starters and reserves"}.`,
+    reason: `${coach.name}: ${coach.style}. Roster fit favors ${tactic}; ${coach.rotation === "bench" ? "share the workload" : coach.rotation === "starters" ? "lean on the strongest rotation" : "balance starters and reserves"}.${abilityReason}${threatReason}`,
   };
 }
 /** Deterministic observations from play, never from optional reporting or future results. */
@@ -127,6 +272,9 @@ export function coachPlayerPreference(
 /** Allocate 240 minutes by ability, stamina and style, independent of roster-slot labels. */
 export function coachRotationMinutes(team: LeagueTeam) {
   const coach = getCoach(team.coach!.id)!;
+  const abilityTactic = abilitiesEnabled(team)
+    ? coachGamePlan(team).tactic
+    : undefined;
   const candidates = ROSTER_SLOTS.map((slot) => {
     const mon = POKEMON_BY_ID.get(team.roster[slot]!)!;
     const p = playerProfile(mon, team.development?.[mon.id]);
@@ -135,7 +283,11 @@ export function coachRotationMinutes(team: LeagueTeam) {
       score:
         Math.max(...Object.values(p.positions)) +
         coachPlayerPreference(coach, p) +
-        p.attributes.stamina * 0.08,
+        p.attributes.stamina * 0.08 +
+        (abilityTactic
+          ? coachAbilityFit(mon.id, p) *
+            (speciesAbility(mon.id).tactics.includes(abilityTactic) ? 5 : 1)
+          : 0),
     };
   }).sort((a, b) => b.score - a.score);
   const minutes = Object.fromEntries(ROSTER_SLOTS.map((s) => [s, 0])) as Record<

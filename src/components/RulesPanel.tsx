@@ -257,6 +257,24 @@ export function RulesPanel() {
           created. Catalog dimensions are compressed into game traits, so
           extreme size never guarantees success.
         </p>
+        <h3>Use each species’ ability</h3>
+        <p>
+          New games use the species’ first normal Pokémon ability with a
+          basketball adaptation shown in scouting. Effects change shot
+          probability when their conditions apply: a shooter can improve a
+          finish, a passer can help a teammate, or a defender can challenge a
+          shot. Local leagues can turn abilities off. Earlier games keep their
+          original rules.
+        </p>
+        <p>
+          Game boxes, season and playoff statistics, and career pages show
+          offensive, support and defensive activations. Counts include misses
+          whenever the effect applied; they do not measure baskets made or
+          points caused. An unavailable entry means no ability data was
+          recorded. Played-game activations count actual court actions and are
+          not multiplied by the official score conversion. Coaches consider
+          enabled abilities in their plans, rotations and training.
+        </p>
         <h3>Play the type matchup</h3>
         <p>
           Offenses look for favorable type matchups while still valuing

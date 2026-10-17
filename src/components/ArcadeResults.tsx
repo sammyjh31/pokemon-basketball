@@ -1,3 +1,4 @@
+import { AbilityStats } from "./AbilityStats";
 import { emptyStats } from "../game/arcade/setup";
 import type {
   ArcadePlayer,
@@ -100,7 +101,20 @@ export function ArcadeResults({
         const players = state.players.filter((player) => player.team === side),
           totals = emptyStats();
         for (const player of players)
-          for (const key of Object.keys(totals) as (keyof ArcadeStats)[])
+          for (const key of [
+            "seconds",
+            "points",
+            "fgm",
+            "fga",
+            "threePM",
+            "threePA",
+            "offensiveRebounds",
+            "defensiveRebounds",
+            "assists",
+            "steals",
+            "blocks",
+            "turnovers",
+          ] as const)
             totals[key] = (totals[key] ?? 0) + (player.stats[key] ?? 0);
         return (
           <section className="arcade-card arcade-box-card" key={side}>
@@ -160,6 +174,15 @@ export function ArcadeResults({
                 </tfoot>
               </table>
             </div>
+            <AbilityStats
+              label={`${state.names[side]} ability activations`}
+              rows={players.map((p) => ({
+                key: p.id,
+                label: p.name,
+                pokemonId: p.pokemonId,
+                abilityActivations: p.stats.abilityActivations,
+              }))}
+            />
           </section>
         );
       })}

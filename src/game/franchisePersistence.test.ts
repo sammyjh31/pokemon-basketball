@@ -38,10 +38,13 @@ beforeAll(() => {
   const playoffs = simulatePlayoffs(league, finished.run.seasonSeed);
   const final = playoffs.series[14],
     championId = playoffs.championId!;
-  const total = (player?: Partial<CareerTotals>): CareerTotals =>
-    Object.fromEntries(
-      CAREER_KEYS.map((key) => [key, player?.[key] ?? 0]),
-    ) as CareerTotals;
+  const total = (player?: Partial<CareerTotals>): CareerTotals => {
+    const result = {} as CareerTotals;
+    for (const key of CAREER_KEYS) result[key] = player?.[key] ?? 0;
+    if (player?.abilityActivations)
+      result.abilityActivations = structuredClone(player.abilityActivations);
+    return result;
+  };
   const honor = (playerId: string) => {
     const player = league.players.find(
       (player) => player.playerId === playerId,

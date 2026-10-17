@@ -1,3 +1,5 @@
+import { AbilityStats } from "./AbilityStats";
+import { SpeciesAbility } from "./SpeciesAbility";
 import { useMemo, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { careerPlayers } from "../game/franchise";
@@ -235,6 +237,7 @@ export function CareerDetail({
           rings
         </p>
       </div>
+      <SpeciesAbility pokemonId={pokemonId} />
       <div className="franchise-detail-tabs" aria-label="Career competition">
         <button
           type="button"
@@ -355,6 +358,27 @@ export function CareerDetail({
           )}
         </table>
       </div>
+      <AbilityStats
+        label={`${phase === "regular" ? "Regular-season" : "Playoff"} ability history`}
+        rows={[
+          ...rows.map((row) => ({
+            key: row.year,
+            label: `Year ${row.year}${row.live ? " · LIVE" : ""}`,
+            pokemonId,
+            abilityActivations: row.player?.abilityActivations,
+          })),
+          ...(career
+            ? [
+                {
+                  key: "career",
+                  label: "Career · recorded games",
+                  pokemonId,
+                  abilityActivations: career[phase].abilityActivations,
+                },
+              ]
+            : []),
+        ]}
+      />
       <section>
         <h3>{team ? "Current skills" : "Skills at release"}</h3>
         <dl className="career-skills">

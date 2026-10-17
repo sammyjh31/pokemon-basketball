@@ -9,6 +9,12 @@ export interface EngineRules {
   familiarity: number;
 }
 export interface ShotEvent {
+  abilityEffects?: {
+    playerId: string;
+    abilityId: string;
+    role: import("./abilities").AbilityRole;
+    probabilityDelta: number;
+  }[];
   courtSequence?: number;
   matchup?: import("./bodyMatchups").MatchupEvidence;
   creatorId?: string;

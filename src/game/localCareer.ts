@@ -560,7 +560,10 @@ export function applyLocalTrade(
     },
   };
 }
-function nextYearTeams(career: LocalCareer): LeagueTeam[] {
+function nextYearTeams(
+  career: LocalCareer,
+  adoptAbilities = true,
+): LeagueTeam[] {
   const archived = career.history.at(-1)!;
   const appointed = projectedCoaches(
     career.teams,
@@ -576,6 +579,7 @@ function nextYearTeams(career: LocalCareer): LeagueTeam[] {
       ).length / 8;
     return {
       ...team,
+      ...(adoptAbilities ? { abilityVersion: 1 as const } : {}),
       ...(team.engineRules
         ? {
             engineRules: {
@@ -758,6 +762,10 @@ function parseTeams(
 ): LeagueTeam[] {
   const used = new Set<number>(),
     format = draft.options!.format;
+  const abilityVersion = object(
+    array(value, format.teamCount)[0],
+  ).abilityVersion;
+  if (abilityVersion !== undefined && abilityVersion !== 1) fail();
   return array(value, format.teamCount).map((value, id) => {
     const row = object(value),
       rawRoster = object(row.roster),
@@ -769,6 +777,7 @@ function parseTeams(
       row.simulationVersion !== 2 ||
       row.typeMatchupsVersion !== draft.typeMatchupsVersion ||
       row.typeTacticsVersion !== draft.typeTacticsVersion ||
+      row.abilityVersion !== abilityVersion ||
       row.courtVersion !== draft.courtVersion ||
       row.matchupVersion !== draft.matchupVersion ||
       row.possessionVersion !== draft.possessionVersion ||
@@ -827,6 +836,7 @@ function parseTeams(
       ...(draft.typeMatchupsVersion === 1
         ? { typeMatchupsVersion: 1 as const }
         : {}),
+      ...(abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
       ...(draft.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
       ...(draft.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
       ...(draft.possessionVersion === 1
@@ -855,6 +865,7 @@ function sameRosterState(actual: LeagueTeam[], expected: LeagueTeam[]) {
     const a = actual[i],
       e = expected[i];
     if (
+      a.abilityVersion !== e.abilityVersion ||
       JSON.stringify(a.engineRules) !== JSON.stringify(e.engineRules) ||
       a.coach?.id !== e.coach?.id
     )
@@ -1146,7 +1157,12 @@ export function parseLocalCareer(
     history.push(replay.career!.history.at(-1)!);
     if (i < rawHistory.length - 1 || raw.phase === "season") {
       if (currentLocalRookieTurn(replay)) fail();
-      expected = nextYearTeams(replay.career!);
+      const nextRawTeams =
+        i < rawHistory.length - 1 ? object(rawHistory[i + 1]).teams : raw.teams;
+      const nextVersion = object(
+        array(nextRawTeams, draft.options.format.teamCount)[0],
+      ).abilityVersion;
+      expected = nextYearTeams(replay.career!, nextVersion === 1);
     } else expected = replay.career!.teams;
   }
   const current = parseTeams(

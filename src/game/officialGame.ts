@@ -2,6 +2,11 @@ import type { ArcadeState } from "./arcade/types";
 import { playerOfGame } from "./arcade/engine";
 import { emptyBox } from "./boxscore";
 import { COUNTING_KEYS } from "./leagueStats";
+import {
+  abilitiesEnabled,
+  abilityTotal,
+  validateAbilityActivations,
+} from "./abilities";
 import type { OfficialGame } from "./franchiseFeatures";
 import {
   ROSTER_SLOTS,
@@ -32,6 +37,9 @@ export function officialGameFromArcade(
 ): OfficialGame {
   if (
     !state.official ||
+    (state.abilityVersion !== undefined && state.abilityVersion !== 1) ||
+    (state.abilityVersion === 1) !==
+      abilitiesEnabled(teams.find((team) => team.id === 0) ?? {}) ||
     state.officialSeed !== fixture.seed ||
     state.phase !== "final" ||
     state.clock !== 0 ||
@@ -97,6 +105,15 @@ export function officialGameFromArcade(
     }
     return units.map(({ p, slot, units: minutes }) => ({
       ...emptyBox(p.pokemonId, slot),
+      ...(state.abilityVersion === 1
+        ? {
+            abilityActivations: validateAbilityActivations(
+              p.stats.abilityActivations,
+            ),
+          }
+        : p.stats.abilityActivations !== undefined
+          ? fail()
+          : {}),
       teamId,
       playerId: `${teamId}:${p.pokemonId}`,
       started: !slot.startsWith("B"),
@@ -189,7 +206,13 @@ export function officialGameFromArcade(
     playerOfGameId: `${winnerTeam}:${winner.pokemonId}`,
   };
   return validateOfficialGame(
-    { fixtureId: fixture.id, courtScore, scale: SCALE, match },
+    {
+      fixtureId: fixture.id,
+      courtScore,
+      scale: SCALE,
+      match,
+      ...(state.abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+    },
     fixture,
     teams,
   );
@@ -205,6 +228,9 @@ export function validateOfficialGame(
     !record(value) ||
     value.fixtureId !== fixture.id ||
     value.scale !== SCALE ||
+    (value.abilityVersion !== undefined && value.abilityVersion !== 1) ||
+    (value.abilityVersion === 1) !==
+      abilitiesEnabled(teams.find((team) => team.id === 0) ?? {}) ||
     ![fixture.homeTeamId, fixture.awayTeamId].includes(0) ||
     fixture.homeTeamId === fixture.awayTeamId ||
     !Array.isArray(value.courtScore) ||
@@ -260,6 +286,14 @@ export function validateOfficialGame(
             box[key] % SCALE !== 0)
         )
           fail();
+      if (game.abilityVersion === 1) {
+        const activations = validateAbilityActivations(box.abilityActivations);
+        if (
+          activations.offense > box.fga / SCALE ||
+          (box.minutes === 0 && abilityTotal(box) !== 0)
+        )
+          fail();
+      } else if (box.abilityActivations !== undefined) fail();
       if (
         box.fouls ||
         box.ftm ||
@@ -282,6 +316,32 @@ export function validateOfficialGame(
       boxes.reduce((n, b) => n + b.plusMinus, 0) !== 5 * (score - against)
     )
       fail();
+  }
+  if (game.abilityVersion === 1) {
+    for (const [own, opposing] of [
+      [match.homeBox, match.awayBox],
+      [match.awayBox, match.homeBox],
+    ]) {
+      const ownAttempts = own.reduce(
+        (total, box) => total + box.fga / SCALE,
+        0,
+      );
+      const opposingAttempts = opposing.reduce(
+        (total, box) => total + box.fga / SCALE,
+        0,
+      );
+      if (
+        own.some(
+          (box) =>
+            box.abilityActivations!.support > ownAttempts - box.fga / SCALE,
+        ) ||
+        own.reduce((total, box) => total + box.abilityActivations!.support, 0) >
+          ownAttempts ||
+        own.reduce((total, box) => total + box.abilityActivations!.defense, 0) >
+          opposingAttempts
+      )
+        fail();
+    }
   }
   if (
     ![...match.homeBox, ...match.awayBox].some(

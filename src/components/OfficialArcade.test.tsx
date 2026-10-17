@@ -1,3 +1,4 @@
+import { abilitiesEnabled } from "../game/abilities";
 import { StrictMode } from "react";
 import {
   act,
@@ -46,6 +47,7 @@ function completedGame(): ArcadeState {
     teams: [teams[0], teams[1]],
     seed: fixture.seed,
     official: true,
+    ...(abilitiesEnabled(teams[0]) ? { abilityVersion: 1 as const } : {}),
   });
   state.phase = "final";
   state.period = 4;
@@ -156,7 +158,11 @@ describe("official arcade flow", () => {
       screen.getByRole("button", { name: "View official box score" }),
     );
     const box = screen.getByRole("dialog");
-    const playerRow = within(box)
+    const playerRow = within(
+      within(box).getByRole("table", {
+        name: `${teams[0].name} player box score`,
+      }),
+    )
       .getByRole("rowheader", { name: /Alakazam/ })
       .closest("tr")!;
     expect(within(playerRow).getAllByRole("cell")[1]).toHaveTextContent("24");

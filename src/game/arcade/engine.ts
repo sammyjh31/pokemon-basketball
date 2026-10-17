@@ -120,6 +120,8 @@ function formation(s: ArcadeState, team: Side) {
   });
 }
 function inbound(s: ArcadeState, team: Side) {
+  if (s.abilityVersion === 1)
+    s.abilityPossession = { transitionAt: null, secondChance: false };
   applySubs(s);
   formation(s, team);
   s.phase = "inbound";

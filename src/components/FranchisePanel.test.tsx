@@ -854,3 +854,70 @@ describe("complete offseason workspace", () => {
     expect(history).toHaveTextContent("CPU trade");
   });
 });
+
+it("keeps recorded ability totals in career browsing and marks unavailable historical detail", () => {
+  const state = fixture();
+  state.franchise!.careers[0].regular.abilityActivations = {
+    offense: 2,
+    support: 3,
+    defense: 4,
+  };
+  state.franchise!.careers[0].playoffs.abilityActivations = {
+    offense: 1,
+    support: 0,
+    defense: 0,
+  };
+  setup(state);
+  fireEvent.click(screen.getByRole("button", { name: "Career stats" }));
+  fireEvent.change(screen.getByLabelText("Search career players"), {
+    target: { value: "Bulbasaur" },
+  });
+  const table = screen.getByRole("table", {
+    name: "Regular-season career ability activations",
+  });
+  expect(
+    within(table)
+      .getAllByRole("cell")
+      .filter((_, index) => index !== 1)
+      .map((cell) => cell.textContent),
+  ).toEqual(["9", "2", "3", "4"]);
+  fireEvent.click(
+    screen.getByRole("button", { name: "Open Bulbasaur career page" }),
+  );
+  const dialog = screen.getByRole("dialog", { name: "Bulbasaur career" });
+  const detail = within(dialog).getByRole("table", {
+    name: "Regular-season ability history",
+  });
+  expect(
+    within(detail).getByRole("rowheader", { name: "Year 1" }).closest("tr"),
+  ).toHaveTextContent(/unavailable/i);
+  expect(
+    within(detail)
+      .getByRole("rowheader", { name: "Career · recorded games" })
+      .closest("tr"),
+  ).toHaveTextContent("Overgrow");
+  expect(
+    within(
+      within(detail)
+        .getByRole("rowheader", { name: "Career · recorded games" })
+        .closest("tr")!,
+    )
+      .getAllByRole("cell")
+      .filter((_, index) => index !== 1)
+      .map((cell) => cell.textContent),
+  ).toEqual(["9", "2", "3", "4"]);
+  fireEvent.click(within(dialog).getByRole("button", { name: "Playoffs" }));
+  const playoffs = within(dialog).getByRole("table", {
+    name: "Playoff ability history",
+  });
+  expect(
+    within(
+      within(playoffs)
+        .getByRole("rowheader", { name: "Career · recorded games" })
+        .closest("tr")!,
+    )
+      .getAllByRole("cell")
+      .filter((_, index) => index !== 1)
+      .map((cell) => cell.textContent),
+  ).toEqual(["1", "1", "0", "0"]);
+});

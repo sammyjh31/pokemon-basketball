@@ -1,3 +1,4 @@
+import { AbilityStats } from "./AbilityStats";
 import { useEffect, useId, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { GameInsightsPanel } from "./GameInsightsPanel";
@@ -140,6 +141,15 @@ function TeamBox({
           </tfoot>
         </table>
       </div>
+      <AbilityStats
+        label={`${team.name} ability activations`}
+        rows={players.map((p) => ({
+          key: p.playerId,
+          label: POKEMON_BY_ID.get(p.pokemonId)?.name ?? `#${p.pokemonId}`,
+          pokemonId: p.pokemonId,
+          abilityActivations: p.abilityActivations,
+        }))}
+      />
     </section>
   );
 }

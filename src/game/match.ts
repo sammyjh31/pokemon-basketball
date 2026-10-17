@@ -1,4 +1,12 @@
 import {
+  abilitiesEnabled,
+  abilityImpact,
+  addAbilityActivation,
+  emptyAbilityActivations,
+  speciesAbility,
+  type AbilityRole,
+} from "./abilities";
+import {
   coachGamePlan,
   coachRotationMinutes,
   coachAdjustment,
@@ -101,7 +109,7 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   const planKey = config.rotationPlan
     ? `:${ROSTER_SLOTS.map((slot) => config.rotationPlan!.minutes[slot]).join(",")}:${config.rotationPlan.closing.join(",")}`
     : "";
-  const key = `${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
+  const key = `${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
   let targets = targetCache.get(key);
   if (!targets) {
     targets = config.coach
@@ -136,6 +144,9 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
       energy: 100,
       consecutive: 0,
       box: {
+        ...(abilitiesEnabled(config)
+          ? { abilityActivations: emptyAbilityActivations() }
+          : {}),
         pokemonId,
         slot,
         teamId: config.id,
@@ -262,6 +273,13 @@ export function simulateMatch(
     (home.courtVersion !== undefined && home.courtVersion !== 1)
   )
     throw new Error("Both teams must use valid, matching court rules.");
+  if (
+    home.abilityVersion !== away.abilityVersion ||
+    (home.abilityVersion !== undefined && home.abilityVersion !== 1)
+  )
+    throw new Error(
+      "Both teams must use valid, matching species ability rules.",
+    );
   const courtEnabled = home.courtVersion === 1;
   const bodyEnabled = home.matchupVersion === 1;
   const possessionDepth = home.possessionVersion === 1;
@@ -433,6 +451,7 @@ export function simulateMatch(
     return guards;
   };
   if (
+    home.abilityVersion === 1 ||
     depthEnabled ||
     possessionDepth ||
     courtEnabled ||
@@ -1734,7 +1753,8 @@ export function simulateMatch(
                   shooter.depth,
                   "shooter",
                   context,
-                  !!offense.config.engineRules?.abilities,
+                  !!offense.config.engineRules?.abilities &&
+                    offense.config.abilityVersion !== 1,
                 )
               : 0) +
             (passer?.depth
@@ -1742,7 +1762,8 @@ export function simulateMatch(
                   passer.depth,
                   "passer",
                   context,
-                  !!offense.config.engineRules?.abilities,
+                  !!offense.config.engineRules?.abilities &&
+                    offense.config.abilityVersion !== 1,
                 )
               : 0) +
             (defender.depth
@@ -1750,7 +1771,8 @@ export function simulateMatch(
                   defender.depth,
                   "defender",
                   { ...context, energy: defender.energy },
-                  !!defense.config.engineRules?.abilities,
+                  !!defense.config.engineRules?.abilities &&
+                    defense.config.abilityVersion !== 1,
                 )
               : 0),
           0.1,
@@ -1834,6 +1856,58 @@ export function simulateMatch(
           physicalChanceDelta,
           typeChanceDelta: accuracy - untypedAccuracy,
         };
+      // Shared ability rules run after basketball, body and type resolution. No extra RNG.
+      // A support activation requires the actual creator when multi-action rules are active.
+      const abilityEffects: NonNullable<ShotEvent["abilityEffects"]> = [];
+      const candidates: [Player | undefined, AbilityRole, Team][] = [
+        [shooter, "shooter", offense],
+        [possessionDepth ? createdBy : passer, "passer", offense],
+        [defender, "defender", defense],
+      ];
+      for (const [player, role, team] of candidates) {
+        if (!player || !abilitiesEnabled(team.config)) continue;
+        const delta = abilityImpact(player.box.pokemonId, role, {
+          zone,
+          play,
+          contested,
+          energy: player.energy,
+          clutch: isClutch,
+          secondChance,
+          period: period + 1,
+          margin:
+            team.side === "home"
+              ? result.homeScore - result.awayScore
+              : result.awayScore - result.homeScore,
+        });
+        const next = clamp(accuracy + delta, 0.1, 0.88);
+        const applied = next - accuracy;
+        if (!applied) continue;
+        accuracy = next;
+        untypedAccuracy = clamp(untypedAccuracy + applied, 0.1, 0.88);
+        abilityEffects.push({
+          playerId: player.box.playerId,
+          abilityId: speciesAbility(player.box.pokemonId).id,
+          role,
+          probabilityDelta: applied,
+        });
+      }
+      const activateAbilities = (scale = 1) => {
+        for (const effect of abilityEffects) {
+          const player = candidates.find(
+            ([p, role]) =>
+              p?.box.playerId === effect.playerId && role === effect.role,
+          )![0]!;
+          addAbilityActivation(player.box, effect.role);
+        }
+        return abilityEffects.length
+          ? {
+              abilityEffects: abilityEffects.map((e) => ({
+                ...e,
+                probabilityDelta: e.probabilityDelta * scale,
+              })),
+            }
+          : {};
+      };
       const shootingFoulRate = clamp(
         (zone === "rim" ? 0.16 : zone === "mid" ? 0.075 : 0.035) +
           (bodyMatch?.foulDelta ?? 0) +
@@ -1848,6 +1922,7 @@ export function simulateMatch(
         const foulProbability = accuracy * (zone === "rim" ? 0.4 : 0.25);
         const andOne = random() < foulProbability;
         recordShot({
+          ...activateAbilities(zone === "rim" ? 0.4 : 0.25),
           offenseTeamId: offense.config.id,
           defenseTeamId: defense.config.id,
           shooterId: shooter.box.playerId,
@@ -1942,6 +2017,7 @@ export function simulateMatch(
         quality.points += made ? value : 0;
       }
       recordShot({
+        ...(!blocked ? activateAbilities(1 - blockRate) : {}),
         offenseTeamId: offense.config.id,
         defenseTeamId: defense.config.id,
         shooterId: shooter.box.playerId,

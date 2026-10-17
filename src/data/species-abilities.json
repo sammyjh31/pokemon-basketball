@@ -1,0 +1,4102 @@
+{
+  "1": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "2": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "3": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "4": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "5": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "6": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "7": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "8": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "9": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "10": {
+    "id": "shield-dust",
+    "name": "Shield Dust"
+  },
+  "11": {
+    "id": "shed-skin",
+    "name": "Shed Skin"
+  },
+  "12": {
+    "id": "compound-eyes",
+    "name": "Compound Eyes"
+  },
+  "13": {
+    "id": "shield-dust",
+    "name": "Shield Dust"
+  },
+  "14": {
+    "id": "shed-skin",
+    "name": "Shed Skin"
+  },
+  "15": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "16": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "17": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "18": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "19": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "20": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "21": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "22": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "23": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "24": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "25": {
+    "id": "static",
+    "name": "Static"
+  },
+  "26": {
+    "id": "static",
+    "name": "Static"
+  },
+  "27": {
+    "id": "sand-veil",
+    "name": "Sand Veil"
+  },
+  "28": {
+    "id": "sand-veil",
+    "name": "Sand Veil"
+  },
+  "29": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "30": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "31": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "32": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "33": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "34": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "35": {
+    "id": "cute-charm",
+    "name": "Cute Charm"
+  },
+  "36": {
+    "id": "cute-charm",
+    "name": "Cute Charm"
+  },
+  "37": {
+    "id": "flash-fire",
+    "name": "Flash Fire"
+  },
+  "38": {
+    "id": "flash-fire",
+    "name": "Flash Fire"
+  },
+  "39": {
+    "id": "cute-charm",
+    "name": "Cute Charm"
+  },
+  "40": {
+    "id": "cute-charm",
+    "name": "Cute Charm"
+  },
+  "41": {
+    "id": "inner-focus",
+    "name": "Inner Focus"
+  },
+  "42": {
+    "id": "inner-focus",
+    "name": "Inner Focus"
+  },
+  "43": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "44": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "45": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "46": {
+    "id": "effect-spore",
+    "name": "Effect Spore"
+  },
+  "47": {
+    "id": "effect-spore",
+    "name": "Effect Spore"
+  },
+  "48": {
+    "id": "compound-eyes",
+    "name": "Compound Eyes"
+  },
+  "49": {
+    "id": "shield-dust",
+    "name": "Shield Dust"
+  },
+  "50": {
+    "id": "sand-veil",
+    "name": "Sand Veil"
+  },
+  "51": {
+    "id": "sand-veil",
+    "name": "Sand Veil"
+  },
+  "52": {
+    "id": "pickup",
+    "name": "Pickup"
+  },
+  "53": {
+    "id": "limber",
+    "name": "Limber"
+  },
+  "54": {
+    "id": "damp",
+    "name": "Damp"
+  },
+  "55": {
+    "id": "damp",
+    "name": "Damp"
+  },
+  "56": {
+    "id": "vital-spirit",
+    "name": "Vital Spirit"
+  },
+  "57": {
+    "id": "vital-spirit",
+    "name": "Vital Spirit"
+  },
+  "58": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "59": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "60": {
+    "id": "water-absorb",
+    "name": "Water Absorb"
+  },
+  "61": {
+    "id": "water-absorb",
+    "name": "Water Absorb"
+  },
+  "62": {
+    "id": "water-absorb",
+    "name": "Water Absorb"
+  },
+  "63": {
+    "id": "synchronize",
+    "name": "Synchronize"
+  },
+  "64": {
+    "id": "synchronize",
+    "name": "Synchronize"
+  },
+  "65": {
+    "id": "synchronize",
+    "name": "Synchronize"
+  },
+  "66": {
+    "id": "guts",
+    "name": "Guts"
+  },
+  "67": {
+    "id": "guts",
+    "name": "Guts"
+  },
+  "68": {
+    "id": "guts",
+    "name": "Guts"
+  },
+  "69": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "70": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "71": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "72": {
+    "id": "clear-body",
+    "name": "Clear Body"
+  },
+  "73": {
+    "id": "clear-body",
+    "name": "Clear Body"
+  },
+  "74": {
+    "id": "rock-head",
+    "name": "Rock Head"
+  },
+  "75": {
+    "id": "rock-head",
+    "name": "Rock Head"
+  },
+  "76": {
+    "id": "rock-head",
+    "name": "Rock Head"
+  },
+  "77": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "78": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "79": {
+    "id": "oblivious",
+    "name": "Oblivious"
+  },
+  "80": {
+    "id": "oblivious",
+    "name": "Oblivious"
+  },
+  "81": {
+    "id": "magnet-pull",
+    "name": "Magnet Pull"
+  },
+  "82": {
+    "id": "magnet-pull",
+    "name": "Magnet Pull"
+  },
+  "83": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "84": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "85": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "86": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "87": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "88": {
+    "id": "stench",
+    "name": "Stench"
+  },
+  "89": {
+    "id": "stench",
+    "name": "Stench"
+  },
+  "90": {
+    "id": "shell-armor",
+    "name": "Shell Armor"
+  },
+  "91": {
+    "id": "shell-armor",
+    "name": "Shell Armor"
+  },
+  "92": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "93": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "94": {
+    "id": "cursed-body",
+    "name": "Cursed Body"
+  },
+  "95": {
+    "id": "rock-head",
+    "name": "Rock Head"
+  },
+  "96": {
+    "id": "insomnia",
+    "name": "Insomnia"
+  },
+  "97": {
+    "id": "insomnia",
+    "name": "Insomnia"
+  },
+  "98": {
+    "id": "hyper-cutter",
+    "name": "Hyper Cutter"
+  },
+  "99": {
+    "id": "hyper-cutter",
+    "name": "Hyper Cutter"
+  },
+  "100": {
+    "id": "soundproof",
+    "name": "Soundproof"
+  },
+  "101": {
+    "id": "soundproof",
+    "name": "Soundproof"
+  },
+  "102": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "103": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "104": {
+    "id": "rock-head",
+    "name": "Rock Head"
+  },
+  "105": {
+    "id": "rock-head",
+    "name": "Rock Head"
+  },
+  "106": {
+    "id": "limber",
+    "name": "Limber"
+  },
+  "107": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "108": {
+    "id": "own-tempo",
+    "name": "Own Tempo"
+  },
+  "109": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "110": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "111": {
+    "id": "lightning-rod",
+    "name": "Lightning Rod"
+  },
+  "112": {
+    "id": "lightning-rod",
+    "name": "Lightning Rod"
+  },
+  "113": {
+    "id": "natural-cure",
+    "name": "Natural Cure"
+  },
+  "114": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "115": {
+    "id": "early-bird",
+    "name": "Early Bird"
+  },
+  "116": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "117": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "118": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "119": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "120": {
+    "id": "illuminate",
+    "name": "Illuminate"
+  },
+  "121": {
+    "id": "illuminate",
+    "name": "Illuminate"
+  },
+  "122": {
+    "id": "soundproof",
+    "name": "Soundproof"
+  },
+  "123": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "124": {
+    "id": "oblivious",
+    "name": "Oblivious"
+  },
+  "125": {
+    "id": "static",
+    "name": "Static"
+  },
+  "126": {
+    "id": "flame-body",
+    "name": "Flame Body"
+  },
+  "127": {
+    "id": "hyper-cutter",
+    "name": "Hyper Cutter"
+  },
+  "128": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "129": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "130": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "131": {
+    "id": "water-absorb",
+    "name": "Water Absorb"
+  },
+  "132": {
+    "id": "limber",
+    "name": "Limber"
+  },
+  "133": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "134": {
+    "id": "water-absorb",
+    "name": "Water Absorb"
+  },
+  "135": {
+    "id": "volt-absorb",
+    "name": "Volt Absorb"
+  },
+  "136": {
+    "id": "flash-fire",
+    "name": "Flash Fire"
+  },
+  "137": {
+    "id": "trace",
+    "name": "Trace"
+  },
+  "138": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "139": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "140": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "141": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "142": {
+    "id": "rock-head",
+    "name": "Rock Head"
+  },
+  "143": {
+    "id": "immunity",
+    "name": "Immunity"
+  },
+  "144": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "145": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "146": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "147": {
+    "id": "shed-skin",
+    "name": "Shed Skin"
+  },
+  "148": {
+    "id": "shed-skin",
+    "name": "Shed Skin"
+  },
+  "149": {
+    "id": "inner-focus",
+    "name": "Inner Focus"
+  },
+  "150": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "151": {
+    "id": "synchronize",
+    "name": "Synchronize"
+  },
+  "152": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "153": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "154": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "155": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "156": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "157": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "158": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "159": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "160": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "161": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "162": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "163": {
+    "id": "insomnia",
+    "name": "Insomnia"
+  },
+  "164": {
+    "id": "insomnia",
+    "name": "Insomnia"
+  },
+  "165": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "166": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "167": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "168": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "169": {
+    "id": "inner-focus",
+    "name": "Inner Focus"
+  },
+  "170": {
+    "id": "volt-absorb",
+    "name": "Volt Absorb"
+  },
+  "171": {
+    "id": "volt-absorb",
+    "name": "Volt Absorb"
+  },
+  "172": {
+    "id": "static",
+    "name": "Static"
+  },
+  "173": {
+    "id": "cute-charm",
+    "name": "Cute Charm"
+  },
+  "174": {
+    "id": "cute-charm",
+    "name": "Cute Charm"
+  },
+  "175": {
+    "id": "hustle",
+    "name": "Hustle"
+  },
+  "176": {
+    "id": "hustle",
+    "name": "Hustle"
+  },
+  "177": {
+    "id": "synchronize",
+    "name": "Synchronize"
+  },
+  "178": {
+    "id": "synchronize",
+    "name": "Synchronize"
+  },
+  "179": {
+    "id": "static",
+    "name": "Static"
+  },
+  "180": {
+    "id": "static",
+    "name": "Static"
+  },
+  "181": {
+    "id": "static",
+    "name": "Static"
+  },
+  "182": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "183": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "184": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "185": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "186": {
+    "id": "water-absorb",
+    "name": "Water Absorb"
+  },
+  "187": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "188": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "189": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "190": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "191": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "192": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "193": {
+    "id": "speed-boost",
+    "name": "Speed Boost"
+  },
+  "194": {
+    "id": "damp",
+    "name": "Damp"
+  },
+  "195": {
+    "id": "damp",
+    "name": "Damp"
+  },
+  "196": {
+    "id": "synchronize",
+    "name": "Synchronize"
+  },
+  "197": {
+    "id": "synchronize",
+    "name": "Synchronize"
+  },
+  "198": {
+    "id": "insomnia",
+    "name": "Insomnia"
+  },
+  "199": {
+    "id": "oblivious",
+    "name": "Oblivious"
+  },
+  "200": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "201": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "202": {
+    "id": "shadow-tag",
+    "name": "Shadow Tag"
+  },
+  "203": {
+    "id": "inner-focus",
+    "name": "Inner Focus"
+  },
+  "204": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "205": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "206": {
+    "id": "serene-grace",
+    "name": "Serene Grace"
+  },
+  "207": {
+    "id": "hyper-cutter",
+    "name": "Hyper Cutter"
+  },
+  "208": {
+    "id": "rock-head",
+    "name": "Rock Head"
+  },
+  "209": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "210": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "211": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "212": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "213": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "214": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "215": {
+    "id": "inner-focus",
+    "name": "Inner Focus"
+  },
+  "216": {
+    "id": "pickup",
+    "name": "Pickup"
+  },
+  "217": {
+    "id": "guts",
+    "name": "Guts"
+  },
+  "218": {
+    "id": "magma-armor",
+    "name": "Magma Armor"
+  },
+  "219": {
+    "id": "magma-armor",
+    "name": "Magma Armor"
+  },
+  "220": {
+    "id": "oblivious",
+    "name": "Oblivious"
+  },
+  "221": {
+    "id": "oblivious",
+    "name": "Oblivious"
+  },
+  "222": {
+    "id": "hustle",
+    "name": "Hustle"
+  },
+  "223": {
+    "id": "hustle",
+    "name": "Hustle"
+  },
+  "224": {
+    "id": "suction-cups",
+    "name": "Suction Cups"
+  },
+  "225": {
+    "id": "vital-spirit",
+    "name": "Vital Spirit"
+  },
+  "226": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "227": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "228": {
+    "id": "early-bird",
+    "name": "Early Bird"
+  },
+  "229": {
+    "id": "early-bird",
+    "name": "Early Bird"
+  },
+  "230": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "231": {
+    "id": "pickup",
+    "name": "Pickup"
+  },
+  "232": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "233": {
+    "id": "trace",
+    "name": "Trace"
+  },
+  "234": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "235": {
+    "id": "own-tempo",
+    "name": "Own Tempo"
+  },
+  "236": {
+    "id": "guts",
+    "name": "Guts"
+  },
+  "237": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "238": {
+    "id": "oblivious",
+    "name": "Oblivious"
+  },
+  "239": {
+    "id": "static",
+    "name": "Static"
+  },
+  "240": {
+    "id": "flame-body",
+    "name": "Flame Body"
+  },
+  "241": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "242": {
+    "id": "natural-cure",
+    "name": "Natural Cure"
+  },
+  "243": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "244": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "245": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "246": {
+    "id": "guts",
+    "name": "Guts"
+  },
+  "247": {
+    "id": "shed-skin",
+    "name": "Shed Skin"
+  },
+  "248": {
+    "id": "sand-stream",
+    "name": "Sand Stream"
+  },
+  "249": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "250": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "251": {
+    "id": "natural-cure",
+    "name": "Natural Cure"
+  },
+  "252": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "253": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "254": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "255": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "256": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "257": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "258": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "259": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "260": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "261": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "262": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "263": {
+    "id": "pickup",
+    "name": "Pickup"
+  },
+  "264": {
+    "id": "pickup",
+    "name": "Pickup"
+  },
+  "265": {
+    "id": "shield-dust",
+    "name": "Shield Dust"
+  },
+  "266": {
+    "id": "shed-skin",
+    "name": "Shed Skin"
+  },
+  "267": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "268": {
+    "id": "shed-skin",
+    "name": "Shed Skin"
+  },
+  "269": {
+    "id": "shield-dust",
+    "name": "Shield Dust"
+  },
+  "270": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "271": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "272": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "273": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "274": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "275": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "276": {
+    "id": "guts",
+    "name": "Guts"
+  },
+  "277": {
+    "id": "guts",
+    "name": "Guts"
+  },
+  "278": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "279": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "280": {
+    "id": "synchronize",
+    "name": "Synchronize"
+  },
+  "281": {
+    "id": "synchronize",
+    "name": "Synchronize"
+  },
+  "282": {
+    "id": "synchronize",
+    "name": "Synchronize"
+  },
+  "283": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "284": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "285": {
+    "id": "effect-spore",
+    "name": "Effect Spore"
+  },
+  "286": {
+    "id": "effect-spore",
+    "name": "Effect Spore"
+  },
+  "287": {
+    "id": "truant",
+    "name": "Truant"
+  },
+  "288": {
+    "id": "vital-spirit",
+    "name": "Vital Spirit"
+  },
+  "289": {
+    "id": "truant",
+    "name": "Truant"
+  },
+  "290": {
+    "id": "compound-eyes",
+    "name": "Compound Eyes"
+  },
+  "291": {
+    "id": "speed-boost",
+    "name": "Speed Boost"
+  },
+  "292": {
+    "id": "wonder-guard",
+    "name": "Wonder Guard"
+  },
+  "293": {
+    "id": "soundproof",
+    "name": "Soundproof"
+  },
+  "294": {
+    "id": "soundproof",
+    "name": "Soundproof"
+  },
+  "295": {
+    "id": "soundproof",
+    "name": "Soundproof"
+  },
+  "296": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "297": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "298": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "299": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "300": {
+    "id": "cute-charm",
+    "name": "Cute Charm"
+  },
+  "301": {
+    "id": "cute-charm",
+    "name": "Cute Charm"
+  },
+  "302": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "303": {
+    "id": "hyper-cutter",
+    "name": "Hyper Cutter"
+  },
+  "304": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "305": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "306": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "307": {
+    "id": "pure-power",
+    "name": "Pure Power"
+  },
+  "308": {
+    "id": "pure-power",
+    "name": "Pure Power"
+  },
+  "309": {
+    "id": "static",
+    "name": "Static"
+  },
+  "310": {
+    "id": "static",
+    "name": "Static"
+  },
+  "311": {
+    "id": "plus",
+    "name": "Plus"
+  },
+  "312": {
+    "id": "minus",
+    "name": "Minus"
+  },
+  "313": {
+    "id": "illuminate",
+    "name": "Illuminate"
+  },
+  "314": {
+    "id": "oblivious",
+    "name": "Oblivious"
+  },
+  "315": {
+    "id": "natural-cure",
+    "name": "Natural Cure"
+  },
+  "316": {
+    "id": "liquid-ooze",
+    "name": "Liquid Ooze"
+  },
+  "317": {
+    "id": "liquid-ooze",
+    "name": "Liquid Ooze"
+  },
+  "318": {
+    "id": "rough-skin",
+    "name": "Rough Skin"
+  },
+  "319": {
+    "id": "rough-skin",
+    "name": "Rough Skin"
+  },
+  "320": {
+    "id": "water-veil",
+    "name": "Water Veil"
+  },
+  "321": {
+    "id": "water-veil",
+    "name": "Water Veil"
+  },
+  "322": {
+    "id": "oblivious",
+    "name": "Oblivious"
+  },
+  "323": {
+    "id": "magma-armor",
+    "name": "Magma Armor"
+  },
+  "324": {
+    "id": "white-smoke",
+    "name": "White Smoke"
+  },
+  "325": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "326": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "327": {
+    "id": "own-tempo",
+    "name": "Own Tempo"
+  },
+  "328": {
+    "id": "hyper-cutter",
+    "name": "Hyper Cutter"
+  },
+  "329": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "330": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "331": {
+    "id": "sand-veil",
+    "name": "Sand Veil"
+  },
+  "332": {
+    "id": "sand-veil",
+    "name": "Sand Veil"
+  },
+  "333": {
+    "id": "natural-cure",
+    "name": "Natural Cure"
+  },
+  "334": {
+    "id": "natural-cure",
+    "name": "Natural Cure"
+  },
+  "335": {
+    "id": "immunity",
+    "name": "Immunity"
+  },
+  "336": {
+    "id": "shed-skin",
+    "name": "Shed Skin"
+  },
+  "337": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "338": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "339": {
+    "id": "oblivious",
+    "name": "Oblivious"
+  },
+  "340": {
+    "id": "oblivious",
+    "name": "Oblivious"
+  },
+  "341": {
+    "id": "hyper-cutter",
+    "name": "Hyper Cutter"
+  },
+  "342": {
+    "id": "hyper-cutter",
+    "name": "Hyper Cutter"
+  },
+  "343": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "344": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "345": {
+    "id": "suction-cups",
+    "name": "Suction Cups"
+  },
+  "346": {
+    "id": "suction-cups",
+    "name": "Suction Cups"
+  },
+  "347": {
+    "id": "battle-armor",
+    "name": "Battle Armor"
+  },
+  "348": {
+    "id": "battle-armor",
+    "name": "Battle Armor"
+  },
+  "349": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "350": {
+    "id": "marvel-scale",
+    "name": "Marvel Scale"
+  },
+  "351": {
+    "id": "forecast",
+    "name": "Forecast"
+  },
+  "352": {
+    "id": "color-change",
+    "name": "Color Change"
+  },
+  "353": {
+    "id": "insomnia",
+    "name": "Insomnia"
+  },
+  "354": {
+    "id": "insomnia",
+    "name": "Insomnia"
+  },
+  "355": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "356": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "357": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "358": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "359": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "360": {
+    "id": "shadow-tag",
+    "name": "Shadow Tag"
+  },
+  "361": {
+    "id": "inner-focus",
+    "name": "Inner Focus"
+  },
+  "362": {
+    "id": "inner-focus",
+    "name": "Inner Focus"
+  },
+  "363": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "364": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "365": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "366": {
+    "id": "shell-armor",
+    "name": "Shell Armor"
+  },
+  "367": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "368": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "369": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "370": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "371": {
+    "id": "rock-head",
+    "name": "Rock Head"
+  },
+  "372": {
+    "id": "rock-head",
+    "name": "Rock Head"
+  },
+  "373": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "374": {
+    "id": "clear-body",
+    "name": "Clear Body"
+  },
+  "375": {
+    "id": "clear-body",
+    "name": "Clear Body"
+  },
+  "376": {
+    "id": "clear-body",
+    "name": "Clear Body"
+  },
+  "377": {
+    "id": "clear-body",
+    "name": "Clear Body"
+  },
+  "378": {
+    "id": "clear-body",
+    "name": "Clear Body"
+  },
+  "379": {
+    "id": "clear-body",
+    "name": "Clear Body"
+  },
+  "380": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "381": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "382": {
+    "id": "drizzle",
+    "name": "Drizzle"
+  },
+  "383": {
+    "id": "drought",
+    "name": "Drought"
+  },
+  "384": {
+    "id": "air-lock",
+    "name": "Air Lock"
+  },
+  "385": {
+    "id": "serene-grace",
+    "name": "Serene Grace"
+  },
+  "386": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "387": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "388": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "389": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "390": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "391": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "392": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "393": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "394": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "395": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "396": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "397": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "398": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "399": {
+    "id": "simple",
+    "name": "Simple"
+  },
+  "400": {
+    "id": "simple",
+    "name": "Simple"
+  },
+  "401": {
+    "id": "shed-skin",
+    "name": "Shed Skin"
+  },
+  "402": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "403": {
+    "id": "rivalry",
+    "name": "Rivalry"
+  },
+  "404": {
+    "id": "rivalry",
+    "name": "Rivalry"
+  },
+  "405": {
+    "id": "rivalry",
+    "name": "Rivalry"
+  },
+  "406": {
+    "id": "natural-cure",
+    "name": "Natural Cure"
+  },
+  "407": {
+    "id": "natural-cure",
+    "name": "Natural Cure"
+  },
+  "408": {
+    "id": "mold-breaker",
+    "name": "Mold Breaker"
+  },
+  "409": {
+    "id": "mold-breaker",
+    "name": "Mold Breaker"
+  },
+  "410": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "411": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "412": {
+    "id": "shed-skin",
+    "name": "Shed Skin"
+  },
+  "413": {
+    "id": "anticipation",
+    "name": "Anticipation"
+  },
+  "414": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "415": {
+    "id": "honey-gather",
+    "name": "Honey Gather"
+  },
+  "416": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "417": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "418": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "419": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "420": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "421": {
+    "id": "flower-gift",
+    "name": "Flower Gift"
+  },
+  "422": {
+    "id": "sticky-hold",
+    "name": "Sticky Hold"
+  },
+  "423": {
+    "id": "sticky-hold",
+    "name": "Sticky Hold"
+  },
+  "424": {
+    "id": "technician",
+    "name": "Technician"
+  },
+  "425": {
+    "id": "aftermath",
+    "name": "Aftermath"
+  },
+  "426": {
+    "id": "aftermath",
+    "name": "Aftermath"
+  },
+  "427": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "428": {
+    "id": "cute-charm",
+    "name": "Cute Charm"
+  },
+  "429": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "430": {
+    "id": "insomnia",
+    "name": "Insomnia"
+  },
+  "431": {
+    "id": "limber",
+    "name": "Limber"
+  },
+  "432": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "433": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "434": {
+    "id": "stench",
+    "name": "Stench"
+  },
+  "435": {
+    "id": "stench",
+    "name": "Stench"
+  },
+  "436": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "437": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "438": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "439": {
+    "id": "soundproof",
+    "name": "Soundproof"
+  },
+  "440": {
+    "id": "natural-cure",
+    "name": "Natural Cure"
+  },
+  "441": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "442": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "443": {
+    "id": "sand-veil",
+    "name": "Sand Veil"
+  },
+  "444": {
+    "id": "sand-veil",
+    "name": "Sand Veil"
+  },
+  "445": {
+    "id": "sand-veil",
+    "name": "Sand Veil"
+  },
+  "446": {
+    "id": "pickup",
+    "name": "Pickup"
+  },
+  "447": {
+    "id": "steadfast",
+    "name": "Steadfast"
+  },
+  "448": {
+    "id": "steadfast",
+    "name": "Steadfast"
+  },
+  "449": {
+    "id": "sand-stream",
+    "name": "Sand Stream"
+  },
+  "450": {
+    "id": "sand-stream",
+    "name": "Sand Stream"
+  },
+  "451": {
+    "id": "battle-armor",
+    "name": "Battle Armor"
+  },
+  "452": {
+    "id": "battle-armor",
+    "name": "Battle Armor"
+  },
+  "453": {
+    "id": "anticipation",
+    "name": "Anticipation"
+  },
+  "454": {
+    "id": "anticipation",
+    "name": "Anticipation"
+  },
+  "455": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "456": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "457": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "458": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "459": {
+    "id": "snow-warning",
+    "name": "Snow Warning"
+  },
+  "460": {
+    "id": "snow-warning",
+    "name": "Snow Warning"
+  },
+  "461": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "462": {
+    "id": "magnet-pull",
+    "name": "Magnet Pull"
+  },
+  "463": {
+    "id": "own-tempo",
+    "name": "Own Tempo"
+  },
+  "464": {
+    "id": "lightning-rod",
+    "name": "Lightning Rod"
+  },
+  "465": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "466": {
+    "id": "motor-drive",
+    "name": "Motor Drive"
+  },
+  "467": {
+    "id": "flame-body",
+    "name": "Flame Body"
+  },
+  "468": {
+    "id": "hustle",
+    "name": "Hustle"
+  },
+  "469": {
+    "id": "speed-boost",
+    "name": "Speed Boost"
+  },
+  "470": {
+    "id": "leaf-guard",
+    "name": "Leaf Guard"
+  },
+  "471": {
+    "id": "snow-cloak",
+    "name": "Snow Cloak"
+  },
+  "472": {
+    "id": "hyper-cutter",
+    "name": "Hyper Cutter"
+  },
+  "473": {
+    "id": "oblivious",
+    "name": "Oblivious"
+  },
+  "474": {
+    "id": "adaptability",
+    "name": "Adaptability"
+  },
+  "475": {
+    "id": "steadfast",
+    "name": "Steadfast"
+  },
+  "476": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "477": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "478": {
+    "id": "snow-cloak",
+    "name": "Snow Cloak"
+  },
+  "479": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "480": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "481": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "482": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "483": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "484": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "485": {
+    "id": "flash-fire",
+    "name": "Flash Fire"
+  },
+  "486": {
+    "id": "slow-start",
+    "name": "Slow Start"
+  },
+  "487": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "488": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "489": {
+    "id": "hydration",
+    "name": "Hydration"
+  },
+  "490": {
+    "id": "hydration",
+    "name": "Hydration"
+  },
+  "491": {
+    "id": "bad-dreams",
+    "name": "Bad Dreams"
+  },
+  "492": {
+    "id": "natural-cure",
+    "name": "Natural Cure"
+  },
+  "493": {
+    "id": "multitype",
+    "name": "Multitype"
+  },
+  "494": {
+    "id": "victory-star",
+    "name": "Victory Star"
+  },
+  "495": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "496": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "497": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "498": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "499": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "500": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "501": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "502": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "503": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "504": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "505": {
+    "id": "illuminate",
+    "name": "Illuminate"
+  },
+  "506": {
+    "id": "vital-spirit",
+    "name": "Vital Spirit"
+  },
+  "507": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "508": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "509": {
+    "id": "limber",
+    "name": "Limber"
+  },
+  "510": {
+    "id": "limber",
+    "name": "Limber"
+  },
+  "511": {
+    "id": "gluttony",
+    "name": "Gluttony"
+  },
+  "512": {
+    "id": "gluttony",
+    "name": "Gluttony"
+  },
+  "513": {
+    "id": "gluttony",
+    "name": "Gluttony"
+  },
+  "514": {
+    "id": "gluttony",
+    "name": "Gluttony"
+  },
+  "515": {
+    "id": "gluttony",
+    "name": "Gluttony"
+  },
+  "516": {
+    "id": "gluttony",
+    "name": "Gluttony"
+  },
+  "517": {
+    "id": "forewarn",
+    "name": "Forewarn"
+  },
+  "518": {
+    "id": "forewarn",
+    "name": "Forewarn"
+  },
+  "519": {
+    "id": "big-pecks",
+    "name": "Big Pecks"
+  },
+  "520": {
+    "id": "big-pecks",
+    "name": "Big Pecks"
+  },
+  "521": {
+    "id": "big-pecks",
+    "name": "Big Pecks"
+  },
+  "522": {
+    "id": "lightning-rod",
+    "name": "Lightning Rod"
+  },
+  "523": {
+    "id": "lightning-rod",
+    "name": "Lightning Rod"
+  },
+  "524": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "525": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "526": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "527": {
+    "id": "unaware",
+    "name": "Unaware"
+  },
+  "528": {
+    "id": "unaware",
+    "name": "Unaware"
+  },
+  "529": {
+    "id": "sand-rush",
+    "name": "Sand Rush"
+  },
+  "530": {
+    "id": "sand-rush",
+    "name": "Sand Rush"
+  },
+  "531": {
+    "id": "healer",
+    "name": "Healer"
+  },
+  "532": {
+    "id": "guts",
+    "name": "Guts"
+  },
+  "533": {
+    "id": "guts",
+    "name": "Guts"
+  },
+  "534": {
+    "id": "guts",
+    "name": "Guts"
+  },
+  "535": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "536": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "537": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "538": {
+    "id": "guts",
+    "name": "Guts"
+  },
+  "539": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "540": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "541": {
+    "id": "leaf-guard",
+    "name": "Leaf Guard"
+  },
+  "542": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "543": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "544": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "545": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "546": {
+    "id": "prankster",
+    "name": "Prankster"
+  },
+  "547": {
+    "id": "prankster",
+    "name": "Prankster"
+  },
+  "548": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "549": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "550": {
+    "id": "reckless",
+    "name": "Reckless"
+  },
+  "551": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "552": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "553": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "554": {
+    "id": "hustle",
+    "name": "Hustle"
+  },
+  "555": {
+    "id": "sheer-force",
+    "name": "Sheer Force"
+  },
+  "556": {
+    "id": "water-absorb",
+    "name": "Water Absorb"
+  },
+  "557": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "558": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "559": {
+    "id": "shed-skin",
+    "name": "Shed Skin"
+  },
+  "560": {
+    "id": "shed-skin",
+    "name": "Shed Skin"
+  },
+  "561": {
+    "id": "wonder-skin",
+    "name": "Wonder Skin"
+  },
+  "562": {
+    "id": "mummy",
+    "name": "Mummy"
+  },
+  "563": {
+    "id": "mummy",
+    "name": "Mummy"
+  },
+  "564": {
+    "id": "solid-rock",
+    "name": "Solid Rock"
+  },
+  "565": {
+    "id": "solid-rock",
+    "name": "Solid Rock"
+  },
+  "566": {
+    "id": "defeatist",
+    "name": "Defeatist"
+  },
+  "567": {
+    "id": "defeatist",
+    "name": "Defeatist"
+  },
+  "568": {
+    "id": "stench",
+    "name": "Stench"
+  },
+  "569": {
+    "id": "stench",
+    "name": "Stench"
+  },
+  "570": {
+    "id": "illusion",
+    "name": "Illusion"
+  },
+  "571": {
+    "id": "illusion",
+    "name": "Illusion"
+  },
+  "572": {
+    "id": "cute-charm",
+    "name": "Cute Charm"
+  },
+  "573": {
+    "id": "cute-charm",
+    "name": "Cute Charm"
+  },
+  "574": {
+    "id": "frisk",
+    "name": "Frisk"
+  },
+  "575": {
+    "id": "frisk",
+    "name": "Frisk"
+  },
+  "576": {
+    "id": "frisk",
+    "name": "Frisk"
+  },
+  "577": {
+    "id": "overcoat",
+    "name": "Overcoat"
+  },
+  "578": {
+    "id": "overcoat",
+    "name": "Overcoat"
+  },
+  "579": {
+    "id": "overcoat",
+    "name": "Overcoat"
+  },
+  "580": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "581": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "582": {
+    "id": "ice-body",
+    "name": "Ice Body"
+  },
+  "583": {
+    "id": "ice-body",
+    "name": "Ice Body"
+  },
+  "584": {
+    "id": "ice-body",
+    "name": "Ice Body"
+  },
+  "585": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "586": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "587": {
+    "id": "static",
+    "name": "Static"
+  },
+  "588": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "589": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "590": {
+    "id": "effect-spore",
+    "name": "Effect Spore"
+  },
+  "591": {
+    "id": "effect-spore",
+    "name": "Effect Spore"
+  },
+  "592": {
+    "id": "water-absorb",
+    "name": "Water Absorb"
+  },
+  "593": {
+    "id": "water-absorb",
+    "name": "Water Absorb"
+  },
+  "594": {
+    "id": "healer",
+    "name": "Healer"
+  },
+  "595": {
+    "id": "compound-eyes",
+    "name": "Compound Eyes"
+  },
+  "596": {
+    "id": "compound-eyes",
+    "name": "Compound Eyes"
+  },
+  "597": {
+    "id": "iron-barbs",
+    "name": "Iron Barbs"
+  },
+  "598": {
+    "id": "iron-barbs",
+    "name": "Iron Barbs"
+  },
+  "599": {
+    "id": "plus",
+    "name": "Plus"
+  },
+  "600": {
+    "id": "plus",
+    "name": "Plus"
+  },
+  "601": {
+    "id": "plus",
+    "name": "Plus"
+  },
+  "602": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "603": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "604": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "605": {
+    "id": "telepathy",
+    "name": "Telepathy"
+  },
+  "606": {
+    "id": "telepathy",
+    "name": "Telepathy"
+  },
+  "607": {
+    "id": "flash-fire",
+    "name": "Flash Fire"
+  },
+  "608": {
+    "id": "flash-fire",
+    "name": "Flash Fire"
+  },
+  "609": {
+    "id": "flash-fire",
+    "name": "Flash Fire"
+  },
+  "610": {
+    "id": "rivalry",
+    "name": "Rivalry"
+  },
+  "611": {
+    "id": "rivalry",
+    "name": "Rivalry"
+  },
+  "612": {
+    "id": "rivalry",
+    "name": "Rivalry"
+  },
+  "613": {
+    "id": "snow-cloak",
+    "name": "Snow Cloak"
+  },
+  "614": {
+    "id": "snow-cloak",
+    "name": "Snow Cloak"
+  },
+  "615": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "616": {
+    "id": "hydration",
+    "name": "Hydration"
+  },
+  "617": {
+    "id": "hydration",
+    "name": "Hydration"
+  },
+  "618": {
+    "id": "static",
+    "name": "Static"
+  },
+  "619": {
+    "id": "inner-focus",
+    "name": "Inner Focus"
+  },
+  "620": {
+    "id": "inner-focus",
+    "name": "Inner Focus"
+  },
+  "621": {
+    "id": "rough-skin",
+    "name": "Rough Skin"
+  },
+  "622": {
+    "id": "iron-fist",
+    "name": "Iron Fist"
+  },
+  "623": {
+    "id": "iron-fist",
+    "name": "Iron Fist"
+  },
+  "624": {
+    "id": "defiant",
+    "name": "Defiant"
+  },
+  "625": {
+    "id": "defiant",
+    "name": "Defiant"
+  },
+  "626": {
+    "id": "reckless",
+    "name": "Reckless"
+  },
+  "627": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "628": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "629": {
+    "id": "big-pecks",
+    "name": "Big Pecks"
+  },
+  "630": {
+    "id": "big-pecks",
+    "name": "Big Pecks"
+  },
+  "631": {
+    "id": "gluttony",
+    "name": "Gluttony"
+  },
+  "632": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "633": {
+    "id": "hustle",
+    "name": "Hustle"
+  },
+  "634": {
+    "id": "hustle",
+    "name": "Hustle"
+  },
+  "635": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "636": {
+    "id": "flame-body",
+    "name": "Flame Body"
+  },
+  "637": {
+    "id": "flame-body",
+    "name": "Flame Body"
+  },
+  "638": {
+    "id": "justified",
+    "name": "Justified"
+  },
+  "639": {
+    "id": "justified",
+    "name": "Justified"
+  },
+  "640": {
+    "id": "justified",
+    "name": "Justified"
+  },
+  "641": {
+    "id": "prankster",
+    "name": "Prankster"
+  },
+  "642": {
+    "id": "prankster",
+    "name": "Prankster"
+  },
+  "643": {
+    "id": "turboblaze",
+    "name": "Turboblaze"
+  },
+  "644": {
+    "id": "teravolt",
+    "name": "Teravolt"
+  },
+  "645": {
+    "id": "sand-force",
+    "name": "Sand Force"
+  },
+  "646": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "647": {
+    "id": "justified",
+    "name": "Justified"
+  },
+  "648": {
+    "id": "serene-grace",
+    "name": "Serene Grace"
+  },
+  "649": {
+    "id": "download",
+    "name": "Download"
+  },
+  "650": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "651": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "652": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "653": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "654": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "655": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "656": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "657": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "658": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "659": {
+    "id": "pickup",
+    "name": "Pickup"
+  },
+  "660": {
+    "id": "pickup",
+    "name": "Pickup"
+  },
+  "661": {
+    "id": "big-pecks",
+    "name": "Big Pecks"
+  },
+  "662": {
+    "id": "flame-body",
+    "name": "Flame Body"
+  },
+  "663": {
+    "id": "flame-body",
+    "name": "Flame Body"
+  },
+  "664": {
+    "id": "shield-dust",
+    "name": "Shield Dust"
+  },
+  "665": {
+    "id": "shed-skin",
+    "name": "Shed Skin"
+  },
+  "666": {
+    "id": "shield-dust",
+    "name": "Shield Dust"
+  },
+  "667": {
+    "id": "rivalry",
+    "name": "Rivalry"
+  },
+  "668": {
+    "id": "rivalry",
+    "name": "Rivalry"
+  },
+  "669": {
+    "id": "flower-veil",
+    "name": "Flower Veil"
+  },
+  "670": {
+    "id": "flower-veil",
+    "name": "Flower Veil"
+  },
+  "671": {
+    "id": "flower-veil",
+    "name": "Flower Veil"
+  },
+  "672": {
+    "id": "sap-sipper",
+    "name": "Sap Sipper"
+  },
+  "673": {
+    "id": "sap-sipper",
+    "name": "Sap Sipper"
+  },
+  "674": {
+    "id": "iron-fist",
+    "name": "Iron Fist"
+  },
+  "675": {
+    "id": "iron-fist",
+    "name": "Iron Fist"
+  },
+  "676": {
+    "id": "fur-coat",
+    "name": "Fur Coat"
+  },
+  "677": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "678": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "679": {
+    "id": "no-guard",
+    "name": "No Guard"
+  },
+  "680": {
+    "id": "no-guard",
+    "name": "No Guard"
+  },
+  "681": {
+    "id": "stance-change",
+    "name": "Stance Change"
+  },
+  "682": {
+    "id": "healer",
+    "name": "Healer"
+  },
+  "683": {
+    "id": "healer",
+    "name": "Healer"
+  },
+  "684": {
+    "id": "sweet-veil",
+    "name": "Sweet Veil"
+  },
+  "685": {
+    "id": "sweet-veil",
+    "name": "Sweet Veil"
+  },
+  "686": {
+    "id": "contrary",
+    "name": "Contrary"
+  },
+  "687": {
+    "id": "contrary",
+    "name": "Contrary"
+  },
+  "688": {
+    "id": "tough-claws",
+    "name": "Tough Claws"
+  },
+  "689": {
+    "id": "tough-claws",
+    "name": "Tough Claws"
+  },
+  "690": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "691": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "692": {
+    "id": "mega-launcher",
+    "name": "Mega Launcher"
+  },
+  "693": {
+    "id": "mega-launcher",
+    "name": "Mega Launcher"
+  },
+  "694": {
+    "id": "dry-skin",
+    "name": "Dry Skin"
+  },
+  "695": {
+    "id": "dry-skin",
+    "name": "Dry Skin"
+  },
+  "696": {
+    "id": "strong-jaw",
+    "name": "Strong Jaw"
+  },
+  "697": {
+    "id": "strong-jaw",
+    "name": "Strong Jaw"
+  },
+  "698": {
+    "id": "refrigerate",
+    "name": "Refrigerate"
+  },
+  "699": {
+    "id": "refrigerate",
+    "name": "Refrigerate"
+  },
+  "700": {
+    "id": "cute-charm",
+    "name": "Cute Charm"
+  },
+  "701": {
+    "id": "limber",
+    "name": "Limber"
+  },
+  "702": {
+    "id": "cheek-pouch",
+    "name": "Cheek Pouch"
+  },
+  "703": {
+    "id": "clear-body",
+    "name": "Clear Body"
+  },
+  "704": {
+    "id": "sap-sipper",
+    "name": "Sap Sipper"
+  },
+  "705": {
+    "id": "sap-sipper",
+    "name": "Sap Sipper"
+  },
+  "706": {
+    "id": "sap-sipper",
+    "name": "Sap Sipper"
+  },
+  "707": {
+    "id": "prankster",
+    "name": "Prankster"
+  },
+  "708": {
+    "id": "natural-cure",
+    "name": "Natural Cure"
+  },
+  "709": {
+    "id": "natural-cure",
+    "name": "Natural Cure"
+  },
+  "710": {
+    "id": "pickup",
+    "name": "Pickup"
+  },
+  "711": {
+    "id": "pickup",
+    "name": "Pickup"
+  },
+  "712": {
+    "id": "own-tempo",
+    "name": "Own Tempo"
+  },
+  "713": {
+    "id": "own-tempo",
+    "name": "Own Tempo"
+  },
+  "714": {
+    "id": "frisk",
+    "name": "Frisk"
+  },
+  "715": {
+    "id": "frisk",
+    "name": "Frisk"
+  },
+  "716": {
+    "id": "fairy-aura",
+    "name": "Fairy Aura"
+  },
+  "717": {
+    "id": "dark-aura",
+    "name": "Dark Aura"
+  },
+  "718": {
+    "id": "aura-break",
+    "name": "Aura Break"
+  },
+  "719": {
+    "id": "clear-body",
+    "name": "Clear Body"
+  },
+  "720": {
+    "id": "magician",
+    "name": "Magician"
+  },
+  "721": {
+    "id": "water-absorb",
+    "name": "Water Absorb"
+  },
+  "722": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "723": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "724": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "725": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "726": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "727": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "728": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "729": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "730": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "731": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "732": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "733": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "734": {
+    "id": "stakeout",
+    "name": "Stakeout"
+  },
+  "735": {
+    "id": "stakeout",
+    "name": "Stakeout"
+  },
+  "736": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "737": {
+    "id": "battery",
+    "name": "Battery"
+  },
+  "738": {
+    "id": "levitate",
+    "name": "Levitate"
+  },
+  "739": {
+    "id": "hyper-cutter",
+    "name": "Hyper Cutter"
+  },
+  "740": {
+    "id": "hyper-cutter",
+    "name": "Hyper Cutter"
+  },
+  "741": {
+    "id": "dancer",
+    "name": "Dancer"
+  },
+  "742": {
+    "id": "honey-gather",
+    "name": "Honey Gather"
+  },
+  "743": {
+    "id": "honey-gather",
+    "name": "Honey Gather"
+  },
+  "744": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "745": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "746": {
+    "id": "schooling",
+    "name": "Schooling"
+  },
+  "747": {
+    "id": "merciless",
+    "name": "Merciless"
+  },
+  "748": {
+    "id": "merciless",
+    "name": "Merciless"
+  },
+  "749": {
+    "id": "own-tempo",
+    "name": "Own Tempo"
+  },
+  "750": {
+    "id": "own-tempo",
+    "name": "Own Tempo"
+  },
+  "751": {
+    "id": "water-bubble",
+    "name": "Water Bubble"
+  },
+  "752": {
+    "id": "water-bubble",
+    "name": "Water Bubble"
+  },
+  "753": {
+    "id": "leaf-guard",
+    "name": "Leaf Guard"
+  },
+  "754": {
+    "id": "leaf-guard",
+    "name": "Leaf Guard"
+  },
+  "755": {
+    "id": "illuminate",
+    "name": "Illuminate"
+  },
+  "756": {
+    "id": "illuminate",
+    "name": "Illuminate"
+  },
+  "757": {
+    "id": "corrosion",
+    "name": "Corrosion"
+  },
+  "758": {
+    "id": "corrosion",
+    "name": "Corrosion"
+  },
+  "759": {
+    "id": "fluffy",
+    "name": "Fluffy"
+  },
+  "760": {
+    "id": "fluffy",
+    "name": "Fluffy"
+  },
+  "761": {
+    "id": "leaf-guard",
+    "name": "Leaf Guard"
+  },
+  "762": {
+    "id": "leaf-guard",
+    "name": "Leaf Guard"
+  },
+  "763": {
+    "id": "leaf-guard",
+    "name": "Leaf Guard"
+  },
+  "764": {
+    "id": "flower-veil",
+    "name": "Flower Veil"
+  },
+  "765": {
+    "id": "inner-focus",
+    "name": "Inner Focus"
+  },
+  "766": {
+    "id": "receiver",
+    "name": "Receiver"
+  },
+  "767": {
+    "id": "wimp-out",
+    "name": "Wimp Out"
+  },
+  "768": {
+    "id": "emergency-exit",
+    "name": "Emergency Exit"
+  },
+  "769": {
+    "id": "water-compaction",
+    "name": "Water Compaction"
+  },
+  "770": {
+    "id": "water-compaction",
+    "name": "Water Compaction"
+  },
+  "771": {
+    "id": "innards-out",
+    "name": "Innards Out"
+  },
+  "772": {
+    "id": "battle-armor",
+    "name": "Battle Armor"
+  },
+  "773": {
+    "id": "rks-system",
+    "name": "RKS System"
+  },
+  "774": {
+    "id": "shields-down",
+    "name": "Shields Down"
+  },
+  "775": {
+    "id": "comatose",
+    "name": "Comatose"
+  },
+  "776": {
+    "id": "shell-armor",
+    "name": "Shell Armor"
+  },
+  "777": {
+    "id": "iron-barbs",
+    "name": "Iron Barbs"
+  },
+  "778": {
+    "id": "disguise",
+    "name": "Disguise"
+  },
+  "779": {
+    "id": "dazzling",
+    "name": "Dazzling"
+  },
+  "780": {
+    "id": "berserk",
+    "name": "Berserk"
+  },
+  "781": {
+    "id": "steelworker",
+    "name": "Steelworker"
+  },
+  "782": {
+    "id": "bulletproof",
+    "name": "Bulletproof"
+  },
+  "783": {
+    "id": "bulletproof",
+    "name": "Bulletproof"
+  },
+  "784": {
+    "id": "bulletproof",
+    "name": "Bulletproof"
+  },
+  "785": {
+    "id": "electric-surge",
+    "name": "Electric Surge"
+  },
+  "786": {
+    "id": "psychic-surge",
+    "name": "Psychic Surge"
+  },
+  "787": {
+    "id": "grassy-surge",
+    "name": "Grassy Surge"
+  },
+  "788": {
+    "id": "misty-surge",
+    "name": "Misty Surge"
+  },
+  "789": {
+    "id": "unaware",
+    "name": "Unaware"
+  },
+  "790": {
+    "id": "sturdy",
+    "name": "Sturdy"
+  },
+  "791": {
+    "id": "full-metal-body",
+    "name": "Full Metal Body"
+  },
+  "792": {
+    "id": "shadow-shield",
+    "name": "Shadow Shield"
+  },
+  "793": {
+    "id": "beast-boost",
+    "name": "Beast Boost"
+  },
+  "794": {
+    "id": "beast-boost",
+    "name": "Beast Boost"
+  },
+  "795": {
+    "id": "beast-boost",
+    "name": "Beast Boost"
+  },
+  "796": {
+    "id": "beast-boost",
+    "name": "Beast Boost"
+  },
+  "797": {
+    "id": "beast-boost",
+    "name": "Beast Boost"
+  },
+  "798": {
+    "id": "beast-boost",
+    "name": "Beast Boost"
+  },
+  "799": {
+    "id": "beast-boost",
+    "name": "Beast Boost"
+  },
+  "800": {
+    "id": "prism-armor",
+    "name": "Prism Armor"
+  },
+  "801": {
+    "id": "soul-heart",
+    "name": "Soul-Heart"
+  },
+  "802": {
+    "id": "technician",
+    "name": "Technician"
+  },
+  "803": {
+    "id": "beast-boost",
+    "name": "Beast Boost"
+  },
+  "804": {
+    "id": "beast-boost",
+    "name": "Beast Boost"
+  },
+  "805": {
+    "id": "beast-boost",
+    "name": "Beast Boost"
+  },
+  "806": {
+    "id": "beast-boost",
+    "name": "Beast Boost"
+  },
+  "807": {
+    "id": "volt-absorb",
+    "name": "Volt Absorb"
+  },
+  "808": {
+    "id": "magnet-pull",
+    "name": "Magnet Pull"
+  },
+  "809": {
+    "id": "iron-fist",
+    "name": "Iron Fist"
+  },
+  "810": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "811": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "812": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "813": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "814": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "815": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "816": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "817": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "818": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "819": {
+    "id": "cheek-pouch",
+    "name": "Cheek Pouch"
+  },
+  "820": {
+    "id": "cheek-pouch",
+    "name": "Cheek Pouch"
+  },
+  "821": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "822": {
+    "id": "keen-eye",
+    "name": "Keen Eye"
+  },
+  "823": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "824": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "825": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "826": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "827": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "828": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "829": {
+    "id": "cotton-down",
+    "name": "Cotton Down"
+  },
+  "830": {
+    "id": "cotton-down",
+    "name": "Cotton Down"
+  },
+  "831": {
+    "id": "fluffy",
+    "name": "Fluffy"
+  },
+  "832": {
+    "id": "fluffy",
+    "name": "Fluffy"
+  },
+  "833": {
+    "id": "strong-jaw",
+    "name": "Strong Jaw"
+  },
+  "834": {
+    "id": "strong-jaw",
+    "name": "Strong Jaw"
+  },
+  "835": {
+    "id": "ball-fetch",
+    "name": "Ball Fetch"
+  },
+  "836": {
+    "id": "strong-jaw",
+    "name": "Strong Jaw"
+  },
+  "837": {
+    "id": "steam-engine",
+    "name": "Steam Engine"
+  },
+  "838": {
+    "id": "steam-engine",
+    "name": "Steam Engine"
+  },
+  "839": {
+    "id": "steam-engine",
+    "name": "Steam Engine"
+  },
+  "840": {
+    "id": "ripen",
+    "name": "Ripen"
+  },
+  "841": {
+    "id": "ripen",
+    "name": "Ripen"
+  },
+  "842": {
+    "id": "ripen",
+    "name": "Ripen"
+  },
+  "843": {
+    "id": "sand-spit",
+    "name": "Sand Spit"
+  },
+  "844": {
+    "id": "sand-spit",
+    "name": "Sand Spit"
+  },
+  "845": {
+    "id": "gulp-missile",
+    "name": "Gulp Missile"
+  },
+  "846": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "847": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "848": {
+    "id": "rattled",
+    "name": "Rattled"
+  },
+  "849": {
+    "id": "punk-rock",
+    "name": "Punk Rock"
+  },
+  "850": {
+    "id": "flash-fire",
+    "name": "Flash Fire"
+  },
+  "851": {
+    "id": "flash-fire",
+    "name": "Flash Fire"
+  },
+  "852": {
+    "id": "limber",
+    "name": "Limber"
+  },
+  "853": {
+    "id": "limber",
+    "name": "Limber"
+  },
+  "854": {
+    "id": "weak-armor",
+    "name": "Weak Armor"
+  },
+  "855": {
+    "id": "weak-armor",
+    "name": "Weak Armor"
+  },
+  "856": {
+    "id": "healer",
+    "name": "Healer"
+  },
+  "857": {
+    "id": "healer",
+    "name": "Healer"
+  },
+  "858": {
+    "id": "healer",
+    "name": "Healer"
+  },
+  "859": {
+    "id": "prankster",
+    "name": "Prankster"
+  },
+  "860": {
+    "id": "prankster",
+    "name": "Prankster"
+  },
+  "861": {
+    "id": "prankster",
+    "name": "Prankster"
+  },
+  "862": {
+    "id": "reckless",
+    "name": "Reckless"
+  },
+  "863": {
+    "id": "battle-armor",
+    "name": "Battle Armor"
+  },
+  "864": {
+    "id": "weak-armor",
+    "name": "Weak Armor"
+  },
+  "865": {
+    "id": "steadfast",
+    "name": "Steadfast"
+  },
+  "866": {
+    "id": "tangled-feet",
+    "name": "Tangled Feet"
+  },
+  "867": {
+    "id": "wandering-spirit",
+    "name": "Wandering Spirit"
+  },
+  "868": {
+    "id": "sweet-veil",
+    "name": "Sweet Veil"
+  },
+  "869": {
+    "id": "sweet-veil",
+    "name": "Sweet Veil"
+  },
+  "870": {
+    "id": "battle-armor",
+    "name": "Battle Armor"
+  },
+  "871": {
+    "id": "lightning-rod",
+    "name": "Lightning Rod"
+  },
+  "872": {
+    "id": "shield-dust",
+    "name": "Shield Dust"
+  },
+  "873": {
+    "id": "shield-dust",
+    "name": "Shield Dust"
+  },
+  "874": {
+    "id": "power-spot",
+    "name": "Power Spot"
+  },
+  "875": {
+    "id": "ice-face",
+    "name": "Ice Face"
+  },
+  "876": {
+    "id": "inner-focus",
+    "name": "Inner Focus"
+  },
+  "877": {
+    "id": "hunger-switch",
+    "name": "Hunger Switch"
+  },
+  "878": {
+    "id": "sheer-force",
+    "name": "Sheer Force"
+  },
+  "879": {
+    "id": "sheer-force",
+    "name": "Sheer Force"
+  },
+  "880": {
+    "id": "volt-absorb",
+    "name": "Volt Absorb"
+  },
+  "881": {
+    "id": "volt-absorb",
+    "name": "Volt Absorb"
+  },
+  "882": {
+    "id": "water-absorb",
+    "name": "Water Absorb"
+  },
+  "883": {
+    "id": "water-absorb",
+    "name": "Water Absorb"
+  },
+  "884": {
+    "id": "light-metal",
+    "name": "Light Metal"
+  },
+  "885": {
+    "id": "clear-body",
+    "name": "Clear Body"
+  },
+  "886": {
+    "id": "clear-body",
+    "name": "Clear Body"
+  },
+  "887": {
+    "id": "clear-body",
+    "name": "Clear Body"
+  },
+  "888": {
+    "id": "intrepid-sword",
+    "name": "Intrepid Sword"
+  },
+  "889": {
+    "id": "dauntless-shield",
+    "name": "Dauntless Shield"
+  },
+  "890": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "891": {
+    "id": "inner-focus",
+    "name": "Inner Focus"
+  },
+  "892": {
+    "id": "unseen-fist",
+    "name": "Unseen Fist"
+  },
+  "893": {
+    "id": "leaf-guard",
+    "name": "Leaf Guard"
+  },
+  "894": {
+    "id": "transistor",
+    "name": "Transistor"
+  },
+  "895": {
+    "id": "dragons-maw",
+    "name": "Dragon’s Maw"
+  },
+  "896": {
+    "id": "chilling-neigh",
+    "name": "Chilling Neigh"
+  },
+  "897": {
+    "id": "grim-neigh",
+    "name": "Grim Neigh"
+  },
+  "898": {
+    "id": "unnerve",
+    "name": "Unnerve"
+  },
+  "899": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "900": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "901": {
+    "id": "guts",
+    "name": "Guts"
+  },
+  "902": {
+    "id": "swift-swim",
+    "name": "Swift Swim"
+  },
+  "903": {
+    "id": "pressure",
+    "name": "Pressure"
+  },
+  "904": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "905": {
+    "id": "cute-charm",
+    "name": "Cute Charm"
+  },
+  "906": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "907": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "908": {
+    "id": "overgrow",
+    "name": "Overgrow"
+  },
+  "909": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "910": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "911": {
+    "id": "blaze",
+    "name": "Blaze"
+  },
+  "912": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "913": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "914": {
+    "id": "torrent",
+    "name": "Torrent"
+  },
+  "915": {
+    "id": "aroma-veil",
+    "name": "Aroma Veil"
+  },
+  "916": {
+    "id": "lingering-aroma",
+    "name": "Lingering Aroma"
+  },
+  "917": {
+    "id": "insomnia",
+    "name": "Insomnia"
+  },
+  "918": {
+    "id": "insomnia",
+    "name": "Insomnia"
+  },
+  "919": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "920": {
+    "id": "swarm",
+    "name": "Swarm"
+  },
+  "921": {
+    "id": "static",
+    "name": "Static"
+  },
+  "922": {
+    "id": "volt-absorb",
+    "name": "Volt Absorb"
+  },
+  "923": {
+    "id": "volt-absorb",
+    "name": "Volt Absorb"
+  },
+  "924": {
+    "id": "run-away",
+    "name": "Run Away"
+  },
+  "925": {
+    "id": "friend-guard",
+    "name": "Friend Guard"
+  },
+  "926": {
+    "id": "own-tempo",
+    "name": "Own Tempo"
+  },
+  "927": {
+    "id": "well-baked-body",
+    "name": "Well-Baked Body"
+  },
+  "928": {
+    "id": "early-bird",
+    "name": "Early Bird"
+  },
+  "929": {
+    "id": "early-bird",
+    "name": "Early Bird"
+  },
+  "930": {
+    "id": "seed-sower",
+    "name": "Seed Sower"
+  },
+  "931": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "932": {
+    "id": "purifying-salt",
+    "name": "Purifying Salt"
+  },
+  "933": {
+    "id": "purifying-salt",
+    "name": "Purifying Salt"
+  },
+  "934": {
+    "id": "purifying-salt",
+    "name": "Purifying Salt"
+  },
+  "935": {
+    "id": "flash-fire",
+    "name": "Flash Fire"
+  },
+  "936": {
+    "id": "flash-fire",
+    "name": "Flash Fire"
+  },
+  "937": {
+    "id": "flash-fire",
+    "name": "Flash Fire"
+  },
+  "938": {
+    "id": "own-tempo",
+    "name": "Own Tempo"
+  },
+  "939": {
+    "id": "electromorphosis",
+    "name": "Electromorphosis"
+  },
+  "940": {
+    "id": "wind-power",
+    "name": "Wind Power"
+  },
+  "941": {
+    "id": "wind-power",
+    "name": "Wind Power"
+  },
+  "942": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "943": {
+    "id": "intimidate",
+    "name": "Intimidate"
+  },
+  "944": {
+    "id": "unburden",
+    "name": "Unburden"
+  },
+  "945": {
+    "id": "unburden",
+    "name": "Unburden"
+  },
+  "946": {
+    "id": "wind-rider",
+    "name": "Wind Rider"
+  },
+  "947": {
+    "id": "wind-rider",
+    "name": "Wind Rider"
+  },
+  "948": {
+    "id": "mycelium-might",
+    "name": "Mycelium Might"
+  },
+  "949": {
+    "id": "mycelium-might",
+    "name": "Mycelium Might"
+  },
+  "950": {
+    "id": "anger-shell",
+    "name": "Anger Shell"
+  },
+  "951": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "952": {
+    "id": "chlorophyll",
+    "name": "Chlorophyll"
+  },
+  "953": {
+    "id": "compound-eyes",
+    "name": "Compound Eyes"
+  },
+  "954": {
+    "id": "synchronize",
+    "name": "Synchronize"
+  },
+  "955": {
+    "id": "anticipation",
+    "name": "Anticipation"
+  },
+  "956": {
+    "id": "opportunist",
+    "name": "Opportunist"
+  },
+  "957": {
+    "id": "mold-breaker",
+    "name": "Mold Breaker"
+  },
+  "958": {
+    "id": "mold-breaker",
+    "name": "Mold Breaker"
+  },
+  "959": {
+    "id": "mold-breaker",
+    "name": "Mold Breaker"
+  },
+  "960": {
+    "id": "gooey",
+    "name": "Gooey"
+  },
+  "961": {
+    "id": "gooey",
+    "name": "Gooey"
+  },
+  "962": {
+    "id": "big-pecks",
+    "name": "Big Pecks"
+  },
+  "963": {
+    "id": "water-veil",
+    "name": "Water Veil"
+  },
+  "964": {
+    "id": "zero-to-hero",
+    "name": "Zero to Hero"
+  },
+  "965": {
+    "id": "overcoat",
+    "name": "Overcoat"
+  },
+  "966": {
+    "id": "overcoat",
+    "name": "Overcoat"
+  },
+  "967": {
+    "id": "shed-skin",
+    "name": "Shed Skin"
+  },
+  "968": {
+    "id": "earth-eater",
+    "name": "Earth Eater"
+  },
+  "969": {
+    "id": "toxic-debris",
+    "name": "Toxic Debris"
+  },
+  "970": {
+    "id": "toxic-debris",
+    "name": "Toxic Debris"
+  },
+  "971": {
+    "id": "pickup",
+    "name": "Pickup"
+  },
+  "972": {
+    "id": "sand-rush",
+    "name": "Sand Rush"
+  },
+  "973": {
+    "id": "scrappy",
+    "name": "Scrappy"
+  },
+  "974": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "975": {
+    "id": "thick-fat",
+    "name": "Thick Fat"
+  },
+  "976": {
+    "id": "mold-breaker",
+    "name": "Mold Breaker"
+  },
+  "977": {
+    "id": "unaware",
+    "name": "Unaware"
+  },
+  "978": {
+    "id": "commander",
+    "name": "Commander"
+  },
+  "979": {
+    "id": "vital-spirit",
+    "name": "Vital Spirit"
+  },
+  "980": {
+    "id": "poison-point",
+    "name": "Poison Point"
+  },
+  "981": {
+    "id": "cud-chew",
+    "name": "Cud Chew"
+  },
+  "982": {
+    "id": "serene-grace",
+    "name": "Serene Grace"
+  },
+  "983": {
+    "id": "defiant",
+    "name": "Defiant"
+  },
+  "984": {
+    "id": "protosynthesis",
+    "name": "Protosynthesis"
+  },
+  "985": {
+    "id": "protosynthesis",
+    "name": "Protosynthesis"
+  },
+  "986": {
+    "id": "protosynthesis",
+    "name": "Protosynthesis"
+  },
+  "987": {
+    "id": "protosynthesis",
+    "name": "Protosynthesis"
+  },
+  "988": {
+    "id": "protosynthesis",
+    "name": "Protosynthesis"
+  },
+  "989": {
+    "id": "protosynthesis",
+    "name": "Protosynthesis"
+  },
+  "990": {
+    "id": "quark-drive",
+    "name": "Quark Drive"
+  },
+  "991": {
+    "id": "quark-drive",
+    "name": "Quark Drive"
+  },
+  "992": {
+    "id": "quark-drive",
+    "name": "Quark Drive"
+  },
+  "993": {
+    "id": "quark-drive",
+    "name": "Quark Drive"
+  },
+  "994": {
+    "id": "quark-drive",
+    "name": "Quark Drive"
+  },
+  "995": {
+    "id": "quark-drive",
+    "name": "Quark Drive"
+  },
+  "996": {
+    "id": "thermal-exchange",
+    "name": "Thermal Exchange"
+  },
+  "997": {
+    "id": "thermal-exchange",
+    "name": "Thermal Exchange"
+  },
+  "998": {
+    "id": "thermal-exchange",
+    "name": "Thermal Exchange"
+  },
+  "999": {
+    "id": "rattled",
+    "name": "Rattled"
+  },
+  "1000": {
+    "id": "good-as-gold",
+    "name": "Good as Gold"
+  },
+  "1001": {
+    "id": "tablets-of-ruin",
+    "name": "Tablets of Ruin"
+  },
+  "1002": {
+    "id": "sword-of-ruin",
+    "name": "Sword of Ruin"
+  },
+  "1003": {
+    "id": "vessel-of-ruin",
+    "name": "Vessel of Ruin"
+  },
+  "1004": {
+    "id": "beads-of-ruin",
+    "name": "Beads of Ruin"
+  },
+  "1005": {
+    "id": "protosynthesis",
+    "name": "Protosynthesis"
+  },
+  "1006": {
+    "id": "quark-drive",
+    "name": "Quark Drive"
+  },
+  "1007": {
+    "id": "orichalcum-pulse",
+    "name": "Orichalcum Pulse"
+  },
+  "1008": {
+    "id": "hadron-engine",
+    "name": "Hadron Engine"
+  },
+  "1009": {
+    "id": "protosynthesis",
+    "name": "Protosynthesis"
+  },
+  "1010": {
+    "id": "quark-drive",
+    "name": "Quark Drive"
+  },
+  "1011": {
+    "id": "supersweet-syrup",
+    "name": "Supersweet Syrup"
+  },
+  "1012": {
+    "id": "hospitality",
+    "name": "Hospitality"
+  },
+  "1013": {
+    "id": "hospitality",
+    "name": "Hospitality"
+  },
+  "1014": {
+    "id": "toxic-chain",
+    "name": "Toxic Chain"
+  },
+  "1015": {
+    "id": "toxic-chain",
+    "name": "Toxic Chain"
+  },
+  "1016": {
+    "id": "toxic-chain",
+    "name": "Toxic Chain"
+  },
+  "1017": {
+    "id": "defiant",
+    "name": "Defiant"
+  },
+  "1018": {
+    "id": "stamina",
+    "name": "Stamina"
+  },
+  "1019": {
+    "id": "supersweet-syrup",
+    "name": "Supersweet Syrup"
+  },
+  "1020": {
+    "id": "protosynthesis",
+    "name": "Protosynthesis"
+  },
+  "1021": {
+    "id": "protosynthesis",
+    "name": "Protosynthesis"
+  },
+  "1022": {
+    "id": "quark-drive",
+    "name": "Quark Drive"
+  },
+  "1023": {
+    "id": "quark-drive",
+    "name": "Quark Drive"
+  },
+  "1024": {
+    "id": "tera-shift",
+    "name": "Tera Shift"
+  },
+  "1025": {
+    "id": "poison-puppeteer",
+    "name": "Poison Puppeteer"
+  }
+}

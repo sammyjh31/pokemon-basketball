@@ -1,3 +1,4 @@
+import { AbilityStats } from "./AbilityStats";
 import { useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import type { SeasonAward, SeasonPlayer } from "../game/types";
@@ -252,6 +253,15 @@ export function SeasonStats({
             </tbody>
           </table>
         </div>
+        <AbilityStats
+          label="Season ability activations"
+          rows={sorted.map((p) => ({
+            key: p.pokemonId,
+            label: POKEMON_BY_ID.get(p.pokemonId)?.name ?? `#${p.pokemonId}`,
+            pokemonId: p.pokemonId,
+            abilityActivations: p.abilityActivations,
+          }))}
+        />
         <p className="stat-legend">
           GP / GS: games played / started · HIGH: most points in one game · DD /
           TD: double / triple doubles. Percentages use total attempts; — means

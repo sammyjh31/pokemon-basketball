@@ -1,3 +1,4 @@
+import { AbilityStats } from "./AbilityStats";
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -200,6 +201,15 @@ export function BoxScore({
             </tfoot>
           </table>
         </div>
+        <AbilityStats
+          label={`Game ${game.index + 1} ability activations`}
+          rows={players.map((p) => ({
+            key: p.pokemonId,
+            label: POKEMON_BY_ID.get(p.pokemonId)?.name ?? `#${p.pokemonId}`,
+            pokemonId: p.pokemonId,
+            abilityActivations: p.abilityActivations,
+          }))}
+        />
         <p className="box-score-note">
           REB combines offensive and defensive rebounds. Shooting columns show
           makes–attempts. Opponent results are simulated at team level.

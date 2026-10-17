@@ -1,3 +1,9 @@
+import {
+  validateAbilityActivations,
+  mergeAbilityActivations,
+  abilityTotal,
+  type AbilityBox,
+} from "./abilities";
 import { validateCoachTraining } from "./coachTraining";
 import { validateCoachOffice, verifyCoachChronology } from "./coachOffice";
 import { validateCoach } from "./trainerCoaches";
@@ -305,9 +311,11 @@ export function validateLeagueTeams(
   const coachIds = new Set<string>();
   const typeVersion = object(rows[0]).typeMatchupsVersion;
   if (typeVersion !== undefined && typeVersion !== 1) return fail();
+  const abilityVersion = object(rows[0]).abilityVersion;
   const courtVersion = object(rows[0]).courtVersion;
   const matchupVersion = object(rows[0]).matchupVersion;
   const possessionVersion = object(rows[0]).possessionVersion;
+  if (abilityVersion !== undefined && abilityVersion !== 1) return fail();
   if (courtVersion !== undefined && courtVersion !== 1) return fail();
   if (matchupVersion !== undefined && matchupVersion !== 1) return fail();
   if (possessionVersion !== undefined && possessionVersion !== 1) return fail();
@@ -334,6 +342,7 @@ export function validateLeagueTeams(
       !DEFENSE_SCHEMES.includes(row.defense as never) ||
       row.simulationVersion !== simulationVersion ||
       row.typeMatchupsVersion !== typeVersion ||
+      row.abilityVersion !== abilityVersion ||
       row.courtVersion !== courtVersion ||
       row.matchupVersion !== matchupVersion ||
       row.possessionVersion !== possessionVersion ||
@@ -375,6 +384,7 @@ export function validateLeagueTeams(
       ...(simulationVersion === 2 ? { simulationVersion } : {}),
       ...(typeVersion === 1 ? { typeMatchupsVersion: 1 as const } : {}),
       ...(tacticsVersion === 1 ? { typeTacticsVersion: 1 as const } : {}),
+      ...(abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
       ...(courtVersion === 1 ? { courtVersion: 1 as const } : {}),
       ...(matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
       ...(possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
@@ -710,6 +720,11 @@ function archivedReplay(
 function totals(value: unknown, maxGames: number): CareerTotals {
   const row = object(value),
     result = {} as CareerTotals;
+  if (row.abilityActivations !== undefined)
+    result.abilityActivations = validateAbilityActivations(
+      row.abilityActivations,
+    );
+  if (abilityTotal(result) > maxGames * 2000) return fail();
   for (const key of CAREER_KEYS)
     result[key] =
       key === "minutes"
@@ -822,6 +837,14 @@ function careers(
     )
       return fail();
     const detailed = (players: LeaguePlayer[], total: CareerTotals) => {
+      const counted: AbilityBox = {};
+      players.forEach((p) => mergeAbilityActivations(counted, p));
+      if (
+        appearances.every((year) => year.replay) &&
+        JSON.stringify(counted.abilityActivations) !==
+          JSON.stringify(total.abilityActivations)
+      )
+        return fail();
       for (const key of CAREER_KEYS) {
         const sum =
           key === "highPoints"
@@ -986,6 +1009,17 @@ function verifyCurrentArchive(franchise: Franchise, run: Run): void {
   const check = (players: LeaguePlayer[], phase: "regular" | "playoffs") => {
     for (const player of players) {
       const total = byId.get(player.pokemonId)![phase];
+      if (player.abilityActivations) {
+        for (const key of ["offense", "support", "defense"] as const) {
+          const actual = total.abilityActivations?.[key] ?? 0;
+          if (
+            franchise.year === 1
+              ? actual !== player.abilityActivations[key]
+              : actual < player.abilityActivations[key]
+          )
+            return fail();
+        }
+      }
       for (const key of CAREER_KEYS) {
         if (
           franchise.year === 1
@@ -1021,6 +1055,7 @@ export function validateFranchise(
     teams.some(
       (team) =>
         team.typeTacticsVersion !== run.typeTacticsVersion ||
+        team.abilityVersion !== run.abilityVersion ||
         team.courtVersion !== run.courtVersion ||
         team.matchupVersion !== run.matchupVersion ||
         team.possessionVersion !== run.possessionVersion,

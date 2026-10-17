@@ -1,14 +1,19 @@
+import { speciesAbility } from "../game/abilities";
 import { engineProfile } from "../game/engineDepth";
 import type { Pokemon } from "../game/types";
 
 export function DepthScouting({
   mon,
   abilities,
+  abilityVersion,
 }: {
   mon: Pokemon;
   abilities: boolean;
+  abilityVersion?: 1;
 }) {
   const profile = engineProfile(mon);
+  const ability =
+    abilityVersion === 1 ? speciesAbility(mon.id) : profile.signature;
   return (
     <section
       className="local-depth-scout"
@@ -22,10 +27,16 @@ export function DepthScouting({
       </p>
       <p>{profile.tendencies.description}</p>
       <p>
-        <strong>{profile.signature.name}</strong> ·{" "}
+        <strong>
+          {abilityVersion === 1 ? "Species ability" : "Legacy signature"}:{" "}
+          {ability.name}
+        </strong>{" "}
+        ·{" "}
         {abilities
-          ? profile.signature.description
-          : "Signature abilities are disabled in this league."}
+          ? ability.description
+          : abilityVersion === 1
+            ? "Species abilities are disabled in this league."
+            : "Legacy signature abilities are disabled in this league."}
       </p>
       <p className="stat-legend">
         These are bounded basketball effects. Skills, matchups, lineup balance,

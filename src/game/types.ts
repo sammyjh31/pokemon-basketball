@@ -1,3 +1,4 @@
+import type { AbilityActivations } from "./abilities";
 import type { CoachAssignment } from "./trainerCoaches";
 import type {
   MatchScouting,
@@ -124,6 +125,7 @@ export interface Matchup {
   home: boolean;
 }
 export interface PlayerBox {
+  abilityActivations?: AbilityActivations;
   pokemonId: number;
   slot: RosterSlot;
   minutes: number;
@@ -194,6 +196,8 @@ export interface Run {
   matchupVersion?: 1;
   /** Court geometry, action sequences and screen coverage rules. */
   courtVersion?: 1;
+  /** Species abilities. Absent on historical seasons for exact replay. */
+  abilityVersion?: 1;
   id: string;
   mode: Mode;
   includeLegends: boolean;
@@ -251,6 +255,8 @@ export interface LeagueTeam {
   matchupVersion?: 1;
   /** Court geometry, action sequences and screen coverage rules. */
   courtVersion?: 1;
+  /** Species abilities. Absent on historical seasons for exact replay. */
+  abilityVersion?: 1;
   id: number;
   name: string;
   roster: Roster;

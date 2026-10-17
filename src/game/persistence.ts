@@ -128,6 +128,8 @@ function validate(
     (raw.typeTacticsVersion === 1 && raw.typeMatchupsVersion !== 1)
   )
     return fail();
+  if (raw.abilityVersion !== undefined && raw.abilityVersion !== 1)
+    return fail();
   if (raw.courtVersion !== undefined && raw.courtVersion !== 1) return fail();
   if (raw.matchupVersion !== undefined && raw.matchupVersion !== 1)
     return fail();
@@ -160,6 +162,7 @@ function validate(
   const run: Run = {
     ...(coach ? { coach } : {}),
     ...(raw.coachDraftRequired ? { coachDraftRequired: true as const } : {}),
+    ...(raw.abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
     ...(raw.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
     ...(raw.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
     ...(raw.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
@@ -201,6 +204,7 @@ function validate(
       run.leagueTeams.some(
         (team) =>
           team.typeTacticsVersion !== run.typeTacticsVersion ||
+          team.abilityVersion !== run.abilityVersion ||
           team.courtVersion !== run.courtVersion ||
           team.matchupVersion !== run.matchupVersion ||
           team.possessionVersion !== run.possessionVersion,

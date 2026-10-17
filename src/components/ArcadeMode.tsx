@@ -10,6 +10,7 @@ import {
 } from "../arcade/settings";
 import { attackDirection, playerOfGame } from "../game/arcade/engine";
 import { createGame } from "../game/arcade/setup";
+import { abilitiesEnabled } from "../game/abilities";
 import type { ArcadeState } from "../game/arcade/types";
 import type { Run } from "../game/types";
 import { useArcade } from "../hooks/useArcade";
@@ -367,6 +368,9 @@ export function ArcadeMode({
         seed: random[0],
         ...(!official || user?.typeMatchupsVersion === 1
           ? { typeMatchupsVersion: 1 as const }
+          : {}),
+        ...(!official || (user && abilitiesEnabled(user))
+          ? { abilityVersion: 1 as const }
           : {}),
         ...(official ? { official: true } : {}),
       });

@@ -91,6 +91,7 @@ function RookiePick({ draft, change }: Props) {
         <DepthScouting
           mon={mon}
           abilities={draft.options!.engineRules.abilities}
+          abilityVersion={team.abilityVersion}
         />
       </details>
       <button

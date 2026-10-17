@@ -1,3 +1,4 @@
+import { mergeAbilityActivations } from "./abilities";
 import { projectedCoaches } from "./coachOffice";
 import { reviewFranchiseCoaches } from "./coachFranchise";
 import { assignLeagueCoaches } from "./trainerCoaches";
@@ -69,10 +70,13 @@ function sameMembership(a: LeagueTeam[], b: LeagueTeam[]) {
 }
 
 function emptyTotals(): CareerTotals {
-  return Object.fromEntries(CAREER_KEYS.map((key) => [key, 0])) as CareerTotals;
+  const result = {} as CareerTotals;
+  for (const key of CAREER_KEYS) result[key] = 0;
+  return result;
 }
 
 function addTotals(target: CareerTotals, player: LeaguePlayer) {
+  mergeAbilityActivations(target, player);
   for (const key of CAREER_KEYS)
     target[key] =
       key === "highPoints"
@@ -326,6 +330,7 @@ export function startFranchiseSeason(
     ...team,
     typeMatchupsVersion: 1 as const,
     typeTacticsVersion: 1 as const,
+    abilityVersion: 1 as const,
     courtVersion: 1 as const,
     matchupVersion: 1 as const,
     possessionVersion: 1 as const,

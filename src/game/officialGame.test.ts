@@ -5,6 +5,76 @@ import { officialGameFromArcade, validateOfficialGame } from "./officialGame";
 
 import { officialFixture, finishedGame } from "./officialGame.testUtils";
 describe("official arcade boxes", () => {
+  it("preserves actual ability activations without multiplying them by the official score scale", () => {
+    const { teams, fixture } = officialFixture();
+    teams[0].abilityVersion = 1;
+    const state = finishedGame(fixture, teams);
+    state.abilityVersion = 1;
+    for (const player of state.players)
+      player.stats.abilityActivations = { offense: 0, support: 0, defense: 0 };
+    state.players[0].stats.abilityActivations!.offense = 4;
+    state.players[1].stats.abilityActivations!.support = 2;
+    state.players[8].stats.abilityActivations!.defense = 3;
+    const game = officialGameFromArcade(state, fixture, teams);
+    expect(game.abilityVersion).toBe(1);
+    expect(game.match.homeBox[0].fga).toBe(48);
+    expect(game.match.homeBox[0].abilityActivations?.offense).toBe(4);
+    expect(game.match.homeBox[1].abilityActivations?.support).toBe(2);
+    expect(game.match.awayBox[0].abilityActivations?.defense).toBe(3);
+    expect(
+      validateOfficialGame(JSON.parse(JSON.stringify(game)), fixture, teams),
+    ).toEqual(game);
+    for (const corrupt of [
+      (g: typeof game) => {
+        (g as { abilityVersion?: number }).abilityVersion = 2;
+      },
+      (g: typeof game) => {
+        delete g.match.homeBox[0].abilityActivations;
+      },
+      (g: typeof game) => {
+        g.match.homeBox[0].abilityActivations!.offense = 5;
+      },
+      (g: typeof game) => {
+        g.match.homeBox[0].abilityActivations!.offense = 0.5;
+      },
+      (g: typeof game) => {
+        g.match.homeBox[1].abilityActivations!.support = 5;
+      },
+      (g: typeof game) => {
+        g.match.homeBox[7].abilityActivations!.support = 1;
+      },
+      (g: typeof game) => {
+        g.match.awayBox[1].abilityActivations!.defense = 2;
+      },
+      (g: typeof game) => {
+        delete g.abilityVersion;
+      },
+    ]) {
+      const bad = structuredClone(game);
+      corrupt(bad);
+      expect(() => validateOfficialGame(bad, fixture, teams)).toThrow();
+    }
+    teams[0].engineRules = {
+      version: 1,
+      abilities: false,
+      adaptiveCoaching: true,
+      familiarity: 0,
+    };
+    expect(() => officialGameFromArcade(state, fixture, teams)).toThrow();
+    expect(() => validateOfficialGame(game, fixture, teams)).toThrow();
+  });
+  it("keeps historical official games without the ability version or statistics valid", () => {
+    const { teams, fixture } = officialFixture();
+    for (const team of teams) delete team.abilityVersion;
+    const state = finishedGame(fixture, teams);
+    const game = officialGameFromArcade(state, fixture, teams);
+    expect(game).not.toHaveProperty("abilityVersion");
+    expect(game.match.homeBox[0]).not.toHaveProperty("abilityActivations");
+    expect(validateOfficialGame(game, fixture, teams)).toEqual(game);
+    teams[0].abilityVersion = 1;
+    expect(() => validateOfficialGame(game, fixture, teams)).toThrow();
+    expect(() => officialGameFromArcade(state, fixture, teams)).toThrow();
+  });
   it.each([false, true])(
     "maps user side to scheduled home/away (%s), scales once and conserves minutes",
     (away) => {
@@ -51,20 +121,26 @@ describe("official arcade boxes", () => {
     expect(game.match.homeBox[5].minutes).toBe(0.125);
     expect(game.match.homeBox.reduce((n, p) => n + p.minutes, 0)).toBe(240);
   });
-  it("converts a full engine-driven game with exact time, event zones and plus/minus", () => {
-    const { teams, fixture } = officialFixture();
-    const state = createGame({
-      official: true,
-      seed: fixture.seed,
-      teams: [teams[0], teams[fixture.awayTeamId]],
-    });
-    for (let tick = 0; tick < 100000 && state.phase !== "final"; tick++) {
-      if (state.phase === "break") continuePeriod(state);
-      stepGame(state);
-    }
-    expect(state.phase).toBe("final");
-    expect(() => officialGameFromArcade(state, fixture, teams)).not.toThrow();
-  });
+  it.each([false, true])(
+    "converts a full engine-driven game with exact time, event zones and plus/minus (abilities %s)",
+    (enabled) => {
+      const { teams, fixture } = officialFixture();
+      if (enabled) teams[0].abilityVersion = 1;
+      else for (const team of teams) delete team.abilityVersion;
+      const state = createGame({
+        official: true,
+        ...(enabled ? { abilityVersion: 1 as const } : {}),
+        seed: fixture.seed,
+        teams: [teams[0], teams[fixture.awayTeamId]],
+      });
+      for (let tick = 0; tick < 100000 && state.phase !== "final"; tick++) {
+        if (state.phase === "break") continuePeriod(state);
+        stepGame(state);
+      }
+      expect(state.phase).toBe("final");
+      expect(() => officialGameFromArcade(state, fixture, teams)).not.toThrow();
+    },
+  );
   it("rejects unfinished games, wrong identities and corrupt official arithmetic", () => {
     const { teams, fixture } = officialFixture();
     const state = finishedGame(fixture, teams);

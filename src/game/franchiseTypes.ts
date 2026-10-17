@@ -37,7 +37,8 @@ export const CAREER_KEYS = [
   "highPoints",
   "playerOfGame",
 ] as const;
-export type CareerTotals = Pick<LeaguePlayer, (typeof CAREER_KEYS)[number]>;
+export type CareerTotals = Pick<LeaguePlayer, (typeof CAREER_KEYS)[number]> &
+  import("./abilities").AbilityBox;
 export interface CareerPlayer {
   pokemonId: number;
   seasons: number;

@@ -1,3 +1,8 @@
+import {
+  abilitiesEnabled,
+  emptyAbilityActivations,
+  mergeAbilityActivations,
+} from "./abilities";
 import { emptyBox } from "./boxscore";
 import {
   ROSTER_SLOTS,
@@ -33,6 +38,9 @@ export function leaguePlayers(teams: LeagueTeam[]): LeaguePlayer[] {
   return teams.flatMap((team) =>
     ROSTER_SLOTS.map((slot) => ({
       ...emptyBox(team.roster[slot]!, slot),
+      ...(abilitiesEnabled(team)
+        ? { abilityActivations: emptyAbilityActivations() }
+        : {}),
       teamId: team.id,
       teamName: team.name,
       playerId: `${team.id}:${team.roster[slot]}`,
@@ -57,6 +65,7 @@ export function addBox(
   playerOfGameId: string,
 ) {
   for (const key of COUNTING_KEYS) player[key] += box[key];
+  mergeAbilityActivations(player, box);
   player.gamesPlayed += Number(box.minutes > 0);
   player.gamesStarted += Number(box.started);
   player.highPoints = Math.max(player.highPoints, box.points);

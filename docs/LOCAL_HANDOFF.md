@@ -1,5 +1,15 @@
 # Local and cloud handoff — 2026-10-16
 
+## Species abilities across modes (October 16)
+
+New solo challenges, local leagues, arcade games and subsequent franchise seasons use `abilityVersion: 1`. Historical/midseason inputs without the flag keep their original rules; local careers adopt it at their next season boundary without changing the original draft or archived teams. The local ability toggle remains available. Species rules replace the older type-derived signatures for enabled version-1 teams.
+
+`abilities.ts` uses a separate pinned catalog of 1,025 species, 224 canonical first normal ability names and 21 conditional basketball adaptations. Shot effects are bounded at 2.5 percentage points per role, draw no extra randomness, and stack with existing types/body/court mechanics. Shooter, actual creator and primary defender activations are recorded only when a probability changes. Simulation excludes blocked attempts where the shot draw is bypassed; arcade records on release because shot probability is sampled before block resolution. Official arcade ability counts are actual events, not multiplied by the 12× statistical normalization.
+
+Optional activation breakdowns flow through regular/playoff boxes, season totals, careers and historical replay. Scouting shows names and conditions; statistics distinguish recorded zero from unavailable legacy data. Coaches use effective ability/tactic fit for plans, opponent coverage, rotation minutes and training explanations. New policy gates and the rotation-cache key preserve old coached matches.
+
+Validation: shared ability/simulation tests, lifecycle + local career/replay baselines, arcade/official games, coaching and nine affected UI suites passed. The full coached franchise save/restore plus expanded ability lifecycle run passed 7 tests in 57 seconds. An independent review found no actionable issues and independently passed 18 shared/arcade tests. TypeScript and production build passed; the existing large-bundle advisory remains. Isolated desktop/390px fixture screenshots are `docs/design/species-abilities-desktop.png` and `species-abilities-mobile.png`; mobile TOTAL is visible without scrolling, with the breakdown in a scrollable table. User saves were not modified.
+
 ## Automatic coach training (October 16)
 
 `coachTraining.ts` owns deterministic previews and camp assignments; both solo `processOffseason` and local `beginLocalOffseason` feed those plans to the existing development model. No match-engine version or random stream changes. The completed season’s coach resolves camp before staff changes; hires direct the next camp. Optional versioned `training` metadata on development rows preserves coach, plan and explanations. Both save parsers validate it while accepting old reports without metadata. Uncoached solo saves keep manual training. Solo Training and local team review show automatic previews; development reports show actual archived assignments. Verified with 25 selected tests (including full solo save/restore and two real local seasons), production build, and desktop/390px browser checks. Screenshot: `docs/design/coach-training.png`.

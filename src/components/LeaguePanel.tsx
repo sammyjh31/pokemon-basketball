@@ -1,3 +1,4 @@
+import { AbilityStats } from "./AbilityStats";
 import { getCoach } from "../game/trainerCoaches";
 import { CoachPortrait } from "./CoachPortrait";
 import { coachGamePlan } from "../game/coachPolicy";
@@ -448,6 +449,15 @@ export function Leaders({
           </tbody>
         </table>
       </div>
+      <AbilityStats
+        label={`${scope} ability activations`}
+        rows={players.map((p) => ({
+          key: p.playerId,
+          label: name(p.pokemonId),
+          pokemonId: p.pokemonId,
+          abilityActivations: p.abilityActivations,
+        }))}
+      />
       {!players.length && (
         <p className="league-empty">No players match these filters.</p>
       )}

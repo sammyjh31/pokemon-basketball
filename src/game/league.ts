@@ -126,6 +126,7 @@ export function createLeague(run: Run): LeagueTeam[] {
     team.ratings = teamRatings(team.roster, team.tactic, team.rotation);
     if (run.typeMatchupsVersion === 1) team.typeMatchupsVersion = 1;
     if (run.typeTacticsVersion === 1) team.typeTacticsVersion = 1;
+    if (run.abilityVersion === 1) team.abilityVersion = 1;
     if (run.courtVersion === 1) team.courtVersion = 1;
     if (run.matchupVersion === 1) team.matchupVersion = 1;
     if (run.possessionVersion === 1) team.possessionVersion = 1;

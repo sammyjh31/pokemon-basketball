@@ -1,5 +1,6 @@
 import { POKEMON_BY_ID } from "../../data/pokemon";
 import { playerProfile } from "../playerProfile";
+import { emptyAbilityActivations } from "../abilities";
 import { POSITIONS, ROSTER_SLOTS } from "../types";
 import type {
   ArcadePlayer,
@@ -25,7 +26,12 @@ export const emptyStats = (): ArcadeStats => ({
 export function createGame(setup: ArcadeSetup): ArcadeState {
   const used = new Set<number>(),
     players: ArcadePlayer[] = [];
-  if (!setup || setup.teams?.length !== 2 || !Number.isFinite(setup.seed))
+  if (
+    !setup ||
+    setup.teams?.length !== 2 ||
+    !Number.isFinite(setup.seed) ||
+    (setup.abilityVersion !== undefined && setup.abilityVersion !== 1)
+  )
     throw new Error("Choose two complete teams to play.");
   setup.teams.forEach((team, side) => {
     ROSTER_SLOTS.forEach((slot, i) => {
@@ -58,6 +64,9 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
         charge: null,
         stats: {
           ...emptyStats(),
+          ...(setup.abilityVersion === 1
+            ? { abilityActivations: emptyAbilityActivations() }
+            : {}),
           ...(setup.official
             ? { rimFgm: 0, rimFga: 0, midFgm: 0, midFga: 0, plusMinus: 0 }
             : {}),
@@ -67,6 +76,12 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
   });
   const s: ArcadeState = {
     modelVersion: 1,
+    ...(setup.abilityVersion === 1
+      ? {
+          abilityVersion: 1 as const,
+          abilityPossession: { transitionAt: null, secondChance: false },
+        }
+      : {}),
     ...(setup.typeMatchupsVersion === 1
       ? { typeMatchupsVersion: 1 as const }
       : {}),

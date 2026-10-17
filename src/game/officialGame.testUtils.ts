@@ -2,6 +2,7 @@ import { createRun } from "./draft";
 import { createLeague, leagueSchedule } from "./league";
 import { createGame } from "./arcade/setup";
 import { emit } from "./arcade/events";
+import { abilitiesEnabled } from "./abilities";
 import { ROSTER_SLOTS, type LeagueFixture, type Run } from "./types";
 export function officialFixture(away = false) {
   const run: Run = {
@@ -31,6 +32,7 @@ export function finishedGame(
   )!;
   const state = createGame({
     official: true,
+    ...(abilitiesEnabled(teams[0]) ? { abilityVersion: 1 as const } : {}),
     seed: fixture.seed,
     teams: [teams[0], opponent],
   });

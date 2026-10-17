@@ -1,3 +1,4 @@
+import { mergeAbilityActivations } from "./abilities";
 import type {
   GameResult,
   PlayerBox,
@@ -70,6 +71,7 @@ export function aggregateStats(games: GameResult[]): SeasonPlayer[] {
         players.set(p.pokemonId, p);
       }
       for (const key of COUNTING_STATS) p[key] += box[key];
+      mergeAbilityActivations(p, box);
       if (box.minutes > 0) {
         p.gamesPlayed++;
         if (!box.slot.startsWith("B")) p.gamesStarted++;

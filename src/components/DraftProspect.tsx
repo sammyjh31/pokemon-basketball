@@ -1,3 +1,4 @@
+import { speciesAbility } from "../game/abilities";
 import type { CSSProperties } from "react";
 import type { DraftRecommendation } from "../game/draftAdvice";
 import { engineProfile } from "../game/engineDepth";
@@ -246,6 +247,7 @@ export function DraftComparison({
   advice,
   position,
   abilities,
+  abilityVersion,
   onPosition,
   onScout,
 }: {
@@ -253,6 +255,7 @@ export function DraftComparison({
   advice: Map<number, DraftRecommendation>;
   position: Position;
   abilities: boolean;
+  abilityVersion?: 1;
   onPosition: (position: Position) => void;
   onScout: (id: number) => void;
 }) {
@@ -352,11 +355,29 @@ export function DraftComparison({
             </tr>
             {abilities && (
               <tr>
-                <th scope="row">Signature ability</th>
+                <th scope="row">
+                  {abilityVersion === 1
+                    ? "Species ability · basketball adaptation"
+                    : "Legacy signature ability"}
+                </th>
                 {mons.map((mon) => (
                   <td key={mon.id}>
-                    <strong>{engineProfile(mon).signature.name}</strong>
-                    <small>{engineProfile(mon).signature.description}</small>
+                    <strong>
+                      {
+                        (abilityVersion === 1
+                          ? speciesAbility(mon.id)
+                          : engineProfile(mon).signature
+                        ).name
+                      }
+                    </strong>
+                    <small>
+                      {
+                        (abilityVersion === 1
+                          ? speciesAbility(mon.id)
+                          : engineProfile(mon).signature
+                        ).description
+                      }
+                    </small>
                   </td>
                 ))}
               </tr>

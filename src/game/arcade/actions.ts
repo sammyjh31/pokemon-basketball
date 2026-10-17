@@ -16,11 +16,26 @@ import {
 } from "./helpers";
 import { TUNE } from "./tuning";
 import { emit } from "./events";
+import { applyArcadeAbilities } from "./abilities";
 const typesOf = (p: ArcadePlayer) =>
   POKEMON_BY_ID.get(p.pokemonId)?.types ?? [p.type];
 
-export function giveBall(s: ArcadeState, p: ArcadePlayer) {
+export function giveBall(
+  s: ArcadeState,
+  p: ArcadePlayer,
+  gain?: "steal" | "defensiveRebound" | "offensiveRebound",
+) {
   const changed = s.possession !== p.team;
+  if (s.abilityVersion === 1) {
+    if (changed || gain === "steal" || gain === "defensiveRebound")
+      s.abilityPossession = {
+        transitionAt:
+          gain === "steal" || gain === "defensiveRebound" ? s.elapsed : null,
+        secondChance: false,
+      };
+    else if (gain === "offensiveRebound")
+      s.abilityPossession = { transitionAt: null, secondChance: true };
+  }
   for (const q of s.players) q.charge = null;
   s.ball.mode = "held";
   s.ball.owner = p.id;
@@ -145,7 +160,14 @@ export function releaseShot(
         0.95,
       )
     : chance;
-  const made = random(s) < typedChance;
+  const adjustedChance = applyArcadeAbilities(
+    s,
+    p,
+    nearest,
+    d < 3 ? "rim" : value === 3 ? "three" : "mid",
+    typedChance,
+  );
+  const made = random(s) < adjustedChance;
   const end = { x: rim.x, y: rim.y, z: 2.6 };
   Object.assign(s.ball, {
     mode: "shot",
@@ -210,7 +232,7 @@ export function attemptSteal(s: ArcadeState, p: ArcadePlayer) {
   if (random(s) < chance) {
     emit(s, { kind: "turnover", team: holder.team, player: holder.id });
     emit(s, { kind: "steal", team: p.team, player: p.id });
-    giveBall(s, p);
+    giveBall(s, p, "steal");
     notify(s, `${p.name.toUpperCase()} · STEAL!`);
   }
 }
@@ -278,7 +300,7 @@ export function advanceBall(
             team: interceptor.team,
             player: interceptor.id,
           });
-          giveBall(s, interceptor);
+          giveBall(s, interceptor, "steal");
           notify(s, "INTERCEPTED!");
           return null;
         }
@@ -400,7 +422,15 @@ export function advanceBall(
         const reset =
           s.possession !== p.team ||
           (b.reboundOf !== null && b.rimContact === true);
-        giveBall(s, p);
+        giveBall(
+          s,
+          p,
+          b.reboundOf === null
+            ? undefined
+            : p.team === b.reboundOf
+              ? "offensiveRebound"
+              : "defensiveRebound",
+        );
         s.lastPass = null;
         if (reset) s.shotClock = TUNE.possession;
       }
