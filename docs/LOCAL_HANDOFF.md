@@ -8,7 +8,7 @@ Fixture context (`LeagueFixture.flow`: stage, rest, trip, playoff series state) 
 
 The engine report is `LeagueMatch.gameFlow`, shown in box scores by `GameFlowPanel`. Gameplay never reads it. Flagless replay hashes for 41622c9 (`3fed7dc0…`) and all earlier releases are unchanged. The balance audit is `scripts/game-flow-audit.mjs` → `docs/game-flow-audit.json`.
 
-Play depth (`docs/superpowers/specs/2026-10-16-play-depth.md`) is part of game flow whenever it runs on court rules v2. It covers zone shells in `courtPossession.ts` (`zoneShell` and shifted spots), off-ball cuts and drifts and post seals (new court action kinds `cut`, `drift` and `seal`), plus shooting form tracked in `match.ts`. Every branch is gated on game flow plus court v2, and the extra random draws happen only there.
+Play depth (`docs/superpowers/specs/2026-10-16-play-depth.md`) is part of game flow whenever it runs on court rules v2. It covers zone principles in `courtPossession.ts` (`zoneShell` areas; defenders sag from their marks toward shifted areas), off-ball cuts and drifts and post seals (new court action kinds `cut`, `drift` and `seal`), plus shooting form tracked in `match.ts`. Every branch is gated on game flow plus court v2, and the extra random draws happen only there.
 
 ## Earned teammate familiarity (October 16)
 

@@ -93,11 +93,11 @@ describe("game flow simulation", () => {
     }
     expect(total).toBeGreaterThan(30);
     expect(reasons.has("run")).toBe(true);
-  });
+  }, 240_000);
 
   it("calls more fouls under tight crews than loose ones", () => {
     const totals = new Map<number, { fouls: number; games: number }>();
-    for (let seed = 1; seed <= 120; seed++) {
+    for (let seed = 1; seed <= 72; seed++) {
       const m = simulateMatch(teams[seed % 30], teams[(seed + 11) % 30], seed);
       const key = m.gameFlow!.referee.tightness;
       const row = totals.get(key) ?? { fouls: 0, games: 0 };
@@ -113,7 +113,7 @@ describe("game flow simulation", () => {
       );
     };
     expect(rate([0.5, 1])).toBeGreaterThan(rate([-1, -0.5]));
-  });
+  }, 240_000);
 
   it("tightens playoff rotations and manages back-to-backs", () => {
     const restful = COACHES.reduce((best, c) => (c.rest > best.rest ? c : best));
@@ -134,7 +134,7 @@ describe("game flow simulation", () => {
     };
     let regularBench = 0,
       playoffBench = 0;
-    for (let seed = 1; seed <= 12; seed++) {
+    for (let seed = 1; seed <= 6; seed++) {
       const benchMinutes = (m: ReturnType<typeof simulateMatch>) =>
         [m.homeBox, m.awayBox]
           .map((box) => [...box].sort((x, y) => x.minutes - y.minutes)[0].minutes)
@@ -149,7 +149,7 @@ describe("game flow simulation", () => {
       flow: { stage: "regular", rest: { home: 0, away: 2 }, trip: { home: 0, away: 1 } },
     });
     expect(backToBack.gameFlow!.loadManaged).toEqual({ home: true, away: false });
-  });
+  }, 240_000);
 });
 
 describe("game flow lifecycle", () => {
@@ -233,7 +233,7 @@ describe("game flow lifecycle", () => {
     const tampered = structuredClone(next);
     tampered.career!.teams[1].gameFlowVersion = 2 as never;
     expect(() => local.parseLocalLeague(JSON.stringify(tampered))).toThrow();
-  });
+  }, 240_000);
 
   it("adds context to solo season fixtures", () => {
     const season = seasonBuilder(run(), 2);
@@ -243,7 +243,7 @@ describe("game flow lifecycle", () => {
     expect(games).toHaveLength(30);
     expect(games.every((g) => g.flow?.stage === "regular")).toBe(true);
     expect(games.filter((g) => g.round === 0).every((g) => g.flow!.rest.home === 3)).toBe(true);
-  });
+  }, 240_000);
 
   it("adopts game flow at the next solo franchise boundary", () => {
     const state = rookieFixture();

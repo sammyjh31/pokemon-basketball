@@ -12,16 +12,19 @@ Heat checks are new. They connect the arcade's hot-streak idea to simulated game
 
 ## Zone defense in geometry
 
-When the defense plays zone, defenders guard areas instead of men. A 2-3 shell has five home spots: two at the top (±7, 24), two on the wings or blocks (±13, 11) and one in the middle (0, 8). Each spot shifts 35% toward the ball's x and 20% toward its y. The defender whose spot is nearest the ball guards it. During every action, recovery moves defenders toward their shifted spot rather than toward their man.
+Zone defenders keep their assignments but play zone principles. A 2-3 shell gives each defender an area: two at the top (±7, 22), two on the wings (±16, 9) and one in the middle (0, 8). The guards go to the quickest perimeter defenders and the middle to the best interior defender and shot-blocker. Areas shift 40% toward the ball's x and 25% toward its y.
 
-Zone strengths and weaknesses then come from positions rather than flat terms:
+The defender on the ball pressures it at man depth. Every other defender sags from their mark toward their shifted area. The sag is `clamp(0.08 + 0.12 × distance from the ball / 30, 0.08, 0.22)` of the way, so the far side sags most. Recovery during every action moves defenders toward these targets.
 
-- The paint stays crowded, so drives meet more lane defenders and rim shots see more help.
-- Skip passes find the weak side open, because a spot covers its area, not the shooter. Closeouts start from farther away, so corner and skip threes are more open.
-- Good passing teams beat zones: the existing pass-read and candidate logic finds the open area.
-- Zone defenders give up offensive rebounds more easily: box-out efficiency is ×0.85. They foul less (reach fouls ×0.85) and tire slightly less (drain ×0.95).
+Tuning came from forcing every possession into one scheme with the same teams and seeds:
 
-Man, switch and press keep today's geometry.
+| Defense | Points per sequence | Rim share | Three share | Defender distance at shot |
+|---|---|---|---|---|
+| Man | 0.980 | 0.478 | 0.378 | 3.72 ft |
+| Zone | 1.002 | 0.440 | 0.423 | 3.67 ft |
+| Main's older zone sag | about 7% above man | — | — | — |
+
+Pure area-matching shells (defenders only take attackers inside their area) left shooters open after passes and gave up more than 25 extra points a game, so they were rejected. On top of the geometry, zone defenders box out less reliably (×0.85), commit fewer reach fouls (×0.85) and tire slightly less (drain ×0.95). Man, switch and press keep today's geometry.
 
 ## Off-ball cuts and relocation
 

@@ -1,0 +1,234 @@
+{
+  "generated": "scripts/game-flow-audit.mjs",
+  "samples": 300,
+  "note": "Descriptive game-design tuning, not an empirical fit to real basketball.",
+  "results": [
+    {
+      "scenario": "Without game flow",
+      "games": 300,
+      "pointsPerTeam": 115.603,
+      "possessions": 102.933,
+      "foulsPerTeam": 15.532,
+      "ftaPerTeam": 21.872,
+      "homeWinRate": 0.59,
+      "overtimeRate": 0.017,
+      "averageMargin": 14.793,
+      "timeoutsPerTeam": 0,
+      "eighthManMinutes": 11.704,
+      "foulsPerTeamByCrew": {},
+      "msPerGame": 158.43
+    },
+    {
+      "scenario": "Regular season, rested",
+      "games": 300,
+      "pointsPerTeam": 124.048,
+      "possessions": 108.093,
+      "foulsPerTeam": 16.482,
+      "ftaPerTeam": 23.455,
+      "homeWinRate": 0.493,
+      "overtimeRate": 0.023,
+      "averageMargin": 17.05,
+      "timeoutsPerTeam": 2.795,
+      "eighthManMinutes": 12.186,
+      "foulsPerTeamByCrew": {
+        "Standard crew": {
+          "games": 123,
+          "fouls": 16.402
+        },
+        "Whistle-happy": {
+          "games": 34,
+          "fouls": 19.088
+        },
+        "Loose whistle": {
+          "games": 49,
+          "fouls": 15.663
+        },
+        "Tight whistle": {
+          "games": 59,
+          "fouls": 17.051
+        },
+        "Let them play": {
+          "games": 35,
+          "fouls": 14.414
+        }
+      },
+      "msPerGame": 51.41
+    },
+    {
+      "scenario": "Home team on a back-to-back",
+      "games": 300,
+      "pointsPerTeam": 123.945,
+      "possessions": 107.72,
+      "foulsPerTeam": 16.207,
+      "ftaPerTeam": 22.838,
+      "homeWinRate": 0.567,
+      "overtimeRate": 0.013,
+      "averageMargin": 16.577,
+      "timeoutsPerTeam": 2.813,
+      "eighthManMinutes": 12.847,
+      "foulsPerTeamByCrew": {
+        "Standard crew": {
+          "games": 123,
+          "fouls": 16.366
+        },
+        "Whistle-happy": {
+          "games": 34,
+          "fouls": 17.853
+        },
+        "Loose whistle": {
+          "games": 49,
+          "fouls": 15.378
+        },
+        "Tight whistle": {
+          "games": 59,
+          "fouls": 16.856
+        },
+        "Let them play": {
+          "games": 35,
+          "fouls": 14.114
+        }
+      },
+      "msPerGame": 2282.12
+    },
+    {
+      "scenario": "Away team on a back-to-back",
+      "games": 300,
+      "pointsPerTeam": 124.67,
+      "possessions": 107.823,
+      "foulsPerTeam": 16.157,
+      "ftaPerTeam": 23.105,
+      "homeWinRate": 0.58,
+      "overtimeRate": 0.01,
+      "averageMargin": 17.46,
+      "timeoutsPerTeam": 2.853,
+      "eighthManMinutes": 13,
+      "foulsPerTeamByCrew": {
+        "Standard crew": {
+          "games": 123,
+          "fouls": 16.215
+        },
+        "Whistle-happy": {
+          "games": 34,
+          "fouls": 18.985
+        },
+        "Loose whistle": {
+          "games": 49,
+          "fouls": 14.724
+        },
+        "Tight whistle": {
+          "games": 59,
+          "fouls": 17.017
+        },
+        "Let them play": {
+          "games": 35,
+          "fouls": 13.757
+        }
+      },
+      "msPerGame": 2932.25
+    },
+    {
+      "scenario": "Playoffs, Game 3",
+      "games": 300,
+      "pointsPerTeam": 118.752,
+      "possessions": 103.607,
+      "foulsPerTeam": 14.54,
+      "ftaPerTeam": 20.362,
+      "homeWinRate": 0.557,
+      "overtimeRate": 0.017,
+      "averageMargin": 14.65,
+      "timeoutsPerTeam": 2.803,
+      "eighthManMinutes": 8.156,
+      "foulsPerTeamByCrew": {
+        "Loose whistle": {
+          "games": 123,
+          "fouls": 14.317
+        },
+        "Tight whistle": {
+          "games": 34,
+          "fouls": 16.456
+        },
+        "Let them play": {
+          "games": 84,
+          "fouls": 13.595
+        },
+        "Standard crew": {
+          "games": 59,
+          "fouls": 15.246
+        }
+      },
+      "msPerGame": 487.67
+    },
+    {
+      "scenario": "Playoffs, Game 7",
+      "games": 300,
+      "pointsPerTeam": 119.215,
+      "possessions": 104.357,
+      "foulsPerTeam": 14.783,
+      "ftaPerTeam": 20.96,
+      "homeWinRate": 0.523,
+      "overtimeRate": 0.037,
+      "averageMargin": 16.143,
+      "timeoutsPerTeam": 2.845,
+      "eighthManMinutes": 7.015,
+      "foulsPerTeamByCrew": {
+        "Loose whistle": {
+          "games": 123,
+          "fouls": 14.679
+        },
+        "Tight whistle": {
+          "games": 34,
+          "fouls": 16.544
+        },
+        "Let them play": {
+          "games": 84,
+          "fouls": 13.506
+        },
+        "Standard crew": {
+          "games": 59,
+          "fouls": 15.805
+        }
+      },
+      "msPerGame": 1349.18
+    }
+  ],
+  "playDepth": {
+    "perGame": {
+      "cut": 49.25,
+      "drift": 27.256,
+      "seal": 43.458
+    },
+    "hotFgPct": 0.489,
+    "allFgPct": 0.477,
+    "hotShareOfAttempts": 0.034,
+    "opponentsByOpeningScheme": {
+      "switch": {
+        "teamGames": 477,
+        "pointsAllowed": 120.56,
+        "threeRate": 0.392,
+        "rimRate": 0.468,
+        "offensiveReboundRate": 0.227
+      },
+      "press": {
+        "teamGames": 420,
+        "pointsAllowed": 125.838,
+        "threeRate": 0.38,
+        "rimRate": 0.476,
+        "offensiveReboundRate": 0.241
+      },
+      "zone": {
+        "teamGames": 486,
+        "pointsAllowed": 124.492,
+        "threeRate": 0.396,
+        "rimRate": 0.462,
+        "offensiveReboundRate": 0.226
+      },
+      "man": {
+        "teamGames": 417,
+        "pointsAllowed": 126.465,
+        "threeRate": 0.408,
+        "rimRate": 0.454,
+        "offensiveReboundRate": 0.23
+      }
+    }
+  }
+}

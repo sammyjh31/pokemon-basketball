@@ -107,10 +107,10 @@ const guardSpot = (p: CourtPoint, shooter: Player, scheme: DefenseScheme) => {
 };
 /** A 2-3 shell: two top spots, two wings and a middle anchor, shifted toward the ball. */
 const ZONE_SPOTS: CourtPoint[] = [
-  { x: -7, y: 24 },
-  { x: 7, y: 24 },
-  { x: -13, y: 11 },
-  { x: 13, y: 11 },
+  { x: -7, y: 22 },
+  { x: 7, y: 22 },
+  { x: -16, y: 9 },
+  { x: 16, y: 9 },
   { x: 0, y: 8 },
 ];
 export function zoneShell(defense: readonly Player[]): Map<Player, number> {
@@ -134,29 +134,39 @@ export function zoneShell(defense: readonly Player[]): Map<Player, number> {
 const shiftedSpot = (index: number, ball: CourtPoint): CourtPoint => {
   const spot = ZONE_SPOTS[index];
   return bounded({
-    x: spot.x + (ball.x - spot.x) * 0.35,
-    y: spot.y + (ball.y - spot.y) * 0.2,
+    x: spot.x + (ball.x - spot.x) * 0.4,
+    y: spot.y + (ball.y - spot.y) * 0.25,
   });
 };
-/** In a zone the defender whose shifted spot is nearest the ball guards it; the rest hold areas. */
+/** Zone principles on top of assignments: the ball is pressured at man depth, and every
+ * other defender sags from its mark toward its shifted zone area, more on the side away
+ * from the ball. The paint stays crowded and weak-side closeouts start from farther away. */
 function zoneTargets(
   shell: Map<Player, number>,
   ball: Player,
   ballPoint: CourtPoint,
+  guards: Map<Player, Player>,
+  court: Court,
 ): Map<Player, CourtPoint> {
   const targets = new Map<Player, CourtPoint>();
-  let onBall: Player | undefined,
-    nearest = Infinity;
-  for (const [p, index] of shell) {
-    const spot = shiftedSpot(index, ballPoint);
-    targets.set(p, spot);
-    const d = distance(spot, ballPoint);
-    if (d < nearest) {
-      nearest = d;
-      onBall = p;
+  for (const [attacker, d] of guards) {
+    const index = shell.get(d);
+    if (index === undefined) continue;
+    const mark = guardSpot(court.get(attacker)!, attacker, "man");
+    if (attacker === ball) {
+      targets.set(d, mark);
+      continue;
     }
+    const spot = shiftedSpot(index, ballPoint),
+      sag = clamp(0.08 + (distance(court.get(attacker)!, ballPoint) / 30) * 0.12, 0.08, 0.22);
+    targets.set(
+      d,
+      bounded({
+        x: mark.x * (1 - sag) + spot.x * sag,
+        y: mark.y * (1 - sag) + spot.y * sag,
+      }),
+    );
   }
-  targets.set(onBall!, guardSpot(ballPoint, ball, "zone"));
   return targets;
 }
 /** Feet on a half court. Shooting threat determines whether off-ball players space or occupy the paint. */
@@ -413,6 +423,8 @@ export function resolveCourtPossession(
       shell,
       c.putback ?? c.handler,
       court.get(c.putback ?? c.handler)!,
+      c.guards,
+      court,
     ))
       court.set(p, point);
   let ball = c.putback ?? c.handler,
@@ -443,7 +455,13 @@ export function resolveCourtPossession(
     clock = Math.max(0, clock - used);
     seconds += used;
     if (recover && shell)
-      for (const [d, target] of zoneTargets(shell, ball, court.get(ball)!))
+      for (const [d, target] of zoneTargets(
+        shell,
+        ball,
+        court.get(ball)!,
+        c.guards,
+        court,
+      ))
         court.set(d, moveToward(court.get(d)!, target, d, used * 0.24));
     else if (recover)
       for (const attacker of c.offense) {
