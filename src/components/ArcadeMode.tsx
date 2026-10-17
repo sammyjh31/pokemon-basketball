@@ -1,3 +1,4 @@
+import { applyMasterySnapshot } from "../game/abilityMastery";
 import { applyMoraleSnapshot } from "../game/playerMorale";
 import { applyChemistrySnapshot } from "../game/teammateChemistry";
 import { useEffect, useRef, useState } from "react";
@@ -371,6 +372,17 @@ export function ArcadeMode({
           official.fixture.morale[userHome ? "away" : "home"],
         );
       }
+      if (official?.fixture.mastery && user) {
+        const userHome = official.fixture.homeTeamId === 0;
+        user = applyMasterySnapshot(
+          user,
+          official.fixture.mastery[userHome ? "home" : "away"],
+        );
+        opponent = applyMasterySnapshot(
+          opponent,
+          official.fixture.mastery[userHome ? "away" : "home"],
+        );
+      }
       const random = new Uint32Array(1);
       if (official) random[0] = official.fixture.seed;
       else if (typeof crypto?.getRandomValues === "function")
@@ -412,6 +424,11 @@ export function ArcadeMode({
             : run.physicalAbilityVersion === 1
         )
           ? { physicalAbilityVersion: 1 as const }
+          : {}),
+        ...((official
+          ? user?.abilityMasteryVersion
+          : run.abilityMasteryVersion) === 1
+          ? { abilityMasteryVersion: 1 as const }
           : {}),
         ...((official ? user?.chemistryVersion : run.chemistryVersion) === 1
           ? { chemistryVersion: 1 as const }

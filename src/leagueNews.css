@@ -1,0 +1,172 @@
+.league-news,
+.mastery-panel {
+  margin-top: 1.4rem;
+}
+.news-controls {
+  align-items: end;
+}
+.news-team-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem 0;
+  font-weight: 600;
+}
+.news-team-filter input {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--gold, #ebc64e);
+}
+.news-feed {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+}
+.news-feed > li {
+  min-width: 0;
+}
+.news-story {
+  height: 100%;
+  padding: 1.15rem;
+  border: 1px solid var(--line, #282e36);
+  border-radius: 10px;
+  background: var(--panel, #0e1217);
+  overflow-wrap: anywhere;
+}
+.news-category {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted, #a6adb7);
+}
+.news-story h4 {
+  font-size: 1.12rem;
+  line-height: 1.25;
+  margin: 0.5rem 0;
+}
+.news-story p {
+  margin: 0.6rem 0;
+  line-height: 1.5;
+}
+.news-story .news-source {
+  font-size: 0.75rem;
+  color: var(--muted, #a6adb7);
+}
+.news-story details {
+  font-size: 0.85rem;
+}
+.news-story details ul {
+  padding-left: 1.25rem;
+  line-height: 1.6;
+}
+.news-links {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-top: 0.8rem;
+}
+.mastery-panel {
+  padding: 1.2rem;
+  border: 1px solid var(--line, #282e36);
+  border-radius: 10px;
+}
+.mastery-panel > p {
+  line-height: 1.55;
+  max-width: 80ch;
+}
+.mastery-heading {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.mastery-heading h3 {
+  margin: 0;
+}
+.mastery-heading > span:not(.mastery-tier) {
+  font-size: 0.8rem;
+}
+.mastery-roster {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  list-style: none;
+  gap: 0.8rem;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+.mastery-roster > li {
+  min-width: 0;
+  border: 1px solid var(--line, #282e36);
+  border-radius: 8px;
+  padding: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.mastery-roster small {
+  display: block;
+  margin: 0.3rem 0;
+  line-height: 1.5;
+}
+.mastery-roster progress {
+  display: block;
+  width: 100%;
+  height: 0.5rem;
+  margin: 0.65rem 0;
+  accent-color: #417655;
+}
+.mastery-tier {
+  display: inline-block;
+  border-radius: 1rem;
+  padding: 0.2rem 0.6rem;
+  background: #e2eee5;
+  color: #245133;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.mastery-roster details {
+  font-size: 0.85rem;
+}
+.mastery-game-sides {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.mastery-changes {
+  list-style: none;
+  padding: 0;
+}
+.mastery-changes li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--line, #282e36);
+  font-size: 0.85rem;
+}
+.mastery-changes small {
+  color: var(--muted, #a6adb7);
+}
+@media (max-width: 640px) {
+  .news-feed,
+  .mastery-roster,
+  .mastery-game-sides {
+    grid-template-columns: 1fr;
+  }
+  .news-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .news-controls .league-field {
+    min-width: 0;
+  }
+  .mastery-panel {
+    padding: 0.9rem;
+  }
+  .news-story {
+    padding: 1rem;
+  }
+}

@@ -20,7 +20,9 @@ import { loadGame } from "./persistence";
  * SHA-256 of saves produced by the release before CPU rules v1 (court rules v2
  * on main e255fb7, commit fce5470) for the exact steps below: a coached,
  * seed-47 season, offseason, full draft, three user signings and a trade
- * (offseason save), then the next season's start.
+ * (offseason save), then the next season's start. These capsules also predate
+ * ability mastery and league news: omit those new fields without altering any
+ * recorded old rules, ratings, transactions or expected hashes.
  */
 const BASE_OFFSEASON =
   "01d2d50fd0371c6547fd571f2f83d697d74eea0c871c849965bc8a20bde94f3b";
@@ -37,6 +39,7 @@ export function legacyFranchise(): { offseason: GameState; season: GameState } {
     ...initialState(47),
     run: {
       ...createRun("free", true, 47),
+      abilityMasteryVersion: undefined,
       coach: { version: 1 as const, id: "misty" },
       roster: Object.fromEntries(
         ROSTER_SLOTS.map((s, i) => [s, [65, 150, 149, 68, 143, 9, 94, 59][i]]),
@@ -58,6 +61,8 @@ export function legacyFranchise(): { offseason: GameState; season: GameState } {
   });
   // A franchise saved before CPU rules v1 has no rules record.
   delete (archived.franchise as { cpuRules?: unknown }).cpuRules;
+  // The old release stored no derived news facts in its archive capsule.
+  for (const history of archived.franchise!.history) delete history.newsGames;
   let s = beginRookieDraft(processOffseason(archived));
   while (!s.franchise!.rookieDrafts!.at(-1)!.complete) {
     const pick = recommendedRookiePick(s.franchise!, 0, true)!;
@@ -80,6 +85,19 @@ export function legacyFranchise(): { offseason: GameState; season: GameState } {
     type: "START_FRANCHISE_SEASON",
     seed: 4747,
   });
+  // Starting a season deliberately adopts current features in production. This
+  // generator represents the pre-feature release, whose next year had neither
+  // the mastery flag nor its initial zero-XP roster maps.
+  delete season.run.abilityMasteryVersion;
+  for (const team of [
+    ...season.franchise!.teams,
+    ...(season.run.leagueTeams ?? []),
+  ]) {
+    if (Object.values(team.abilityMastery ?? {}).some((xp) => xp !== 0))
+      throw new Error("A historical fixture cannot discard earned mastery.");
+    delete team.abilityMasteryVersion;
+    delete team.abilityMastery;
+  }
   return { offseason, season };
 }
 

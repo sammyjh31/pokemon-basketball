@@ -1,3 +1,4 @@
+import { retainMastery } from "./abilityMastery";
 import { retainMorale } from "./playerMorale";
 import { retainChemistry } from "./teammateChemistry";
 import { beforeAll, describe, expect, it } from "vitest";
@@ -26,6 +27,7 @@ let finished: GameState;
 beforeAll(() => {
   let run = createRun("free", true, 82);
   // Preserve the explicitly historical model-1/2 helper contract.
+  delete run.abilityMasteryVersion;
   delete run.chemistryGrowthVersion;
   delete run.moraleVersion;
   delete run.personalityVersion;
@@ -231,6 +233,7 @@ describe("franchise lifecycle", () => {
       offseason
         .franchise!.teams.map(retainChemistry)
         .map(retainMorale)
+        .map(retainMastery)
         .map((team) => ({ ...team, personalityVersion: 1 as const })),
     );
     expect(next.run.leagueTeams).not.toBe(offseason.franchise!.teams);

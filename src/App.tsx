@@ -1,3 +1,6 @@
+import { MasteryPanel } from "./components/MasteryPanel";
+import { teamsWithMastery } from "./game/abilityMastery";
+import { currentMasteryBanks } from "./game/currentMastery";
 import { projectedCoaches } from "./game/coachOffice";
 import { CoachDraft } from "./components/CoachDraft";
 import { CoachSummary } from "./components/CoachSummary";
@@ -86,15 +89,18 @@ export default function App({
   const coachTeam = {
     ...(state.franchise?.phase === "offseason"
       ? state.franchise.teams[0]
-      : teamsWithMorale(
-          teamsWithChemistry(
-            run.leagueTeams ??
-              run.result?.league?.teams ??
-              run.seasonProgress?.result?.league?.teams ??
-              [],
-            currentChemistryBanks(run),
+      : teamsWithMastery(
+          teamsWithMorale(
+            teamsWithChemistry(
+              run.leagueTeams ??
+                run.result?.league?.teams ??
+                run.seasonProgress?.result?.league?.teams ??
+                [],
+              currentChemistryBanks(run),
+            ),
+            currentMoraleBanks(run),
           ),
-          currentMoraleBanks(run),
+          currentMasteryBanks(run),
         )[0]),
     ...(state.franchise?.phase !== "offseason"
       ? {
@@ -103,6 +109,7 @@ export default function App({
           personalityVersion: run.personalityVersion,
           chemistryGrowthVersion: run.chemistryGrowthVersion,
           abilityVersion: run.abilityVersion,
+          abilityMasteryVersion: run.abilityMasteryVersion,
           physicalAbilityVersion: run.physicalAbilityVersion,
           evaluationVersion: run.evaluationVersion,
         }
@@ -626,6 +633,9 @@ export default function App({
                 />
               )}
               {!coachTeam.coach && <MoralePanel team={coachTeam} />}
+              {coachTeam.abilityMasteryVersion === 1 && (
+                <MasteryPanel team={coachTeam} />
+              )}
               {coachTeam.coach && (
                 <CoachSummary
                   team={coachTeam}

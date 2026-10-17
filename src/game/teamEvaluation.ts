@@ -1,3 +1,4 @@
+import { masteryXp } from "./abilityMastery";
 import { teamLeadership } from "./playerPersonality";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { abilitiesEnabled, speciesAbility } from "./abilities";
@@ -45,6 +46,8 @@ export interface EvaluationTeam {
   coach?: CoachAssignment;
   development?: PlayerDevelopment;
   abilityVersion?: 1;
+  abilityMasteryVersion?: 1;
+  abilityMastery?: Record<number, number>;
   physicalAbilityVersion?: 1;
   evaluationVersion?: 1;
   chemistryVersion?: 1;
@@ -70,6 +73,7 @@ export interface EvaluationContext {
   defense: DefenseScheme;
   abilities: boolean;
   physicalAbilities?: boolean;
+  mastery?: Record<number, number>;
   development: PlayerDevelopment;
   morale?: Pick<EvaluationTeam, "roster" | "moraleVersion" | "morale">;
   needs: Record<NeedSkill, { average: number; weight: number }>;
@@ -217,6 +221,15 @@ function projectedUnit(
           tactic,
           defense,
           abilities: abilitiesEnabled(team),
+          ...(team.abilityMasteryVersion === 1
+            ? {
+                mastery: Object.fromEntries(
+                  Object.values(team.roster).flatMap((id) =>
+                    id == null ? [] : [[id, masteryXp(team, id)]],
+                  ),
+                ),
+              }
+            : {}),
           familiarity: team.engineRules?.familiarity,
           ...(leadership ? { leadership } : {}),
           ...(team.moraleVersion === 1 ? { morale: moraleScores(team) } : {}),
@@ -271,11 +284,19 @@ export function evaluationGamePlan(team: EvaluationTeam) {
           ({ mon, p }) =>
             offenseFit(p, tactic) +
             (enabled
-              ? abilityUsefulness(mon.id, p) *
+              ? abilityUsefulness(mon.id, p, masteryXp(team, mon.id)) *
                 (speciesAbility(mon.id).tactics.includes(tactic) ? 4 : 1)
               : 0) +
             (physical
-              ? physicalAbilityValue(mon.id, p, tactic, team.defense ?? "man")
+              ? physicalAbilityValue(
+                  mon.id,
+                  p,
+                  tactic,
+                  team.defense ?? "man",
+                  p.bestPosition,
+                  {},
+                  masteryXp(team, mon.id),
+                )
               : 0),
         ),
       ) +
@@ -290,7 +311,17 @@ export function evaluationGamePlan(team: EvaluationTeam) {
         players.map(
           ({ mon, p }) =>
             defenseFit(p, defense) +
-            (physical ? physicalAbilityValue(mon.id, p, tactic, defense) : 0),
+            (physical
+              ? physicalAbilityValue(
+                  mon.id,
+                  p,
+                  tactic,
+                  defense,
+                  p.bestPosition,
+                  {},
+                  masteryXp(team, mon.id),
+                )
+              : 0),
         ),
       ) +
       (defense === coach.defense ? 18 - 10 * coach.adaptability : 0) +
@@ -312,6 +343,15 @@ export function createEvaluationContext(
     tactic: plan.tactic,
     defense: plan.defense,
     abilities: abilitiesEnabled(team),
+    ...(team.abilityMasteryVersion === 1
+      ? {
+          mastery: Object.fromEntries(
+            Object.values(team.roster).flatMap((id) =>
+              id == null ? [] : [[id, masteryXp(team, id)]],
+            ),
+          ),
+        }
+      : {}),
     ...(physicalAbilitiesEnabled(team) ? { physicalAbilities: true } : {}),
     ...(team.moraleVersion === 1
       ? {
@@ -366,7 +406,7 @@ function scoreProfile(
       0,
     ) * 100;
   const ability = context.abilities
-    ? abilityUsefulness(pokemonId, p) *
+    ? abilityUsefulness(pokemonId, p, context.mastery?.[pokemonId]) *
       (speciesAbility(pokemonId).tactics.includes(context.tactic) ? 1 : 0.5)
     : 0;
   const factors: EvaluationFactor[] = [
@@ -409,6 +449,7 @@ function scoreProfile(
         context.defense,
         actualRole,
         context.needs,
+        context.mastery?.[pokemonId],
       )
     : 0;
   if (context.physicalAbilities)
@@ -650,14 +691,47 @@ export function evaluationTrainingOptions(
             context.defense,
           )?.chemistry.value ?? 0)
         : 0;
+      // Mastery practice is a separate, bounded opportunity. Its expected XP
+      // follows the aligned focus while existing skill needs retain priority.
+      const xp = masteryXp(team, pokemonId);
+      const expectedXp =
+        18 + (speciesAbility(pokemonId).training === focus ? 24 : 0);
+      const masteryGain =
+        team.abilityMasteryVersion === 1 && abilitiesEnabled(team)
+          ? clamp(
+              evaluatePlayer(
+                {
+                  ...context,
+                  mastery: {
+                    ...context.mastery,
+                    [pokemonId]: Math.min(1000, xp + expectedXp),
+                  },
+                },
+                pokemonId,
+                before.role,
+                projected,
+              ).score - after.score,
+              0,
+              0.35,
+            )
+          : 0;
       const gain =
-        after.score - before.score + chemistryAfter - chemistryBefore;
+        after.score -
+        before.score +
+        chemistryAfter -
+        chemistryBefore +
+        masteryGain;
       return {
         focus,
         role: before.role,
         gain,
         reasons: [
           `Shared team value: ${gain >= 0 ? "+" : ""}${gain.toFixed(2)} projected from this practice focus; this is a planning estimate, not a promised rating gain.`,
+          ...(team.abilityMasteryVersion === 1 && abilitiesEnabled(team)
+            ? [
+                `Ability mastery opportunity: +${masteryGain.toFixed(2)} projected team value from ${speciesAbility(pokemonId).training === focus ? "aligned" : "general"} practice, with ${Math.max(0, 1000 - xp).toFixed(0)} XP of headroom; recovery still limits workload.`,
+              ]
+            : []),
           ...before.reasons.slice(0, 2),
           ...(chemistryPlayers
             ? [

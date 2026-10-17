@@ -1,3 +1,4 @@
+import { withRosterMastery } from "./abilityMastery";
 import { withRosterMorale } from "./playerMorale";
 import { createRivalStrategy } from "./rivalRosterStrategy";
 import { compareTeamEvaluation } from "./teamEvaluation";
@@ -132,19 +133,24 @@ function replacedTeam(
       id === pokemonId ? {} : { ...(team.development?.[id!] ?? {}) },
     ]),
   );
-  return withRosterMorale(
-    {
-      ...team,
-      roster,
-      development,
-      ratings: teamRatings(
+  return withRosterMastery(
+    withRosterMorale(
+      {
+        ...team,
         roster,
-        team.tactic,
-        team.rotation,
         development,
-        team.rotationPlan,
-      ),
-    },
+        ratings: teamRatings(
+          roster,
+          team.tactic,
+          team.rotation,
+          development,
+          team.rotationPlan,
+        ),
+      },
+      team,
+      [team],
+      "rookie",
+    ),
     team,
     [team],
     "rookie",

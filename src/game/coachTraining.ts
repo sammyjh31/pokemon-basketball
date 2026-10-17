@@ -1,3 +1,4 @@
+import { masteryXp } from "./abilityMastery";
 import {
   playerPersonality,
   personalityReactions,
@@ -63,7 +64,9 @@ export function coachTrainingPlans(
       const species = abilitiesEnabled(team)
         ? speciesAbility(mon.id)
         : undefined;
-      const abilityFit = species ? coachAbilityFit(mon.id, profile) : 0;
+      const abilityFit = species
+        ? coachAbilityFit(mon.id, profile, masteryXp(team, mon.id))
+        : 0;
       const skillsFor = (focus: Focus) =>
         focus === "position" ? POSITION_SKILLS[role] : FOCUS_SKILLS[focus];
       const style: Record<Focus, number> = {
@@ -109,6 +112,14 @@ export function coachTrainingPlans(
                 (0.8 + roleFit * 0.2) *
                 (species.tactics.includes(coach.tactic) ? 1 : 0.9)
               : 0;
+          const masteryOpportunity =
+            team.abilityMasteryVersion === 1 && species?.training === focus
+              ? Math.min(
+                  4,
+                  4 * Math.max(0, 1 - masteryXp(team, mon.id) / 1000),
+                ) *
+                (0.6 + coach.adaptability * 0.4)
+              : 0;
           const score =
             style[focus] * (1 - coach.adaptability * 0.45) +
             need * (0.65 + coach.adaptability * 1.1) +
@@ -116,7 +127,8 @@ export function coachTrainingPlans(
             ability * roleFit * 0.12 +
             roleFit * 8 +
             headroom * 0.12 +
-            synergy;
+            synergy +
+            masteryOpportunity;
           return {
             focus,
             skills,
@@ -215,6 +227,9 @@ export function coachTrainingPlans(
             ? `${species.name}: ${species.description} ${focusName} develops the skills needed to use this ability in the ${role} role, with room for improvement.`
             : `${species.name}: ${species.description} Its ${TRAINING_FOCUS_LABELS[species.training].toLowerCase()} synergy was considered; current team needs, role fit and development headroom favor ${focusName}.`,
         );
+      if (species && team.abilityMasteryVersion === 1)
+        reasons[reasons.length - 1] +=
+          ` Ability mastery: ${masteryXp(team, mon.id).toFixed(0)}/1000 XP; ${chosen.focus === species.training ? "aligned practice develops this ability" : "general practice preserves an ability learning opportunity"}. Team needs, recovery and workload limits remain part of this choice.`;
       return [
         mon.id,
         {

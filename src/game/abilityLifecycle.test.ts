@@ -12,6 +12,7 @@ import { loadGame, saveGame } from "./persistence";
 import type { FranchiseSeason } from "./franchiseTypes";
 const run = () => ({
   ...createRun("free", true, 22),
+  abilityMasteryVersion: undefined,
   physicalAbilityVersion: undefined,
   chemistryVersion: undefined,
   chemistryGrowthVersion: undefined,
@@ -97,6 +98,7 @@ it("opts new local leagues in, but never upgrades a saved local career implicitl
   delete d.chemistryGrowthVersion;
   delete d.moraleVersion;
   delete d.personalityVersion;
+  delete d.abilityMasteryVersion;
   delete d.abilityVersion;
   expect(parseLocalLeague(JSON.stringify(d)).abilityVersion).toBeUndefined();
   expect(() =>
@@ -114,8 +116,13 @@ import { rookieFixture } from "./rookieDraft.testUtils";
 
 it("adopts abilities at the next solo franchise boundary without rewriting the previous run", () => {
   const state = rookieFixture();
+  delete state.run.abilityMasteryVersion;
   delete state.run.abilityVersion;
-  state.franchise!.teams.forEach((team) => delete team.abilityVersion);
+  state.franchise!.teams.forEach((team) => {
+    delete team.abilityMasteryVersion;
+    delete team.abilityMastery;
+    delete team.abilityVersion;
+  });
   const before = JSON.stringify(state);
   const next = startFranchiseSeason(state, 988);
   expect(next.run.abilityVersion).toBe(1);
@@ -150,6 +157,7 @@ it("restores old local seasons and adopts abilities only at the next season boun
   delete draft.chemistryGrowthVersion;
   delete draft.moraleVersion;
   delete draft.personalityVersion;
+  delete draft.abilityMasteryVersion;
   delete draft.abilityVersion;
   while (local.currentLocalTurn(draft)) {
     draft = local.advanceLocalCpu(draft);
@@ -192,6 +200,8 @@ it("restores old local seasons and adopts abilities only at the next season boun
   // An older already-started year two can still be restored without upgrading it.
   const oldYearTwo = structuredClone(next);
   oldYearTwo.career!.teams.forEach((t) => {
+    delete t.abilityMasteryVersion;
+    delete t.abilityMastery;
     delete t.abilityVersion;
     delete t.physicalAbilityVersion;
     delete t.chemistryVersion;

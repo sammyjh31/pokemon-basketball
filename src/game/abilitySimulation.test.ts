@@ -7,6 +7,7 @@ import { abilityTotal } from "./abilities";
 import { ROSTER_SLOTS } from "./types";
 const teams = () => {
   const run = createRun("free", true, 2719);
+  delete run.abilityMasteryVersion;
   delete run.physicalAbilityVersion;
   delete run.chemistryVersion;
   delete run.chemistryGrowthVersion;

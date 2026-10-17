@@ -1,9 +1,14 @@
+import { masteryFactor } from "./masteryMath";
 import { speciesAbility, type AbilityMechanic } from "./abilities";
 import type { PlayerProfile } from "./playerProfile";
 import { clamp } from "./ratings";
 
 /** Expected usefulness in the player's actual role, not just an ability-name match. */
-export function abilityUsefulness(pokemonId: number, p: PlayerProfile): number {
+export function abilityUsefulness(
+  pokemonId: number,
+  p: PlayerProfile,
+  xp = 0,
+): number {
   const a = p.attributes;
   const shooting = (a.threePoint + a.midRange) / 2;
   const creation = (a.passing + a.ballHandling + a.composure) / 3;
@@ -58,6 +63,7 @@ export function abilityUsefulness(pokemonId: number, p: PlayerProfile): number {
   return (
     clamp((quality[mechanic] - 30) / 55, 0, 1) *
     involvement *
-    (frequency[mechanic] ?? 1)
+    (frequency[mechanic] ?? 1) *
+    masteryFactor(xp)
   );
 }

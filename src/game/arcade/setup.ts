@@ -1,3 +1,8 @@
+import {
+  masteryXp,
+  snapshotMastery,
+  validateMasteryRoster,
+} from "../abilityMastery";
 import { POKEMON_BY_ID } from "../../data/pokemon";
 import { playerProfile } from "../playerProfile";
 import { emptyAbilityActivations } from "../abilities";
@@ -62,12 +67,47 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
             team.personalityVersion !== undefined &&
             team.personalityVersion !== 1,
         ))) ||
+    (setup.abilityMasteryVersion !== undefined &&
+      (setup.abilityMasteryVersion !== 1 ||
+        // The top ability flag controls live effects. Disabled official leagues
+        // still freeze mastery from clubs using the underlying ability rules.
+        (setup.abilityVersion !== 1 &&
+          !setup.teams.every(
+            (team) =>
+              team.abilityVersion === 1 &&
+              team.engineRules?.abilities === false,
+          )) ||
+        setup.teams[0].abilityMasteryVersion !==
+          setup.teams[1].abilityMasteryVersion ||
+        setup.teams.some(
+          (team) =>
+            team.abilityMasteryVersion !== undefined &&
+            team.abilityMasteryVersion !== 1,
+        ))) ||
     (setup.abilityVersion !== undefined && setup.abilityVersion !== 1) ||
     (setup.physicalAbilityVersion !== undefined &&
       setup.physicalAbilityVersion !== 1) ||
     (setup.evaluationVersion !== undefined && setup.evaluationVersion !== 1)
   )
     throw new Error("Choose two complete teams to play.");
+  const masteryTeams =
+    setup.abilityMasteryVersion === 1
+      ? setup.teams.map((team) => ({
+          ...team,
+          abilityVersion: 1 as const,
+          abilityMasteryVersion: 1 as const,
+          // Court flags are authoritative, including when per-club rules are disabled.
+          engineRules: { ...team.engineRules, abilities: true },
+          ...(team.abilityMastery === undefined
+            ? {}
+            : {
+                abilityMastery: validateMasteryRoster(
+                  team.abilityMastery,
+                  team,
+                ),
+              }),
+        }))
+      : undefined;
   const moraleTeams =
     setup.moraleVersion === 1
       ? setup.teams.map((team) => ({
@@ -108,6 +148,7 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
             tactic: team.tactic ?? "balanced",
             // Evaluate the abilities actually active on this court.
             abilityVersion: setup.abilityVersion,
+            abilityMasteryVersion: setup.abilityMasteryVersion,
             physicalAbilityVersion: setup.physicalAbilityVersion,
             chemistryVersion: setup.chemistryVersion,
             chemistryGrowthVersion: setup.chemistryGrowthVersion,
@@ -145,6 +186,9 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
         z: 0,
         facing: side === 0 ? 1 : -1,
         energy: 100,
+        ...(masteryTeams
+          ? { masteryXp: masteryXp(masteryTeams[side], mon.id) }
+          : {}),
         attributes: { ...profile.attributes },
         ...(setup.chemistryVersion === 1
           ? { chemistryProfile: structuredClone(profile) }
@@ -178,6 +222,12 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
   });
   const s: ArcadeState = {
     modelVersion: 1,
+    ...(masteryTeams
+      ? {
+          abilityMasteryVersion: 1 as const,
+          masteryInitial: snapshotMastery(masteryTeams[0], masteryTeams[1]),
+        }
+      : {}),
     ...(setup.chemistryVersion === 1
       ? {
           chemistryVersion: 1 as const,

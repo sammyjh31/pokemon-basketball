@@ -1,3 +1,5 @@
+import { captureNewsGames } from "./archive";
+import { retainMastery, teamsWithMastery } from "./abilityMastery";
 import { retainMorale, teamsWithMorale } from "./playerMorale";
 import {
   retainChemistry,
@@ -220,6 +222,7 @@ function seasonArchive(run: Run, year: number): FranchiseSeason | null {
   const rivalScouting = captureRivalScouting(league, playoffs);
   return {
     ...(rivalScouting ? { rivalScouting } : {}),
+    newsGames: captureNewsGames(league.games, playoffs),
     year,
     seasonSeed: run.seasonSeed,
     standings: structuredClone(league.standings),
@@ -268,12 +271,15 @@ export function enterOffseason(state: GameState): GameState {
   let teams: LeagueTeam[];
   try {
     teams = validateLeagueTeams(
-      teamsWithMorale(
-        teamsWithChemistry(
-          league.teams,
-          run.playoffs?.chemistryBonds ?? league.chemistryBonds,
+      teamsWithMastery(
+        teamsWithMorale(
+          teamsWithChemistry(
+            league.teams,
+            run.playoffs?.chemistryBonds ?? league.chemistryBonds,
+          ),
+          run.playoffs?.morale ?? league.morale,
         ),
-        run.playoffs?.morale ?? league.morale,
+        run.playoffs?.abilityMastery ?? league.abilityMastery,
       ),
       run.includeLegends,
     );
@@ -284,12 +290,18 @@ export function enterOffseason(state: GameState): GameState {
   const year = previous?.year ?? 1,
     archive = seasonArchive(run, year);
   if (!archive) return state;
-  if (previous?.modelVersion === 3 || run.chemistryGrowthVersion === 1)
+  if (
+    previous?.modelVersion === 3 ||
+    run.chemistryGrowthVersion === 1 ||
+    run.abilityMasteryVersion === 1
+  )
     archive.replay = captureSeasonReplay(run);
   const franchise: Franchise = {
     ...(previous?.coachOffice ? { coachOffice: previous.coachOffice } : {}),
     modelVersion:
-      run.chemistryGrowthVersion === 1 ? 3 : (previous?.modelVersion ?? 1),
+      run.chemistryGrowthVersion === 1 || run.abilityMasteryVersion === 1
+        ? 3
+        : (previous?.modelVersion ?? 1),
     cpuRules: previous?.cpuRules ?? { modelVersion: 1, since: year },
     year,
     phase: "offseason",
@@ -346,7 +358,9 @@ export function startFranchiseSeason(
   }
   // Type rules roll forward only at the season boundary. Historical teams stay frozen.
   teams = syncTeamBonds(teams).map((team) => ({
-    ...retainMorale(retainChemistry(team)),
+    ...retainMastery(
+      retainMorale(retainChemistry({ ...team, abilityVersion: 1 as const })),
+    ),
     personalityVersion: 1 as const,
     typeMatchupsVersion: 1 as const,
     typeTacticsVersion: 1 as const,
@@ -438,6 +452,8 @@ export function archiveFranchiseSeason(state: GameState): GameState {
   // Enrich old archives without inventing recruiting knowledge they never stored.
   if (source && !Object.hasOwn(previousSummary, "rivalScouting"))
     delete source.rivalScouting;
+  if (source && !Object.hasOwn(previousSummary, "newsGames"))
+    delete source.newsGames;
   if (!source || !sameSnapshot(source, previousSummary)) return state;
   const history = [...next.franchise.history];
   history[history.length - 1] = {

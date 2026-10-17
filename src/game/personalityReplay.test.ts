@@ -19,6 +19,7 @@ it("preserves morale-enabled release e8681b9", () => {
       B3: 131,
     },
   };
+  delete run.abilityMasteryVersion;
   delete (run as { personalityVersion?: 1 }).personalityVersion;
   const teams = createLeague(run);
   for (const [i, p] of Object.values(teams[0].morale!).entries())

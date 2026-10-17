@@ -20,6 +20,7 @@ it("preserves the evaluation-enabled draft and matches from release 84925c0", ()
       B3: 131,
     },
   };
+  delete (run as { abilityMasteryVersion?: 1 }).abilityMasteryVersion;
   delete (run as { physicalAbilityVersion?: 1 }).physicalAbilityVersion;
   delete run.chemistryVersion;
   delete run.chemistryGrowthVersion;

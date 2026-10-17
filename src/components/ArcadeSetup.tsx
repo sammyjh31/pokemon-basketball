@@ -1,3 +1,5 @@
+import { teamsWithMastery } from "../game/abilityMastery";
+import { currentMasteryBanks } from "../game/currentMastery";
 import { currentChemistryBanks } from "../game/currentChemistry";
 import { teamsWithChemistry } from "../game/teammateChemistry";
 import { currentMoraleBanks } from "../game/currentMorale";
@@ -53,17 +55,23 @@ export function prepareArcadeTeams(run: Run): {
       });
       if (valid)
         return {
-          teams: teamsWithMorale(
-            teamsWithChemistry(existing, currentChemistryBanks(run)),
-            currentMoraleBanks(run),
+          teams: teamsWithMastery(
+            teamsWithMorale(
+              teamsWithChemistry(existing, currentChemistryBanks(run)),
+              currentMoraleBanks(run),
+            ),
+            currentMasteryBanks(run),
           ),
           error: null,
         };
     }
     return {
-      teams: teamsWithMorale(
-        teamsWithChemistry(createLeague(run), currentChemistryBanks(run)),
-        currentMoraleBanks(run),
+      teams: teamsWithMastery(
+        teamsWithMorale(
+          teamsWithChemistry(createLeague(run), currentChemistryBanks(run)),
+          currentMoraleBanks(run),
+        ),
+        currentMasteryBanks(run),
       ),
       error: null,
     };

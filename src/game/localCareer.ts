@@ -1,3 +1,12 @@
+import { captureNewsGames } from "./archive";
+import {
+  retainMastery,
+  teamsWithMastery,
+  trainMastery,
+  type MasteryTrainingChange,
+} from "./abilityMastery";
+import { validateMasteryRoster } from "./abilityMastery";
+import { withRosterMastery } from "./abilityMastery";
 import {
   retainMorale,
   teamsWithMorale,
@@ -88,7 +97,22 @@ export interface LocalDevelopment {
   pokemonId: number;
   changes: DevelopmentRatings;
 }
+const captureNewsPlayers = (players: import("./types").LeaguePlayer[]) =>
+  players
+    .filter((player) => player.highPoints >= 40)
+    .map(({ pokemonId, teamId, highPoints, gamesPlayed }) => ({
+      pokemonId,
+      teamId,
+      highPoints,
+      gamesPlayed,
+    }));
 export interface LocalSeasonArchive {
+  newsPlayers?: Pick<
+    import("./types").LeaguePlayer,
+    "pokemonId" | "teamId" | "highPoints" | "gamesPlayed"
+  >[];
+  mastery?: MasteryTrainingChange[];
+  newsGames?: import("./types").LeagueGameSummary[];
   coachRecords?: import("./coachCareers").CoachSeasonRecord[];
   year: number;
   seasonSeed: number;
@@ -263,9 +287,15 @@ export function beginLocalOffseason(
     (draft.playoffGames !== undefined && draft.playoffGames !== count)
   )
     fail("The championship does not match this season.");
-  const finalTeams = teamsWithMorale(
-    teamsWithChemistry(teams, verified.chemistryBonds ?? league.chemistryBonds),
-    verified.morale ?? league.morale,
+  const finalTeams = teamsWithMastery(
+    teamsWithMorale(
+      teamsWithChemistry(
+        teams,
+        verified.chemistryBonds ?? league.chemistryBonds,
+      ),
+      verified.morale ?? league.morale,
+    ),
+    verified.abilityMastery ?? league.abilityMastery,
   );
   const assignments = Object.assign(
     {},
@@ -286,8 +316,29 @@ export function beginLocalOffseason(
       : {}),
   }));
   if (development.length !== draft.options.format.teamCount * 8) fail();
+  const mastery = finalTeams
+    .filter((team) => team.abilityMasteryVersion === 1)
+    .flatMap(
+      (team) =>
+        trainMastery(team, assignments, year, localSeasonSeed(draft)).changes,
+    );
+  const trainedTeams = finalTeams.map((team) =>
+    team.abilityMasteryVersion === 1
+      ? {
+          ...team,
+          abilityMastery: trainMastery(
+            team,
+            assignments,
+            year,
+            localSeasonSeed(draft),
+          ).mastery,
+        }
+      : team,
+  );
   const rivalScouting = captureRivalScouting(league, verified);
   const archived: LocalSeasonArchive = {
+    newsGames: captureNewsGames(league.games, verified),
+    newsPlayers: captureNewsPlayers(league.players),
     coachRecords: captureCoachRecords(teams, league.standings, verified, year),
     year,
     seasonSeed: localSeasonSeed(draft),
@@ -298,6 +349,7 @@ export function beginLocalOffseason(
     finalsMvp: structuredClone(verified.finalsMvp!),
     playoffGames: count,
     development,
+    ...(mastery.length ? { mastery } : {}),
     rookiePicks: [],
     trades: [],
     ...(rivalScouting ? { rivalScouting } : {}),
@@ -312,7 +364,7 @@ export function beginLocalOffseason(
       version: 1,
       year,
       phase: "offseason",
-      teams: withDevelopment(finalTeams, development),
+      teams: withDevelopment(trainedTeams, development),
       history: [...(draft.career?.history ?? []), archived],
     },
   };
@@ -348,7 +400,12 @@ function appendRookie(
       teams: syncTeamBonds(
         career.teams.map((t) =>
           t.id === team.id
-            ? withRosterMorale(updated, team, career.teams, "rookie")
+            ? withRosterMastery(
+                withRosterMorale(updated, team, career.teams, "rookie"),
+                team,
+                career.teams,
+                "rookie",
+              )
             : t,
         ),
       ),
@@ -410,12 +467,17 @@ export function recommendedLocalRookie(draft: LocalLeague) {
         team.evaluationVersion === 1
           ? compareTeamEvaluation(
               team,
-              withRosterMorale(
-                {
-                  ...team,
-                  roster: { ...team.roster, [slot]: mon.id },
-                  development,
-                },
+              withRosterMastery(
+                withRosterMorale(
+                  {
+                    ...team,
+                    roster: { ...team.roster, [slot]: mon.id },
+                    development,
+                  },
+                  team,
+                  career.teams,
+                  "rookie",
+                ),
                 team,
                 career.teams,
                 "rookie",
@@ -707,6 +769,7 @@ function nextYearTeams(
   adoptChemistryGrowth = true,
   adoptMorale = true,
   adoptPersonality = true,
+  adoptMastery = true,
 ): LeagueTeam[] {
   const archived = career.history.at(-1)!;
   const appointed = projectedCoaches(
@@ -726,6 +789,15 @@ function nextYearTeams(
       ...(adoptMorale ? retainMorale(growth) : growth),
       ...(adoptPersonality ? { personalityVersion: 1 as const } : {}),
       ...(adoptAbilities ? { abilityVersion: 1 as const } : {}),
+      ...(adoptMastery
+        ? {
+            abilityMasteryVersion: 1 as const,
+            abilityMastery: retainMastery({
+              ...team,
+              abilityVersion: 1 as const,
+            }).abilityMastery,
+          }
+        : {}),
       ...(adoptPhysicalAbilities ? { physicalAbilityVersion: 1 as const } : {}),
       ...(adoptChemistry ? { chemistryVersion: 1 as const } : {}),
       ...(adoptEvaluation ? { evaluationVersion: 1 as const } : {}),
@@ -828,6 +900,12 @@ function verifyArchivedResult(
   playoffs: Playoffs,
 ) {
   if (
+    archived.newsPlayers &&
+    JSON.stringify(archived.newsPlayers) !==
+      JSON.stringify(captureNewsPlayers(result.league!.players))
+  )
+    fail("Archived player news does not match its frozen inputs.");
+  if (
     playoffs.championId === null ||
     playoffs.championId !== archived.championId ||
     playoffGameCount(playoffs) !== archived.playoffGames ||
@@ -849,6 +927,12 @@ function verifyArchivedResult(
     )
   )
     fail("This archived season does not match its frozen inputs.");
+  if (
+    archived.newsGames &&
+    JSON.stringify(archived.newsGames) !==
+      JSON.stringify(captureNewsGames(result.league!.games, playoffs))
+  )
+    fail("Archived game news does not match its frozen inputs.");
   if (
     archived.coachRecords !== undefined &&
     JSON.stringify(archived.coachRecords) !==
@@ -915,6 +999,14 @@ function parseTeams(
     array(value, format.teamCount)[0],
   ).abilityVersion;
   if (abilityVersion !== undefined && abilityVersion !== 1) fail();
+  const abilityMasteryVersion = object(
+    array(value, format.teamCount)[0],
+  ).abilityMasteryVersion;
+  if (
+    (abilityMasteryVersion !== undefined && abilityMasteryVersion !== 1) ||
+    (abilityMasteryVersion === 1 && abilityVersion !== 1)
+  )
+    fail();
   const physicalAbilityVersion = object(
     array(value, format.teamCount)[0],
   ).physicalAbilityVersion;
@@ -965,6 +1057,8 @@ function parseTeams(
       row.typeMatchupsVersion !== draft.typeMatchupsVersion ||
       row.typeTacticsVersion !== draft.typeTacticsVersion ||
       row.abilityVersion !== abilityVersion ||
+      row.abilityMasteryVersion !== abilityMasteryVersion ||
+      (abilityMasteryVersion !== 1 && row.abilityMastery !== undefined) ||
       row.physicalAbilityVersion !== physicalAbilityVersion ||
       row.chemistryVersion !== chemistryVersion ||
       row.chemistryGrowthVersion !== chemistryGrowthVersion ||
@@ -1032,6 +1126,14 @@ function parseTeams(
         ? { typeMatchupsVersion: 1 as const }
         : {}),
       ...(abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+      ...(abilityMasteryVersion === 1
+        ? {
+            abilityMasteryVersion: 1 as const,
+            abilityMastery: validateMasteryRoster(row.abilityMastery, {
+              roster,
+            }),
+          }
+        : {}),
       ...(physicalAbilityVersion === 1
         ? { physicalAbilityVersion: 1 as const }
         : {}),
@@ -1079,6 +1181,8 @@ function sameRosterState(actual: LeagueTeam[], expected: LeagueTeam[]) {
       e = expected[i];
     if (
       a.abilityVersion !== e.abilityVersion ||
+      a.abilityMasteryVersion !== e.abilityMasteryVersion ||
+      JSON.stringify(a.abilityMastery) !== JSON.stringify(e.abilityMastery) ||
       a.physicalAbilityVersion !== e.physicalAbilityVersion ||
       a.chemistryVersion !== e.chemistryVersion ||
       a.chemistryGrowthVersion !== e.chemistryGrowthVersion ||
@@ -1338,7 +1442,12 @@ export function parseLocalCareer(
       ...(rivalScouting ? { rivalScouting } : {}),
     };
     let finalTeams = teams;
-    if (teams[0].chemistryGrowthVersion === 1) {
+    if (
+      teams[0].chemistryGrowthVersion === 1 ||
+      teams[0].abilityMasteryVersion === 1 ||
+      row.newsGames !== undefined ||
+      row.newsPlayers !== undefined
+    ) {
       const season = localSeasonBuilder(
         teams,
         draft.options.format,
@@ -1348,14 +1457,44 @@ export function parseLocalCareer(
       const league = season.finish().league!;
       const playoffs = replayPlayoffs(league, row.seasonSeed, playoffGames);
       if (playoffs.championId !== championId) fail();
-      finalTeams = teamsWithMorale(
-        teamsWithChemistry(
-          teams,
-          playoffs.chemistryBonds ?? league.chemistryBonds,
+      if (row.newsGames !== undefined) {
+        const facts = captureNewsGames(league.games, playoffs);
+        if (JSON.stringify(row.newsGames) !== JSON.stringify(facts)) fail();
+        archived.newsGames = facts;
+      }
+      if (row.newsPlayers !== undefined) {
+        const players = captureNewsPlayers(league.players);
+        if (JSON.stringify(row.newsPlayers) !== JSON.stringify(players)) fail();
+        archived.newsPlayers = players;
+      }
+      finalTeams = teamsWithMastery(
+        teamsWithMorale(
+          teamsWithChemistry(
+            teams,
+            playoffs.chemistryBonds ?? league.chemistryBonds,
+          ),
+          playoffs.morale ?? league.morale,
         ),
-        playoffs.morale ?? league.morale,
+        playoffs.abilityMastery ?? league.abilityMastery,
       );
     }
+    if (finalTeams[0].abilityMasteryVersion === 1) {
+      const assignments = Object.fromEntries(
+        development
+          .filter((p) => p.training)
+          .map((p) => [p.pokemonId, p.training!]),
+      );
+      const training = finalTeams.map((team) =>
+        trainMastery(team, assignments, archiveYear, row.seasonSeed as number),
+      );
+      const mastery = training.flatMap((t) => t.changes);
+      if (JSON.stringify(row.mastery) !== JSON.stringify(mastery)) fail();
+      archived.mastery = mastery;
+      finalTeams = finalTeams.map((team, index) => ({
+        ...team,
+        abilityMastery: training[index].mastery,
+      }));
+    } else if (row.mastery !== undefined) fail();
     let replay: LocalLeague = {
       ...draft,
       completed: true,
@@ -1426,6 +1565,8 @@ export function parseLocalCareer(
           .moraleVersion === 1,
         object(array(nextRawTeams, draft.options.format.teamCount)[0])
           .personalityVersion === 1,
+        object(array(nextRawTeams, draft.options.format.teamCount)[0])
+          .abilityMasteryVersion === 1,
       );
     } else expected = replay.career!.teams;
     onProgress?.(i + 1, rawHistory.length);

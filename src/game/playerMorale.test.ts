@@ -170,3 +170,12 @@ it("caps temporary execution, preserves physical attributes/base profile and lea
   expect(moraleProfile(raw, { ...t, moraleVersion: undefined }, id)).toBe(raw);
   expect(raw.attributes).not.toBe(happy.attributes);
 });
+
+it("canonicalizes a fading disruption to positive zero so long careers round-trip exactly", () => {
+  const club = team(),
+    id = ids(club)[0];
+  club.morale[id].disruption = -0.01;
+  const retained = retainMorale(club);
+  expect(Object.is(retained.morale[id].disruption, -0)).toBe(false);
+  expect(JSON.parse(JSON.stringify(retained.morale))).toEqual(retained.morale);
+});

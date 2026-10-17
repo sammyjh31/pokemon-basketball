@@ -6,6 +6,7 @@ import { ROSTER_SLOTS, type GameState } from "./types";
 export function rookieFixture(): GameState {
   let run = createRun("free", false, 82);
   // This fixture represents existing franchises; modern tests opt in explicitly.
+  delete run.abilityMasteryVersion;
   delete run.evaluationVersion;
   delete run.physicalAbilityVersion;
   delete run.chemistryVersion;

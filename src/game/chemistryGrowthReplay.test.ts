@@ -20,6 +20,7 @@ it("preserves the chemistry enabled coached draft and matches from release e5582
       B3: 131,
     },
   };
+  delete run.abilityMasteryVersion;
   delete (run as { chemistryGrowthVersion?: 1 }).chemistryGrowthVersion;
   delete run.moraleVersion;
   delete run.personalityVersion;

@@ -41,6 +41,16 @@ Solo/franchise progress and the local league are saved separately in this browse
 - **Several tabs:** if another tab changes the same save, this tab stops saving, so it cannot overwrite the newer progress, and offers **Reload to continue**.
 - **Faster restore:** saved leagues are re-simulated to validate them on load. This replay runs in a background worker with progress, so the page stays responsive; it falls back to the page when workers are unavailable, with the same result.
 
+## Ability mastery and league news
+
+New games track each Pokémon’s experience with its signature ability. Official minutes and recorded ability use earn bounded mastery XP after each game, including playoff and officially played franchise games. Coach-managed offseason training adds experience based on the assigned focus, coaching fit and personality, with occasional recorded breakthroughs. Practice games do not award persistent experience, and disabling abilities stops mastery gains.
+
+The five levels are **Developing** (0 XP), **Practiced** (75), **Skilled** (200), **Expert** (400) and **Master** (700), with a cap of 1,000 XP. Progress gradually strengthens the ability’s existing shooting, support, defense, movement, screen, rebounding and fatigue effects, up to 20% of the original effect. It does not add 20 percentage points to shooting or change underlying ratings. Coaches consider mastery in game plans, lineup evaluation and automatic training while retaining recovery and workload limits.
+
+Mastery follows a Pokémon through trades and seasons. New rookies start at zero; released players retain their experience if signed from free agency. **Ability mastery** shows current experience and the next level; game box scores and offseason reports show earned progress. Existing active seasons keep their original simulation rules, and existing franchises adopt mastery at the next season boundary without retroactive experience. Historical games use their frozen pregame mastery.
+
+**League news** covers every club with recorded results, weekly recaps, scoring highs, player development, mastery milestones, trades, rookie picks, signings, coaching changes, awards and championships. Filter by season, category or your teams, then open recorded details or available player/game links. Stories are derived from saved facts, so revisiting the feed does not simulate games or award progress. Older saves show the records they contain; missing historical game facts are not invented.
+
 ## Player personalities and captains
 
 New games give every Pokémon a stable basketball personality: ambition, loyalty, resilience, coachability and leadership, plus a readable archetype. Personalities stay with the species across roster moves and seasons. They change minutes expectations, reactions to winning and losing, trade adjustment, compatibility with trainers and automatic training intensity. These are game adaptations, not canonical Pokémon personality claims.

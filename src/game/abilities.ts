@@ -1,3 +1,4 @@
+import { masteryFactor } from "./masteryMath";
 import catalog from "../data/species-abilities.json";
 import type { PlayType, Tactic } from "./types";
 import type { PlayerTrainingPlan } from "./franchiseFeatures";
@@ -305,9 +306,10 @@ export function abilityImpact(
   pokemonId: number,
   role: AbilityRole,
   context: AbilityContext,
+  xp = 0,
 ): number {
   const rule = mechanics[speciesAbility(pokemonId).mechanic];
-  return rule.role === role ? rule.effect(context) : 0;
+  return rule.role === role ? rule.effect(context) * masteryFactor(xp) : 0;
 }
 export function emptyAbilityActivations(): AbilityActivations {
   return { offense: 0, support: 0, defense: 0 };

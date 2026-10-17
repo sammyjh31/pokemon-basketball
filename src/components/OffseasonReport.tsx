@@ -1,3 +1,4 @@
+import { MasteryTrainingReport } from "./MasteryPanel";
 import { CoachTrainingDetails } from "./CoachTrainingPanel";
 import { useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -274,6 +275,13 @@ export function OffseasonReport({ franchise }: { franchise: Franchise }) {
       {!players.length && (
         <p className="league-empty">No players match these filters.</p>
       )}
+      <MasteryTrainingReport
+        year={report.year}
+        teams={franchise.teams}
+        changes={report.mastery?.filter(
+          (row) => team === "all" || row.teamId === Number(team),
+        )}
+      />
       <section
         className="development-transactions"
         aria-label="CPU offseason transactions"

@@ -79,7 +79,10 @@ type MoraleMatch = {
   awayBox: Box[];
   overtimePeriods: number;
 };
-const round = (value: number) => Math.round(value * 100) / 100;
+const round = (value: number) => {
+  const rounded = Math.round(value * 100) / 100;
+  return rounded === 0 ? 0 : rounded;
+};
 const fields = ["score", "minutes", "success", "disruption", "games"] as const;
 const mean = (values: number[]) =>
   values.reduce((a, b) => a + b, 0) / Math.max(1, values.length);

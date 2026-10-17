@@ -1,3 +1,4 @@
+import { withRosterMastery } from "./abilityMastery";
 import { withRosterMorale } from "./playerMorale";
 import { withKnownBonds } from "./teammateChemistry";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -81,6 +82,18 @@ export function freeAgentMarket(
         }
         offsets.set(player.pokemonId, values);
       }
+    const mastery = new Map<number, number>();
+    for (const season of f.history) {
+      for (const roster of Object.values(
+        season.replay?.playoffs.abilityMastery ?? {},
+      ))
+        for (const [id, xp] of Object.entries(roster))
+          mastery.set(Number(id), xp);
+      for (const row of f.offseasons?.find(
+        (report) => report.year === season.year,
+      )?.mastery ?? [])
+        mastery.set(row.pokemonId, row.after);
+    }
     result = [...released]
       .flatMap(([pokemonId, source]) => {
         const mon = POKEMON_BY_ID.get(pokemonId);
@@ -93,6 +106,9 @@ export function freeAgentMarket(
             pokemonId,
             ...source,
             development,
+            ...(f.teams[0].abilityMasteryVersion === 1
+              ? { abilityMastery: mastery.get(pokemonId) ?? 0 }
+              : {}),
             rating,
             position: POSITIONS[fits.indexOf(rating)],
           },
@@ -126,25 +142,31 @@ function replacePlayer(
       ];
     }),
   );
-  return withRosterMorale(
-    withKnownBonds(
-      {
-        ...team,
-        roster,
-        development,
-        ratings: teamRatings(
+  return withRosterMastery(
+    withRosterMorale(
+      withKnownBonds(
+        {
+          ...team,
           roster,
-          team.tactic,
-          team.rotation,
           development,
-          team.rotationPlan,
-        ),
-      },
+          ratings: teamRatings(
+            roster,
+            team.tactic,
+            team.rotation,
+            development,
+            team.rotationPlan,
+          ),
+        },
+        sources,
+      ),
+      team,
       sources,
+      "free-agent",
     ),
     team,
     sources,
     "free-agent",
+    { [agent.pokemonId]: agent.abilityMastery ?? 0 },
   );
 }
 function skillProfile(id: number, offsets: DevelopmentRatings = {}) {

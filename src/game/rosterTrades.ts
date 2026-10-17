@@ -1,3 +1,4 @@
+import { withRosterMastery, masteryXp } from "./abilityMastery";
 import { withRosterMorale } from "./playerMorale";
 import { withKnownBonds } from "./teammateChemistry";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -46,21 +47,26 @@ export function exchangePlayers(
       };
       delete development[from];
     }
-    return withRosterMorale(
-      withKnownBonds(
-        {
-          ...team,
-          roster,
-          ...(development ? { development } : {}),
-          ratings: teamRatings(
+    return withRosterMastery(
+      withRosterMorale(
+        withKnownBonds(
+          {
+            ...team,
             roster,
-            team.tactic,
-            team.rotation,
-            development,
-            team.rotationPlan,
-          ),
-        },
+            ...(development ? { development } : {}),
+            ratings: teamRatings(
+              roster,
+              team.tactic,
+              team.rotation,
+              development,
+              team.rotationPlan,
+            ),
+          },
+          teams,
+        ),
+        team,
         teams,
+        "trade",
       ),
       team,
       teams,
@@ -95,10 +101,21 @@ export function cpuTrades(
       }),
     ),
   );
+  const allMastery = Object.fromEntries(
+    teams.flatMap((team) =>
+      Object.values(team.roster).map((id) => [id!, masteryXp(team, id!)]),
+    ),
+  );
   const sharedContexts = new Map(
     teams
       .filter((team) => team.evaluationVersion === 1)
-      .map((team) => [team.id, createEvaluationContext(team)]),
+      .map((team) => {
+        const context = createEvaluationContext(team);
+        return [
+          team.id,
+          context.mastery ? { ...context, mastery: allMastery } : context,
+        ] as const;
+      }),
   );
   const sharedValues = new Map<string, number>();
   const sharedValue = (team: LeagueTeam, id: number, slot: string) => {
@@ -300,27 +317,32 @@ export function exchangePackage(
       const score =
         team.evaluationVersion === 1
           ? evaluateTeam(
-              withRosterMorale(
-                withKnownBonds(
-                  {
-                    ...team,
-                    roster: {
-                      ...team.roster,
-                      ...Object.fromEntries(
-                        slots.map((slot, index) => [slot, order[index]]),
-                      ),
+              withRosterMastery(
+                withRosterMorale(
+                  withKnownBonds(
+                    {
+                      ...team,
+                      roster: {
+                        ...team.roster,
+                        ...Object.fromEntries(
+                          slots.map((slot, index) => [slot, order[index]]),
+                        ),
+                      },
+                      development: {
+                        ...team.development,
+                        ...Object.fromEntries(
+                          incoming.map((id) => [
+                            id,
+                            other.development?.[id] ?? {},
+                          ]),
+                        ),
+                      },
                     },
-                    development: {
-                      ...team.development,
-                      ...Object.fromEntries(
-                        incoming.map((id) => [
-                          id,
-                          other.development?.[id] ?? {},
-                        ]),
-                      ),
-                    },
-                  },
+                    teams,
+                  ),
+                  team,
                   teams,
+                  "trade",
                 ),
                 team,
                 teams,
@@ -350,21 +372,26 @@ export function exchangePackage(
         development[id] = { ...(other.development?.[id] ?? {}) };
       });
     }
-    return withRosterMorale(
-      withKnownBonds(
-        {
-          ...team,
-          roster,
-          ...(development ? { development } : {}),
-          ratings: teamRatings(
+    return withRosterMastery(
+      withRosterMorale(
+        withKnownBonds(
+          {
+            ...team,
             roster,
-            team.tactic,
-            team.rotation,
-            development,
-            team.rotationPlan,
-          ),
-        },
+            ...(development ? { development } : {}),
+            ratings: teamRatings(
+              roster,
+              team.tactic,
+              team.rotation,
+              development,
+              team.rotationPlan,
+            ),
+          },
+          teams,
+        ),
+        team,
         teams,
+        "trade",
       ),
       team,
       teams,

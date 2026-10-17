@@ -22,6 +22,7 @@ export interface FreeAgency {
   cpuYears: number[];
 }
 export interface FreeAgent {
+  abilityMastery?: number;
   pokemonId: number;
   position: Position;
   rating: number;

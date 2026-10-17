@@ -1,3 +1,4 @@
+import { retainMastery } from "./abilityMastery";
 import { retainMorale } from "./playerMorale";
 import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
 import { assignLeagueCoaches } from "./trainerCoaches";
@@ -158,6 +159,11 @@ export function createLeague(run: Run): LeagueTeam[] {
     if (run.typeMatchupsVersion === 1) team.typeMatchupsVersion = 1;
     if (run.typeTacticsVersion === 1) team.typeTacticsVersion = 1;
     if (run.abilityVersion === 1) team.abilityVersion = 1;
+    if (run.abilityMasteryVersion === 1) {
+      if (run.abilityVersion !== 1)
+        throw new Error("Ability mastery requires abilities.");
+      Object.assign(team, retainMastery(team));
+    }
     if (run.physicalAbilityVersion === 1) team.physicalAbilityVersion = 1;
     if (run.chemistryVersion === 1) team.chemistryVersion = 1;
     if (run.chemistryGrowthVersion === 1) {

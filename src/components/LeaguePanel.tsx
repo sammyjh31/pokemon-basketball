@@ -1,3 +1,7 @@
+import { MasteryPanel } from "./MasteryPanel";
+import { LeagueNewsPanel } from "./LeagueNewsPanel";
+import { buildLeagueNews } from "../game/leagueNews";
+import { teamsWithMastery, type MasteryBanks } from "../game/abilityMastery";
 import { MoralePanel } from "./MoralePanel";
 import { teamsWithMorale, type MoraleBanks } from "../game/playerMorale";
 import { AbilityStats } from "./AbilityStats";
@@ -660,13 +664,18 @@ function Rosters({
   teamId,
   setTeamId,
   morale,
+  mastery,
 }: {
   league: LeagueResult;
   teamId: string;
   setTeamId: (id: string) => void;
   morale?: MoraleBanks;
+  mastery?: MasteryBanks;
 }) {
-  const teams = teamsWithMorale(league.teams, morale ?? league.morale);
+  const teams = teamsWithMastery(
+    teamsWithMorale(league.teams, morale ?? league.morale),
+    mastery ?? league.abilityMastery,
+  );
   const team = teams.find((t) => String(t.id) === teamId) ?? teams[0];
   if (!team) return null;
   const coach = getCoach(team.coach?.id ?? "");
@@ -717,6 +726,7 @@ function Rosters({
         </div>
       </div>
       <MoralePanel team={team} />
+      <MasteryPanel team={team} />
       <div
         className="results-table-wrap"
         role="region"
@@ -1098,6 +1108,7 @@ function Games({
 }
 const sections = [
   "Standings",
+  "League news",
   "Team analysis",
   "Season insights",
   "Player leaders",
@@ -1107,13 +1118,19 @@ const sections = [
   "Awards",
 ] as const;
 export function LeaguePanel({
+  yourTeamIds = [0],
+  year = 1,
   league,
   playedGames,
   morale,
+  mastery,
 }: {
   league: LeagueResult;
+  year?: number;
+  yourTeamIds?: number[];
   playedGames?: Record<string, OfficialGame>;
   morale?: MoraleBanks;
+  mastery?: MasteryBanks;
 }) {
   const [section, setSection] =
       useState<(typeof sections)[number]>("Standings"),
@@ -1131,6 +1148,7 @@ export function LeaguePanel({
           scouting: game.scouting,
           chemistry: game.chemistry,
           morale: game.morale,
+          mastery: game.mastery,
         },
       ),
     [league, playedGames],
@@ -1175,6 +1193,23 @@ export function LeaguePanel({
             }}
           />
         )}
+        {section === "League news" && (
+          <LeagueNewsPanel
+            yourTeamIds={yourTeamIds}
+            stories={buildLeagueNews([
+              {
+                year,
+                teams: league.teams,
+                games: league.games,
+                players: league.players,
+                awards: league.awards,
+              },
+            ])}
+            onGame={(id) =>
+              setGame(league.games.find((g) => g.id === id) ?? null)
+            }
+          />
+        )}
         {section === "Player leaders" && <Leaders league={league} />}
         {section === "Team analysis" && <LeagueAnalytics league={league} />}
         {section === "Season insights" && (
@@ -1186,6 +1221,7 @@ export function LeaguePanel({
             teamId={teamId}
             setTeamId={setTeamId}
             morale={morale}
+            mastery={mastery}
           />
         )}
         {section === "League games" && (

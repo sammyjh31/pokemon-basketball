@@ -135,6 +135,12 @@ function validate(
     (raw.typeTacticsVersion === 1 && raw.typeMatchupsVersion !== 1)
   )
     return fail();
+  if (
+    (raw.abilityMasteryVersion !== undefined &&
+      raw.abilityMasteryVersion !== 1) ||
+    (raw.abilityMasteryVersion === 1 && raw.abilityVersion !== 1)
+  )
+    throw new Error("Invalid ability mastery rules.");
   if (raw.abilityVersion !== undefined && raw.abilityVersion !== 1)
     return fail();
   if (
@@ -197,6 +203,9 @@ function validate(
     ...(coach ? { coach } : {}),
     ...(raw.coachDraftRequired ? { coachDraftRequired: true as const } : {}),
     ...(raw.abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+    ...(raw.abilityMasteryVersion === 1
+      ? { abilityMasteryVersion: 1 as const }
+      : {}),
     ...(raw.physicalAbilityVersion === 1
       ? { physicalAbilityVersion: 1 as const }
       : {}),
@@ -251,6 +260,7 @@ function validate(
         (team) =>
           team.typeTacticsVersion !== run.typeTacticsVersion ||
           team.abilityVersion !== run.abilityVersion ||
+          team.abilityMasteryVersion !== run.abilityMasteryVersion ||
           team.physicalAbilityVersion !== run.physicalAbilityVersion ||
           team.chemistryVersion !== run.chemistryVersion ||
           team.chemistryGrowthVersion !== run.chemistryGrowthVersion ||

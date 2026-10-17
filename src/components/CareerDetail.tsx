@@ -1,3 +1,6 @@
+import { MasteryPanel, MasteryTrainingReport } from "./MasteryPanel";
+import { currentMasteryBanks } from "../game/currentMastery";
+import { teamsWithMastery } from "../game/abilityMastery";
 import { AbilityStats } from "./AbilityStats";
 import { SpeciesAbility } from "./SpeciesAbility";
 import { useMemo, useState } from "react";
@@ -116,9 +119,17 @@ export function CareerDetail({
   const cells = (row: CareerTotals) =>
     defense ? defenseCells(row, totals) : statCells(row, totals);
   const pokemon = POKEMON_BY_ID.get(pokemonId)!,
-    team = franchise.teams.find((team) =>
-      Object.values(team.roster).includes(pokemonId),
-    );
+    team = (
+      franchise.phase === "season"
+        ? teamsWithMastery(
+            run.leagueTeams ??
+              run.result?.league?.teams ??
+              run.seasonProgress?.result?.league?.teams ??
+              franchise.teams,
+            currentMasteryBanks(run),
+          )
+        : franchise.teams
+    ).find((team) => Object.values(team.roster).includes(pokemonId));
   const career = useMemo(
     () =>
       careerPlayers(franchise, run).find(
@@ -238,6 +249,21 @@ export function CareerDetail({
         </p>
       </div>
       <SpeciesAbility pokemonId={pokemonId} />
+      {team && <MasteryPanel team={team} pokemonId={pokemonId} />}
+      {(franchise.offseasons ?? [])
+        .filter((report) =>
+          report.mastery?.some((row) => row.pokemonId === pokemonId),
+        )
+        .map((report) => (
+          <MasteryTrainingReport
+            key={report.year}
+            year={report.year}
+            teams={franchise.teams}
+            changes={report.mastery?.filter(
+              (row) => row.pokemonId === pokemonId,
+            )}
+          />
+        ))}
       <div className="franchise-detail-tabs" aria-label="Career competition">
         <button
           type="button"

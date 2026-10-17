@@ -36,6 +36,7 @@ export function createRun(
     typeMatchupsVersion: 1,
     typeTacticsVersion: 1,
     abilityVersion: 1,
+    abilityMasteryVersion: 1,
     physicalAbilityVersion: 1,
     chemistryVersion: 1,
     chemistryGrowthVersion: 1,

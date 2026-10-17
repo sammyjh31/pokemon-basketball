@@ -1,3 +1,6 @@
+import { captureNewsGames, validateNewsGames } from "./archive";
+import { verifyMasteryChronology } from "./masteryChronology";
+import { validateMasteryRoster } from "./abilityMastery";
 import { validateMoraleRoster } from "./playerMorale";
 import { verifyMoraleChronology } from "./moraleChronology";
 import { verifyChemistryChronology } from "./chemistryChronology";
@@ -287,7 +290,23 @@ function reports(
     )
       return fail();
     previousTradeEnd = tradeStart + tradeCount;
-    return { modelVersion: 1, year, players, tradeStart, tradeCount };
+    if (
+      row.mastery !== undefined &&
+      (!Array.isArray(row.mastery) || row.mastery.length !== 240)
+    )
+      return fail();
+    return {
+      modelVersion: 1,
+      year,
+      players,
+      tradeStart,
+      tradeCount,
+      ...(row.mastery !== undefined
+        ? {
+            mastery: structuredClone(row.mastery) as OffseasonReport["mastery"],
+          }
+        : {}),
+    };
   });
   if (
     (parsed.at(-1)!.year !== lastYear &&
@@ -318,6 +337,12 @@ export function validateLeagueTeams(
   const typeVersion = object(rows[0]).typeMatchupsVersion;
   if (typeVersion !== undefined && typeVersion !== 1) return fail();
   const abilityVersion = object(rows[0]).abilityVersion;
+  const abilityMasteryVersion = object(rows[0]).abilityMasteryVersion;
+  if (
+    (abilityMasteryVersion !== undefined && abilityMasteryVersion !== 1) ||
+    (abilityMasteryVersion === 1 && abilityVersion !== 1)
+  )
+    fail();
   const physicalAbilityVersion = object(rows[0]).physicalAbilityVersion;
   const chemistryVersion = object(rows[0]).chemistryVersion;
   const chemistryGrowthVersion = object(rows[0]).chemistryGrowthVersion;
@@ -378,6 +403,8 @@ export function validateLeagueTeams(
       row.simulationVersion !== simulationVersion ||
       row.typeMatchupsVersion !== typeVersion ||
       row.abilityVersion !== abilityVersion ||
+      row.abilityMasteryVersion !== abilityMasteryVersion ||
+      (abilityMasteryVersion !== 1 && row.abilityMastery !== undefined) ||
       row.physicalAbilityVersion !== physicalAbilityVersion ||
       row.chemistryVersion !== chemistryVersion ||
       row.chemistryGrowthVersion !== chemistryGrowthVersion ||
@@ -428,6 +455,14 @@ export function validateLeagueTeams(
       ...(typeVersion === 1 ? { typeMatchupsVersion: 1 as const } : {}),
       ...(tacticsVersion === 1 ? { typeTacticsVersion: 1 as const } : {}),
       ...(abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+      ...(abilityMasteryVersion === 1
+        ? {
+            abilityMasteryVersion: 1 as const,
+            abilityMastery: validateMasteryRoster(row.abilityMastery, {
+              roster,
+            }),
+          }
+        : {}),
       ...(physicalAbilityVersion === 1
         ? { physicalAbilityVersion: 1 as const }
         : {}),
@@ -597,6 +632,14 @@ function archivedSeason(
       value: text(mvp.value),
     },
   };
+  if (row.newsGames !== undefined) {
+    season.newsGames = validateNewsGames(
+      row.newsGames,
+      leagueSchedule(season.seasonSeed),
+      rosters,
+      season.seasonSeed,
+    );
+  }
   if (Object.hasOwn(row, "rivalScouting"))
     season.rivalScouting = parseRivalScouting(row.rivalScouting, rosters);
   if (Object.hasOwn(row, "replay"))
@@ -755,6 +798,12 @@ function archivedReplay(
     season.rivalScouting &&
     JSON.stringify(season.rivalScouting) !==
       JSON.stringify(captureRivalScouting(league, playoffs))
+  )
+    return fail();
+  if (
+    season.newsGames &&
+    JSON.stringify(season.newsGames) !==
+      JSON.stringify(captureNewsGames(league.games, playoffs))
   )
     return fail();
   const finals = playoffs.series[14];
@@ -1128,6 +1177,7 @@ export function validateFranchise(
       (team) =>
         team.typeTacticsVersion !== run.typeTacticsVersion ||
         team.abilityVersion !== run.abilityVersion ||
+        team.abilityMasteryVersion !== run.abilityMasteryVersion ||
         team.physicalAbilityVersion !== run.physicalAbilityVersion ||
         team.chemistryVersion !== run.chemistryVersion ||
         team.chemistryGrowthVersion !== run.chemistryGrowthVersion ||
@@ -1323,6 +1373,16 @@ export function validateFranchise(
     developmentHistory?.reports,
     freeAgency,
     cpuRules?.since,
+  );
+  verifyMasteryChronology(
+    run,
+    teams,
+    history,
+    trades,
+    drafts,
+    freeAgency,
+    row.phase,
+    developmentHistory?.reports,
   );
   verifyMoraleChronology(
     run,

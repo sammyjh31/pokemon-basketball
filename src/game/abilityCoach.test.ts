@@ -17,7 +17,12 @@ const finishers = [67, 68, 217, 277, 307, 308, 533, 534];
 const base = createLeague({
   ...createRun("free", true, 88),
   // These fixtures lock the original species-ability policy before shared valuation.
+  abilityMasteryVersion: undefined,
   evaluationVersion: undefined,
+  chemistryVersion: undefined,
+  chemistryGrowthVersion: undefined,
+  moraleVersion: undefined,
+  personalityVersion: undefined,
   roster: { PG: 65, SG: 135, SF: 149, PF: 68, C: 143, B1: 121, B2: 6, B3: 131 },
 })[0];
 function team(

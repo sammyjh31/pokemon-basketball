@@ -1,3 +1,4 @@
+import { currentMasteryBanks } from "../game/currentMastery";
 import { currentMoraleBanks } from "../game/currentMorale";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { OPPONENTS, SCHEDULE } from "../data/opponents";
@@ -337,8 +338,10 @@ export function SeasonPanel({
           )}
           {done && league && (
             <LeaguePanel
+              year={franchiseYear}
               league={league}
               morale={currentMoraleBanks(run)}
+              mastery={currentMasteryBanks(run)}
               playedGames={run.seasonProgress?.playedGames}
             />
           )}

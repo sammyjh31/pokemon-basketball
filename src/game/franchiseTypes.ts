@@ -51,6 +51,7 @@ export interface HistoricalHonor {
   teamId: number;
 }
 export interface FranchiseSeason {
+  newsGames?: import("./types").LeagueGameSummary[];
   year: number;
   seasonSeed: number;
   standings: Standing[];

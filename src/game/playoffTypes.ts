@@ -29,6 +29,7 @@ export interface FinalsMvp {
 }
 export interface Playoffs {
   morale?: import("./playerMorale").MoraleBanks;
+  abilityMastery?: import("./abilityMastery").MasteryBanks;
   chemistryBonds?: Record<number, import("./teammateChemistry").PairBonds>;
   scouting?: import("./typeTacticsTypes").ScoutingMemory;
   modelVersion: 1 | 2;

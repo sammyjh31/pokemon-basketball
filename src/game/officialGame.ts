@@ -1,4 +1,10 @@
 import {
+  applyMasterySnapshot,
+  snapshotMastery,
+  masteryGameReport,
+  type MasteryFixture,
+} from "./abilityMastery";
+import {
   applyMoraleSnapshot,
   snapshotMorale,
   moraleGameReport,
@@ -217,6 +223,77 @@ function officialMoraleReport(
     match,
   );
 }
+function officialMasteryVersion(
+  fixture: LeagueFixture,
+  teams: LeagueTeam[],
+): 1 | undefined {
+  const home = teams.find((team) => team.id === fixture.homeTeamId);
+  const away = teams.find((team) => team.id === fixture.awayTeamId);
+  if (!home || !away) return fail();
+  const version = home.abilityMasteryVersion;
+  if (
+    (version !== undefined && version !== 1) ||
+    version !== away.abilityMasteryVersion ||
+    (version === 1 && (home.abilityVersion !== 1 || away.abilityVersion !== 1))
+  )
+    return fail();
+  return version;
+}
+function officialMastery(
+  fixture: LeagueFixture,
+  teams: LeagueTeam[],
+): MasteryFixture | undefined {
+  if (officialMasteryVersion(fixture, teams) !== 1) {
+    if (fixture.mastery !== undefined) fail();
+    return undefined;
+  }
+  return (
+    fixture.mastery ??
+    snapshotMastery(
+      teams.find((team) => team.id === fixture.homeTeamId)!,
+      teams.find((team) => team.id === fixture.awayTeamId)!,
+    )
+  );
+}
+function sameMastery(
+  actual: unknown,
+  expected: MasteryFixture | undefined,
+  fixture: LeagueFixture,
+  teams: LeagueTeam[],
+) {
+  if (!expected) return actual === undefined;
+  if (!record(actual) || Object.keys(actual).length !== 2) return false;
+  for (const side of ["home", "away"] as const) {
+    const teamId = side === "home" ? fixture.homeTeamId : fixture.awayTeamId;
+    const team = teams.find((team) => team.id === teamId);
+    if (!team || !Array.isArray(actual[side])) return false;
+    // The shared decoder validates all eight values and their precision.
+    applyMasterySnapshot(team, actual[side] as number[]);
+    applyMasterySnapshot(team, expected[side]);
+    if (JSON.stringify(actual[side]) !== JSON.stringify(expected[side]))
+      return false;
+  }
+  return true;
+}
+function officialMasteryReport(
+  fixture: LeagueFixture,
+  teams: LeagueTeam[],
+  match: LeagueMatch,
+) {
+  const snapshot = officialMastery(fixture, teams);
+  const chemistry = officialChemistry(fixture, teams);
+  let home = teams.find((team) => team.id === fixture.homeTeamId)!;
+  let away = teams.find((team) => team.id === fixture.awayTeamId)!;
+  if (chemistry) {
+    home = applyChemistrySnapshot(home, chemistry.home);
+    away = applyChemistrySnapshot(away, chemistry.away);
+  }
+  return masteryGameReport(
+    snapshot ? applyMasterySnapshot(home, snapshot.home) : home,
+    snapshot ? applyMasterySnapshot(away, snapshot.away) : away,
+    match,
+  );
+}
 function scaledMinutes(values: PairBonds): PairBonds {
   return validatePairBonds(
     Object.fromEntries(
@@ -240,6 +317,7 @@ export function officialGameFromArcade(
     state.chemistryVersion !== officialChemistryVersion(fixture, teams) ||
     state.chemistryGrowthVersion !== officialGrowthVersion(fixture, teams) ||
     state.moraleVersion !== officialMoraleVersion(fixture, teams) ||
+    state.abilityMasteryVersion !== officialMasteryVersion(fixture, teams) ||
     state.personalityVersion !== officialPersonalityVersion(fixture, teams) ||
     (state.abilityVersion !== undefined && state.abilityVersion !== 1) ||
     (state.abilityVersion === 1) !==
@@ -267,6 +345,32 @@ export function officialGameFromArcade(
     : undefined;
   if (!sameMorale(morale, officialMorale(fixture, teams), fixture, teams))
     fail();
+  const mastery = state.masteryInitial
+    ? userHome
+      ? state.masteryInitial
+      : { home: state.masteryInitial.away, away: state.masteryInitial.home }
+    : undefined;
+  if (!sameMastery(mastery, officialMastery(fixture, teams), fixture, teams))
+    fail();
+  for (const player of state.players) {
+    const teamId =
+      player.team === 0
+        ? 0
+        : userHome
+          ? fixture.awayTeamId
+          : fixture.homeTeamId;
+    const team = teams.find((team) => team.id === teamId)!;
+    const side = teamId === fixture.homeTeamId ? "home" : "away";
+    const index = Object.values(team.roster)
+      .map((id) => id!)
+      .sort((a, b) => a - b)
+      .indexOf(player.pokemonId);
+    if (
+      index < 0 ||
+      player.masteryXp !== (mastery ? mastery[side][index] : undefined)
+    )
+      fail();
+  }
   const sideOf = (teamId: number) => (teamId === 0 ? 0 : 1);
   const overtimePeriods = state.period - 4;
   const elapsed = 240 + overtimePeriods * 25;
@@ -443,6 +547,8 @@ export function officialGameFromArcade(
   };
   const moraleReport = officialMoraleReport(fixture, teams, match);
   if (moraleReport) match.moraleReport = moraleReport;
+  const masteryReport = officialMasteryReport(fixture, teams, match);
+  if (masteryReport) match.masteryReport = masteryReport;
   return validateOfficialGame(
     {
       fixtureId: fixture.id,
@@ -456,6 +562,9 @@ export function officialGameFromArcade(
       ...(state.chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
       ...(state.personalityVersion === 1
         ? { personalityVersion: 1 as const }
+        : {}),
+      ...(state.abilityMasteryVersion === 1
+        ? { abilityMasteryVersion: 1 as const, mastery }
         : {}),
       ...(state.moraleVersion === 1
         ? { moraleVersion: 1 as const, morale }
@@ -483,6 +592,13 @@ export function validateOfficialGame(
     value.chemistryVersion !== officialChemistryVersion(fixture, teams) ||
     value.chemistryGrowthVersion !== officialGrowthVersion(fixture, teams) ||
     value.moraleVersion !== officialMoraleVersion(fixture, teams) ||
+    value.abilityMasteryVersion !== officialMasteryVersion(fixture, teams) ||
+    !sameMastery(
+      value.mastery,
+      officialMastery(fixture, teams),
+      fixture,
+      teams,
+    ) ||
     value.personalityVersion !== officialPersonalityVersion(fixture, teams) ||
     !sameMorale(value.morale, officialMorale(fixture, teams), fixture, teams) ||
     !sameChemistry(value.chemistry, officialChemistry(fixture, teams)) ||
@@ -695,8 +811,10 @@ export function validateOfficialGame(
     )
       fail();
   if (
+    JSON.stringify(match.masteryReport) !==
+      JSON.stringify(officialMasteryReport(fixture, teams, match)) ||
     JSON.stringify(match.moraleReport) !==
-    JSON.stringify(officialMoraleReport(fixture, teams, match))
+      JSON.stringify(officialMoraleReport(fixture, teams, match))
   )
     fail();
   return structuredClone(game);
@@ -708,16 +826,30 @@ export function validateStoredOfficialGame(
   fixture: LeagueFixture,
   teams: LeagueTeam[],
 ): OfficialGame {
-  if (officialGrowthVersion(fixture, teams) !== 1)
+  if (
+    officialGrowthVersion(fixture, teams) !== 1 &&
+    officialMasteryVersion(fixture, teams) !== 1
+  )
     return validateOfficialGame(value, fixture, teams);
-  if (!record(value) || !record(value.chemistry)) return fail();
+  if (
+    !record(value) ||
+    (officialGrowthVersion(fixture, teams) === 1 && !record(value.chemistry))
+  )
+    return fail();
   const chemistry = value.chemistry as unknown as ChemistryFixture;
   if (!sameChemistry(chemistry, chemistry)) return fail();
   const morale = value.morale as MoraleFixture | undefined;
   if (!sameMorale(morale, morale, fixture, teams)) return fail();
+  const mastery = value.mastery as MasteryFixture | undefined;
+  if (!sameMastery(mastery, mastery, fixture, teams)) return fail();
   return validateOfficialGame(
     value,
-    { ...fixture, chemistry, ...(morale ? { morale } : {}) },
+    {
+      ...fixture,
+      chemistry,
+      ...(morale ? { morale } : {}),
+      ...(mastery ? { mastery } : {}),
+    },
     teams,
   );
 }

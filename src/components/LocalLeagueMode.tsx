@@ -1,3 +1,6 @@
+import { MasteryPanel } from "./MasteryPanel";
+import { LocalNewsPanel } from "./LocalNewsPanel";
+import { teamsWithMastery, type MasteryBanks } from "../game/abilityMastery";
 import { CoachTrainingPanel } from "./CoachTrainingPanel";
 import { CoachOfficePanel } from "./CoachOfficePanel";
 import { projectedCoaches } from "../game/coachOffice";
@@ -56,12 +59,14 @@ function ReviewTeams({
   disabled,
   chemistryBonds,
   morale,
+  mastery,
 }: {
   draft: LocalLeague;
   change: (next: (draft: LocalLeague) => LocalLeague) => void;
   disabled: boolean;
   chemistryBonds?: Record<number, PairBonds>;
   morale?: MoraleBanks;
+  mastery?: MasteryBanks;
 }) {
   const [teamId, setTeamId] = useState(draft.managers[0].teamId);
   const teams = useMemo(
@@ -72,11 +77,14 @@ function ReviewTeams({
             draft.career.coachOffice,
             draft.career.year,
           )
-        : teamsWithMorale(
-            teamsWithChemistry(localLeagueTeams(draft), chemistryBonds),
-            morale,
+        : teamsWithMastery(
+            teamsWithMorale(
+              teamsWithChemistry(localLeagueTeams(draft), chemistryBonds),
+              morale,
+            ),
+            mastery,
           ),
-    [draft, chemistryBonds, morale],
+    [draft, chemistryBonds, morale, mastery],
   );
   const team = teams[teamId];
   return (
@@ -169,6 +177,7 @@ function ReviewTeams({
             <MoralePanel team={team} />
           </>
         )}
+        <MasteryPanel team={team} />
         {team.coach ? (
           <>
             <CoachSummary
@@ -497,6 +506,7 @@ export function LocalLeagueMode({
                       playoffs?.chemistryBonds ?? league.chemistryBonds
                     }
                     morale={playoffs?.morale ?? league.morale}
+                    mastery={playoffs?.abilityMastery ?? league.abilityMastery}
                   />
                 </details>
               )}
@@ -606,10 +616,25 @@ export function LocalLeagueMode({
                 progress={progress}
               />
               <LeaguePanel
+                yourTeamIds={draft.managers.map((manager) => manager.teamId)}
+                year={year}
                 league={league}
                 morale={playoffs?.morale ?? league.morale}
+                mastery={playoffs?.abilityMastery ?? league.abilityMastery}
               />
             </>
+          )}
+          {draft && (league || draft.career?.history.length) && (
+            <details className="local-panel">
+              <summary>
+                League news · results, development and club moves
+              </summary>
+              <LocalNewsPanel
+                draft={draft}
+                league={league}
+                playoffs={playoffs}
+              />
+            </details>
           )}
           {draft?.career && <LocalCareerHistory draft={draft} />}
         </main>

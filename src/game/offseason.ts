@@ -1,3 +1,4 @@
+import { trainMastery } from "./abilityMastery";
 import { coachTrainingPlans } from "./coachTraining";
 import { cpuMarketTrades } from "./tradeMarket";
 import { developPlayer } from "./development";
@@ -61,7 +62,15 @@ export function processOffseason(state: GameState): GameState {
     }
     next[row.pokemonId] = changes;
   }
+  const mastery: import("./abilityMastery").MasteryTrainingChange[] = [];
   const developed = teams.map((team) => {
+    const trained = trainMastery(
+      team,
+      assignments,
+      f.year,
+      state.run.seasonSeed,
+    );
+    if (team.abilityMasteryVersion === 1) mastery.push(...trained.changes);
     const development = Object.fromEntries(
       ROSTER_SLOTS.map((slot) => [
         team.roster[slot]!,
@@ -70,6 +79,9 @@ export function processOffseason(state: GameState): GameState {
     );
     return {
       ...team,
+      ...(team.abilityMasteryVersion === 1
+        ? { abilityMastery: trained.mastery }
+        : {}),
       development,
       ratings: teamRatings(
         team.roster,
@@ -96,6 +108,7 @@ export function processOffseason(state: GameState): GameState {
                 modelVersion: 1,
                 year: f.year,
                 players,
+                ...(mastery.length ? { mastery } : {}),
                 tradeStart: f.trades.length,
                 tradeCount: 0,
               },
@@ -117,6 +130,7 @@ export function processOffseason(state: GameState): GameState {
           modelVersion: 1,
           year: f.year,
           players,
+          ...(mastery.length ? { mastery } : {}),
           tradeStart: f.trades.length,
           tradeCount: activity.trades.length,
         },

@@ -1,3 +1,4 @@
+import { masteryXp } from "./abilityMastery";
 import { createRivalStrategy, type RivalStrategy } from "./rivalRosterStrategy";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { attributes, positionRating, teamRatings } from "./ratings";
@@ -58,6 +59,7 @@ const draftInProgress = (franchise: Franchise) =>
 const signed = (value: number) => `${value >= 0 ? "+" : ""}${value.toFixed(2)}`;
 interface PlayerProfile {
   id: number;
+  mastery: number;
   a: Attributes;
   fits: number[];
   best: number;
@@ -115,6 +117,7 @@ function context(franchise: Franchise): Context {
         const best = Math.max(...fits);
         players.set(id, {
           id,
+          mastery: masteryXp(team, id),
           a: developed?.attributes ?? attributes(mon, development),
           fits,
           best,
@@ -601,6 +604,13 @@ function fitPotential(
     let evaluation = ctx.evaluations.get(team.id);
     if (!evaluation) {
       evaluation = createEvaluationContext(team);
+      if (evaluation.mastery)
+        evaluation = {
+          ...evaluation,
+          mastery: Object.fromEntries(
+            [...ctx.players].map(([id, player]) => [id, player.mastery]),
+          ),
+        };
       ctx.evaluations.set(team.id, evaluation);
     }
     // Shared player values form a bounded shortlist; no old skill/scheme

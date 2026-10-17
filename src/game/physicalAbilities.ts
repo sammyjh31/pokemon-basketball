@@ -1,3 +1,4 @@
+import { masteryFactor } from "./masteryMath";
 import {
   abilitiesEnabled,
   speciesAbility,
@@ -58,19 +59,37 @@ const fresh = Object.freeze({ ...table.get("fresh")!, movement: 1.03 });
 export function physicalAbilityEffects(
   pokemonId: number,
   energy = 100,
+  xp = 0,
 ): Readonly<PhysicalAbilityEffects> {
   const mechanic = speciesAbility(pokemonId).mechanic;
-  if (mechanic === "surge" && energy <= 55) return surge;
-  if (mechanic === "fresh" && energy > 75) return fresh;
-  return table.get(mechanic) ?? NEUTRAL_PHYSICAL_ABILITY;
+  const effect =
+    mechanic === "surge" && energy <= 55
+      ? surge
+      : mechanic === "fresh" && energy > 75
+        ? fresh
+        : (table.get(mechanic) ?? NEUTRAL_PHYSICAL_ABILITY);
+  const factor = masteryFactor(xp);
+  // Keep the exact legacy numbers (and shared neutral object) at zero mastery.
+  if (factor === 1 || effect === NEUTRAL_PHYSICAL_ABILITY) return effect;
+  return Object.fromEntries(
+    Object.entries(effect).map(([key, value]) => [
+      key,
+      1 + (value - 1) * factor,
+    ]),
+  ) as unknown as Readonly<PhysicalAbilityEffects>;
 }
 export function physicalPlayerEffects(player: {
   physicalAbilities?: true;
+  masteryXp?: number;
   box: { pokemonId: number };
   energy: number;
 }) {
   return player.physicalAbilities
-    ? physicalAbilityEffects(player.box.pokemonId, player.energy)
+    ? physicalAbilityEffects(
+        player.box.pokemonId,
+        player.energy,
+        player.masteryXp,
+      )
     : NEUTRAL_PHYSICAL_ABILITY;
 }
 /** Account for the energy floor/cap before reporting an actual benefit. */
@@ -80,9 +99,10 @@ export function abilityEnergyChange(
   delta: number,
   enabled: boolean,
   floor = 0,
+  xp = 0,
 ) {
   const e = enabled
-    ? physicalAbilityEffects(pokemonId, energy)
+    ? physicalAbilityEffects(pokemonId, energy, xp)
     : NEUTRAL_PHYSICAL_ABILITY;
   const baseline = clamp(energy + delta, floor, 100);
   const adjusted = clamp(

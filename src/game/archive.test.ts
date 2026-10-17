@@ -29,6 +29,7 @@ let finished: GameState;
 beforeAll(() => {
   let run = createRun("free", true, 82);
   // Preserve the explicitly historical model-1/2 helper contract.
+  delete run.abilityMasteryVersion;
   delete run.chemistryGrowthVersion;
   delete run.moraleVersion;
   delete run.personalityVersion;

@@ -1,3 +1,4 @@
+import { applyMasterySnapshot } from "./abilityMastery";
 import { applyMoraleSnapshot } from "./playerMorale";
 import { addSharedMinutes, applyChemistrySnapshot } from "./teammateChemistry";
 import { createRun } from "./draft";
@@ -43,6 +44,14 @@ export function finishedGame(
           ? applyMoraleSnapshot(team, fixture.morale!.away)
           : team,
     );
+  if (fixture.mastery)
+    teams = teams.map((team) =>
+      team.id === fixture.homeTeamId
+        ? applyMasterySnapshot(team, fixture.mastery!.home)
+        : team.id === fixture.awayTeamId
+          ? applyMasterySnapshot(team, fixture.mastery!.away)
+          : team,
+    );
   const opponent = teams.find(
     (t) =>
       t.id ===
@@ -50,6 +59,9 @@ export function finishedGame(
   )!;
   const state = createGame({
     official: true,
+    ...(teams[0].abilityMasteryVersion === 1
+      ? { abilityMasteryVersion: 1 as const }
+      : {}),
     ...(abilitiesEnabled(teams[0]) ? { abilityVersion: 1 as const } : {}),
     ...(abilitiesEnabled(teams[0]) && teams[0].physicalAbilityVersion === 1
       ? { physicalAbilityVersion: 1 as const }

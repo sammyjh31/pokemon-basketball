@@ -1,3 +1,4 @@
+import type { MasteryFixture } from "../abilityMastery";
 import type { Attributes, Position, Tactic } from "../types";
 import type { AbilityActivations } from "../abilities";
 import type { EvaluationTeam } from "../teamEvaluation";
@@ -23,6 +24,7 @@ export interface ArcadeSetup {
   moraleVersion?: 1;
   personalityVersion?: 1;
   abilityVersion?: 1;
+  abilityMasteryVersion?: 1;
   physicalAbilityVersion?: 1;
   evaluationVersion?: 1;
   typeMatchupsVersion?: 1;
@@ -73,6 +75,8 @@ export interface ArcadePlayer {
   z: number;
   facing: number;
   energy: number;
+  /** Frozen pregame ability mastery; never earns XP during practice. */
+  masteryXp?: number;
   /** Neutral velocity used to measure actual movement added by physical abilities. */
   physicalNeutralVelocity?: { x: number; y: number };
   attributes: Attributes;
@@ -137,6 +141,7 @@ export interface ArcadeState {
   personalityVersion?: 1;
   /** Frozen pregame roster state; home is arcade side 0, away is side 1. */
   moraleInitial?: MoraleFixture;
+  masteryInitial?: MasteryFixture;
   /** Frozen pregame roster-pair snapshot; home is arcade side 0, away is side 1. */
   chemistryInitial?: ChemistryFixture;
   /** Raw arcade minutes, by side 0/home and side 1/away. Official conversion scales
@@ -151,6 +156,7 @@ export interface ArcadeState {
     { key: string; lineup: LineupChemistry },
   ];
   abilityVersion?: 1;
+  abilityMasteryVersion?: 1;
   physicalAbilityVersion?: 1;
   /** Opposing screen contacts remain one encounter until the players separate. */
   physicalScreenContacts?: string[];

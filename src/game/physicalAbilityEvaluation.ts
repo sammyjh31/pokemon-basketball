@@ -21,9 +21,10 @@ export function physicalAbilityValue(
   defense: DefenseScheme,
   role: Position = p.bestPosition,
   needs: PhysicalNeeds = {},
+  xp = 0,
 ): number {
-  const fresh = physicalAbilityEffects(pokemonId, 90);
-  const tired = physicalAbilityEffects(pokemonId, 50);
+  const fresh = physicalAbilityEffects(pokemonId, 90, xp);
+  const tired = physicalAbilityEffects(pokemonId, 50, xp);
   const effect = (key: keyof typeof fresh) => (fresh[key] + tired[key]) / 2;
   const a = p.attributes;
   const big = role === "C" || role === "PF";

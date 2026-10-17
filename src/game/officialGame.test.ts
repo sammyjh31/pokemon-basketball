@@ -68,6 +68,8 @@ describe("official arcade boxes", () => {
     const { teams, fixture } = officialFixture();
     for (const team of teams) {
       delete team.abilityVersion;
+      delete team.abilityMasteryVersion;
+      delete team.abilityMastery;
       delete team.physicalAbilityVersion;
     }
     const state = finishedGame(fixture, teams);
@@ -133,12 +135,17 @@ describe("official arcade boxes", () => {
       else
         for (const team of teams) {
           delete team.abilityVersion;
+          delete team.abilityMasteryVersion;
+          delete team.abilityMastery;
           delete team.physicalAbilityVersion;
         }
       const state = createGame({
         official: true,
         chemistryVersion: 1,
         chemistryGrowthVersion: 1,
+        moraleVersion: teams[0].moraleVersion,
+        personalityVersion: teams[0].personalityVersion,
+        abilityMasteryVersion: teams[0].abilityMasteryVersion,
         ...(enabled
           ? { abilityVersion: 1 as const, physicalAbilityVersion: 1 as const }
           : {}),

@@ -21,6 +21,7 @@ import {
 const run = (): Run => ({
   ...createRun("free", true, 47),
   // This suite exercises the historical model-2 development capsule.
+  abilityMasteryVersion: undefined,
   chemistryGrowthVersion: undefined,
   moraleVersion: undefined,
   personalityVersion: undefined,

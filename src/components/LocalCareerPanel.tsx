@@ -1,3 +1,4 @@
+import { MasteryTrainingReport } from "./MasteryPanel";
 import { CoachTrainingDetails } from "./CoachTrainingPanel";
 import { projectedCoaches } from "../game/coachOffice";
 import { useEffect, useRef, useState } from "react";
@@ -317,6 +318,11 @@ export function LocalCareerPanel({ draft, change }: Props) {
           </div>
         </details>
       </div>
+      <MasteryTrainingReport
+        year={archive.year}
+        teams={archive.teams}
+        changes={archive.mastery}
+      />
       {turn ? (
         <RookiePick key={turn.pick} draft={draft} change={change} />
       ) : (
@@ -480,7 +486,21 @@ export function LocalCareerHistory({ draft }: { draft: LocalLeague }) {
             managers={draft.managers}
             onAdvance={() => {}}
           />
-          <LeaguePanel league={opened.result.league!} />
+          <MasteryTrainingReport
+            year={opened.year}
+            teams={
+              draft.career.history.find((h) => h.year === opened.year)!.teams
+            }
+            changes={
+              draft.career.history.find((h) => h.year === opened.year)!.mastery
+            }
+          />
+          <LeaguePanel
+            yourTeamIds={draft.managers.map((manager) => manager.teamId)}
+            year={opened.year}
+            league={opened.result.league!}
+            mastery={opened.playoffs.abilityMastery}
+          />
         </div>
       )}
     </section>

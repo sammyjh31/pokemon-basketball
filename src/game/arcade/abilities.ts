@@ -24,6 +24,8 @@ export function changeArcadeEnergy(
     player.energy,
     delta < 0 ? delta * arcadeChemistryEffects(state, player).drain : delta,
     physicalAbilitiesEnabled(state),
+    0,
+    state.abilityMasteryVersion === 1 ? player.masteryXp : undefined,
   );
   player.energy = result.energy;
   if (result.saved > 0)
@@ -78,11 +80,16 @@ export function applyArcadeAbilities(
     margin: state.score[shooter.team] - state.score[other(shooter.team)],
   };
   const apply = (player: ArcadePlayer, role: AbilityRole) => {
-    const delta = abilityImpact(player.pokemonId, role, {
-      ...context,
-      energy: player.energy,
-      margin: state.score[player.team] - state.score[other(player.team)],
-    });
+    const delta = abilityImpact(
+      player.pokemonId,
+      role,
+      {
+        ...context,
+        energy: player.energy,
+        margin: state.score[player.team] - state.score[other(player.team)],
+      },
+      state.abilityMasteryVersion === 1 ? player.masteryXp : undefined,
+    );
     const adjusted = clamp(chance + delta, 0.04, 0.95);
     if (adjusted !== chance) addAbilityActivation(player.stats, role);
     chance = adjusted;

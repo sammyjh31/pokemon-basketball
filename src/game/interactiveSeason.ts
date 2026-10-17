@@ -1,3 +1,4 @@
+import { teamsWithMastery, snapshotMastery } from "./abilityMastery";
 import { snapshotMorale, teamsWithMorale } from "./playerMorale";
 import { snapshotChemistry, teamsWithChemistry } from "./teammateChemistry";
 import type { OfficialGame } from "./franchiseFeatures";
@@ -17,7 +18,11 @@ export function nextFranchiseFixture(run: Run): LeagueFixture | null {
     leagueSchedule(run.seasonSeed)
       .slice(completed * 15, (completed + 1) * 15)
       .find((f) => f.homeTeamId === 0 || f.awayTeamId === 0) ?? null;
-  if (!fixture || run.chemistryGrowthVersion !== 1) return fixture;
+  if (
+    !fixture ||
+    (run.chemistryGrowthVersion !== 1 && run.abilityMasteryVersion !== 1)
+  )
+    return fixture;
   const latest =
     run.seasonProgress?.result ??
     (completed
@@ -27,11 +32,18 @@ export function nextFranchiseFixture(run: Run): LeagueFixture | null {
           run.seasonProgress?.playedGames ?? {},
         )
       : undefined);
-  const teams = teamsWithMorale(
-    teamsWithChemistry(seasonTeams(run), latest?.league?.chemistryBonds),
-    latest?.league?.morale,
+  const teams = teamsWithMastery(
+    teamsWithMorale(
+      teamsWithChemistry(seasonTeams(run), latest?.league?.chemistryBonds),
+      latest?.league?.morale,
+    ),
+    latest?.league?.abilityMastery,
   );
   const chemistry = snapshotChemistry(
+    teams[fixture.homeTeamId],
+    teams[fixture.awayTeamId],
+  );
+  const mastery = snapshotMastery(
     teams[fixture.homeTeamId],
     teams[fixture.awayTeamId],
   );
@@ -43,6 +55,7 @@ export function nextFranchiseFixture(run: Run): LeagueFixture | null {
     ...fixture,
     ...(chemistry ? { chemistry } : {}),
     ...(morale ? { morale } : {}),
+    ...(mastery ? { mastery } : {}),
   };
 }
 

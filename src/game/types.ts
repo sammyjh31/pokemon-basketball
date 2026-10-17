@@ -205,6 +205,7 @@ export interface Run {
   courtVersion?: 1 | 2;
   /** Species abilities. Absent on historical seasons for exact replay. */
   abilityVersion?: 1;
+  abilityMasteryVersion?: 1;
   /** Physical species abilities; absent on historical seasons for exact replay. */
   physicalAbilityVersion?: 1;
   /** Active-five basketball chemistry; independent of the ability switch. */
@@ -264,6 +265,7 @@ export type PlayType =
 export interface LeagueTeam {
   chemistryBonds?: PairBonds;
   morale?: MoraleRoster;
+  abilityMastery?: import("./abilityMastery").MasteryRoster;
   coach?: CoachAssignment;
   engineRules?: EngineRules;
   simulationVersion?: 2;
@@ -278,6 +280,7 @@ export interface LeagueTeam {
   courtVersion?: 1 | 2;
   /** Species abilities. Absent on historical seasons for exact replay. */
   abilityVersion?: 1;
+  abilityMasteryVersion?: 1;
   /** Physical species abilities; absent on historical seasons for exact replay. */
   physicalAbilityVersion?: 1;
   /** Active-five basketball chemistry; independent of the ability switch. */
@@ -304,6 +307,7 @@ export interface LeagueTeam {
 export interface LeagueFixture {
   chemistry?: ChemistryFixture;
   morale?: MoraleFixture;
+  mastery?: import("./abilityMastery").MasteryFixture;
   id: string;
   round: number;
   homeTeamId: number;
@@ -322,6 +326,7 @@ export interface LeagueBox extends PlayerBox {
   midFga: number;
 }
 export interface LeagueGameSummary extends LeagueFixture {
+  masteryMilestones?: import("./abilityMastery").MasteryMilestone[];
   scouting?: MatchScouting;
   homeScore: number;
   awayScore: number;
@@ -329,6 +334,7 @@ export interface LeagueGameSummary extends LeagueFixture {
 }
 export interface LeagueMatch {
   moraleReport?: MoraleGameReport;
+  masteryReport?: import("./abilityMastery").MasteryGameReport;
   chemistryMinutes?: { home: PairBonds; away: PairBonds };
   typeTactics?: TypeTacticsReport;
   insights?: MatchInsights;
@@ -388,6 +394,7 @@ export interface LeagueAward extends SeasonAward {
 }
 export interface LeagueResult {
   morale?: MoraleBanks;
+  abilityMastery?: import("./abilityMastery").MasteryBanks;
   chemistryBonds?: Record<number, PairBonds>;
   scouting?: ScoutingMemory;
   format?: import("./localFormat").LocalFormat;

@@ -1,4 +1,11 @@
 import {
+  initialMasteryBanks,
+  teamsWithMastery,
+  snapshotMastery,
+  recordMasteryGame,
+  masteryMilestones,
+} from "./abilityMastery";
+import {
   initialMoraleBanks,
   recordMoraleGame,
   snapshotMorale,
@@ -99,11 +106,17 @@ export function seasonBuilder(
     const fixture = eligible.get(id);
     if (!fixture)
       throw new Error("Official game is outside the completed season prefix.");
-    if (!teams.some((team) => team.chemistryGrowthVersion === 1))
+    if (
+      !teams.some(
+        (team) =>
+          team.chemistryGrowthVersion === 1 || team.abilityMasteryVersion === 1,
+      )
+    )
       validateOfficialGame(game, fixture, teams);
   }
   const chemistryBonds = initialChemistryBanks(teams);
   const morale = initialMoraleBanks(teams);
+  const abilityMastery = initialMasteryBanks(teams);
   const byPlayer = new Map(players.map((p) => [p.playerId, p]));
   const standings: Standing[] = teams.map((t) => ({
     teamId: t.id,
@@ -123,16 +136,20 @@ export function seasonBuilder(
     teams[0].typeTacticsVersion === 1 ? {} : undefined;
   const play = (fixture: LeagueFixture) => {
     const { homeTeamId: h, awayTeamId: a } = fixture;
-    if (chemistryBonds && fixture.id !== fixtures[summaries.length]?.id)
+    if (
+      (chemistryBonds || abilityMastery) &&
+      fixture.id !== fixtures[summaries.length]?.id
+    )
       throw new Error(
         "Chemistry games must advance the schedule exactly once in order.",
       );
-    const currentTeams = teamsWithMorale(
-      teamsWithChemistry(teams, chemistryBonds),
-      morale,
+    const currentTeams = teamsWithMastery(
+      teamsWithMorale(teamsWithChemistry(teams, chemistryBonds), morale),
+      abilityMastery,
     );
     const chemistry = snapshotChemistry(currentTeams[h], currentTeams[a]);
     const moraleSnapshot = snapshotMorale(currentTeams[h], currentTeams[a]);
+    const mastery = snapshotMastery(currentTeams[h], currentTeams[a]);
     const context = scouting ? scoutingForMatch(scouting, h, a) : undefined;
     const match = resolveSeasonMatch(
       {
@@ -140,6 +157,7 @@ export function seasonBuilder(
         ...(context ? { scouting: context } : {}),
         ...(chemistry ? { chemistry } : {}),
         ...(moraleSnapshot ? { morale: moraleSnapshot } : {}),
+        ...(mastery ? { mastery } : {}),
       },
       currentTeams,
       playedGames,
@@ -154,10 +172,18 @@ export function seasonBuilder(
         match,
       );
     recordMoraleGame(morale, currentTeams[h], currentTeams[a], match);
+    recordMasteryGame(abilityMastery, currentTeams[h], currentTeams[a], match);
+    const milestones = masteryMilestones(
+      currentTeams[h],
+      currentTeams[a],
+      match,
+    );
     summaries.push({
       ...fixture,
       ...(chemistry ? { chemistry } : {}),
       ...(moraleSnapshot ? { morale: moraleSnapshot } : {}),
+      ...(mastery ? { mastery } : {}),
+      ...(milestones.length ? { masteryMilestones: milestones } : {}),
       ...(context ? { scouting: context } : {}),
       homeScore: match.homeScore,
       awayScore: match.awayScore,
@@ -241,6 +267,9 @@ export function seasonBuilder(
           ? { chemistryBonds: structuredClone(chemistryBonds) }
           : {}),
         ...(morale ? { morale: structuredClone(morale) } : {}),
+        ...(abilityMastery
+          ? { abilityMastery: structuredClone(abilityMastery) }
+          : {}),
         games: summaries,
         players,
         standings,
@@ -292,5 +321,6 @@ export function resolveSeasonMatch(
     scouting: fixture.scouting,
     chemistry: fixture.chemistry,
     morale: fixture.morale,
+    mastery: fixture.mastery,
   });
 }

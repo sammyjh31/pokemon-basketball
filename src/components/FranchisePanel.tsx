@@ -1,3 +1,10 @@
+import { LeagueBoxScore } from "./LeagueBoxScore";
+import type { LeagueGameSummary } from "../game/types";
+import { MasteryPanel } from "./MasteryPanel";
+import { LeagueNewsPanel } from "./LeagueNewsPanel";
+import { buildLeagueNews, franchiseNewsSources } from "../game/leagueNews";
+import { teamsWithMastery } from "../game/abilityMastery";
+import { currentMasteryBanks } from "../game/currentMastery";
 import { currentMoraleBanks } from "../game/currentMorale";
 import { teamsWithMorale } from "../game/playerMorale";
 import { AbilityStats } from "./AbilityStats";
@@ -1482,9 +1489,18 @@ export function FranchisePanel({
   onCpuFreeAgency,
 }: FranchisePanelProps) {
   const [view, setView] = useState<
-    "overview" | "careers" | "history" | "development" | "training" | "coaches"
+    | "overview"
+    | "careers"
+    | "history"
+    | "development"
+    | "training"
+    | "coaches"
+    | "news"
+    | "mastery"
   >("overview");
   const { franchise, run } = state;
+  const [newsPlayer, setNewsPlayer] = useState<number | null>(null);
+  const [newsGame, setNewsGame] = useState<LeagueGameSummary | null>(null);
   const [reviewedYear, setReviewedYear] = useState<number | null>(null);
   useEffect(() => {
     if (view === "development" && franchise?.phase === "offseason")
@@ -1534,15 +1550,19 @@ export function FranchisePanel({
           franchise.year,
         )[0]
       : {
-          ...teamsWithMorale(
-            run.leagueTeams ??
-              run.result?.league?.teams ??
-              run.seasonProgress?.result?.league?.teams ??
-              franchise.teams,
-            currentMoraleBanks(run),
+          ...teamsWithMastery(
+            teamsWithMorale(
+              run.leagueTeams ??
+                run.result?.league?.teams ??
+                run.seasonProgress?.result?.league?.teams ??
+                franchise.teams,
+              currentMoraleBanks(run),
+            ),
+            currentMasteryBanks(run),
           )[0],
           roster: run.roster,
         };
+  const newsLeague = run.result?.league ?? run.seasonProgress?.result?.league;
   const trainingCoach = trainingTeam.coach ?? franchise.pendingCoach;
   const automaticTraining = !!(trainingCoach || franchise.teams[0].coach);
   return (
@@ -1569,6 +1589,8 @@ export function FranchisePanel({
               id: "overview",
               label: franchise.phase === "offseason" ? "Offseason" : "Overview",
             },
+            { id: "news", label: "League news" },
+            { id: "mastery", label: "Ability mastery" },
             { id: "development", label: "Development report" },
             ...(onTraining || automaticTraining
               ? [{ id: "training" as const, label: "Training plans" }]
@@ -1661,6 +1683,45 @@ export function FranchisePanel({
             )}
           </section>
         ))}
+      {view === "news" && (
+        <LeagueNewsPanel
+          stories={buildLeagueNews(franchiseNewsSources(franchise, run))}
+          onPlayer={(id) => setNewsPlayer(id)}
+          canOpenGame={(_, year) =>
+            !!newsLeague &&
+            franchise.phase === "season" &&
+            year === franchise.year
+          }
+          onGame={(id) =>
+            setNewsGame(
+              [
+                ...(newsLeague?.games ?? []),
+                ...(run.playoffs?.series.flatMap((s) => s.games) ?? []),
+              ].find((g) => g.id === id) ?? null,
+            )
+          }
+        />
+      )}
+      {newsGame && newsLeague && (
+        <LeagueBoxScore
+          game={newsGame}
+          teams={newsLeague.teams}
+          match={
+            run.playoffs?.playedGames?.[newsGame.id]?.match ??
+            run.seasonProgress?.playedGames[newsGame.id]?.match
+          }
+          onClose={() => setNewsGame(null)}
+        />
+      )}
+      {newsPlayer !== null && (
+        <CareerDetail
+          pokemonId={newsPlayer}
+          franchise={franchise}
+          run={run}
+          onClose={() => setNewsPlayer(null)}
+        />
+      )}
+      {view === "mastery" && <MasteryPanel team={trainingTeam} />}
       {view === "coaches" && (
         <CoachOfficePanel
           teams={franchise.teams}

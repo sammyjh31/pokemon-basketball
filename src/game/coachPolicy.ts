@@ -1,3 +1,4 @@
+import { masteryXp } from "./abilityMastery";
 import { teamLeadership } from "./playerPersonality";
 import { abilityUsefulness as coachAbilityFit } from "./abilityEvaluation";
 import {
@@ -57,7 +58,7 @@ function rosterAbilityFits(team: LeagueTeam, coach: TrainerCoach) {
       {
         ability: speciesAbility(mon.id),
         profile: p,
-        fit: coachAbilityFit(mon.id, p),
+        fit: coachAbilityFit(mon.id, p, masteryXp(team, mon.id)),
         weight,
       },
     ];
@@ -265,7 +266,7 @@ export function coachRotationMinutes(team: LeagueTeam) {
             (coach ? coachPlayerPreference(coach, p) : 0)) +
         p.attributes.stamina * 0.08 +
         (!shared && abilityTactic
-          ? coachAbilityFit(mon.id, p) *
+          ? coachAbilityFit(mon.id, p, masteryXp(team, mon.id)) *
             (speciesAbility(mon.id).tactics.includes(abilityTactic) ? 5 : 1)
           : 0),
     };

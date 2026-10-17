@@ -12,6 +12,7 @@ type Side = "home" | "away";
 export interface Player {
   chemistry?: ChemistryEffects;
   physicalAbilities?: true;
+  masteryXp?: number;
   depth?: EngineProfile;
   body?: BodyProfile;
   types: readonly string[];

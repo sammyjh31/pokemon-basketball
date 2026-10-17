@@ -32,6 +32,8 @@ export interface PlayerTrainingPlan {
 export type TrainingPlans = Partial<Record<number, PlayerTrainingPlan>>;
 export interface OfficialGame {
   abilityVersion?: 1;
+  abilityMasteryVersion?: 1;
+  mastery?: import("./abilityMastery").MasteryFixture;
   /** Physical species abilities; absent on historical seasons for exact replay. */
   physicalAbilityVersion?: 1;
   /** Active-five basketball chemistry; independent of the ability switch. */

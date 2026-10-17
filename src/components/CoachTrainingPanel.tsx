@@ -87,6 +87,13 @@ export function CoachTrainingPanel({
         Development report. Focus redirects a limited practice budget, and
         intensity changes the chance of large gains or setbacks.
       </p>
+      {team.abilityMasteryVersion === 1 && (
+        <p>
+          Ability mastery is part of the automatic plan. Your trainer weighs
+          each ability’s practice focus and room to improve alongside recovery
+          and workload. Completed XP gains appear in the offseason report.
+        </p>
+      )}
       <div className="training-grid">
         {ROSTER_SLOTS.map((slot) => {
           const mon = POKEMON_BY_ID.get(team.roster[slot]!);

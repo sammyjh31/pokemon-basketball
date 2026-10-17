@@ -196,7 +196,11 @@ export function movePlayers(
       chemistry.movement *
       coordination;
     const movement = physical
-      ? physicalAbilityEffects(p.pokemonId, p.energy).movement
+      ? physicalAbilityEffects(
+          p.pokemonId,
+          p.energy,
+          s.abilityMasteryVersion === 1 ? p.masteryXp : undefined,
+        ).movement
       : 1;
     const oldX = p.x,
       oldY = p.y;
@@ -282,14 +286,24 @@ export function movePlayers(
           const contactEffect =
             chemistryScreen *
             (physical
-              ? physicalAbilityEffects(screener.pokemonId, screener.energy)
-                  .screen
+              ? physicalAbilityEffects(
+                  screener.pokemonId,
+                  screener.energy,
+                  s.abilityMasteryVersion === 1
+                    ? screener.masteryXp
+                    : undefined,
+                ).screen
               : 1);
           const navigation =
             chemistryNavigation *
             (physical
-              ? physicalAbilityEffects(navigator.pokemonId, navigator.energy)
-                  .navigation
+              ? physicalAbilityEffects(
+                  navigator.pokemonId,
+                  navigator.energy,
+                  s.abilityMasteryVersion === 1
+                    ? navigator.masteryXp
+                    : undefined,
+                ).navigation
               : 1);
           const resolve = (contactFactor: number, navigationFactor: number) =>
             clamp(

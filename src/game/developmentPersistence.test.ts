@@ -37,6 +37,7 @@ let legacyTwo: GameState;
 beforeAll(() => {
   let state = initialState(51);
   // These hand-built model-2 capsules predate earned teammate history.
+  delete state.run.abilityMasteryVersion;
   delete state.run.chemistryGrowthVersion;
   delete state.run.moraleVersion;
   delete state.run.personalityVersion;
@@ -65,6 +66,15 @@ beforeAll(() => {
   };
   legacy = enterOffseason(state);
   legacyTwo = startFranchiseSeason(legacy, 91);
+  // The manually authored model-4 reports below predate mastery progression.
+  delete legacyTwo.run.abilityMasteryVersion;
+  for (const team of [
+    ...legacyTwo.franchise!.teams,
+    ...(legacyTwo.run.leagueTeams ?? []),
+  ]) {
+    delete team.abilityMasteryVersion;
+    delete team.abilityMastery;
+  }
   processed = structuredClone(legacy);
   const franchise = processed.franchise!;
   franchise.modelVersion = 2;
@@ -134,6 +144,7 @@ beforeAll(() => {
     ...processed,
     run: {
       ...createRun("spin", true, 67),
+      abilityMasteryVersion: undefined,
       chemistryGrowthVersion: undefined,
       moraleVersion: undefined,
       personalityVersion: undefined,

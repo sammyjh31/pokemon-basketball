@@ -30,6 +30,8 @@ it("opts new solo and local clubs into one chemistry version, rejecting mixed an
       teams.map((team) => ({
         ...team,
         abilityVersion: undefined,
+        abilityMasteryVersion: undefined,
+        abilityMastery: undefined,
         physicalAbilityVersion: undefined,
         engineRules: {
           version: 1,
@@ -67,6 +69,8 @@ it("opts new solo and local clubs into one chemistry version, rejecting mixed an
       JSON.stringify({
         ...draft,
         abilityVersion: undefined,
+        abilityMasteryVersion: undefined,
+        abilityMastery: undefined,
         physicalAbilityVersion: undefined,
       }),
     ).chemistryVersion,
@@ -117,6 +121,7 @@ it("preserves absent chemistry flags through saves and archives and rejects inva
   expect(loadGame(storage, 22).notice).toBeTruthy();
   bad.run.chemistryVersion = 1;
   delete bad.run.abilityVersion;
+  delete bad.run.abilityMasteryVersion;
   delete bad.run.physicalAbilityVersion;
   value = JSON.stringify(bad);
   expect(loadGame(storage, 22).notice).toBeNull();

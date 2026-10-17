@@ -435,7 +435,12 @@ export function advanceBall(
           ? p.attributes.rebounding *
             0.002 *
             chemistryRebound(p) *
-            (physicalAbilityEffects(p.pokemonId, p.energy).rebound - 1)
+            (physicalAbilityEffects(
+              p.pokemonId,
+              p.energy,
+              s.abilityMasteryVersion === 1 ? p.masteryXp : undefined,
+            ).rebound -
+              1)
           : 0;
       candidates.sort(
         (a, c) =>

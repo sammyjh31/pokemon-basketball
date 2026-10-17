@@ -19,6 +19,7 @@ export interface PlayerDevelopmentChange {
   reasons: string[];
 }
 export interface OffseasonReport {
+  mastery?: import("./abilityMastery").MasteryTrainingChange[];
   modelVersion: 1;
   year: number;
   players: PlayerDevelopmentChange[];

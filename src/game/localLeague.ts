@@ -55,6 +55,7 @@ export interface LocalLeague {
   typeMatchupsVersion?: 1;
   typeTacticsVersion?: 1;
   abilityVersion?: 1;
+  abilityMasteryVersion?: 1;
   /** Physical species abilities; absent on historical seasons for exact replay. */
   physicalAbilityVersion?: 1;
   /** Active-five basketball chemistry; independent of the ability switch. */
@@ -153,6 +154,7 @@ export function createLocalLeague(
           typeMatchupsVersion: 1 as const,
           typeTacticsVersion: 1 as const,
           abilityVersion: 1 as const,
+          abilityMasteryVersion: 1 as const,
           physicalAbilityVersion: 1 as const,
           chemistryVersion: 1 as const,
           chemistryGrowthVersion: 1 as const,
@@ -388,6 +390,14 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
         ? { typeMatchupsVersion: 1 as const }
         : {}),
       ...(draft.abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+      ...(draft.abilityMasteryVersion === 1
+        ? {
+            abilityMasteryVersion: 1 as const,
+            abilityMastery: Object.fromEntries(
+              Object.values(roster).map((id) => [id!, 0]),
+            ),
+          }
+        : {}),
       ...(draft.physicalAbilityVersion === 1
         ? { physicalAbilityVersion: 1 as const }
         : {}),
@@ -446,6 +456,7 @@ export function localLeagueRun(draft: LocalLeague): Run {
   delete run.typeMatchupsVersion;
   delete run.typeTacticsVersion;
   delete run.abilityVersion;
+  delete run.abilityMasteryVersion;
   delete run.physicalAbilityVersion;
   delete run.chemistryVersion;
   delete run.chemistryGrowthVersion;
@@ -461,6 +472,9 @@ export function localLeagueRun(draft: LocalLeague): Run {
       ? { typeMatchupsVersion: 1 as const }
       : {}),
     ...(teams[0].abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+    ...(teams[0].abilityMasteryVersion === 1
+      ? { abilityMasteryVersion: 1 as const }
+      : {}),
     ...(teams[0].physicalAbilityVersion === 1
       ? { physicalAbilityVersion: 1 as const }
       : {}),
@@ -605,6 +619,9 @@ export function parseLocalLeague(
   if (
     !value ||
     (value.abilityVersion !== undefined && value.abilityVersion !== 1) ||
+    (value.abilityMasteryVersion !== undefined &&
+      value.abilityMasteryVersion !== 1) ||
+    (value.abilityMasteryVersion === 1 && value.abilityVersion !== 1) ||
     (value.physicalAbilityVersion !== undefined &&
       value.physicalAbilityVersion !== 1) ||
     (value.physicalAbilityVersion === 1 && value.abilityVersion !== 1) ||
@@ -646,6 +663,7 @@ export function parseLocalLeague(
   delete draft.typeMatchupsVersion;
   delete draft.typeTacticsVersion;
   delete draft.abilityVersion;
+  delete draft.abilityMasteryVersion;
   delete draft.physicalAbilityVersion;
   delete draft.chemistryVersion;
   delete draft.chemistryGrowthVersion;
@@ -656,6 +674,7 @@ export function parseLocalLeague(
   delete draft.matchupVersion;
   delete draft.possessionVersion;
   if (value.abilityVersion === 1) draft.abilityVersion = 1;
+  if (value.abilityMasteryVersion === 1) draft.abilityMasteryVersion = 1;
   if (value.physicalAbilityVersion === 1) draft.physicalAbilityVersion = 1;
   if (value.chemistryVersion === 1) draft.chemistryVersion = 1;
   if (value.chemistryGrowthVersion === 1) draft.chemistryGrowthVersion = 1;
