@@ -24,6 +24,8 @@ const clubs = (
   if (!current) {
     // Reproduce seasons saved before species abilities and shared evaluation.
     delete run.abilityVersion;
+    delete run.physicalAbilityVersion;
+    delete run.chemistryVersion;
     delete run.evaluationVersion;
   }
   return createLeague(run).map((t) => ({ ...t, courtVersion }));

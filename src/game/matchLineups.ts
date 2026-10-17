@@ -184,24 +184,13 @@ export function chooseLineup(
         !closers.includes(p)
       )
         continue;
-      const foulThreshold =
-        minute < 12 ? 2 : minute < 24 ? 3 : minute < 36 ? 4 : 5;
-      // Version-2 coaches sit foul trouble ahead of minute targets, and keep a
-      // five-foul player off the floor until the closing minutes.
-      const foulPenalty =
-        team.config.courtVersion === 2
-          ? (minute < 43 && p.box.fouls >= foulThreshold
-              ? 60 + (p.box.fouls - foulThreshold) * 30
-              : 0) + (p.box.fouls >= 5 && minute < 46 ? 80 : 0)
-          : minute < 43 && p.box.fouls >= foulThreshold
-            ? 14 + (p.box.fouls - foulThreshold) * 9
-            : 0;
+      const foulPenalty = foulTroublePenalty(team, p, minute);
       const debt = p.target * phase - Math.min(p.box.minutes, 48);
       const basketballScore = close
         ? roleValue(team, p, role) * 0.85 +
           p.energy * 0.42 +
           p.profile.attributes.composure * 0.12 -
-          foulPenalty * (team.config.courtVersion === 2 ? 0.6 : 0.2)
+          foulPenalty * closingFoulWeight(team)
         : roleValue(team, p, role) * 0.5 +
           p.energy * 0.22 +
           p.target * 0.8 +
@@ -231,6 +220,23 @@ export function chooseLineup(
   if (minute > 0) recordCounters(team, previous, bonuses, opponents);
 }
 
+/** Version-2 coaches sit foul trouble ahead of minute targets, and keep a
+ * five-foul player off the floor until the closing minutes. */
+function foulTroublePenalty(team: Team, p: Player, minute: number) {
+  const threshold = minute < 12 ? 2 : minute < 24 ? 3 : minute < 36 ? 4 : 5;
+  if (team.config.courtVersion === 2)
+    return (
+      (minute < 43 && p.box.fouls >= threshold
+        ? 60 + (p.box.fouls - threshold) * 30
+        : 0) + (p.box.fouls >= 5 && minute < 46 ? 80 : 0)
+    );
+  return minute < 43 && p.box.fouls >= threshold
+    ? 14 + (p.box.fouls - threshold) * 9
+    : 0;
+}
+const closingFoulWeight = (team: Team) =>
+  team.config.courtVersion === 2 ? 0.6 : 0.2;
+
 /** Score each player/role once, then compare at most C(8, 5) complete units. */
 function chooseChemistryLineup(
   team: Team,
@@ -250,11 +256,7 @@ function chooseChemistryLineup(
   const phase = Math.min(minute / 48, 1);
   const scores = new Map(
     pool.map((p) => {
-      const threshold = minute < 12 ? 2 : minute < 24 ? 3 : minute < 36 ? 4 : 5;
-      const foulPenalty =
-        minute < 43 && p.box.fouls >= threshold
-          ? 14 + (p.box.fouls - threshold) * 9
-          : 0;
+      const foulPenalty = foulTroublePenalty(team, p, minute);
       const debt = p.target * phase - Math.min(p.box.minutes, 48);
       return [
         p,
@@ -263,7 +265,7 @@ function chooseChemistryLineup(
             ? roleValue(team, p, role) * 0.85 +
               p.energy * 0.42 +
               p.profile.attributes.composure * 0.12 -
-              foulPenalty * 0.2
+              foulPenalty * closingFoulWeight(team)
             : roleValue(team, p, role) * 0.5 +
               p.energy * 0.22 +
               p.target * 0.8 +
