@@ -26,6 +26,9 @@ const actionLabels = {
   turnover: "Lose possession",
   violation: "Shot-clock violation",
   foul: "Foul stops play",
+  cut: "Cut to the rim",
+  drift: "Drift to open space",
+  seal: "Seal in the post",
 };
 export function CourtInsights({
   sequences,
@@ -59,7 +62,7 @@ export function CourtInsights({
   const multi = sequences.filter(
     (s) =>
       s.actions.filter((a) =>
-        ["screen", "drive", "pass", "kickout", "reset"].includes(a.kind),
+        ["screen", "drive", "pass", "kickout", "reset", "cut", "drift", "seal"].includes(a.kind),
       ).length >= 2,
   ).length;
   const late = sequences.filter(

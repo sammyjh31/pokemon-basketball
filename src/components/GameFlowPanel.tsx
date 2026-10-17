@@ -1,3 +1,4 @@
+import { POKEMON_BY_ID } from "../data/pokemon";
 import { FIELD_LABELS, type GameFlowReport } from "../game/gameFlow";
 import type { LeagueTeam } from "../game/types";
 import "../gameFlow.css";
@@ -15,6 +16,11 @@ const clock = (period: number, elapsed: number) => {
   const length = period <= 4 ? 720 : 300;
   const left = Math.max(0, Math.round(length - (elapsed - start)));
   return `${period <= 4 ? `Q${period}` : `OT${period - 4}`} ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+};
+
+const playerName = (playerId: string) => {
+  const id = Number(playerId.split(":")[1]);
+  return POKEMON_BY_ID.get(id)?.name ?? `#${id}`;
 };
 
 /** Frozen fixture context and coach decisions for one simulated game. */
@@ -78,6 +84,28 @@ export function GameFlowPanel({
           </div>
         ))}
       </dl>
+      {report.heat && report.heat.length > 0 && (
+        <p className="game-flow-note">
+          {(["hot", "cold"] as const)
+            .map((state) => {
+              const counts = new Map<string, number>();
+              for (const h of report.heat!)
+                if (h.state === state)
+                  counts.set(h.playerId, (counts.get(h.playerId) ?? 0) + 1);
+              if (!counts.size) return "";
+              return `${state === "hot" ? "Heated up" : "Went cold"}: ${[...counts]
+                .map(([id, n]) => `${playerName(id)}${n > 1 ? ` ×${n}` : ""}`)
+                .join(", ")}.`;
+            })
+            .filter(Boolean)
+            .join(" ")}
+          {report.hotShots && report.hotShots.some((s) => s.attempts > 0) &&
+            ` Field goals while hot: ${report.hotShots
+              .filter((s) => s.attempts > 0)
+              .map((s) => `${playerName(s.playerId)} ${s.made}–${s.attempts}`)
+              .join(", ")}.`}
+        </p>
+      )}
       {report.notes.length > 0 && (
         <ul className="game-flow-notes">
           {report.notes.map((note) => (

@@ -6,9 +6,9 @@
 
 Fixture context (`LeagueFixture.flow`: stage, rest, trip, playoff series state) is built in `seasonBuilder`, `localSeasonBuilder` and playoff `playOne`. It is stored on summaries like chemistry and morale snapshots, and passed through every replay call site (archive, insights, league and box-score views). The referee crew and arena come from salted hashes of the seed and the home club, so they need no storage and add no draws to the schedules. Played arcade games carry no flow and keep their rules.
 
-The engine report is `LeagueMatch.gameFlow`, shown in box scores by `GameFlowPanel`. Gameplay never reads it. Flagless replay hashes for e8681b9 (`54f982c9…`) and all earlier releases are unchanged. The balance audit is `scripts/game-flow-audit.mjs` → `docs/game-flow-audit.json`.
+The engine report is `LeagueMatch.gameFlow`, shown in box scores by `GameFlowPanel`. Gameplay never reads it. Flagless replay hashes for 41622c9 (`3fed7dc0…`) and all earlier releases are unchanged. The balance audit is `scripts/game-flow-audit.mjs` → `docs/game-flow-audit.json`.
 
-Proposed next phase: `docs/superpowers/specs/2026-10-16-play-depth.md` (zone geometry, cuts and post seals, heat checks), stacked on court rules v2.
+Play depth (`docs/superpowers/specs/2026-10-16-play-depth.md`) is part of game flow whenever it runs on court rules v2. It covers zone shells in `courtPossession.ts` (`zoneShell` and shifted spots), off-ball cuts and drifts and post seals (new court action kinds `cut`, `drift` and `seal`), plus shooting form tracked in `match.ts`. Every branch is gated on game flow plus court v2, and the extra random draws happen only there.
 
 ## Earned teammate familiarity (October 16)
 

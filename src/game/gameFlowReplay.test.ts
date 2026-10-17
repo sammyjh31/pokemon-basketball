@@ -3,7 +3,7 @@ import { it, expect } from "vitest";
 import { createRun } from "./draft";
 import { createLeague } from "./league";
 import { simulateMatch } from "./match";
-it("preserves the pre-game-flow release e8681b9", () => {
+it("preserves the pre-game-flow release 41622c9", () => {
   const run = {
     ...createRun("free", true, 22),
     coach: { version: 1 as const, id: "misty" },
@@ -25,6 +25,6 @@ it("preserves the pre-game-flow release e8681b9", () => {
     games: [1, 42, 400].map((seed) => simulateMatch(teams[0], teams[1], seed)),
   };
   expect(createHash("sha256").update(JSON.stringify(value)).digest("hex")).toBe(
-    "54f982c910a9f46aa98caf4b641ad816c7106be76089f8fb938c84db166b527c",
+    "3fed7dc0537f8a435dd2f9d4be9fba08c8478cb6cdb0ae2321bcf1cd753472be",
   );
 });

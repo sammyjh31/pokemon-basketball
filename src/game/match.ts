@@ -441,6 +441,8 @@ export function simulateMatch(
   const courtEnabled = home.courtVersion !== undefined;
   // Version 2 adds ball pressure, shot-zone intent, catch assists and foul spreading.
   const courtV2 = home.courtVersion === 2;
+  // Game flow on court v2 adds zone shells, off-ball cuts, post seals and shooting form.
+  const playDepth = flow !== undefined && courtV2;
   const bodyEnabled = home.matchupVersion === 1;
   const possessionDepth = home.possessionVersion === 1;
   const advanced = home.typeTacticsVersion === 1;
@@ -1108,6 +1110,9 @@ export function simulateMatch(
           tactic: offense.config.tactic,
           defenseTactic: defense.config.tactic,
           freeThrow: freeThrowMiss,
+          ...(playDepth && defense.config.defense === "zone"
+            ? { zoneDefense: true }
+            : {}),
         },
         random,
       );
@@ -1190,6 +1195,7 @@ export function simulateMatch(
     passer: Player | undefined,
     assistChance: number,
   ) => {
+    if (playDepth) recordForm(shooter, made, zone === "three" ? 3 : 2);
     shooter.box.fga++;
     if (zone === "rim") shooter.box.rimFga++;
     else if (zone === "mid") shooter.box.midFga++;
@@ -1253,7 +1259,12 @@ export function simulateMatch(
               (team.config.tactic === "pace" || team.config.defense === "press"
                 ? 1.8
                 : 1);
-          changeEnergy(player, -(drain * seconds) / 60);
+          changeEnergy(
+            player,
+            -(drain * seconds) /
+              60 *
+              (playDepth && team.config.defense === "zone" ? 0.95 : 1),
+          );
         } else {
           player.consecutive = 0;
           changeEnergy(
@@ -1291,10 +1302,69 @@ export function simulateMatch(
         loadManaged,
         timeouts: [],
         notes: flowNotes,
+        ...(playDepth ? { heat: [] } : {}),
       }
     : undefined;
   let ato: { team: Team; late: boolean } | undefined;
   let fieldCondition: FieldCondition | undefined;
+  // Shooting form: hot after four straight makes, or three that include two threes;
+  // cooled by a miss or two quiet minutes; cold after five straight misses.
+  const form = new Map<
+    Player,
+    {
+      streak: number;
+      streakPoints: number;
+      misses: number;
+      last: number;
+      state: "hot" | "cold" | "neutral";
+    }
+  >();
+  const formOf = (p: Player) => {
+    const f = form.get(p);
+    if (!f) return 1;
+    if (f.state === "hot" && elapsedSeconds() - f.last > 120) f.state = "neutral";
+    return f.state === "hot" ? 1.3 : f.state === "cold" ? 0.85 : 1;
+  };
+  const recordForm = (p: Player, made: boolean, points: number) => {
+    const t = elapsedSeconds();
+    const f = form.get(p) ?? {
+      streak: 0,
+      streakPoints: 0,
+      misses: 0,
+      last: t,
+      state: "neutral" as const,
+    };
+    form.set(p, f);
+    const before = formOf(p) > 1 ? "hot" : f.state;
+    if (before === "hot") {
+      const row = hotShots.get(p.box.playerId) ?? { attempts: 0, made: 0 };
+      row.attempts++;
+      row.made += Number(made);
+      hotShots.set(p.box.playerId, row);
+    }
+    f.last = t;
+    if (made) {
+      f.streak++;
+      f.streakPoints += points;
+      f.misses = 0;
+      if (f.state === "cold") f.state = "neutral";
+      if (f.streak >= 4 || (f.streak >= 3 && f.streakPoints >= 8))
+        f.state = "hot";
+    } else {
+      f.streak = 0;
+      f.streakPoints = 0;
+      f.misses++;
+      f.state = f.misses >= 5 ? "cold" : "neutral";
+    }
+    if (f.state !== before && (f.state === "hot" || f.state === "cold"))
+      flowReport!.heat!.push({
+        playerId: p.box.playerId,
+        period: period + 1,
+        elapsedSeconds: t,
+        state: f.state,
+      });
+  };
+  const hotShots = new Map<string, { attempts: number; made: number }>();
   const refreshField = () => {
     if (!flow) return;
     const next = floorCondition(
@@ -1405,8 +1475,16 @@ export function simulateMatch(
       let kickoutPasser: Player | undefined;
       let help: ReturnType<typeof chooseTypeHelp>;
       // A late after-timeout play runs through the floor's best clutch option.
+      const hottest =
+        atoPlay?.late &&
+        firstAction &&
+        playDepth &&
+        (getCoach(offense.config.coach?.id ?? "")?.adaptability ?? 0) >= 0.7
+          ? offense.floor.find((p) => formOf(p) > 1)
+          : undefined;
       const designed =
-        atoPlay?.late && firstAction
+        hottest ??
+        (atoPlay?.late && firstAction
           ? offense.floor.reduce((best, p) => {
               const value = (q: Player) =>
                 q.profile.attributes.composure * 0.5 +
@@ -1418,7 +1496,7 @@ export function simulateMatch(
                   0.5;
               return value(p) > value(best) ? p : best;
             })
-          : undefined;
+          : undefined);
       const handler =
         designed ??
         pick(
@@ -1431,9 +1509,10 @@ export function simulateMatch(
               playoff ? 3.6 : 3,
             ) *
             (role === 0 ? 1.6 : 1) *
-            (p.depth?.tendencies.passing ?? 1),
+            (p.depth?.tendencies.passing ?? 1) *
+            (playDepth ? formOf(p) : 1),
         );
-      const screener = pick(
+      let screener = pick(
         offense.floor.filter((p) => p !== handler),
         (p) =>
           Math.pow(
@@ -1530,6 +1609,16 @@ export function simulateMatch(
         if (phase.transition && firstAction)
           teamDetail.get(offense.config.id)!.transitionPossessions++;
       }
+      if (playDepth && play === "post")
+        // Post plays go to the best post player, chosen without a random draw.
+        screener = offense.floor
+          .filter((p) => p !== handler)
+          .reduce((best, p) =>
+            p.profile.traits.postGame * 0.6 + skill(p, "strength") * 0.4 >
+            best.profile.traits.postGame * 0.6 + skill(best, "strength") * 0.4
+              ? p
+              : best,
+          );
       firstAction = false;
       result.plays[play][offense.side]++;
       offense.transition = 0;
@@ -1576,6 +1665,11 @@ export function simulateMatch(
           shotWeights[2] *= matchupPreference(shooter, defender, "spotUp");
         }
         if (chaseThree) shotWeights[2] *= 3;
+        if (playDepth && formOf(shooter) > 1) {
+          // Heat checks: hot shooters look for longer shots, not better odds.
+          shotWeights[1] *= 1.2;
+          shotWeights[2] *= 1.5;
+        }
         return shotWeights as [number, number, number];
       };
       let court: ReturnType<typeof resolveCourtPossession> | undefined;
@@ -1608,6 +1702,7 @@ export function simulateMatch(
                 }
               : {}),
             ...(playoff ? { advanceDelta: 0.5 } : {}),
+            ...(playDepth ? { depth: { form: formOf } } : {}),
             ...(atoShot && atoPlay!.late ? { frontCourt: true } : {}),
           },
           random,
@@ -1993,11 +2088,12 @@ export function simulateMatch(
         margin(defense) >= -9 &&
         periodTicks - tickInPeriod <= 5;
       const reachRate = crew
-        ? (0.032 + (defense.config.defense === "press" ? 0.025 : 0)) *
+        ? ((0.032 + (defense.config.defense === "press" ? 0.025 : 0)) *
             (1 + 0.2 * crew.tightness) +
-          (65 - defender.profile.traits.discipline) *
-            0.0003 *
-            (1 + 0.4 * crew.tightness)
+            (65 - defender.profile.traits.discipline) *
+              0.0003 *
+              (1 + 0.4 * crew.tightness)) *
+          (playDepth && defense.config.defense === "zone" ? 0.85 : 1)
         : 0.032 +
           (defense.config.defense === "press" ? 0.025 : 0) +
           (65 - defender.profile.traits.discipline) * 0.0003;
@@ -2732,6 +2828,11 @@ export function simulateMatch(
           "Read the help rotation and pass to the uncovered shooter.",
         );
     }
+  if (flowReport && playDepth)
+    flowReport.hotShots = [...hotShots].map(([playerId, row]) => ({
+      playerId,
+      ...row,
+    }));
   if (flowReport) result.gameFlow = flowReport;
   if (home.moraleVersion === 1)
     result.moraleReport = moraleGameReport(home, away, result);

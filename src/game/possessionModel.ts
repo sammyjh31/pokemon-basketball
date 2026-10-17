@@ -18,6 +18,8 @@ export interface ReboundContext {
   tactic: Tactic;
   defenseTactic: Tactic;
   freeThrow?: boolean;
+  /** Game flow on court v2: zone defenders box out less reliably. */
+  zoneDefense?: boolean;
 }
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
 const weighted = (weights: number[], random: () => number) => {
@@ -68,7 +70,8 @@ export function resolveRebound(
             (d.discipline - 60) * 0.002,
           0.18,
           0.8,
-        ),
+        ) *
+          (c.zoneDefense ? 0.85 : 1),
   );
   const attackWeights = attack.map((p, i) =>
     candidates.includes(i)

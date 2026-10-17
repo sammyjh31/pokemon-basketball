@@ -32,6 +32,12 @@ export interface CourtContext {
   advanceDelta?: number;
   /** Game flow: a late after-timeout inbound starts in the frontcourt. */
   frontCourt?: boolean;
+  /** Game flow on court rules v2: zone shells, off-ball reactions, post seals and shooting form. */
+  depth?: PlayDepthContext;
+}
+export interface PlayDepthContext {
+  /** Shooting form: above 1 while hot, below 1 while cold. */
+  form: (player: Player) => number;
 }
 const basket = { x: 0, y: 5.25 };
 const distance = (a: CourtPoint, b: CourtPoint) =>
@@ -99,6 +105,60 @@ const guardSpot = (p: CourtPoint, shooter: Player, scheme: DefenseScheme) => {
     y: p.y + ((basket.y - p.y) * sag) / length,
   });
 };
+/** A 2-3 shell: two top spots, two wings and a middle anchor, shifted toward the ball. */
+const ZONE_SPOTS: CourtPoint[] = [
+  { x: -7, y: 24 },
+  { x: 7, y: 24 },
+  { x: -13, y: 11 },
+  { x: 13, y: 11 },
+  { x: 0, y: 8 },
+];
+export function zoneShell(defense: readonly Player[]): Map<Player, number> {
+  const remaining = [...defense];
+  const take = (score: (p: Player) => number) => {
+    const best = remaining.reduce((a, b) => (score(b) > score(a) ? b : a));
+    remaining.splice(remaining.indexOf(best), 1);
+    return best;
+  };
+  const anchor = take((p) => skill(p, "interiorDefense") + skill(p, "block"));
+  const guard = (p: Player) => skill(p, "speed") + skill(p, "perimeterDefense");
+  const tops = [take(guard), take(guard)];
+  return new Map<Player, number>([
+    [tops[0], 0],
+    [tops[1], 1],
+    [remaining[0], 2],
+    [remaining[1], 3],
+    [anchor, 4],
+  ]);
+}
+const shiftedSpot = (index: number, ball: CourtPoint): CourtPoint => {
+  const spot = ZONE_SPOTS[index];
+  return bounded({
+    x: spot.x + (ball.x - spot.x) * 0.35,
+    y: spot.y + (ball.y - spot.y) * 0.2,
+  });
+};
+/** In a zone the defender whose shifted spot is nearest the ball guards it; the rest hold areas. */
+function zoneTargets(
+  shell: Map<Player, number>,
+  ball: Player,
+  ballPoint: CourtPoint,
+): Map<Player, CourtPoint> {
+  const targets = new Map<Player, CourtPoint>();
+  let onBall: Player | undefined,
+    nearest = Infinity;
+  for (const [p, index] of shell) {
+    const spot = shiftedSpot(index, ballPoint);
+    targets.set(p, spot);
+    const d = distance(spot, ballPoint);
+    if (d < nearest) {
+      nearest = d;
+      onBall = p;
+    }
+  }
+  targets.set(onBall!, guardSpot(ballPoint, ball, "zone"));
+  return targets;
+}
 /** Feet on a half court. Shooting threat determines whether off-ball players space or occupy the paint. */
 export function createCourt(c: CourtContext): Court {
   const court: Court = new Map();
@@ -346,6 +406,15 @@ export function resolveCourtPossession(
 ) {
   const c = { ...source, guards: new Map(source.guards) },
     court = createCourt(c);
+  const shell =
+    c.depth && c.scheme === "zone" ? zoneShell(c.defense) : undefined;
+  if (shell)
+    for (const [p, point] of zoneTargets(
+      shell,
+      c.putback ?? c.handler,
+      court.get(c.putback ?? c.handler)!,
+    ))
+      court.set(p, point);
   let ball = c.putback ?? c.handler,
     passer: Player | undefined,
     helper: Player | undefined,
@@ -373,7 +442,10 @@ export function resolveCourtPossession(
     const used = Math.min(clock, duration);
     clock = Math.max(0, clock - used);
     seconds += used;
-    if (recover)
+    if (recover && shell)
+      for (const [d, target] of zoneTargets(shell, ball, court.get(ball)!))
+        court.set(d, moveToward(court.get(d)!, target, d, used * 0.24));
+    else if (recover)
       for (const attacker of c.offense) {
         const d = c.guards.get(attacker)!;
         court.set(
@@ -461,8 +533,41 @@ export function resolveCourtPossession(
     }
   }
   if (!clockLimited && c.play === "post" && !c.putback && clock > 3) {
-    court.set(c.screener, { x: 5, y: 10 });
-    pass(c.screener, "pass");
+    if (c.depth) {
+      // Post skill and strength decide how deep the seal is; deep seals draw a double.
+      const post = c.screener,
+        guard = shell
+          ? [...c.defense].sort(
+              (a, b) =>
+                distance(court.get(a)!, { x: 5, y: 10 }) -
+                distance(court.get(b)!, { x: 5, y: 10 }),
+            )[0]
+          : c.guards.get(post)!;
+      const depth = clamp(
+        (post.profile.traits.postGame - skill(guard, "interiorDefense")) *
+          0.08 +
+          (skill(post, "strength") - skill(guard, "strength")) * 0.05,
+        -2,
+        4,
+      );
+      const spot = { x: 5, y: Math.max(6, 10 - depth) };
+      court.set(post, spot);
+      court.set(guard, guardSpot(spot, post, c.scheme));
+      actions.push({ kind: "seal", playerId: post.box.playerId, clock });
+      if (pass(post, "pass") && depth >= 2.5 && post.profile.traits.postGame >= 65) {
+        const double = c.defense
+          .filter((p) => p !== guard)
+          .sort(
+            (a, b) =>
+              distance(court.get(a)!, spot) - distance(court.get(b)!, spot),
+          )[0];
+        helper = double;
+        court.set(double, moveToward(court.get(double)!, spot, double, 1.2));
+      }
+    } else {
+      court.set(c.screener, { x: 5, y: 10 });
+      pass(c.screener, "pass");
+    }
   } else if (!clockLimited && !c.putback && c.play === "spotUp" && clock > 3) {
     const target = c.offense
       .filter((p) => p !== ball)
@@ -495,6 +600,10 @@ export function resolveCourtPossession(
       c.putback ||
       clock < 4 ||
       (step > 0 && open && shooting > 55) ||
+      (c.depth !== undefined &&
+        c.depth.form(ball) > 1 &&
+        geometry.defenderDistance > 3.5 &&
+        shooting > 50) ||
       random() < (c.zoneIntent ? 0.08 : 0.13)
     )
       break;
@@ -583,10 +692,12 @@ export function resolveCourtPossession(
         )[0];
       if (beat && distance(court.get(near)!, court.get(ball)!) < 18) {
         helper = near;
+        const helperFrom = court.get(near)!;
         court.set(
           near,
           moveToward(court.get(near)!, court.get(ball)!, near, 0.65),
         );
+        if (c.depth) reactOffBall(c, court, ball, near, helperFrom, clock, actions, random, shell);
       }
       if (
         random() <
@@ -746,7 +857,14 @@ function relocateForIntent(
   if (!spend(desired === "rim" ? "drive" : "reset", duration, undefined, false))
     return;
   court.set(shooter, target);
-  const guard = c.guards.get(shooter)!;
+  // A zone's nearest defender, not a nominal assignment, follows the relocation.
+  const guard =
+    c.depth && c.scheme === "zone"
+      ? [...c.defense].sort(
+          (a, b) =>
+            distance(court.get(a)!, target) - distance(court.get(b)!, target),
+        )[0]
+      : c.guards.get(shooter)!;
   court.set(
     guard,
     moveToward(
@@ -756,4 +874,72 @@ function relocateForIntent(
       duration * (desired === "rim" ? 0.55 : 0.7),
     ),
   );
+}
+
+/** On a help rotation the abandoned attacker cuts, and the nearest spacer drifts to open space. */
+function reactOffBall(
+  c: CourtContext,
+  court: Court,
+  ball: Player,
+  helper: Player,
+  helperFrom: CourtPoint,
+  clock: number,
+  actions: CourtAction[],
+  random: () => number,
+  shell: Map<Player, number> | undefined,
+) {
+  const spacer = (p: Player) =>
+    zoneAt(court.get(p)!) === "three" && skill(p, "threePoint") >= 57;
+  const left = shell
+    ? c.offense
+        .filter((p) => p !== ball)
+        .sort(
+          (a, b) =>
+            distance(court.get(a)!, helperFrom) -
+            distance(court.get(b)!, helperFrom),
+        )[0]
+    : c.offense.find((p) => p !== ball && c.guards.get(p) === helper);
+  if (left && !spacer(left)) {
+    const from = court.get(left)!,
+      side = Math.sign(from.x) || 1;
+    const chance = clamp(
+      0.25 +
+        (left.profile.traits.offBall - 55) * 0.012 +
+        (distance(court.get(helper)!, from) > 6 ? 0.1 : 0),
+      0.1,
+      0.6,
+    );
+    court.set(
+      left,
+      random() < chance
+        ? { x: side * 4, y: 6 }
+        : { x: from.x * 0.6, y: Math.max(7, from.y * 0.8) },
+    );
+    actions.push({ kind: "cut", playerId: left.box.playerId, clock });
+  }
+  // Corners lift to the wing and wings sink to the corner, by up to six feet.
+  const shooter = c.offense
+    .filter((p) => p !== ball && p !== left && spacer(p))
+    .sort(
+      (a, b) =>
+        distance(court.get(a)!, court.get(ball)!) -
+        distance(court.get(b)!, court.get(ball)!),
+    )[0];
+  if (!shooter) return;
+  const from = court.get(shooter)!,
+    side = Math.sign(from.x) || 1,
+    target = from.y > 9 ? { x: side * 22.5, y: 3 } : { x: side * 22.5, y: 16 },
+    span = distance(from, target),
+    step = Math.min(
+      span,
+      clamp(2 + (shooter.profile.traits.offBall - 50) * 0.1, 1, 6),
+    );
+  if (span < 0.5) return;
+  const next = bounded({
+    x: from.x + ((target.x - from.x) * step) / span,
+    y: from.y + ((target.y - from.y) * step) / span,
+  });
+  if (zoneAt(next) !== "three") return;
+  court.set(shooter, next);
+  actions.push({ kind: "drift", playerId: shooter.box.playerId, clock });
 }

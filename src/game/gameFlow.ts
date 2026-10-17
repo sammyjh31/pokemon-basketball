@@ -73,6 +73,15 @@ export interface GameFlowReport {
   loadManaged: { home: boolean; away: boolean };
   timeouts: TimeoutEvent[];
   notes: string[];
+  /** Court rules v2 only: when players heated up or went cold. */
+  heat?: {
+    playerId: string;
+    period: number;
+    elapsedSeconds: number;
+    state: "hot" | "cold";
+  }[];
+  /** Court rules v2 only: field-goal attempts taken while hot. */
+  hotShots?: { playerId: string; attempts: number; made: number }[];
 }
 
 export const FIELD_LABELS: Record<FieldCondition, string> = {

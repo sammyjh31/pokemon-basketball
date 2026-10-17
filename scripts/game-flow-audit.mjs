@@ -54,6 +54,8 @@ try {
     { name: "Playoffs, Game 7", teams: clubs, flow: playoff(7, 3, 3) },
   ];
   const results = [];
+  const schemes = {},
+    depth = { cut: 0, drift: 0, seal: 0, games: 0, hotFga: 0, hotFgm: 0, fga: 0, fgm: 0 };
   for (const scenario of scenarios) {
     const rows = [],
       crews = {},
@@ -84,6 +86,43 @@ try {
         const crew = m.gameFlow.referee.label;
         (crews[crew] ??= []).push(fouls / 2);
       }
+      if (m.gameFlow?.hotShots && scenario.flow?.stage === "regular") {
+        depth.games++;
+        for (const seq of m.insights.court)
+          for (const a of seq.actions)
+            if (a.kind in depth && a.kind !== "games") depth[a.kind]++;
+        for (const shot of m.gameFlow.hotShots) {
+          depth.hotFga += shot.attempts;
+          depth.hotFgm += shot.made;
+        }
+        for (const b of [...m.homeBox, ...m.awayBox]) {
+          depth.fga += b.fga;
+          depth.fgm += b.fgm;
+        }
+        // Opponent shot profile and offensive rebounding against each opening scheme.
+        for (const plan of m.insights.coaches ?? []) {
+          const offense = plan.teamId === m.homeBox[0].teamId ? m.awayBox : m.homeBox;
+          const defense = plan.teamId === m.homeBox[0].teamId ? m.homeBox : m.awayBox;
+          const row = (schemes[plan.defense] ??= {
+            games: 0,
+            points: 0,
+            fga: 0,
+            threes: 0,
+            rim: 0,
+            offensiveRebounds: 0,
+            defensiveRebounds: 0,
+          });
+          row.games++;
+          for (const b of offense) {
+            row.points += b.points;
+            row.fga += b.fga;
+            row.threes += b.threePA;
+            row.rim += b.rimFga;
+            row.offensiveRebounds += b.offensiveRebounds;
+          }
+          for (const b of defense) row.defensiveRebounds += b.defensiveRebounds;
+        }
+      }
     }
     const pick = (key) => mean(rows.map((r) => r[key]));
     results.push({
@@ -104,11 +143,34 @@ try {
       msPerGame: Number(((performance.now() - started) / samples).toFixed(2)),
     });
   }
+  const playDepth = {
+    perGame: Object.fromEntries(
+      ["cut", "drift", "seal"].map((k) => [k, mean([depth[k] / Math.max(1, depth.games)])]),
+    ),
+    hotFgPct: mean([depth.hotFgm / Math.max(1, depth.hotFga)]),
+    allFgPct: mean([depth.fgm / Math.max(1, depth.fga)]),
+    hotShareOfAttempts: mean([depth.hotFga / Math.max(1, depth.fga)]),
+    opponentsByOpeningScheme: Object.fromEntries(
+      Object.entries(schemes).map(([scheme, r]) => [
+        scheme,
+        {
+          teamGames: r.games,
+          pointsAllowed: mean([r.points / r.games]),
+          threeRate: mean([r.threes / r.fga]),
+          rimRate: mean([r.rim / r.fga]),
+          offensiveReboundRate: mean([
+            r.offensiveRebounds / (r.offensiveRebounds + r.defensiveRebounds),
+          ]),
+        },
+      ]),
+    ),
+  };
   const report = {
     generated: "scripts/game-flow-audit.mjs",
     samples,
     note: "Descriptive game-design tuning, not an empirical fit to real basketball.",
     results,
+    playDepth,
   };
   await writeFile("docs/game-flow-audit.json", JSON.stringify(report, null, 2) + "\n");
   console.table(
@@ -117,6 +179,7 @@ try {
   for (const r of results)
     if (Object.keys(r.foulsPerTeamByCrew).length)
       console.log(r.scenario, JSON.stringify(r.foulsPerTeamByCrew));
+  console.log(JSON.stringify(playDepth, null, 2));
 } finally {
   await server.close();
 }

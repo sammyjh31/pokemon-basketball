@@ -14,7 +14,10 @@ export interface CourtAction {
     | "shoot"
     | "turnover"
     | "violation"
-    | "foul";
+    | "foul"
+    | "cut"
+    | "drift"
+    | "seal";
   playerId: string;
   targetId?: string;
   clock: number;
