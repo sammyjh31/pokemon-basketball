@@ -20,11 +20,24 @@ const roster = {
   B2: 6,
   B3: 131,
 };
-const clubs = (seed: number, courtVersion: CourtVersion): LeagueTeam[] =>
-  createLeague({ ...createRun("free", true, seed), roster }).map((t) => ({
-    ...t,
-    courtVersion,
-  }));
+/**
+ * `current: false` reproduces version-1/2 saves made before abilities, chemistry and
+ * evaluation; comparisons between court versions keep every other current flag on.
+ */
+const clubs = (
+  seed: number,
+  courtVersion: CourtVersion,
+  current = courtVersion === 3,
+): LeagueTeam[] => {
+  const run = { ...createRun("free", true, seed), roster };
+  if (!current) {
+    delete run.abilityVersion;
+    delete run.physicalAbilityVersion;
+    delete run.chemistryVersion;
+    delete run.evaluationVersion;
+  }
+  return createLeague(run).map((t) => ({ ...t, courtVersion }));
+};
 const digest = (rows: unknown[]) => {
   const hash = createHash("sha256");
   for (const row of rows) hash.update(JSON.stringify(row));
@@ -97,7 +110,7 @@ it("saturates body size under version 3 without reordering species", () => {
 
 it("spreads rebounds beyond one designated crasher under version 3", () => {
   const leaders = (version: CourtVersion) => {
-    const teams = clubs(9824, version);
+    const teams = clubs(9824, version, true);
     let top = 0,
       total = 0,
       orbTop = 0,
@@ -126,7 +139,7 @@ it("spreads rebounds beyond one designated crasher under version 3", () => {
 
 it("closes version-3 margins with score-state effort and garbage time", () => {
   const sample = (version: CourtVersion) => {
-    const teams = clubs(9824, version);
+    const teams = clubs(9824, version, true);
     let margin = 0,
       blowouts = 0,
       overtime = 0,
