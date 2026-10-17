@@ -3,6 +3,10 @@ import type { Position } from "./types";
 import type { TradeFactor } from "./tradeTypes";
 
 export const MAX_FREE_AGENT_SIGNINGS = 100000;
+/** CPU rules v1: signings per CPU club per offseason (second needs a clear gain). */
+export const CPU_FREE_AGENT_SIGNINGS = 2;
+/** CPU rules v1: signings the user may make per offseason, after the CPU pass. */
+export const USER_FREE_AGENT_SIGNINGS = 2;
 export interface FreeAgentSigning {
   year: number;
   teamId: number;

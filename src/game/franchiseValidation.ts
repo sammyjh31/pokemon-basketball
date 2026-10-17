@@ -1309,6 +1309,7 @@ export function validateFranchise(
         historyCount,
         trades.length,
         run.includeLegends,
+        cpuRules?.since,
       )
     : undefined;
   const { drafts, expected } = validateRosterTransactions(

@@ -5,6 +5,7 @@ import type { TradeFactor } from "./tradeTypes";
 import { projectedCoaches } from "./coachOffice";
 import { cpuRulesApply } from "./cpuRules";
 import { lotteryOrder, recordOrder } from "./draftLottery";
+import { processCpuFreeAgency } from "./freeAgency";
 import {
   POKEMON_BY_ID,
   ROOKIE_GENERATIONS,
@@ -450,7 +451,12 @@ export function advanceRookieDraft(state: GameState): GameState {
         ? recordPass(f)
         : recordPick(f, pick.pokemonId, pick.releasedId);
   }
-  return f === state.franchise ? state : { ...state, franchise: f };
+  const next = f === state.franchise ? state : { ...state, franchise: f };
+  // Under CPU rules v1, clubs sign free agents as soon as the market opens,
+  // before the user's own moves.
+  return cpuRulesApply(f) && currentDraft(f)?.complete
+    ? processCpuFreeAgency(next)
+    : next;
 }
 
 /** The user's turn in a model-2 draft: keep the current roster. */

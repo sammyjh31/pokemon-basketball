@@ -7,7 +7,11 @@ import { compareTeamEvaluation } from "./teamEvaluation";
 import { projectedCoaches } from "./coachOffice";
 import type { DevelopmentRatings } from "./developmentTypes";
 import type { Franchise } from "./franchiseTypes";
+import { cpuRulesApply } from "./cpuRules";
+import { recordOrder, seededRecordOrder } from "./draftLottery";
 import {
+  CPU_FREE_AGENT_SIGNINGS,
+  USER_FREE_AGENT_SIGNINGS,
   MAX_FREE_AGENT_SIGNINGS,
   type FreeAgent,
   type FreeAgentEvaluation,
@@ -192,6 +196,15 @@ function fitScore(
   };
 }
 
+/** User signings already made in the current offseason. */
+export function userSigningsThisYear(f: Franchise): number {
+  return (
+    f.freeAgency?.transactions.filter(
+      (t) => t.year === f.year && t.source === "user",
+    ).length ?? 0
+  );
+}
+
 export function evaluateFreeAgentSigning(
   f: Franchise,
   teamId: number,
@@ -227,6 +240,14 @@ export function evaluateFreeAgentSigning(
     );
   if (!team || f.teams.length !== 30 || f.teams.some((t, i) => t.id !== i))
     return reject("The league roster is unavailable.");
+  if (teamId === 0 && cpuRulesApply(f)) {
+    if (!f.freeAgency?.cpuYears.includes(f.year))
+      return reject("CPU clubs make their free-agent moves first.");
+    if (userSigningsThisYear(f) >= USER_FREE_AGENT_SIGNINGS)
+      return reject(
+        `Clubs may sign ${USER_FREE_AGENT_SIGNINGS} free agents per offseason. Your signings are complete until next year.`,
+      );
+  }
   const all = f.teams.flatMap((t) => ROSTER_SLOTS.map((s) => t.roster[s]));
   if (
     new Set(all).size !== 240 ||
@@ -358,98 +379,129 @@ export function signFreeAgent(
   };
 }
 
-/** One deterministic waiver round. A failed upgrade leaves the roster intact. */
-export function processCpuFreeAgency(state: GameState): GameState {
-  let f = state.franchise;
-  if (!f || !freeAgencyReady(f) || f.freeAgency?.cpuYears.includes(f.year))
-    return state;
+/** A CPU club's preferred signing for a waiver round, or null when none clears its bar. */
+export function cpuFreeAgentChoice(
+  f: Franchise,
+  teamId: number,
+  round: number,
+  includeLegends = true,
+): {
+  agent: FreeAgent;
+  releasedId: number;
+  evaluation: FreeAgentEvaluation;
+} | null {
+  const actualTeam = f.teams[teamId];
+  const team =
+    actualTeam.evaluationVersion === 1
+      ? projectedCoaches(f.teams, f.coachOffice, f.year)[teamId]
+      : actualTeam;
+  const pool = freeAgentMarket(f, includeLegends);
   const protectedRookies = new Set(
-    f
-      .rookieDrafts!.find((d) => d.year === f!.year)!
-      .picks.map((p) => p.pokemonId),
+    f.rookieDrafts
+      ?.find((d) => d.year === f.year)
+      ?.picks.map((p) => p.pokemonId),
   );
-  const order = [...f.history.at(-1)!.standings]
+  const outgoing = ROSTER_SLOTS.filter(
+    (s) => !protectedRookies.has(team.roster[s]!),
+  ).map((slot) => ({
+    slot,
+    id: team.roster[slot]!,
+    profile: skillProfile(
+      team.roster[slot]!,
+      team.development?.[team.roster[slot]!],
+    ),
+  }));
+  const options = pool
+    .flatMap((agent) => {
+      const profile = skillProfile(agent.pokemonId, agent.development);
+      return outgoing.map((out) => ({
+        agent,
+        releasedId: out.id,
+        score:
+          team.evaluationVersion === 1
+            ? compareTeamEvaluation(
+                team,
+                replacePlayer(team, out.slot, agent, f.teams),
+              ).delta
+            : fitScore(team, out.slot, profile, out.profile).score,
+      }));
+    })
     .sort(
       (a, b) =>
-        a.wins - b.wins ||
-        a.pointsFor - a.pointsAgainst - (b.pointsFor - b.pointsAgainst) ||
-        a.teamId - b.teamId,
+        b.score - a.score ||
+        a.agent.pokemonId - b.agent.pokemonId ||
+        a.releasedId - b.releasedId,
     )
-    .map((s) => s.teamId)
-    .filter((id) => id !== 0);
-  for (const teamId of order) {
-    const actualTeam = f.teams[teamId];
-    const team =
-      actualTeam.evaluationVersion === 1
-        ? projectedCoaches(f.teams, f.coachOffice, f.year)[teamId]
-        : actualTeam;
-    const pool = freeAgentMarket(f, state.run.includeLegends);
-    const direction = clubTradeProfile(f, teamId);
-    const outgoing = ROSTER_SLOTS.filter(
-      (s) => !protectedRookies.has(team.roster[s]!),
-    ).map((slot) => ({
-      slot,
-      id: team.roster[slot]!,
-      profile: skillProfile(
-        team.roster[slot]!,
-        team.development?.[team.roster[slot]!],
-      ),
-    }));
-    const options = pool
-      .flatMap((agent) => {
-        const profile = skillProfile(agent.pokemonId, agent.development);
-        return outgoing.map((out) => ({
-          agent,
-          releasedId: out.id,
-          score:
-            team.evaluationVersion === 1
-              ? compareTeamEvaluation(
-                  team,
-                  replacePlayer(team, out.slot, agent, f!.teams),
-                ).delta
-              : fitScore(team, out.slot, profile, out.profile).score,
-        }));
-      })
-      .sort(
-        (a, b) =>
-          b.score - a.score ||
-          a.agent.pokemonId - b.agent.pokemonId ||
-          a.releasedId - b.releasedId,
-      )
-      .slice(0, 6);
-    const best = options
+    .slice(0, 6);
+  // Shared-evaluation clubs score on a smaller scale (team value delta).
+  const bar = team.evaluationVersion === 1 ? 0.15 : 2;
+  return (
+    options
       .map((option) => ({
-        ...option,
+        agent: option.agent,
+        releasedId: option.releasedId,
         evaluation: evaluateFreeAgentSigning(
-          f!,
+          f,
           teamId,
           option.agent.pokemonId,
           option.releasedId,
-          state.run.includeLegends,
+          includeLegends,
         ),
       }))
+      // A later round (rules v1) needs a clearly better player and lineup.
       .filter(
         (o) =>
           o.evaluation.eligible &&
-          o.evaluation.score >= (team.evaluationVersion === 1 ? 0.15 : 2) &&
-          o.evaluation.teamAfter >= o.evaluation.teamBefore - 0.15,
+          (round === 0
+            ? o.evaluation.score >= bar &&
+              o.evaluation.teamAfter >= o.evaluation.teamBefore - 0.15
+            : o.evaluation.score >= 2 * bar &&
+              o.evaluation.teamAfter >= o.evaluation.teamBefore + 0.1),
       )
       .sort(
         (a, b) =>
           b.evaluation.score - a.evaluation.score ||
           a.agent.pokemonId - b.agent.pokemonId ||
           a.releasedId - b.releasedId,
-      )[0];
-    if (best)
-      f = recordSigning(
+      )[0] ?? null
+  );
+}
+
+/**
+ * Deterministic waiver rounds, worst record first. Rules v1 adds a second
+ * round (seeded ties) so a club can make another, clearly better, signing
+ * after every club has had a first chance. A failed upgrade leaves the roster intact.
+ */
+export function processCpuFreeAgency(state: GameState): GameState {
+  let f = state.franchise;
+  if (!f || !freeAgencyReady(f) || f.freeAgency?.cpuYears.includes(f.year))
+    return state;
+  const season = f.history.at(-1)!,
+    fair = cpuRulesApply(f);
+  const order = (
+    fair
+      ? seededRecordOrder(season.standings, season.seasonSeed)
+      : recordOrder(season.standings)
+  ).filter((id) => id !== 0);
+  const rounds = fair ? CPU_FREE_AGENT_SIGNINGS : 1;
+  for (let round = 0; round < rounds; round++)
+    for (const teamId of order) {
+      const best = cpuFreeAgentChoice(
         f,
         teamId,
-        best.agent,
-        best.releasedId,
-        "cpu",
-        `${direction.title}: ${best.evaluation.reason}`,
+        round,
+        state.run.includeLegends,
       );
-  }
+      if (best)
+        f = recordSigning(
+          f,
+          teamId,
+          best.agent,
+          best.releasedId,
+          "cpu",
+          `${clubTradeProfile(f, teamId).title}: ${best.evaluation.reason}`,
+        );
+    }
   return {
     ...state,
     franchise: {
