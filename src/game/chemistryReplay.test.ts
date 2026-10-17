@@ -8,6 +8,7 @@ it("preserves the evaluation and physical enabled coached draft and matches from
   const run = {
     ...createRun("free", true, 22),
     coach: { version: 1 as const, id: "misty" },
+    courtVersion: 1 as const,
     roster: {
       PG: 65,
       SG: 135,
