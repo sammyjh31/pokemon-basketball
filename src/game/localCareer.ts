@@ -1341,14 +1341,19 @@ export function parseLocalCareer(
     const standings = parseStandings(row.standings, draft),
       championId = integer(row.championId, 0, teams.length - 1),
       finalsMvp = parseHonor(row.finalsMvp, teams);
-    const qualified = [...standings]
-      .sort(
-        (a, b) =>
-          b.wins - a.wins ||
-          b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst) ||
-          a.teamId - b.teamId,
-      )
-      .slice(0, draft.options.format.playoffTeams);
+    const ranked = [...standings].sort(
+      (a, b) =>
+        b.wins - a.wins ||
+        b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst) ||
+        a.teamId - b.teamId,
+    );
+    // Summary-only checks cannot reconstruct head-to-head results. Allow the
+    // cutoff tie here; court-v3 games and exact seeds are replayed below.
+    const cutoffWins = ranked[draft.options.format.playoffTeams - 1].wins;
+    const qualified =
+      teams[0].courtVersion === 3
+        ? ranked.filter((s) => s.wins >= cutoffWins)
+        : ranked.slice(0, draft.options.format.playoffTeams);
     if (
       finalsMvp.teamId !== championId ||
       !qualified.some((s) => s.teamId === championId)
@@ -1433,16 +1438,19 @@ export function parseLocalCareer(
     const archived: LocalSeasonArchive = {
       ...(row.coachRecords !== undefined
         ? {
-            coachRecords: validateCoachRecords(
-              row.coachRecords,
-              teams,
-              standings,
-              archiveYear,
-              championId,
-              draft.options.format.playoffTeams,
-              draft.options.format.bestOf,
-              playoffGames,
-            ),
+            coachRecords:
+              teams[0].courtVersion === 3
+                ? undefined
+                : validateCoachRecords(
+                    row.coachRecords,
+                    teams,
+                    standings,
+                    archiveYear,
+                    championId,
+                    draft.options.format.playoffTeams,
+                    draft.options.format.bestOf,
+                    playoffGames,
+                  ),
           }
         : {}),
       year: archiveYear,
@@ -1460,6 +1468,7 @@ export function parseLocalCareer(
     };
     let finalTeams = teams;
     if (
+      teams[0].courtVersion === 3 ||
       teams[0].chemistryGrowthVersion === 1 ||
       teams[0].abilityMasteryVersion === 1 ||
       row.newsGames !== undefined ||
@@ -1474,6 +1483,18 @@ export function parseLocalCareer(
       const league = season.finish().league!;
       const playoffs = replayPlayoffs(league, row.seasonSeed, playoffGames);
       if (playoffs.championId !== championId) fail();
+      if (teams[0].courtVersion === 3 && row.coachRecords !== undefined)
+        archived.coachRecords = validateCoachRecords(
+          row.coachRecords,
+          teams,
+          standings,
+          archiveYear,
+          championId,
+          draft.options.format.playoffTeams,
+          draft.options.format.bestOf,
+          playoffGames,
+          playoffs.seeds,
+        );
       if (row.newsGames !== undefined) {
         const facts = captureNewsGames(league.games, playoffs);
         if (JSON.stringify(row.newsGames) !== JSON.stringify(facts)) fail();

@@ -167,20 +167,24 @@ export function validateCoachRecords(
   playoffTeams: number,
   bestOf: number,
   playoffGames: number,
+  replayedSeeds?: readonly { teamId: number }[],
 ): CoachSeasonRecord[] {
   const fail = (): never => {
     throw new Error("Invalid saved coach season records.");
   };
   const coached = teams.filter((t) => t.coach);
   if (!Array.isArray(value) || value.length !== coached.length) return fail();
-  const seeds = [...standings]
-    .sort(
-      (a, b) =>
-        b.wins - a.wins ||
-        b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst) ||
-        a.teamId - b.teamId,
-    )
-    .slice(0, playoffTeams);
+  // Modern local archives provide seeds reconstructed from their actual games.
+  const seeds =
+    replayedSeeds ??
+    [...standings]
+      .sort(
+        (a, b) =>
+          b.wins - a.wins ||
+          b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst) ||
+          a.teamId - b.teamId,
+      )
+      .slice(0, playoffTeams);
   const firstRound = 4 - Math.log2(playoffTeams),
     winsNeeded = Math.ceil(bestOf / 2);
   const rows: CoachSeasonRecord[] = value.map((r, i) => {

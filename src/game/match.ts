@@ -1407,8 +1407,8 @@ export function simulateMatch(
     if (!flow) return;
     const next = floorCondition(
       arena,
-      h.floor.map((p) => p.box.pokemonId),
-      a.floor.map((p) => p.box.pokemonId),
+      abilitiesEnabled(h.config) ? h.floor.map((p) => p.box.pokemonId) : [],
+      abilitiesEnabled(a.config) ? a.floor.map((p) => p.box.pokemonId) : [],
     );
     if (next !== arena) flowReport!.setterPossessions++;
     if (next === fieldCondition) return;
@@ -1424,6 +1424,14 @@ export function simulateMatch(
   };
   const floorEnergy = (team: Team) =>
     team.floor.reduce((n, p) => n + p.energy, 0) / 5;
+  const garbageTime = (minute: number) => {
+    const lead = Math.abs(result.homeScore - result.awayScore);
+    return (
+      courtV3 &&
+      period < 4 &&
+      (minute >= 42 ? lead >= 16 : minute >= 36 && lead >= 22)
+    );
+  };
   const callTimeout = (team: Team, opponent: Team) => {
     const coach = getCoach(team.config.coach?.id ?? "");
     if (!flow || !coach) return;
@@ -1465,8 +1473,9 @@ export function simulateMatch(
       minute >= 44 && Math.abs(result.homeScore - result.awayScore) <= 12;
     const homeFloor = h.floor,
       awayFloor = a.floor;
-    chooseLineup(h, minute, close, awayFloor);
-    chooseLineup(a, minute, close, homeFloor);
+    const garbage = garbageTime(minute);
+    chooseLineup(h, minute, close, awayFloor, garbage);
+    chooseLineup(a, minute, close, homeFloor, garbage);
     ato = { team, late: reason === "late" };
   };
   const possession = (offense: Team, defense: Team) => {
@@ -2731,12 +2740,8 @@ export function simulateMatch(
           }
           const close =
             minute >= 44 && Math.abs(result.homeScore - result.awayScore) <= 12;
-          const lead = Math.abs(result.homeScore - result.awayScore);
-          // Version 3 garbage time: both coaches empty the bench once a game is decided.
-          const garbage =
-            courtV3 &&
-            period < 4 &&
-            (minute >= 42 ? lead >= 16 : minute >= 36 && lead >= 22);
+          // Version 3 garbage time also applies to timeout substitutions.
+          const garbage = garbageTime(minute);
           const homeFloor = h.floor,
             awayFloor = a.floor;
           chooseLineup(h, minute, close, awayFloor, garbage);
