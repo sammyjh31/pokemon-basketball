@@ -203,8 +203,14 @@ describe("automatic coach training", () => {
         coachTrainingPlans(teams[p.teamId], players)[p.pokemonId],
       );
       expect(p.changes).toEqual(
-        developPlayer(source, {}, 1, state.run.seasonSeed, p.training!.plan)
-          .changes,
+        developPlayer(
+          source,
+          {},
+          1,
+          state.run.seasonSeed,
+          p.training!.plan,
+          teams[0].courtVersion === 3,
+        ).changes,
       );
     }
     expect(
@@ -217,6 +223,8 @@ describe("automatic coach training", () => {
               {},
               1,
               state.run.seasonSeed,
+              undefined,
+              teams[0].courtVersion === 3,
             ).changes,
           ),
       ),
@@ -239,6 +247,7 @@ describe("automatic coach training", () => {
         1,
         state.run.seasonSeed,
         state.franchise.trainingPlans![players[0].pokemonId],
+        teams[0].courtVersion === 3,
       ).changes,
     );
   });
