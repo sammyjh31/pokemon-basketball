@@ -4,55 +4,55 @@
   "node scripts/court-metrics.mjs --court=3 --games=600",
   "node scripts/balance-metrics.mjs --court=2|3 --legends=false|true --seasons=8"
  ],
- "note": "Measured on main e5582dc with trainer coaches, species abilities, chemistry and shared evaluation enabled for both court versions. Multi-season runs develop every player each offseason without trades, free agency or rookie drafts, so they isolate the development formula.",
+ "note": "Measured on main e255fb7 with trainer coaches, species abilities, chemistry, chemistry growth, morale, personalities and shared evaluation enabled for both court versions. Multi-season runs develop every player each offseason without trades, free agency or rookie drafts, so they isolate the development formula.",
  "court": {
   "v2": {
    "courtVersion": 2,
    "games": 600,
    "pace": 101.6,
    "pointsPerTeam": 111.9,
-   "fgPct": 0.469,
+   "fgPct": 0.468,
    "threeRate": 0.372,
-   "threePct": 0.38,
-   "ftRate": 0.249,
-   "tovPct": 0.127,
-   "turnoversPerTeam": 14.24,
-   "stealsPerTeam": 8.36,
-   "assistedPct": 0.562,
-   "assistsPerTeam": 23.3,
-   "foulsPerTeam": 16.1,
-   "foulOutsPerGame": 0.285,
+   "threePct": 0.381,
+   "ftRate": 0.247,
+   "tovPct": 0.126,
+   "turnoversPerTeam": 14.22,
+   "stealsPerTeam": 8.41,
+   "assistedPct": 0.563,
+   "assistsPerTeam": 23.4,
+   "foulsPerTeam": 16,
+   "foulOutsPerGame": 0.255,
    "orbPct": 0.227,
-   "homeWinPct": 0.563,
-   "overtimePct": 0.022,
-   "avgMargin": 15.9,
-   "blowout20Pct": 0.305,
-   "within5Pct": 0.212,
-   "msPerGame": 133.2
+   "homeWinPct": 0.553,
+   "overtimePct": 0.02,
+   "avgMargin": 16.4,
+   "blowout20Pct": 0.31,
+   "within5Pct": 0.162,
+   "msPerGame": 60.1
   },
   "v3": {
    "courtVersion": 3,
    "games": 600,
    "pace": 101.6,
-   "pointsPerTeam": 111.2,
-   "fgPct": 0.465,
-   "threeRate": 0.375,
-   "threePct": 0.38,
-   "ftRate": 0.241,
-   "tovPct": 0.126,
-   "turnoversPerTeam": 14.23,
-   "stealsPerTeam": 8.39,
+   "pointsPerTeam": 111,
+   "fgPct": 0.463,
+   "threeRate": 0.376,
+   "threePct": 0.381,
+   "ftRate": 0.243,
+   "tovPct": 0.125,
+   "turnoversPerTeam": 14.11,
+   "stealsPerTeam": 8.34,
    "assistedPct": 0.566,
-   "assistsPerTeam": 23.4,
+   "assistsPerTeam": 23.3,
    "foulsPerTeam": 15.8,
-   "foulOutsPerGame": 0.262,
-   "orbPct": 0.224,
-   "homeWinPct": 0.533,
-   "overtimePct": 0.03,
-   "avgMargin": 11.9,
-   "blowout20Pct": 0.178,
-   "within5Pct": 0.265,
-   "msPerGame": 91.9
+   "foulOutsPerGame": 0.247,
+   "orbPct": 0.223,
+   "homeWinPct": 0.542,
+   "overtimePct": 0.025,
+   "avgMargin": 11.4,
+   "blowout20Pct": 0.158,
+   "within5Pct": 0.257,
+   "msPerGame": 60.2
   }
  },
  "seasons": {
@@ -64,302 +64,302 @@
      "year": 1,
      "ratingSdBefore": 11.07,
      "topRebounders": [
-      "Gyarados 22.3",
-      "Feraligatr 20.1",
-      "Kangaskhan 18.9",
-      "Tyranitar 18.3",
-      "Hitmonlee 16.7"
+      "Gyarados 21.9",
+      "Feraligatr 20.5",
+      "Kangaskhan 19.3",
+      "Miltank 17.7",
+      "Steelix 17.4"
      ],
      "topScorers": [
-      "Gyarados 31.2",
-      "Sneasel 30.6",
-      "Houndoom 29.8",
-      "Furret 29.5",
-      "Typhlosion 29.4"
+      "Sneasel 30.7",
+      "Furret 30.1",
+      "Gyarados 29.1",
+      "Tentacruel 28.8",
+      "Houndoom 28.7"
      ],
-     "mvp": "31.2 PPG · 22.3 RPG · 3.4 APG",
+     "mvp": "29.1 PPG · 21.9 RPG · 3.2 APG",
      "mvpName": "Gyarados",
-     "dpoy": "Aerodactyl",
+     "dpoy": "Crobat",
      "heightRebCorr": 0.63,
      "heightPtsCorr": 0.43,
-     "avgMargin": 16.1,
-     "blowout20Pct": 0.324,
-     "within5Pct": 0.196,
-     "overtimePct": 0.021,
-     "winsSd": 11.1,
-     "reboundsPerTeam": 50.1,
-     "pointsPerTeam": 111.9,
+     "avgMargin": 15,
+     "blowout20Pct": 0.291,
+     "within5Pct": 0.216,
+     "overtimePct": 0.025,
+     "winsSd": 10.8,
+     "reboundsPerTeam": 50.4,
+     "pointsPerTeam": 111.7,
      "topMinutes": [
-      "Tyranitar 42.9",
-      "Ninetales 42.9",
-      "Steelix 42.1"
+      "Ninetales 42.6",
+      "Steelix 42.5",
+      "Slowking 42.3"
      ],
-     "bestRecord": 78,
-     "worstRecord": 21
+     "bestRecord": 77,
+     "worstRecord": 22
     },
     {
      "year": 2,
-     "ratingSdBefore": 13.16,
+     "ratingSdBefore": 13.15,
      "topRebounders": [
-      "Tentacruel 22.2",
-      "Gyarados 22.2",
-      "Kangaskhan 21.9",
-      "Miltank 20.8",
-      "Aerodactyl 19.7"
+      "Gyarados 22.4",
+      "Kangaskhan 22.3",
+      "Tentacruel 21.8",
+      "Miltank 21.3",
+      "Aerodactyl 20.1"
      ],
      "topScorers": [
-      "Aerodactyl 36",
-      "Tentacruel 33.2",
-      "Gyarados 32.3",
-      "Nidoqueen 31.2",
-      "Kangaskhan 31.2"
+      "Tentacruel 36.6",
+      "Aerodactyl 34.5",
+      "Kangaskhan 32.5",
+      "Gyarados 32.1",
+      "Hitmonlee 31.8"
      ],
-     "mvp": "33.2 PPG · 22.2 RPG · 11.3 APG",
+     "mvp": "36.6 PPG · 21.8 RPG · 10.7 APG",
      "mvpName": "Tentacruel",
-     "dpoy": "Aerodactyl",
+     "dpoy": "Poliwrath",
      "heightRebCorr": 0.56,
      "heightPtsCorr": 0.39,
-     "avgMargin": 16.1,
-     "blowout20Pct": 0.34,
-     "within5Pct": 0.183,
-     "overtimePct": 0.022,
-     "winsSd": 12.1,
-     "reboundsPerTeam": 49.7,
-     "pointsPerTeam": 112.7,
+     "avgMargin": 16,
+     "blowout20Pct": 0.316,
+     "within5Pct": 0.197,
+     "overtimePct": 0.023,
+     "winsSd": 11.3,
+     "reboundsPerTeam": 50,
+     "pointsPerTeam": 112.9,
      "topMinutes": [
-      "Raichu 43.4",
-      "Kangaskhan 43.2",
-      "Politoed 43.1"
+      "Raichu 43.5",
+      "Kangaskhan 43.3",
+      "Miltank 43.2"
      ],
      "bestRecord": 68,
-     "worstRecord": 19
+     "worstRecord": 20
     },
     {
      "year": 3,
-     "ratingSdBefore": 15.57,
+     "ratingSdBefore": 15.53,
      "topRebounders": [
-      "Kangaskhan 24.2",
-      "Gyarados 23.5",
-      "Nidoqueen 22.4",
-      "Miltank 22.4",
-      "Kingdra 22.1"
+      "Kangaskhan 24.3",
+      "Gyarados 23.8",
+      "Miltank 23.6",
+      "Tentacruel 23",
+      "Nidoqueen 22.9"
      ],
      "topScorers": [
-      "Crobat 46.4",
-      "Jynx 44.2",
-      "Gyarados 41.6",
-      "Kangaskhan 41.2",
-      "Kingdra 38.6"
+      "Jynx 47.5",
+      "Crobat 43.5",
+      "Kangaskhan 40.8",
+      "Gyarados 40.8",
+      "Tentacruel 37.9"
      ],
-     "mvp": "46.4 PPG · 18.2 RPG · 6.9 APG",
-     "mvpName": "Crobat",
-     "dpoy": "Aerodactyl",
+     "mvp": "37.9 PPG · 23.0 RPG · 11.6 APG",
+     "mvpName": "Tentacruel",
+     "dpoy": "Poliwrath",
      "heightRebCorr": 0.52,
-     "heightPtsCorr": 0.38,
-     "avgMargin": 17.4,
-     "blowout20Pct": 0.358,
-     "within5Pct": 0.184,
-     "overtimePct": 0.01,
-     "winsSd": 15.5,
-     "reboundsPerTeam": 49.6,
-     "pointsPerTeam": 114.7,
+     "heightPtsCorr": 0.36,
+     "avgMargin": 17.9,
+     "blowout20Pct": 0.38,
+     "within5Pct": 0.173,
+     "overtimePct": 0.02,
+     "winsSd": 15.4,
+     "reboundsPerTeam": 49.7,
+     "pointsPerTeam": 115.3,
      "topMinutes": [
       "Kangaskhan 44.2",
-      "Miltank 43.8",
-      "Poliwrath 43.6"
+      "Poliwrath 43.7",
+      "Miltank 43.7"
      ],
-     "bestRecord": 73,
-     "worstRecord": 11
+     "bestRecord": 71,
+     "worstRecord": 8
     },
     {
      "year": 4,
-     "ratingSdBefore": 17.56,
+     "ratingSdBefore": 17.51,
      "topRebounders": [
-      "Miltank 27.2",
+      "Miltank 28.7",
       "Nidoqueen 26.9",
-      "Gyarados 26.2",
-      "Dewgong 24.7",
-      "Kangaskhan 24.4"
+      "Kangaskhan 24.9",
+      "Gyarados 24.8",
+      "Dewgong 23.4"
      ],
      "topScorers": [
-      "Nidoqueen 55.2",
-      "Gyarados 46",
-      "Alakazam 42.9",
-      "Kangaskhan 42.4",
-      "Miltank 42.2"
+      "Nidoqueen 53.7",
+      "Gyarados 46.5",
+      "Miltank 42.3",
+      "Kangaskhan 41.4",
+      "Haunter 39.8"
      ],
-     "mvp": "55.2 PPG · 26.9 RPG · 9.8 APG",
+     "mvp": "53.7 PPG · 26.9 RPG · 10.6 APG",
      "mvpName": "Nidoqueen",
-     "dpoy": "Nidoqueen",
-     "heightRebCorr": 0.51,
-     "heightPtsCorr": 0.37,
-     "avgMargin": 18.8,
-     "blowout20Pct": 0.418,
-     "within5Pct": 0.17,
-     "overtimePct": 0.019,
-     "winsSd": 16.1,
-     "reboundsPerTeam": 49.8,
+     "dpoy": "Miltank",
+     "heightRebCorr": 0.5,
+     "heightPtsCorr": 0.36,
+     "avgMargin": 19.2,
+     "blowout20Pct": 0.436,
+     "within5Pct": 0.161,
+     "overtimePct": 0.016,
+     "winsSd": 16.4,
+     "reboundsPerTeam": 49.5,
      "pointsPerTeam": 116,
      "topMinutes": [
-      "Miltank 44.9",
-      "Kangaskhan 44.1",
-      "Politoed 44"
+      "Nidoqueen 45.1",
+      "Miltank 44.7",
+      "Poliwrath 44.1"
      ],
-     "bestRecord": 68,
-     "worstRecord": 11
+     "bestRecord": 70,
+     "worstRecord": 10
     },
     {
      "year": 5,
-     "ratingSdBefore": 19.03,
+     "ratingSdBefore": 18.92,
      "topRebounders": [
-      "Nidoqueen 28",
-      "Gyarados 26.1",
-      "Kangaskhan 25.6",
-      "Dewgong 25.2",
-      "Aerodactyl 24.9"
+      "Nidoqueen 27.5",
+      "Kangaskhan 26.7",
+      "Gyarados 26.2",
+      "Dewgong 24.9",
+      "Miltank 24.5"
      ],
      "topScorers": [
-      "Nidoqueen 61.4",
-      "Politoed 56",
-      "Gyarados 55",
-      "Jynx 47.7",
-      "Blastoise 45.3"
+      "Politoed 64.9",
+      "Nidoqueen 64.6",
+      "Gyarados 57.7",
+      "Jynx 48.2",
+      "Blastoise 47.1"
      ],
-     "mvp": "61.4 PPG · 28.0 RPG · 8.9 APG",
+     "mvp": "64.6 PPG · 27.5 RPG · 9.6 APG",
      "mvpName": "Nidoqueen",
      "dpoy": "Gyarados",
      "heightRebCorr": 0.49,
-     "heightPtsCorr": 0.34,
-     "avgMargin": 18.9,
-     "blowout20Pct": 0.404,
-     "within5Pct": 0.172,
-     "overtimePct": 0.013,
-     "winsSd": 14.6,
-     "reboundsPerTeam": 49.1,
-     "pointsPerTeam": 118.1,
+     "heightPtsCorr": 0.35,
+     "avgMargin": 19.2,
+     "blowout20Pct": 0.415,
+     "within5Pct": 0.156,
+     "overtimePct": 0.02,
+     "winsSd": 17.5,
+     "reboundsPerTeam": 49.2,
+     "pointsPerTeam": 117.8,
      "topMinutes": [
-      "Nidoqueen 45.2",
-      "Kangaskhan 44.6",
-      "Politoed 44.6"
+      "Nidoqueen 45.1",
+      "Politoed 44.9",
+      "Dewgong 44.6"
      ],
-     "bestRecord": 67,
+     "bestRecord": 73,
      "worstRecord": 4
     },
     {
      "year": 6,
-     "ratingSdBefore": 20.22,
+     "ratingSdBefore": 20.18,
      "topRebounders": [
-      "Kangaskhan 27.8",
-      "Nidoqueen 27.3",
-      "Dewgong 26.9",
-      "Aerodactyl 25.8",
-      "Gyarados 24.9"
+      "Kangaskhan 27.3",
+      "Dewgong 27",
+      "Nidoqueen 26.8",
+      "Gyarados 26.4",
+      "Aerodactyl 25.7"
      ],
      "topScorers": [
-      "Blastoise 65.2",
-      "Politoed 64.1",
-      "Nidoqueen 58",
-      "Gyarados 57.8",
-      "Golduck 56.2"
+      "Blastoise 69.2",
+      "Politoed 66.6",
+      "Gyarados 61.8",
+      "Nidoqueen 61.8",
+      "Golduck 56.7"
      ],
-     "mvp": "65.2 PPG · 23.3 RPG · 8.4 APG",
+     "mvp": "69.2 PPG · 24.0 RPG · 7.9 APG",
      "mvpName": "Blastoise",
-     "dpoy": "Nidoqueen",
-     "heightRebCorr": 0.48,
-     "heightPtsCorr": 0.34,
-     "avgMargin": 19.4,
-     "blowout20Pct": 0.42,
-     "within5Pct": 0.141,
-     "overtimePct": 0.011,
-     "winsSd": 15.1,
-     "reboundsPerTeam": 48.8,
-     "pointsPerTeam": 118.9,
-     "topMinutes": [
-      "Politoed 45.6",
-      "Dewgong 44.9",
-      "Kangaskhan 44.9"
-     ],
-     "bestRecord": 68,
-     "worstRecord": 3
-    },
-    {
-     "year": 7,
-     "ratingSdBefore": 21.13,
-     "topRebounders": [
-      "Kangaskhan 26.8",
-      "Gyarados 26.3",
-      "Hitmonlee 24.4",
-      "Miltank 24.2",
-      "Nidoqueen 23.9"
-     ],
-     "topScorers": [
-      "Blastoise 71.1",
-      "Jynx 70.9",
-      "Politoed 67.2",
-      "Golduck 62.8",
-      "Gyarados 58.2"
-     ],
-     "mvp": "71.1 PPG · 23.5 RPG · 8.4 APG",
-     "mvpName": "Blastoise",
-     "dpoy": "Gyarados",
-     "heightRebCorr": 0.48,
-     "heightPtsCorr": 0.32,
-     "avgMargin": 20.3,
-     "blowout20Pct": 0.446,
-     "within5Pct": 0.153,
-     "overtimePct": 0.019,
-     "winsSd": 17.5,
+     "dpoy": "Aerodactyl",
+     "heightRebCorr": 0.49,
+     "heightPtsCorr": 0.35,
+     "avgMargin": 19.9,
+     "blowout20Pct": 0.441,
+     "within5Pct": 0.154,
+     "overtimePct": 0.015,
+     "winsSd": 17.2,
      "reboundsPerTeam": 48.7,
      "pointsPerTeam": 119.5,
      "topMinutes": [
       "Politoed 45.4",
-      "Kangaskhan 44.4",
-      "Blastoise 44.4"
+      "Kangaskhan 44.9",
+      "Dewgong 44.6"
      ],
-     "bestRecord": 73,
-     "worstRecord": 7
+     "bestRecord": 78,
+     "worstRecord": 4
+    },
+    {
+     "year": 7,
+     "ratingSdBefore": 21.04,
+     "topRebounders": [
+      "Kangaskhan 27.6",
+      "Hitmonlee 26.5",
+      "Gyarados 26.1",
+      "Nidoqueen 24.5",
+      "Miltank 24.4"
+     ],
+     "topScorers": [
+      "Blastoise 74.7",
+      "Jynx 67",
+      "Golduck 63.6",
+      "Politoed 62.7",
+      "Gyarados 57.6"
+     ],
+     "mvp": "74.7 PPG · 24.0 RPG · 7.4 APG",
+     "mvpName": "Blastoise",
+     "dpoy": "Gyarados",
+     "heightRebCorr": 0.48,
+     "heightPtsCorr": 0.32,
+     "avgMargin": 20.6,
+     "blowout20Pct": 0.448,
+     "within5Pct": 0.144,
+     "overtimePct": 0.017,
+     "winsSd": 17.4,
+     "reboundsPerTeam": 49,
+     "pointsPerTeam": 119.2,
+     "topMinutes": [
+      "Politoed 45.5",
+      "Kangaskhan 44.8",
+      "Ninetales 44.6"
+     ],
+     "bestRecord": 78,
+     "worstRecord": 6
     },
     {
      "year": 8,
-     "ratingSdBefore": 21.64,
+     "ratingSdBefore": 21.54,
      "topRebounders": [
-      "Hitmonlee 27.5",
-      "Dewgong 26.8",
-      "Gyarados 26.8",
-      "Kangaskhan 25.7",
-      "Nidoqueen 25.6"
+      "Gyarados 27.6",
+      "Dewgong 26.7",
+      "Miltank 26.4",
+      "Kangaskhan 26.3",
+      "Hitmonlee 26.2"
      ],
      "topScorers": [
-      "Blastoise 80.5",
-      "Jynx 65",
-      "Venusaur 64.4",
-      "Nidoqueen 59.2",
-      "Golduck 58.4"
+      "Blastoise 83.1",
+      "Jynx 64.1",
+      "Venusaur 62.2",
+      "Golduck 61.9",
+      "Nidoqueen 58.5"
      ],
-     "mvp": "80.5 PPG · 24.4 RPG · 6.5 APG",
+     "mvp": "83.1 PPG · 23.9 RPG · 6.8 APG",
      "mvpName": "Blastoise",
-     "dpoy": "Gyarados",
+     "dpoy": "Venusaur",
      "heightRebCorr": 0.46,
      "heightPtsCorr": 0.32,
-     "avgMargin": 19.6,
-     "blowout20Pct": 0.415,
-     "within5Pct": 0.136,
+     "avgMargin": 20.3,
+     "blowout20Pct": 0.435,
+     "within5Pct": 0.163,
      "overtimePct": 0.015,
-     "winsSd": 16.5,
-     "reboundsPerTeam": 48.8,
-     "pointsPerTeam": 120.3,
+     "winsSd": 17.6,
+     "reboundsPerTeam": 48.7,
+     "pointsPerTeam": 120.8,
      "topMinutes": [
-      "Politoed 45.4",
-      "Venusaur 44.8",
-      "Dewgong 44.5"
+      "Kangaskhan 45",
+      "Politoed 45",
+      "Venusaur 44.6"
      ],
-     "bestRecord": 71,
-     "worstRecord": 11
+     "bestRecord": 74,
+     "worstRecord": 10
     }
    ],
    "ratingSd": {
     "initial": 11.07,
-    "final": 21.64
+    "final": 21.54
    },
    "largestOffsets": [
     {
@@ -389,9 +389,7 @@
      "name": "Golduck",
      "gain": 30,
      "dev": {
-      "finishing": 30,
       "perimeterDefense": 30,
-      "threePoint": 30,
       "midRange": 30,
       "freeThrow": 30,
       "ballHandling": 30,
@@ -400,12 +398,14 @@
       "strength": 30,
       "stamina": 30,
       "vertical": 30,
-      "steal": 30,
       "block": 30,
+      "offensiveRebound": 30,
       "defensiveRebound": 30,
       "composure": 30,
+      "finishing": 30,
       "interiorDefense": 30,
-      "offensiveRebound": 30
+      "threePoint": 30,
+      "steal": 30
      }
     },
     {
@@ -422,7 +422,7 @@
       "passing": 30,
       "speed": 30,
       "strength": 30,
-      "stamina": 28,
+      "stamina": 29,
       "vertical": 30,
       "steal": 30,
       "block": 30,
@@ -433,14 +433,14 @@
     }
    ],
    "meanAnnualDelta": {
-    "starters28": 0.57,
-    "mid15to28": -1.15,
-    "deepUnder15": -1.38
+    "starters28": 0.56,
+    "mid15to28": -0.99,
+    "deepUnder15": -1.49
    },
    "cumulativeDelta": {
-    "starters28": 4,
-    "mid15to28": -8,
-    "deepUnder15": -9.7
+    "starters28": 3.9,
+    "mid15to28": -6.9,
+    "deepUnder15": -10.4
    }
   },
   "v2-legends-true": {
@@ -451,302 +451,302 @@
      "year": 1,
      "ratingSdBefore": 10.32,
      "topRebounders": [
-      "Mewtwo 20.1",
-      "Ho-Oh 19.4",
-      "Arbok 19.4",
-      "Gyarados 19.2",
-      "Moltres 18.7"
+      "Moltres 20.2",
+      "Mewtwo 19.8",
+      "Arbok 19.1",
+      "Gyarados 18.7",
+      "Ho-Oh 18.6"
      ],
      "topScorers": [
-      "Typhlosion 38.5",
-      "Aerodactyl 36",
-      "Lugia 34.9",
-      "Ho-Oh 33.3",
-      "Dragonair 32.1"
+      "Typhlosion 36.7",
+      "Aerodactyl 35.9",
+      "Arcanine 31.7",
+      "Ho-Oh 31.7",
+      "Dragonair 31.6"
      ],
-     "mvp": "23.1 PPG · 20.1 RPG · 15.2 APG",
+     "mvp": "22.9 PPG · 19.8 RPG · 14.9 APG",
      "mvpName": "Mewtwo",
      "dpoy": "Lugia",
-     "heightRebCorr": 0.62,
-     "heightPtsCorr": 0.43,
-     "avgMargin": 16.1,
-     "blowout20Pct": 0.317,
-     "within5Pct": 0.191,
-     "overtimePct": 0.02,
-     "winsSd": 10.3,
-     "reboundsPerTeam": 49.9,
-     "pointsPerTeam": 112.6,
+     "heightRebCorr": 0.61,
+     "heightPtsCorr": 0.42,
+     "avgMargin": 15.8,
+     "blowout20Pct": 0.304,
+     "within5Pct": 0.211,
+     "overtimePct": 0.023,
+     "winsSd": 10.1,
+     "reboundsPerTeam": 50.2,
+     "pointsPerTeam": 112.7,
      "topMinutes": [
-      "Ho-Oh 43",
+      "Ho-Oh 43.3",
       "Mewtwo 42.6",
-      "Suicune 42.4"
+      "Lugia 42.5"
      ],
-     "bestRecord": 75,
-     "worstRecord": 22
+     "bestRecord": 78,
+     "worstRecord": 21
     },
     {
      "year": 2,
-     "ratingSdBefore": 12.55,
+     "ratingSdBefore": 12.52,
      "topRebounders": [
-      "Moltres 22.9",
-      "Ho-Oh 22.7",
-      "Gyarados 22",
-      "Rapidash 21.3",
-      "Aerodactyl 21"
+      "Moltres 23.4",
+      "Ho-Oh 21.9",
+      "Gyarados 20.8",
+      "Rapidash 20.4",
+      "Aerodactyl 19.9"
      ],
      "topScorers": [
-      "Ho-Oh 58.7",
-      "Articuno 39.8",
-      "Tauros 38.4",
-      "Lugia 38",
-      "Moltres 35.6"
+      "Ho-Oh 57.9",
+      "Articuno 40.5",
+      "Tauros 37.7",
+      "Moltres 36.7",
+      "Jynx 35.6"
      ],
-     "mvp": "58.7 PPG · 22.7 RPG · 8.4 APG",
+     "mvp": "57.9 PPG · 21.9 RPG · 7.9 APG",
      "mvpName": "Ho-Oh",
-     "dpoy": "Ho-Oh",
-     "heightRebCorr": 0.58,
+     "dpoy": "Lugia",
+     "heightRebCorr": 0.57,
      "heightPtsCorr": 0.4,
-     "avgMargin": 16.5,
-     "blowout20Pct": 0.328,
-     "within5Pct": 0.167,
-     "overtimePct": 0.015,
-     "winsSd": 13,
-     "reboundsPerTeam": 49.6,
-     "pointsPerTeam": 113.8,
+     "avgMargin": 16,
+     "blowout20Pct": 0.322,
+     "within5Pct": 0.193,
+     "overtimePct": 0.02,
+     "winsSd": 13.3,
+     "reboundsPerTeam": 49.8,
+     "pointsPerTeam": 113.7,
      "topMinutes": [
-      "Ho-Oh 44.2",
       "Poliwrath 43.4",
-      "Suicune 43.3"
+      "Tentacruel 43.3",
+      "Ho-Oh 43.2"
      ],
-     "bestRecord": 70,
-     "worstRecord": 18
+     "bestRecord": 71,
+     "worstRecord": 22
     },
     {
      "year": 3,
-     "ratingSdBefore": 14.97,
+     "ratingSdBefore": 14.89,
      "topRebounders": [
-      "Moltres 25.5",
-      "Gyarados 24.1",
-      "Poliwrath 22.3",
-      "Hitmonchan 22",
-      "Ho-Oh 22"
+      "Moltres 26.2",
+      "Gyarados 24.2",
+      "Aerodactyl 22.3",
+      "Ho-Oh 22.1",
+      "Poliwrath 21.9"
      ],
      "topScorers": [
-      "Articuno 57.5",
-      "Ho-Oh 56.4",
-      "Moltres 52.5",
-      "Jynx 48.1",
-      "Politoed 43.3"
+      "Articuno 59.5",
+      "Ho-Oh 56.8",
+      "Moltres 56.5",
+      "Jynx 53",
+      "Politoed 40.9"
      ],
-     "mvp": "52.5 PPG · 25.5 RPG · 10.7 APG",
+     "mvp": "56.5 PPG · 26.2 RPG · 10.6 APG",
      "mvpName": "Moltres",
      "dpoy": "Moltres",
      "heightRebCorr": 0.51,
      "heightPtsCorr": 0.34,
-     "avgMargin": 17.2,
-     "blowout20Pct": 0.346,
-     "within5Pct": 0.168,
-     "overtimePct": 0.02,
-     "winsSd": 14,
-     "reboundsPerTeam": 49.3,
-     "pointsPerTeam": 116.5,
+     "avgMargin": 16.6,
+     "blowout20Pct": 0.341,
+     "within5Pct": 0.191,
+     "overtimePct": 0.012,
+     "winsSd": 14.3,
+     "reboundsPerTeam": 49.6,
+     "pointsPerTeam": 116.3,
      "topMinutes": [
-      "Ho-Oh 44.3",
-      "Poliwrath 44.2",
-      "Moltres 43.9"
+      "Poliwrath 44.5",
+      "Moltres 44.4",
+      "Ho-Oh 44.2"
      ],
-     "bestRecord": 62,
-     "worstRecord": 17
+     "bestRecord": 64,
+     "worstRecord": 18
     },
     {
      "year": 4,
-     "ratingSdBefore": 17.04,
+     "ratingSdBefore": 16.97,
      "topRebounders": [
-      "Moltres 27.4",
-      "Gyarados 26.3",
-      "Mewtwo 23.8",
-      "Aerodactyl 23.4",
-      "Ho-Oh 22.6"
+      "Moltres 28.6",
+      "Gyarados 26.4",
+      "Aerodactyl 23.8",
+      "Raikou 22.9",
+      "Mewtwo 22.8"
      ],
      "topScorers": [
-      "Articuno 65.9",
-      "Moltres 64.1",
-      "Politoed 58.2",
-      "Ho-Oh 49.4",
-      "Jynx 44.5"
+      "Articuno 69.7",
+      "Moltres 63.6",
+      "Politoed 53.3",
+      "Ho-Oh 50.1",
+      "Jynx 46"
      ],
-     "mvp": "64.1 PPG · 27.4 RPG · 11.5 APG",
+     "mvp": "63.6 PPG · 28.6 RPG · 11.1 APG",
      "mvpName": "Moltres",
      "dpoy": "Moltres",
-     "heightRebCorr": 0.5,
-     "heightPtsCorr": 0.33,
-     "avgMargin": 19.1,
-     "blowout20Pct": 0.428,
-     "within5Pct": 0.141,
-     "overtimePct": 0.015,
+     "heightRebCorr": 0.49,
+     "heightPtsCorr": 0.34,
+     "avgMargin": 18.9,
+     "blowout20Pct": 0.394,
+     "within5Pct": 0.159,
+     "overtimePct": 0.014,
      "winsSd": 16.6,
-     "reboundsPerTeam": 49.4,
-     "pointsPerTeam": 117.9,
+     "reboundsPerTeam": 49.2,
+     "pointsPerTeam": 118,
      "topMinutes": [
-      "Moltres 44.5",
-      "Gyarados 44.5",
-      "Mewtwo 44.1"
+      "Gyarados 44.8",
+      "Moltres 44.7",
+      "Poliwrath 44.5"
      ],
-     "bestRecord": 71,
+     "bestRecord": 68,
      "worstRecord": 14
     },
     {
      "year": 5,
-     "ratingSdBefore": 18.53,
+     "ratingSdBefore": 18.52,
      "topRebounders": [
-      "Mewtwo 26.2",
-      "Gyarados 25.7",
-      "Aerodactyl 25.4",
-      "Moltres 24.7",
-      "Raikou 24.2"
+      "Aerodactyl 26.1",
+      "Moltres 25.3",
+      "Mewtwo 25",
+      "Gyarados 24.5",
+      "Raikou 24"
      ],
      "topScorers": [
-      "Politoed 69",
-      "Jynx 58.4",
-      "Moltres 55.9",
-      "Articuno 55",
-      "Mewtwo 53.3"
+      "Politoed 74.2",
+      "Jynx 61.2",
+      "Articuno 60.3",
+      "Moltres 59.5",
+      "Mewtwo 53.7"
      ],
-     "mvp": "53.3 PPG · 26.2 RPG · 14.5 APG",
-     "mvpName": "Mewtwo",
+     "mvp": "74.2 PPG · 18.7 RPG · 7.8 APG",
+     "mvpName": "Politoed",
      "dpoy": "Kangaskhan",
-     "heightRebCorr": 0.46,
+     "heightRebCorr": 0.45,
      "heightPtsCorr": 0.32,
-     "avgMargin": 19.7,
-     "blowout20Pct": 0.437,
-     "within5Pct": 0.162,
-     "overtimePct": 0.019,
-     "winsSd": 17.1,
-     "reboundsPerTeam": 48.8,
-     "pointsPerTeam": 119.2,
+     "avgMargin": 19.2,
+     "blowout20Pct": 0.41,
+     "within5Pct": 0.175,
+     "overtimePct": 0.02,
+     "winsSd": 16.6,
+     "reboundsPerTeam": 48.9,
+     "pointsPerTeam": 119.4,
      "topMinutes": [
-      "Mewtwo 45.1",
-      "Gyarados 44.8",
-      "Poliwrath 44.6"
+      "Poliwrath 44.7",
+      "Mewtwo 44.4",
+      "Dragonair 44.4"
      ],
-     "bestRecord": 74,
-     "worstRecord": 13
+     "bestRecord": 71,
+     "worstRecord": 15
     },
     {
      "year": 6,
-     "ratingSdBefore": 19.75,
+     "ratingSdBefore": 19.74,
      "topRebounders": [
-      "Aerodactyl 26.6",
-      "Mewtwo 26.3",
-      "Moltres 26.3",
-      "Gyarados 25.2",
-      "Venusaur 24.6"
-     ],
-     "topScorers": [
-      "Moltres 66",
-      "Politoed 62.9",
-      "Articuno 58.1",
-      "Poliwrath 55.7",
-      "Blastoise 55.5"
-     ],
-     "mvp": "66.0 PPG · 26.3 RPG · 11.4 APG",
-     "mvpName": "Moltres",
-     "dpoy": "Moltres",
-     "heightRebCorr": 0.45,
-     "heightPtsCorr": 0.32,
-     "avgMargin": 19.7,
-     "blowout20Pct": 0.424,
-     "within5Pct": 0.144,
-     "overtimePct": 0.02,
-     "winsSd": 17.1,
-     "reboundsPerTeam": 48.5,
-     "pointsPerTeam": 120.4,
-     "topMinutes": [
-      "Mewtwo 45.1",
-      "Moltres 44.6",
-      "Politoed 44.2"
-     ],
-     "bestRecord": 77,
-     "worstRecord": 13
-    },
-    {
-     "year": 7,
-     "ratingSdBefore": 20.85,
-     "topRebounders": [
-      "Aerodactyl 29.5",
-      "Gyarados 27",
+      "Mewtwo 27.1",
+      "Aerodactyl 26.7",
       "Moltres 26.6",
-      "Venusaur 26.2",
-      "Mewtwo 25.2"
+      "Gyarados 25.9",
+      "Venusaur 24.4"
      ],
      "topScorers": [
-      "Moltres 72.3",
-      "Jynx 64.7",
-      "Blastoise 64.5",
-      "Politoed 61.2",
-      "Ho-Oh 58"
+      "Politoed 67.8",
+      "Moltres 65.5",
+      "Jynx 62.3",
+      "Articuno 59.1",
+      "Blastoise 56.6"
      ],
-     "mvp": "72.3 PPG · 26.6 RPG · 10.7 APG",
+     "mvp": "65.5 PPG · 26.6 RPG · 10.5 APG",
      "mvpName": "Moltres",
      "dpoy": "Moltres",
      "heightRebCorr": 0.45,
      "heightPtsCorr": 0.33,
-     "avgMargin": 19.4,
-     "blowout20Pct": 0.419,
-     "within5Pct": 0.154,
-     "overtimePct": 0.011,
-     "winsSd": 15.8,
+     "avgMargin": 20.5,
+     "blowout20Pct": 0.45,
+     "within5Pct": 0.143,
+     "overtimePct": 0.013,
+     "winsSd": 17.3,
      "reboundsPerTeam": 48.5,
-     "pointsPerTeam": 121.4,
+     "pointsPerTeam": 121,
      "topMinutes": [
       "Mewtwo 44.9",
-      "Moltres 44.6",
-      "Aerodactyl 44.6"
+      "Politoed 44.6",
+      "Aerodactyl 44.5"
      ],
-     "bestRecord": 75,
-     "worstRecord": 7
+     "bestRecord": 74,
+     "worstRecord": 10
+    },
+    {
+     "year": 7,
+     "ratingSdBefore": 20.8,
+     "topRebounders": [
+      "Aerodactyl 27.3",
+      "Gyarados 26.7",
+      "Moltres 25.9",
+      "Raikou 25.9",
+      "Venusaur 25.8"
+     ],
+     "topScorers": [
+      "Moltres 73.1",
+      "Blastoise 68.5",
+      "Politoed 64.9",
+      "Jynx 62.7",
+      "Ho-Oh 56.3"
+     ],
+     "mvp": "73.1 PPG · 25.9 RPG · 9.5 APG",
+     "mvpName": "Moltres",
+     "dpoy": "Moltres",
+     "heightRebCorr": 0.44,
+     "heightPtsCorr": 0.32,
+     "avgMargin": 21.1,
+     "blowout20Pct": 0.46,
+     "within5Pct": 0.128,
+     "overtimePct": 0.012,
+     "winsSd": 17,
+     "reboundsPerTeam": 48.6,
+     "pointsPerTeam": 121.2,
+     "topMinutes": [
+      "Ho-Oh 44.9",
+      "Poliwrath 44.8",
+      "Pupitar 44.7"
+     ],
+     "bestRecord": 77,
+     "worstRecord": 9
     },
     {
      "year": 8,
-     "ratingSdBefore": 21.41,
+     "ratingSdBefore": 21.35,
      "topRebounders": [
-      "Aerodactyl 27.9",
-      "Venusaur 26.4",
-      "Gyarados 25.8",
-      "Mewtwo 25.6",
-      "Raikou 25.4"
+      "Aerodactyl 27.6",
+      "Venusaur 26",
+      "Moltres 25.6",
+      "Mewtwo 25.5",
+      "Gyarados 25.4"
      ],
      "topScorers": [
-      "Articuno 73",
-      "Moltres 69.7",
-      "Venusaur 63",
-      "Jynx 61.4",
-      "Blastoise 60"
+      "Moltres 73.6",
+      "Articuno 71.8",
+      "Venusaur 66.5",
+      "Blastoise 65.2",
+      "Jynx 65.1"
      ],
-     "mvp": "69.7 PPG · 25.1 RPG · 8.7 APG",
+     "mvp": "73.6 PPG · 25.6 RPG · 9.0 APG",
      "mvpName": "Moltres",
-     "dpoy": "Venusaur",
+     "dpoy": "Moltres",
      "heightRebCorr": 0.45,
-     "heightPtsCorr": 0.36,
+     "heightPtsCorr": 0.34,
      "avgMargin": 20.5,
-     "blowout20Pct": 0.438,
-     "within5Pct": 0.141,
-     "overtimePct": 0.007,
-     "winsSd": 16.7,
-     "reboundsPerTeam": 48.5,
-     "pointsPerTeam": 121.3,
+     "blowout20Pct": 0.442,
+     "within5Pct": 0.149,
+     "overtimePct": 0.019,
+     "winsSd": 16.6,
+     "reboundsPerTeam": 48.4,
+     "pointsPerTeam": 121.8,
      "topMinutes": [
-      "Mewtwo 45",
-      "Gyarados 44.4",
-      "Politoed 44.4"
+      "Mewtwo 44.7",
+      "Articuno 44.4",
+      "Politoed 44.3"
      ],
-     "bestRecord": 72,
-     "worstRecord": 6
+     "bestRecord": 71,
+     "worstRecord": 7
     }
    ],
    "ratingSd": {
     "initial": 10.32,
-    "final": 21.41
+    "final": 21.35
    },
    "largestOffsets": [
     {
@@ -773,11 +773,13 @@
      }
     },
     {
-     "name": "Golduck",
-     "gain": 30,
+     "name": "Aipom",
+     "gain": 29.6,
      "dev": {
       "finishing": 30,
       "perimeterDefense": 30,
+      "interiorDefense": 29,
+      "threePoint": 30,
       "midRange": 30,
       "freeThrow": 30,
       "ballHandling": 30,
@@ -786,48 +788,46 @@
       "strength": 30,
       "stamina": 26,
       "vertical": 30,
-      "block": 30,
-      "defensiveRebound": 30,
-      "composure": 30,
-      "interiorDefense": 30,
-      "threePoint": 30,
       "steal": 30,
-      "offensiveRebound": 30
+      "block": 29,
+      "offensiveRebound": 23,
+      "defensiveRebound": 30,
+      "composure": 30
      }
     },
     {
-     "name": "Aipom",
-     "gain": 29.8,
+     "name": "Golduck",
+     "gain": 29.6,
      "dev": {
       "finishing": 30,
       "perimeterDefense": 30,
-      "interiorDefense": 30,
-      "threePoint": 30,
-      "midRange": 30,
+      "midRange": 29,
       "freeThrow": 30,
       "ballHandling": 30,
       "passing": 30,
       "speed": 30,
       "strength": 30,
-      "stamina": 28,
-      "vertical": 30,
-      "steal": 30,
+      "stamina": 26,
+      "vertical": 29,
       "block": 30,
-      "offensiveRebound": 26,
       "defensiveRebound": 30,
-      "composure": 30
+      "composure": 29,
+      "interiorDefense": 30,
+      "threePoint": 29,
+      "steal": 30,
+      "offensiveRebound": 30
      }
     }
    ],
    "meanAnnualDelta": {
-    "starters28": 0.54,
-    "mid15to28": -1.65,
-    "deepUnder15": -1.45
+    "starters28": 0.48,
+    "mid15to28": -1.42,
+    "deepUnder15": -1.43
    },
    "cumulativeDelta": {
-    "starters28": 3.8,
-    "mid15to28": -11.5,
-    "deepUnder15": -10.2
+    "starters28": 3.4,
+    "mid15to28": -9.9,
+    "deepUnder15": -10
    }
   },
   "v3-legends-false": {
@@ -838,383 +838,383 @@
      "year": 1,
      "ratingSdBefore": 11.07,
      "topRebounders": [
-      "Feraligatr 14.3",
-      "Gyarados 14",
-      "Tyranitar 13.9",
-      "Kangaskhan 13",
-      "Arcanine 12.6"
+      "Tyranitar 14.1",
+      "Kangaskhan 13.8",
+      "Gyarados 13.7",
+      "Feraligatr 13",
+      "Arcanine 12.7"
      ],
      "topScorers": [
-      "Sneasel 30.5",
-      "Furret 29.3",
-      "Houndoom 27.3",
-      "Dragonair 27",
-      "Xatu 26.7"
+      "Sneasel 30",
+      "Furret 29",
+      "Houndoom 28.1",
+      "Aerodactyl 26.7",
+      "Dragonair 25.9"
      ],
-     "mvp": "27.3 PPG · 10.8 RPG · 6.4 APG",
+     "mvp": "28.1 PPG · 10.3 RPG · 6.5 APG",
      "mvpName": "Houndoom",
-     "dpoy": "Electrode",
+     "dpoy": "Miltank",
      "heightRebCorr": 0.56,
      "heightPtsCorr": 0.37,
-     "avgMargin": 11.9,
-     "blowout20Pct": 0.172,
-     "within5Pct": 0.277,
-     "overtimePct": 0.027,
-     "winsSd": 10.4,
+     "avgMargin": 11.6,
+     "blowout20Pct": 0.157,
+     "within5Pct": 0.278,
+     "overtimePct": 0.028,
+     "winsSd": 11.4,
      "reboundsPerTeam": 50.5,
-     "pointsPerTeam": 110.9,
+     "pointsPerTeam": 111.3,
      "topMinutes": [
-      "Tyranitar 42.5",
-      "Ninetales 42.3",
-      "Politoed 42"
+      "Ninetales 42.5",
+      "Tyranitar 42.2",
+      "Politoed 41.6"
      ],
-     "bestRecord": 76,
-     "worstRecord": 25
+     "bestRecord": 82,
+     "worstRecord": 20
     },
     {
      "year": 2,
-     "ratingSdBefore": 10.82,
+     "ratingSdBefore": 10.8,
      "topRebounders": [
-      "Aerodactyl 14.5",
-      "Kangaskhan 14.1",
-      "Miltank 13.6",
-      "Gyarados 13.5",
-      "Tyranitar 13.5"
+      "Miltank 14.7",
+      "Kangaskhan 14.4",
+      "Tentacruel 14.2",
+      "Aerodactyl 13.8",
+      "Nidoqueen 13.4"
      ],
      "topScorers": [
-      "Qwilfish 28.2",
-      "Poliwhirl 28.2",
-      "Sneasel 28.1",
-      "Aerodactyl 26.3",
-      "Rapidash 26.1"
+      "Poliwhirl 28.8",
+      "Sneasel 28.5",
+      "Weezing 25.9",
+      "Tentacruel 25.9",
+      "Aipom 25.5"
      ],
-     "mvp": "26.3 PPG · 14.5 RPG · 5.1 APG",
-     "mvpName": "Aerodactyl",
-     "dpoy": "Electrode",
-     "heightRebCorr": 0.52,
-     "heightPtsCorr": 0.31,
-     "avgMargin": 10.8,
-     "blowout20Pct": 0.144,
-     "within5Pct": 0.307,
-     "overtimePct": 0.036,
-     "winsSd": 9.5,
+     "mvp": "25.9 PPG · 14.2 RPG · 10.1 APG",
+     "mvpName": "Tentacruel",
+     "dpoy": "Aerodactyl",
+     "heightRebCorr": 0.5,
+     "heightPtsCorr": 0.32,
+     "avgMargin": 11.5,
+     "blowout20Pct": 0.161,
+     "within5Pct": 0.286,
+     "overtimePct": 0.027,
+     "winsSd": 10.5,
      "reboundsPerTeam": 50.6,
-     "pointsPerTeam": 110.5,
+     "pointsPerTeam": 110.7,
      "topMinutes": [
-      "Politoed 43.6",
-      "Raichu 42.5",
-      "Poliwrath 42.3"
+      "Vaporeon 43",
+      "Politoed 42.6",
+      "Kangaskhan 42.3"
      ],
-     "bestRecord": 70,
-     "worstRecord": 27
+     "bestRecord": 73,
+     "worstRecord": 22
     },
     {
      "year": 3,
-     "ratingSdBefore": 11.1,
+     "ratingSdBefore": 11.07,
      "topRebounders": [
-      "Miltank 14.5",
-      "Kingdra 14.1",
-      "Nidoqueen 14",
-      "Kangaskhan 14",
-      "Aerodactyl 13.7"
+      "Kangaskhan 14.6",
+      "Miltank 14.3",
+      "Aerodactyl 14",
+      "Nidoqueen 13.7",
+      "Crobat 13.4"
      ],
      "topScorers": [
-      "Furret 31",
-      "Sneasel 29.1",
-      "Dratini 28.4",
-      "Crobat 28.1",
-      "Venusaur 27.1"
+      "Furret 30.3",
+      "Aerodactyl 28.5",
+      "Venusaur 27.9",
+      "Crobat 27.8",
+      "Sneasel 27.7"
      ],
-     "mvp": "28.1 PPG · 12.5 RPG · 5.1 APG",
-     "mvpName": "Crobat",
-     "dpoy": "Poliwrath",
-     "heightRebCorr": 0.46,
+     "mvp": "28.5 PPG · 14.0 RPG · 6.0 APG",
+     "mvpName": "Aerodactyl",
+     "dpoy": "Aerodactyl",
+     "heightRebCorr": 0.47,
      "heightPtsCorr": 0.28,
-     "avgMargin": 11.8,
-     "blowout20Pct": 0.18,
-     "within5Pct": 0.273,
-     "overtimePct": 0.032,
-     "winsSd": 12.2,
-     "reboundsPerTeam": 50.5,
-     "pointsPerTeam": 110.5,
+     "avgMargin": 11.9,
+     "blowout20Pct": 0.176,
+     "within5Pct": 0.27,
+     "overtimePct": 0.028,
+     "winsSd": 13.5,
+     "reboundsPerTeam": 50.3,
+     "pointsPerTeam": 110.8,
      "topMinutes": [
-      "Politoed 43.2",
-      "Poliwrath 42.5",
-      "Noctowl 42.4"
+      "Politoed 43.4",
+      "Miltank 42.9",
+      "Ninetales 42.3"
      ],
-     "bestRecord": 70,
-     "worstRecord": 14
+     "bestRecord": 73,
+     "worstRecord": 9
     },
     {
      "year": 4,
-     "ratingSdBefore": 11.2,
+     "ratingSdBefore": 11.15,
      "topRebounders": [
-      "Miltank 16.5",
-      "Nidoqueen 15.5",
-      "Gyarados 14.3",
-      "Tyranitar 13.9",
-      "Aerodactyl 13.9"
+      "Miltank 16.7",
+      "Nidoqueen 14.9",
+      "Gyarados 14.7",
+      "Aerodactyl 13.9",
+      "Blastoise 13.8"
      ],
      "topScorers": [
-      "Sneasel 34.7",
-      "Furret 31.9",
-      "Nidoqueen 30.3",
-      "Dragonair 27.9",
-      "Miltank 26.8"
+      "Sneasel 33.2",
+      "Furret 32.8",
+      "Dragonair 31.5",
+      "Stantler 29.6",
+      "Nidoqueen 29.3"
      ],
-     "mvp": "30.3 PPG · 15.5 RPG · 6.7 APG",
+     "mvp": "29.3 PPG · 14.9 RPG · 7.1 APG",
      "mvpName": "Nidoqueen",
      "dpoy": "Miltank",
-     "heightRebCorr": 0.47,
+     "heightRebCorr": 0.46,
      "heightPtsCorr": 0.3,
-     "avgMargin": 11.4,
-     "blowout20Pct": 0.158,
-     "within5Pct": 0.291,
-     "overtimePct": 0.022,
-     "winsSd": 11.9,
+     "avgMargin": 11.5,
+     "blowout20Pct": 0.162,
+     "within5Pct": 0.297,
+     "overtimePct": 0.019,
+     "winsSd": 12,
      "reboundsPerTeam": 50.3,
-     "pointsPerTeam": 110,
+     "pointsPerTeam": 110.3,
      "topMinutes": [
-      "Politoed 43",
-      "Miltank 42.6",
-      "Ninetales 42.1"
+      "Politoed 43.3",
+      "Miltank 43",
+      "Poliwrath 42.8"
      ],
-     "bestRecord": 77,
-     "worstRecord": 25
+     "bestRecord": 72,
+     "worstRecord": 21
     },
     {
      "year": 5,
-     "ratingSdBefore": 11.12,
+     "ratingSdBefore": 11.05,
      "topRebounders": [
-      "Nidoqueen 16.3",
-      "Blastoise 15.1",
-      "Gyarados 14.7",
-      "Kangaskhan 14.6",
-      "Rapidash 14.4"
+      "Nidoqueen 17.2",
+      "Gyarados 15.8",
+      "Kangaskhan 14.8",
+      "Blastoise 14.8",
+      "Rapidash 14.3"
      ],
      "topScorers": [
-      "Sneasel 40.8",
-      "Furret 33.6",
-      "Nidoqueen 32",
-      "Blastoise 30.8",
-      "Poliwhirl 29.6"
+      "Sneasel 41.7",
+      "Furret 34.8",
+      "Nidoqueen 32.4",
+      "Poliwag 29.5",
+      "Venusaur 29.5"
      ],
-     "mvp": "40.8 PPG · 11.4 RPG · 3.1 APG",
-     "mvpName": "Sneasel",
-     "dpoy": "Poliwrath",
+     "mvp": "32.4 PPG · 17.2 RPG · 9.4 APG",
+     "mvpName": "Nidoqueen",
+     "dpoy": "Kangaskhan",
      "heightRebCorr": 0.46,
      "heightPtsCorr": 0.27,
-     "avgMargin": 11.3,
+     "avgMargin": 11.5,
      "blowout20Pct": 0.17,
-     "within5Pct": 0.307,
-     "overtimePct": 0.033,
-     "winsSd": 11.3,
+     "within5Pct": 0.296,
+     "overtimePct": 0.028,
+     "winsSd": 12.1,
      "reboundsPerTeam": 50.1,
-     "pointsPerTeam": 110.5,
+     "pointsPerTeam": 110.7,
      "topMinutes": [
-      "Nidoqueen 43.4",
-      "Ninetales 43",
-      "Politoed 42.8"
+      "Ninetales 42.9",
+      "Politoed 42.8",
+      "Nidoqueen 42.8"
      ],
-     "bestRecord": 64,
-     "worstRecord": 14
+     "bestRecord": 68,
+     "worstRecord": 18
     },
     {
      "year": 6,
-     "ratingSdBefore": 11.27,
+     "ratingSdBefore": 11.2,
      "topRebounders": [
-      "Nidoqueen 17.9",
-      "Kangaskhan 16.5",
-      "Gyarados 15.2",
-      "Dewgong 14.6",
-      "Aerodactyl 14.4"
+      "Nidoqueen 17.2",
+      "Kangaskhan 15.8",
+      "Gyarados 15.6",
+      "Dewgong 14.7",
+      "Aerodactyl 14.5"
      ],
      "topScorers": [
-      "Sneasel 36.4",
-      "Furret 35.1",
-      "Nidoqueen 32.9",
-      "Kangaskhan 30.1",
-      "Raticate 29.7"
+      "Sneasel 37.5",
+      "Furret 36",
+      "Nidoqueen 31.8",
+      "Kangaskhan 31",
+      "Poliwag 29.4"
      ],
-     "mvp": "32.9 PPG · 17.9 RPG · 8.9 APG",
+     "mvp": "31.8 PPG · 17.2 RPG · 9.3 APG",
      "mvpName": "Nidoqueen",
-     "dpoy": "Aerodactyl",
+     "dpoy": "Kangaskhan",
      "heightRebCorr": 0.45,
-     "heightPtsCorr": 0.26,
-     "avgMargin": 11.5,
-     "blowout20Pct": 0.17,
-     "within5Pct": 0.294,
-     "overtimePct": 0.028,
-     "winsSd": 13,
+     "heightPtsCorr": 0.28,
+     "avgMargin": 12.1,
+     "blowout20Pct": 0.184,
+     "within5Pct": 0.241,
+     "overtimePct": 0.031,
+     "winsSd": 12.9,
      "reboundsPerTeam": 50.1,
-     "pointsPerTeam": 110,
+     "pointsPerTeam": 110.5,
      "topMinutes": [
-      "Politoed 43.3",
-      "Ninetales 42.8",
-      "Nidoqueen 42.7"
+      "Politoed 43.5",
+      "Nidoqueen 43.2",
+      "Golduck 42.9"
      ],
-     "bestRecord": 73,
-     "worstRecord": 15
+     "bestRecord": 69,
+     "worstRecord": 18
     },
     {
      "year": 7,
-     "ratingSdBefore": 11.26,
+     "ratingSdBefore": 11.2,
      "topRebounders": [
-      "Kangaskhan 17.4",
-      "Gyarados 17.1",
-      "Golduck 15.2",
-      "Nidoqueen 14.9",
-      "Blastoise 14.7"
+      "Kangaskhan 16.2",
+      "Blastoise 15.8",
+      "Gyarados 15.3",
+      "Golduck 14.6",
+      "Nidoqueen 14.4"
      ],
      "topScorers": [
-      "Poliwhirl 34.4",
-      "Sneasel 34.1",
-      "Raticate 32",
-      "Kangaskhan 30.5",
-      "Venusaur 30.4"
+      "Sneasel 37.8",
+      "Kangaskhan 31.9",
+      "Furret 31.7",
+      "Venusaur 30.8",
+      "Raticate 30.7"
      ],
-     "mvp": "29.8 PPG · 14.7 RPG · 9.0 APG",
+     "mvp": "29.9 PPG · 15.8 RPG · 9.0 APG",
      "mvpName": "Blastoise",
      "dpoy": "Kangaskhan",
-     "heightRebCorr": 0.46,
+     "heightRebCorr": 0.44,
      "heightPtsCorr": 0.28,
-     "avgMargin": 12,
-     "blowout20Pct": 0.183,
-     "within5Pct": 0.276,
-     "overtimePct": 0.029,
-     "winsSd": 13.6,
-     "reboundsPerTeam": 50.5,
-     "pointsPerTeam": 110.2,
+     "avgMargin": 12.4,
+     "blowout20Pct": 0.19,
+     "within5Pct": 0.263,
+     "overtimePct": 0.028,
+     "winsSd": 14.4,
+     "reboundsPerTeam": 50.2,
+     "pointsPerTeam": 110.3,
      "topMinutes": [
+      "Golduck 43.7",
       "Politoed 43.6",
-      "Golduck 43.2",
-      "Ninetales 43"
+      "Kangaskhan 42.4"
      ],
-     "bestRecord": 69,
-     "worstRecord": 17
+     "bestRecord": 79,
+     "worstRecord": 12
     },
     {
      "year": 8,
-     "ratingSdBefore": 11.13,
+     "ratingSdBefore": 11.05,
      "topRebounders": [
-      "Gyarados 16.7",
-      "Hitmonlee 16.3",
-      "Blastoise 15.6",
-      "Kangaskhan 14.4",
-      "Nidoqueen 14.1"
+      "Hitmonlee 16.9",
+      "Gyarados 16.3",
+      "Blastoise 15.4",
+      "Kangaskhan 14.8",
+      "Venusaur 13.7"
      ],
      "topScorers": [
-      "Sneasel 35",
-      "Furret 34.4",
-      "Poliwhirl 32.5",
-      "Houndoom 32",
-      "Gyarados 31.1"
+      "Gyarados 35.5",
+      "Furret 34.3",
+      "Sneasel 33.5",
+      "Houndoom 33",
+      "Hitmonlee 31.2"
      ],
-     "mvp": "30.7 PPG · 15.6 RPG · 10.2 APG",
+     "mvp": "30.7 PPG · 15.4 RPG · 10.2 APG",
      "mvpName": "Blastoise",
-     "dpoy": "Gligar",
-     "heightRebCorr": 0.46,
-     "heightPtsCorr": 0.27,
-     "avgMargin": 12.1,
-     "blowout20Pct": 0.187,
-     "within5Pct": 0.266,
-     "overtimePct": 0.023,
-     "winsSd": 12.9,
+     "dpoy": "Qwilfish",
+     "heightRebCorr": 0.44,
+     "heightPtsCorr": 0.29,
+     "avgMargin": 11.7,
+     "blowout20Pct": 0.176,
+     "within5Pct": 0.282,
+     "overtimePct": 0.035,
+     "winsSd": 13.6,
      "reboundsPerTeam": 50.3,
-     "pointsPerTeam": 110.5,
+     "pointsPerTeam": 110.3,
      "topMinutes": [
-      "Golduck 42.3",
-      "Politoed 42.3",
-      "Miltank 41.9"
+      "Politoed 42.7",
+      "Raichu 42.3",
+      "Ninetales 42.3"
      ],
-     "bestRecord": 71,
-     "worstRecord": 17
+     "bestRecord": 72,
+     "worstRecord": 15
     }
    ],
    "ratingSd": {
     "initial": 11.07,
-    "final": 11.13
+    "final": 11.05
    },
    "largestOffsets": [
     {
      "name": "Caterpie",
-     "gain": 17.5,
+     "gain": 16.9,
      "dev": {
       "finishing": 17,
-      "perimeterDefense": 16,
-      "threePoint": 22,
-      "ballHandling": 21,
+      "threePoint": 21,
+      "ballHandling": 20,
+      "passing": 14,
+      "speed": 17,
       "strength": 18,
       "vertical": 19,
-      "composure": 16,
-      "interiorDefense": 15,
-      "midRange": 17,
-      "freeThrow": 16,
-      "passing": 15,
-      "speed": 17,
-      "stamina": 17,
       "steal": 17,
-      "block": 17,
-      "offensiveRebound": 16,
-      "defensiveRebound": 18
+      "defensiveRebound": 17,
+      "composure": 15,
+      "perimeterDefense": 16,
+      "interiorDefense": 14,
+      "midRange": 16,
+      "freeThrow": 17,
+      "stamina": 15,
+      "block": 15,
+      "offensiveRebound": 15
      }
     },
     {
      "name": "Blastoise",
-     "gain": 15.7,
+     "gain": 15.9,
      "dev": {
       "finishing": 17,
-      "perimeterDefense": 17,
+      "perimeterDefense": 18,
       "interiorDefense": 15,
       "threePoint": 13,
-      "midRange": 14,
-      "freeThrow": 16,
-      "ballHandling": 17,
-      "passing": 14,
-      "speed": 10,
-      "strength": 15,
-      "stamina": 7,
-      "vertical": 15,
+      "midRange": 12,
+      "freeThrow": 17,
+      "ballHandling": 18,
+      "speed": 11,
+      "strength": 16,
+      "stamina": 8,
+      "vertical": 16,
       "steal": 12,
       "block": 10,
-      "offensiveRebound": 15,
+      "offensiveRebound": 16,
       "defensiveRebound": 17,
-      "composure": 15
+      "composure": 14,
+      "passing": 14
      }
     },
     {
-     "name": "Poliwag",
-     "gain": 13.8,
+     "name": "Aipom",
+     "gain": 14.5,
      "dev": {
       "finishing": 13,
-      "perimeterDefense": 12,
-      "interiorDefense": 9,
+      "perimeterDefense": 16,
+      "interiorDefense": 13,
       "threePoint": 16,
-      "midRange": 12,
-      "freeThrow": 11,
-      "ballHandling": 15,
-      "speed": 13,
-      "strength": 11,
-      "stamina": 13,
-      "vertical": 12,
-      "steal": 12,
-      "offensiveRebound": 10,
-      "defensiveRebound": 17,
-      "composure": 12,
-      "passing": 8,
-      "block": 10
+      "midRange": 13,
+      "freeThrow": 15,
+      "ballHandling": 18,
+      "passing": 15,
+      "speed": 14,
+      "strength": 14,
+      "stamina": 9,
+      "vertical": 15,
+      "steal": 16,
+      "block": 13,
+      "offensiveRebound": 11,
+      "defensiveRebound": 16,
+      "composure": 15
      }
     }
    ],
    "meanAnnualDelta": {
-    "starters28": -0.62,
-    "mid15to28": -0.12,
-    "deepUnder15": 1.04
+    "starters28": -0.64,
+    "mid15to28": -0.04,
+    "deepUnder15": 1.11
    },
    "cumulativeDelta": {
-    "starters28": -4.3,
-    "mid15to28": -0.8,
-    "deepUnder15": 7.3
+    "starters28": -4.5,
+    "mid15to28": -0.3,
+    "deepUnder15": 7.8
    }
   },
   "v3-legends-true": {
@@ -1225,383 +1225,383 @@
      "year": 1,
      "ratingSdBefore": 10.32,
      "topRebounders": [
-      "Ho-Oh 15.6",
-      "Mewtwo 14",
-      "Tyranitar 13.7",
-      "Gyarados 13.6",
-      "Moltres 13.6"
+      "Ho-Oh 15.9",
+      "Lugia 13.9",
+      "Mewtwo 13.9",
+      "Gyarados 13.4",
+      "Moltres 13.4"
      ],
      "topScorers": [
-      "Typhlosion 32.9",
-      "Lugia 30.7",
-      "Celebi 30.3",
-      "Dragonair 30.1",
-      "Aerodactyl 29.4"
+      "Typhlosion 33.7",
+      "Dragonair 31.1",
+      "Celebi 30.7",
+      "Lugia 30.3",
+      "Ho-Oh 29.6"
      ],
-     "mvp": "29.2 PPG · 15.6 RPG · 8.8 APG",
-     "mvpName": "Ho-Oh",
+     "mvp": "30.3 PPG · 13.9 RPG · 6.9 APG",
+     "mvpName": "Lugia",
      "dpoy": "Lugia",
-     "heightRebCorr": 0.58,
+     "heightRebCorr": 0.59,
      "heightPtsCorr": 0.38,
-     "avgMargin": 11.2,
-     "blowout20Pct": 0.154,
-     "within5Pct": 0.294,
-     "overtimePct": 0.034,
-     "winsSd": 8.7,
-     "reboundsPerTeam": 50.5,
-     "pointsPerTeam": 112.2,
+     "avgMargin": 10.9,
+     "blowout20Pct": 0.148,
+     "within5Pct": 0.31,
+     "overtimePct": 0.025,
+     "winsSd": 11,
+     "reboundsPerTeam": 50.7,
+     "pointsPerTeam": 111.7,
      "topMinutes": [
-      "Ho-Oh 43.9",
-      "Mew 42.4",
-      "Flareon 42.2"
+      "Ho-Oh 43.4",
+      "Poliwrath 42.1",
+      "Suicune 42"
      ],
-     "bestRecord": 71,
-     "worstRecord": 23
+     "bestRecord": 78,
+     "worstRecord": 26
     },
     {
      "year": 2,
-     "ratingSdBefore": 10.24,
+     "ratingSdBefore": 10.19,
      "topRebounders": [
-      "Ho-Oh 17.4",
-      "Moltres 15",
-      "Articuno 14.1",
-      "Aerodactyl 13.6",
-      "Poliwrath 13.5"
+      "Ho-Oh 16.7",
+      "Lugia 14.3",
+      "Articuno 14.2",
+      "Moltres 13.9",
+      "Aerodactyl 13.9"
      ],
      "topScorers": [
-      "Ho-Oh 36.8",
+      "Ho-Oh 37.7",
       "Typhlosion 31.5",
-      "Celebi 29.9",
-      "Politoed 29.1",
-      "Heracross 28.9"
+      "Heracross 30.7",
+      "Politoed 29.9",
+      "Tauros 27.9"
      ],
-     "mvp": "36.8 PPG · 17.4 RPG · 9.0 APG",
+     "mvp": "37.7 PPG · 16.7 RPG · 8.8 APG",
      "mvpName": "Ho-Oh",
-     "dpoy": "Aerodactyl",
+     "dpoy": "Lugia",
      "heightRebCorr": 0.54,
-     "heightPtsCorr": 0.31,
-     "avgMargin": 11.3,
-     "blowout20Pct": 0.156,
-     "within5Pct": 0.282,
-     "overtimePct": 0.023,
-     "winsSd": 9.5,
-     "reboundsPerTeam": 50.3,
-     "pointsPerTeam": 111.1,
+     "heightPtsCorr": 0.3,
+     "avgMargin": 11.1,
+     "blowout20Pct": 0.146,
+     "within5Pct": 0.292,
+     "overtimePct": 0.032,
+     "winsSd": 11,
+     "reboundsPerTeam": 50.2,
+     "pointsPerTeam": 111.4,
      "topMinutes": [
-      "Ho-Oh 43.1",
-      "Poliwrath 42.7",
-      "Moltres 42.2"
+      "Ho-Oh 43.9",
+      "Tentacruel 42.9",
+      "Poliwrath 42.5"
      ],
-     "bestRecord": 66,
-     "worstRecord": 23
+     "bestRecord": 68,
+     "worstRecord": 20
     },
     {
      "year": 3,
-     "ratingSdBefore": 10.48,
+     "ratingSdBefore": 10.43,
      "topRebounders": [
-      "Ho-Oh 15.9",
-      "Moltres 14.7",
-      "Poliwrath 14.2",
-      "Aerodactyl 14.1",
-      "Gyarados 14.1"
+      "Moltres 16",
+      "Ho-Oh 15.5",
+      "Poliwrath 14.5",
+      "Gyarados 14.3",
+      "Aerodactyl 13.6"
      ],
      "topScorers": [
-      "Kingdra 34.5",
-      "Poliwrath 34.3",
-      "Politoed 32.1",
-      "Jynx 31.9",
-      "Articuno 30.3"
+      "Poliwrath 33.8",
+      "Kingdra 33.2",
+      "Ho-Oh 31.6",
+      "Celebi 30.6",
+      "Crobat 30.1"
      ],
-     "mvp": "34.3 PPG · 14.2 RPG · 6.5 APG",
-     "mvpName": "Poliwrath",
+     "mvp": "30.6 PPG · 10.3 RPG · 9.6 APG",
+     "mvpName": "Celebi",
      "dpoy": "Aerodactyl",
-     "heightRebCorr": 0.48,
+     "heightRebCorr": 0.49,
      "heightPtsCorr": 0.27,
-     "avgMargin": 11.1,
-     "blowout20Pct": 0.137,
-     "within5Pct": 0.273,
-     "overtimePct": 0.024,
-     "winsSd": 11.5,
-     "reboundsPerTeam": 49.9,
-     "pointsPerTeam": 111.9,
+     "avgMargin": 11.4,
+     "blowout20Pct": 0.145,
+     "within5Pct": 0.282,
+     "overtimePct": 0.033,
+     "winsSd": 10.7,
+     "reboundsPerTeam": 50.1,
+     "pointsPerTeam": 111.6,
      "topMinutes": [
-      "Poliwrath 43.1",
-      "Ho-Oh 42.3",
-      "Dragonair 41.7"
+      "Poliwrath 43.3",
+      "Moltres 42.7",
+      "Ho-Oh 42.6"
      ],
-     "bestRecord": 66,
-     "worstRecord": 20
+     "bestRecord": 65,
+     "worstRecord": 18
     },
     {
      "year": 4,
-     "ratingSdBefore": 10.62,
+     "ratingSdBefore": 10.55,
      "topRebounders": [
-      "Moltres 16.3",
-      "Mewtwo 15",
-      "Ho-Oh 14.8",
-      "Gyarados 14.6",
-      "Raikou 14"
+      "Moltres 15.9",
+      "Gyarados 15.9",
+      "Ho-Oh 15.1",
+      "Mewtwo 13.9",
+      "Raikou 13.6"
      ],
      "topScorers": [
-      "Politoed 35.4",
-      "Articuno 33.6",
-      "Sneasel 30",
-      "Furret 29.7",
-      "Dodrio 29.3"
+      "Politoed 35.3",
+      "Articuno 30.8",
+      "Dodrio 29.8",
+      "Moltres 29.4",
+      "Aerodactyl 29.1"
      ],
-     "mvp": "26.9 PPG · 16.3 RPG · 11.5 APG",
+     "mvp": "29.4 PPG · 15.9 RPG · 9.8 APG",
      "mvpName": "Moltres",
-     "dpoy": "Nidoqueen",
+     "dpoy": "Miltank",
      "heightRebCorr": 0.5,
-     "heightPtsCorr": 0.28,
-     "avgMargin": 11.2,
-     "blowout20Pct": 0.153,
-     "within5Pct": 0.28,
-     "overtimePct": 0.026,
-     "winsSd": 10.8,
-     "reboundsPerTeam": 50.1,
-     "pointsPerTeam": 110.9,
+     "heightPtsCorr": 0.29,
+     "avgMargin": 11.6,
+     "blowout20Pct": 0.164,
+     "within5Pct": 0.27,
+     "overtimePct": 0.027,
+     "winsSd": 10.7,
+     "reboundsPerTeam": 49.9,
+     "pointsPerTeam": 110.8,
      "topMinutes": [
-      "Poliwrath 42.9",
-      "Dragonair 42.4",
-      "Suicune 42.3"
+      "Raikou 42.3",
+      "Ho-Oh 42.2",
+      "Poliwrath 41.9"
      ],
-     "bestRecord": 63,
-     "worstRecord": 21
+     "bestRecord": 65,
+     "worstRecord": 24
     },
     {
      "year": 5,
-     "ratingSdBefore": 10.53,
+     "ratingSdBefore": 10.45,
      "topRebounders": [
-      "Mewtwo 15.8",
-      "Aerodactyl 14.6",
-      "Poliwrath 14.6",
-      "Gyarados 14.4",
-      "Venusaur 14.2"
+      "Gyarados 15.2",
+      "Mewtwo 15",
+      "Venusaur 14.2",
+      "Aerodactyl 14.1",
+      "Moltres 14"
      ],
      "topScorers": [
       "Sneasel 39.2",
-      "Poliwrath 33.3",
-      "Poliwhirl 31.1",
-      "Kangaskhan 30.8",
-      "Heracross 30.6"
+      "Kangaskhan 31.6",
+      "Poliwhirl 31.4",
+      "Dragonair 31.1",
+      "Poliwrath 30"
      ],
-     "mvp": "39.2 PPG · 9.6 RPG · 4.8 APG",
+     "mvp": "39.2 PPG · 8.9 RPG · 4.8 APG",
      "mvpName": "Sneasel",
      "dpoy": "Ninetales",
-     "heightRebCorr": 0.45,
-     "heightPtsCorr": 0.24,
-     "avgMargin": 11,
-     "blowout20Pct": 0.143,
-     "within5Pct": 0.298,
-     "overtimePct": 0.031,
-     "winsSd": 11.6,
-     "reboundsPerTeam": 49.9,
-     "pointsPerTeam": 111.3,
+     "heightRebCorr": 0.46,
+     "heightPtsCorr": 0.27,
+     "avgMargin": 11.6,
+     "blowout20Pct": 0.162,
+     "within5Pct": 0.259,
+     "overtimePct": 0.027,
+     "winsSd": 12.3,
+     "reboundsPerTeam": 49.7,
+     "pointsPerTeam": 111.5,
      "topMinutes": [
-      "Ninetales 42.9",
-      "Poliwrath 42.8",
-      "Dragonair 42.6"
+      "Poliwrath 42.6",
+      "Slowbro 42.5",
+      "Dragonair 42.3"
      ],
-     "bestRecord": 66,
-     "worstRecord": 20
+     "bestRecord": 61,
+     "worstRecord": 14
     },
     {
      "year": 6,
      "ratingSdBefore": 10.53,
      "topRebounders": [
-      "Gyarados 15.9",
-      "Aerodactyl 15.6",
-      "Moltres 14.8",
+      "Aerodactyl 15.1",
+      "Gyarados 15.1",
+      "Moltres 14.7",
       "Mewtwo 14.6",
-      "Politoed 13.7"
+      "Entei 14.5"
      ],
      "topScorers": [
-      "Politoed 35.6",
-      "Sneasel 35.3",
-      "Heracross 35.1",
-      "Kangaskhan 34.5",
+      "Politoed 35.9",
+      "Sneasel 35.4",
+      "Heracross 34.4",
+      "Aerodactyl 33.2",
       "Typhlosion 31.5"
      ],
-     "mvp": "35.6 PPG · 13.7 RPG · 9.6 APG",
+     "mvp": "35.9 PPG · 12.9 RPG · 10.1 APG",
      "mvpName": "Politoed",
      "dpoy": "Aerodactyl",
      "heightRebCorr": 0.47,
      "heightPtsCorr": 0.28,
-     "avgMargin": 11.2,
-     "blowout20Pct": 0.16,
-     "within5Pct": 0.303,
-     "overtimePct": 0.033,
-     "winsSd": 11.7,
+     "avgMargin": 11.6,
+     "blowout20Pct": 0.163,
+     "within5Pct": 0.265,
+     "overtimePct": 0.019,
+     "winsSd": 12.3,
      "reboundsPerTeam": 49.9,
-     "pointsPerTeam": 110.8,
+     "pointsPerTeam": 110.5,
      "topMinutes": [
-      "Poliwrath 43.6",
+      "Poliwrath 42.9",
       "Dragonair 42.4",
-      "Ninetales 42.2"
+      "Entei 41.9"
      ],
-     "bestRecord": 62,
-     "worstRecord": 17
+     "bestRecord": 68,
+     "worstRecord": 18
     },
     {
      "year": 7,
-     "ratingSdBefore": 10.9,
+     "ratingSdBefore": 10.84,
      "topRebounders": [
-      "Gyarados 16",
-      "Moltres 15.5",
-      "Ho-Oh 15.1",
-      "Politoed 15",
-      "Aerodactyl 14.4"
+      "Gyarados 15.9",
+      "Moltres 15.8",
+      "Ho-Oh 15.3",
+      "Politoed 14.6",
+      "Venusaur 14.1"
      ],
      "topScorers": [
-      "Politoed 43.5",
-      "Kangaskhan 37.8",
+      "Politoed 45.4",
+      "Arcanine 35.8",
       "Heracross 35.8",
-      "Dodrio 33.4",
-      "Arcanine 33.4"
+      "Kangaskhan 34.7",
+      "Dodrio 32.7"
      ],
-     "mvp": "43.5 PPG · 15.0 RPG · 9.9 APG",
+     "mvp": "45.4 PPG · 14.6 RPG · 9.5 APG",
      "mvpName": "Politoed",
-     "dpoy": "Moltres",
-     "heightRebCorr": 0.46,
+     "dpoy": "Politoed",
+     "heightRebCorr": 0.47,
      "heightPtsCorr": 0.28,
-     "avgMargin": 12.2,
-     "blowout20Pct": 0.18,
-     "within5Pct": 0.27,
-     "overtimePct": 0.027,
-     "winsSd": 12.7,
+     "avgMargin": 11.9,
+     "blowout20Pct": 0.181,
+     "within5Pct": 0.261,
+     "overtimePct": 0.028,
+     "winsSd": 13.2,
      "reboundsPerTeam": 50,
-     "pointsPerTeam": 110.7,
+     "pointsPerTeam": 110.6,
      "topMinutes": [
-      "Politoed 42.7",
-      "Poliwrath 42.5",
-      "Ho-Oh 42.1"
+      "Pupitar 42.4",
+      "Poliwrath 42.3",
+      "Venusaur 42.3"
      ],
-     "bestRecord": 69,
-     "worstRecord": 21
+     "bestRecord": 73,
+     "worstRecord": 19
     },
     {
      "year": 8,
-     "ratingSdBefore": 10.89,
+     "ratingSdBefore": 10.8,
      "topRebounders": [
-      "Moltres 16.3",
-      "Gyarados 16.2",
-      "Aerodactyl 15.5",
-      "Ho-Oh 14.5",
-      "Hitmonlee 14.2"
+      "Gyarados 16.3",
+      "Moltres 15.9",
+      "Aerodactyl 15",
+      "Hitmonlee 14.8",
+      "Venusaur 14.3"
      ],
      "topScorers": [
-      "Articuno 33",
-      "Ho-Oh 33",
-      "Heracross 32.9",
-      "Arcanine 31.7",
-      "Sneasel 31.1"
+      "Arcanine 33.5",
+      "Ho-Oh 31.5",
+      "Lanturn 31.2",
+      "Moltres 31",
+      "Articuno 30.9"
      ],
-     "mvp": "30.9 PPG · 16.3 RPG · 10.7 APG",
+     "mvp": "31.0 PPG · 15.9 RPG · 10.4 APG",
      "mvpName": "Moltres",
      "dpoy": "Aerodactyl",
-     "heightRebCorr": 0.47,
-     "heightPtsCorr": 0.27,
-     "avgMargin": 11.6,
-     "blowout20Pct": 0.175,
-     "within5Pct": 0.294,
+     "heightRebCorr": 0.46,
+     "heightPtsCorr": 0.29,
+     "avgMargin": 11.9,
+     "blowout20Pct": 0.17,
+     "within5Pct": 0.271,
      "overtimePct": 0.028,
-     "winsSd": 11.8,
-     "reboundsPerTeam": 50.2,
-     "pointsPerTeam": 110.7,
+     "winsSd": 12.3,
+     "reboundsPerTeam": 49.8,
+     "pointsPerTeam": 111,
      "topMinutes": [
-      "Hitmonlee 42.5",
-      "Flareon 42.5",
-      "Moltres 42.4"
+      "Flareon 42.7",
+      "Politoed 42.5",
+      "Hitmonlee 42.1"
      ],
-     "bestRecord": 64,
-     "worstRecord": 20
+     "bestRecord": 66,
+     "worstRecord": 19
     }
    ],
    "ratingSd": {
     "initial": 10.32,
-    "final": 10.89
+    "final": 10.8
    },
    "largestOffsets": [
     {
      "name": "Aipom",
-     "gain": 16.4,
+     "gain": 15.4,
      "dev": {
-      "finishing": 14,
-      "perimeterDefense": 19,
-      "interiorDefense": 14,
-      "threePoint": 19,
-      "midRange": 14,
-      "freeThrow": 17,
-      "ballHandling": 19,
-      "passing": 17,
-      "speed": 16,
+      "finishing": 13,
+      "perimeterDefense": 17,
+      "interiorDefense": 13,
+      "threePoint": 18,
+      "midRange": 12,
+      "freeThrow": 15,
+      "ballHandling": 18,
+      "passing": 16,
+      "speed": 15,
       "strength": 16,
-      "stamina": 12,
+      "stamina": 10,
       "vertical": 16,
-      "steal": 19,
-      "block": 13,
-      "offensiveRebound": 15,
+      "steal": 17,
+      "block": 12,
+      "offensiveRebound": 12,
       "defensiveRebound": 17,
       "composure": 16
      }
     },
     {
-     "name": "Hitmonlee",
-     "gain": 13.1,
+     "name": "Poliwag",
+     "gain": 12.2,
      "dev": {
-      "perimeterDefense": 14,
-      "interiorDefense": 11,
       "threePoint": 15,
-      "midRange": 14,
-      "freeThrow": 14,
-      "ballHandling": 13,
-      "passing": 14,
-      "speed": 14,
-      "strength": 14,
+      "midRange": 10,
+      "speed": 10,
+      "strength": 9,
       "stamina": 7,
-      "vertical": 13,
-      "steal": 16,
-      "block": 9,
-      "offensiveRebound": 13,
-      "defensiveRebound": 14,
-      "finishing": 13,
-      "composure": 17
+      "steal": 10,
+      "offensiveRebound": 8,
+      "composure": 10,
+      "finishing": 10,
+      "perimeterDefense": 10,
+      "ballHandling": 14,
+      "defensiveRebound": 15,
+      "interiorDefense": 8,
+      "freeThrow": 11,
+      "passing": 6,
+      "vertical": 10,
+      "block": 9
      }
     },
     {
      "name": "Blastoise",
-     "gain": 12.1,
+     "gain": 11.8,
      "dev": {
-      "finishing": 13,
-      "freeThrow": 14,
-      "ballHandling": 15,
-      "passing": 10,
-      "speed": 8,
-      "strength": 13,
-      "block": 9,
-      "offensiveRebound": 11,
-      "defensiveRebound": 13,
-      "composure": 11,
-      "perimeterDefense": 15,
-      "interiorDefense": 12,
+      "finishing": 14,
+      "perimeterDefense": 14,
+      "interiorDefense": 11,
       "threePoint": 9,
-      "midRange": 9,
+      "midRange": 10,
+      "ballHandling": 15,
+      "passing": 9,
+      "speed": 9,
+      "strength": 12,
+      "stamina": 6,
       "vertical": 13,
-      "steal": 10,
-      "stamina": 6
+      "steal": 9,
+      "block": 9,
+      "offensiveRebound": 10,
+      "defensiveRebound": 13,
+      "composure": 12,
+      "freeThrow": 14
      }
     }
    ],
    "meanAnnualDelta": {
-    "starters28": -0.71,
-    "mid15to28": -0.34,
-    "deepUnder15": 1.12
+    "starters28": -0.74,
+    "mid15to28": -0.27,
+    "deepUnder15": 1.16
    },
    "cumulativeDelta": {
-    "starters28": -5,
-    "mid15to28": -2.4,
-    "deepUnder15": 7.8
+    "starters28": -5.2,
+    "mid15to28": -1.9,
+    "deepUnder15": 8.1
    }
   }
  }

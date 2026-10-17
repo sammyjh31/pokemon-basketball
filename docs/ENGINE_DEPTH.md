@@ -88,37 +88,37 @@ The script exits nonzero if its documented score/tempo/efficiency, probability r
 
 Court version 3 (`COURT_VERSION` in `courtTypes.ts`) is the default for new runs, new local leagues and the next franchise season. Versions 1 and 2 replay byte-identically; `courtVersion3.test.ts` pins version-2 match, development and honors fingerprints that were verified against the unmodified version-2 commit. Raw evidence is in [balance-v3-audit.json](balance-v3-audit.json); formulas are in [the league model](LEAGUE_MODEL.md#court-version-3-balance-rules).
 
-600 league games, same clubs and seeds, with main's trainer coaches, abilities, chemistry and shared evaluation enabled for both versions (`node scripts/court-metrics.mjs --court=N --games=600`):
+600 league games, same clubs and seeds, with main's trainer coaches, abilities, chemistry, chemistry growth, morale, personalities and shared evaluation enabled for both versions (`node scripts/court-metrics.mjs --court=N --games=600`):
 
 | Measurement            | Version 2 | Version 3 |
 | ---------------------- | --------: | --------: |
-| Average margin         |      15.9 |      11.9 |
-| Games decided by 20+   |     30.5% |     17.8% |
-| Games within 5         |     21.2% |     26.5% |
-| Overtime               |      2.2% |      3.0% |
-| Points per team        |     111.9 |     111.2 |
+| Average margin         |      16.4 |      11.4 |
+| Games decided by 20+   |     31.0% |     15.8% |
+| Games within 5         |     16.2% |     25.7% |
+| Overtime               |      2.0% |      2.5% |
+| Points per team        |     111.9 |       111 |
 | Pace                   |     101.6 |     101.6 |
-| Offensive rebound rate |     22.7% |     22.4% |
+| Offensive rebound rate |     22.7% |     22.3% |
 
 Full seasons and eight-season careers (`node scripts/balance-metrics.mjs --court=N --legends=L --seasons=8`). The career loop develops every player each offseason but has no trades, free agency or rookie drafts, so it isolates the development formula.
 
-| Measurement                              | v2, no legends | v3, no legends |      v2, legends |    v3, legends |
-| ---------------------------------------- | -------------: | -------------: | ---------------: | -------------: |
-| Year-1 top rebounder (RPG)               |           22.3 |           14.3 |             20.1 |           15.6 |
-| Year-1 top scorer (PPG)                  |           31.2 |           30.5 |             38.5 |           32.9 |
-| Year-1 height/RPG correlation            |           0.63 |           0.56 |             0.62 |           0.58 |
-| Year-1 height/PPG correlation            |           0.43 |           0.37 |             0.43 |           0.38 |
-| Year-1 MVP line (PPG/RPG/APG)            |  31.2/22.3/3.4 |  27.3/10.8/6.4 |   23.1/20.1/15.2 |  29.2/15.6/8.8 |
-| Year-8 top scorer (PPG)                  |           80.5 |             35 |               73 |             33 |
-| Year-8 top rebounder (RPG)               |           27.5 |           16.7 |             27.9 |           16.3 |
-| Rating SD, year 1 → year 8               |    11.1 → 21.6 |    11.1 → 11.1 |      10.3 → 21.4 |    10.3 → 10.9 |
-| Cumulative change, 28+ / 15–28 / <15 MPG | +4.0/−8.0/−9.7 | −4.3/−0.8/+7.3 | +3.8/−11.5/−10.2 | −5.0/−2.4/+7.8 |
-| Average margin, seasons 1–8              |      16.1–20.3 |      10.8–12.1 |        16.1–20.5 |        11–12.2 |
-| Games decided by 20+, seasons 1–8        |    32.4%–44.6% |    14.4%–18.7% |      31.7%–43.8% |    13.7%–18.0% |
+| Measurement                              |  v2, no legends | v3, no legends |     v2, legends |    v3, legends |
+| ---------------------------------------- | --------------: | -------------: | --------------: | -------------: |
+| Year-1 top rebounder (RPG)               |            21.9 |           14.1 |            20.2 |           15.9 |
+| Year-1 top scorer (PPG)                  |            30.7 |             30 |            36.7 |           33.7 |
+| Year-1 height/RPG correlation            |            0.63 |           0.56 |            0.61 |           0.59 |
+| Year-1 height/PPG correlation            |            0.43 |           0.37 |            0.42 |           0.38 |
+| Year-1 MVP line (PPG/RPG/APG)            |   29.1/21.9/3.2 |  28.1/10.3/6.5 |  22.9/19.8/14.9 |  30.3/13.9/6.9 |
+| Year-8 top scorer (PPG)                  |            83.1 |           35.5 |            73.6 |           33.5 |
+| Year-8 top rebounder (RPG)               |            27.6 |           16.9 |            27.6 |           16.3 |
+| Rating SD, year 1 → year 8               |     11.1 → 21.5 |    11.1 → 11.1 |     10.3 → 21.4 |    10.3 → 10.8 |
+| Cumulative change, 28+ / 15–28 / <15 MPG | +3.9/−6.9/−10.4 | −4.5/−0.3/+7.8 | +3.4/−9.9/−10.0 | −5.2/−1.9/+8.1 |
+| Average margin, seasons 1–8              |       15.0–20.6 |      11.5–12.4 |       15.8–21.1 |      10.9–11.9 |
+| Games decided by 20+, seasons 1–8        |     29.1%–44.8% |    15.7%–19.0% |     30.4%–46.0% |    14.5%–18.1% |
 
 Notes and limits:
 
-- Across eight seasons, version-3 margins stay at 10.8–12.2 (no legends) and 11.0–12.2 (legends), with 14–19% of games decided by 20+. Overtime rises only to about 3%; the NBA's ~6% would need a stronger catch-up effect than seems fair.
+- Across eight seasons, version-3 margins stay at 11.5–12.4 (no legends) and 10.9–11.9 (legends), with 15.7%–19.0% and 14.5%–18.1% of games decided by 20+. Overtime rises only to about 2.5–3%; the NBA's ~6% would need a stronger catch-up effect than seems fair.
 - Rebound leaders still play about 41–42 minutes; garbage time trims decided games but rotation targets are unchanged.
 - The <15 MPG group gains under version 3 because the parity term lifts weak species toward the league mean while regression pulls strong ones back. Breakouts and slumps still occur (`balancedDevelopment.test.ts`).
 - Defensive Player of the Year uses club points allowed per game. Individual points-allowed-versus-expected is recorded in game insights but not aggregated into season player rows; adding it would change saved row shapes.
