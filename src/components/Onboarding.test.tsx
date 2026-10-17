@@ -124,7 +124,11 @@ it("names what a mode switch clears", () => {
   expect(
     screen.getByRole("button", { name: "Lineup builder", pressed: true }),
   ).toBeInTheDocument();
-  expect(slot("PG")).toHaveAccessibleName("PG slot: Empty");
+  // The fresh run starts with its trainer pick; the old lineup is gone.
+  expect(
+    screen.getByRole("region", { name: "Your team. Their game plan." }),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /^PG slot:/ })).toBeNull();
 });
 
 it("changes the Lineup builder legendary pool without clearing other picks", () => {

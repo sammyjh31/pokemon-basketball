@@ -94,7 +94,17 @@ it("fires and rehires from the franchise tab and blocks next season while vacant
   expect(screen.getByRole("status")).toHaveTextContent("has no head coach");
   fireEvent.click(screen.getByRole("button", { name: "Offseason" }));
   expect(screen.getByRole("button", { name: "Start season 2" })).toBeDisabled();
-  fireEvent.click(screen.getByRole("button", { name: "Coaches" }));
+  // The stepper names the vacancy and links straight to the Coaches view.
+  expect(
+    screen.getByRole("button", { name: "Start season 2" }),
+  ).toHaveAccessibleDescription(/head-coach position is vacant/);
+  const coaching = within(screen.getByRole("list", { name: "Offseason steps" }))
+    .getAllByRole("listitem")
+    .find((step) => step.textContent?.includes("Coaching"))!;
+  expect(coaching).toHaveTextContent("Status: Hire a trainer");
+  fireEvent.click(
+    within(coaching).getByRole("button", { name: "Hire a trainer" }),
+  );
   fireEvent.click(
     screen.getByRole("button", { name: `Hire ${replacement.name}` }),
   );
@@ -105,6 +115,11 @@ it("fires and rehires from the franchise tab and blocks next season while vacant
   ).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Offseason" }));
   expect(screen.getByRole("button", { name: "Start season 2" })).toBeEnabled();
+  expect(
+    within(screen.getByRole("list", { name: "Offseason steps" })).getByText(
+      "Trainer in place",
+    ),
+  ).toBeInTheDocument();
 });
 it("keeps hiring closed during the season and shows historical series results", () => {
   const f = fixture().franchise!;
