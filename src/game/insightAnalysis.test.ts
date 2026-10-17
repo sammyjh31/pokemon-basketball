@@ -12,8 +12,91 @@ import {
   insightMatch,
   insightShot,
 } from "./insightAnalysis.testUtils";
+import { evaluateLineupChemistry } from "./lineupChemistry";
+import { POKEMON_BY_ID } from "../data/pokemon";
+import { playerProfile } from "./playerProfile";
+import { simulateMatch } from "./match";
 
 describe("recorded insight calculations", () => {
+  it("replays a game with its frozen pregame chemistry instead of the season opening or final bank", async () => {
+    const league = insightLeague();
+    league.teams = league.teams.map((team) => ({
+      ...team,
+      abilityVersion: 1,
+      chemistryVersion: 1,
+      chemistryGrowthVersion: 1,
+      chemistryBonds: {},
+    }));
+    const chemistry = { home: Array(28).fill(600), away: Array(28).fill(600) };
+    const match = simulateMatch(league.teams[0], league.teams[1], 712, {
+      chemistry,
+    });
+    league.games = [
+      {
+        ...league.games[0],
+        seed: 712,
+        homeScore: match.homeScore,
+        awayScore: match.awayScore,
+        overtimePeriods: match.overtimePeriods,
+        chemistry,
+      },
+    ];
+    league.chemistryBonds = { 0: { "1:2": 6000 }, 1: { "9:10": 6000 } };
+    const data = await buildSeasonInsights(league);
+    expect(data.detailGames).toBe(1);
+    expect(data.unavailableGames).toBe(0);
+    expect(data.lineups.length).toBeGreaterThan(0);
+    expect(
+      data.lineups.every((row) => row.chemistry?.continuity?.score === 50),
+    ).toBe(true);
+    expect(
+      league.teams.every(
+        (team) => Object.keys(team.chemistryBonds!).length === 0,
+      ),
+    ).toBe(true);
+  });
+  it("averages familiarity by actual lineup time without replacing historical games with the current bank", async () => {
+    const players = [1, 2, 3, 4, 5].map((pokemonId) => ({
+      pokemonId,
+      profile: playerProfile(POKEMON_BY_ID.get(pokemonId)!),
+    }));
+    const fresh = evaluateLineupChemistry(players, {
+      tactic: "balanced",
+      defense: "man",
+      abilities: false,
+      bonds: {},
+    });
+    const experienced = evaluateLineupChemistry(players, {
+      tactic: "balanced",
+      defense: "man",
+      abilities: false,
+      bonds: { "1:2": 600 },
+    });
+    const matches = [fresh, experienced].map((chemistry, index) => {
+      const match = insightMatch();
+      match.insights!.lineups[0] = {
+        ...match.insights!.lineups[0],
+        chemistry,
+        seconds: index ? 180 : 60,
+      };
+      return match;
+    });
+    const before = JSON.stringify(matches);
+    const data = await buildSeasonInsights(
+      { ...insightLeague(2), chemistryBonds: { 0: { "1:2": 6000 } } },
+      { resolveMatch: (game) => matches[game.round] },
+    );
+    expect(data.lineups[0].chemistry?.continuity?.sharedMinutes).toBeCloseTo(
+      45,
+    );
+    expect(data.lineups[0].chemistry?.continuity?.score).toBeCloseTo(3.75);
+    expect(
+      data.lineups[0].chemistry?.continuity?.pairs.find(
+        (pair) => pair.pokemonIds.join(":") === "1:2",
+      )?.minutes,
+    ).toBeCloseTo(450);
+    expect(JSON.stringify(matches)).toBe(before);
+  });
   it("separates official attempts from shooting-foul events and includes their expectation", () => {
     expect(shotSummary(insightMatch().insights!.shots)).toMatchObject({
       events: 3,

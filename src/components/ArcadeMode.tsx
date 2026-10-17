@@ -1,3 +1,4 @@
+import { applyChemistrySnapshot } from "../game/teammateChemistry";
 import { useEffect, useRef, useState } from "react";
 import { ArcadeInputController } from "../arcade/input";
 import { useArcadeGamepad } from "../hooks/useArcadeGamepad";
@@ -343,8 +344,19 @@ export function ArcadeMode({
     audio.current.setEnabled(next.audio);
   };
   const start = () => {
-    const opponent = prepared.teams.find((team) => team.id === opponentId);
-    const user = prepared.teams.find((team) => team.id === 0);
+    let opponent = prepared.teams.find((team) => team.id === opponentId);
+    let user = prepared.teams.find((team) => team.id === 0);
+    if (official?.fixture.chemistry && opponent && user) {
+      const userHome = official.fixture.homeTeamId === 0;
+      user = applyChemistrySnapshot(
+        user,
+        official.fixture.chemistry[userHome ? "home" : "away"],
+      );
+      opponent = applyChemistrySnapshot(
+        opponent,
+        official.fixture.chemistry[userHome ? "away" : "home"],
+      );
+    }
     if (!ready || !opponent) return;
     try {
       const random = new Uint32Array(1);
@@ -391,6 +403,11 @@ export function ArcadeMode({
           : {}),
         ...((official ? user?.chemistryVersion : run.chemistryVersion) === 1
           ? { chemistryVersion: 1 as const }
+          : {}),
+        ...((official
+          ? user?.chemistryGrowthVersion
+          : run.chemistryGrowthVersion) === 1
+          ? { chemistryGrowthVersion: 1 as const }
           : {}),
         ...(official ? { official: true } : {}),
       });

@@ -1,3 +1,4 @@
+import { addSharedMinutes, applyChemistrySnapshot } from "./teammateChemistry";
 import { createRun } from "./draft";
 import { createLeague, leagueSchedule } from "./league";
 import { createGame } from "./arcade/setup";
@@ -25,6 +26,14 @@ export function finishedGame(
   teams: ReturnType<typeof createLeague>,
   overtime = 0,
 ) {
+  if (fixture.chemistry)
+    teams = teams.map((team) =>
+      team.id === fixture.homeTeamId
+        ? applyChemistrySnapshot(team, fixture.chemistry!.home)
+        : team.id === fixture.awayTeamId
+          ? applyChemistrySnapshot(team, fixture.chemistry!.away)
+          : team,
+    );
   const opponent = teams.find(
     (t) =>
       t.id ===
@@ -39,6 +48,9 @@ export function finishedGame(
     ...(teams[0].chemistryVersion === 1
       ? { chemistryVersion: 1 as const }
       : {}),
+    ...(teams[0].chemistryGrowthVersion === 1
+      ? { chemistryGrowthVersion: 1 as const }
+      : {}),
     seed: fixture.seed,
     teams: [teams[0], opponent],
   });
@@ -47,6 +59,15 @@ export function finishedGame(
   state.players
     .filter((p) => p.active)
     .forEach((p) => (p.stats.seconds = state.elapsed));
+  if (state.chemistryMinutes)
+    for (const side of [0, 1] as const)
+      addSharedMinutes(
+        state.chemistryMinutes[side === 0 ? "home" : "away"],
+        state.players
+          .filter((player) => player.team === side && player.active)
+          .map((player) => player.pokemonId),
+        state.elapsed / 60,
+      );
   for (let period = 1; period <= 4 + overtime; period++) {
     emit(state, { kind: "shot", team: 0, player: 0, value: 2, zone: "rim" });
     emit(state, { kind: "score", team: 0, player: 0, value: 2, zone: "rim" });

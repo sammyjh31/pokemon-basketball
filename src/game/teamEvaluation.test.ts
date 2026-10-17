@@ -19,6 +19,107 @@ const team = (): EvaluationTeam => ({
   abilityVersion: 1,
 });
 describe("shared evaluation", () => {
+  it("lets a practiced connection decide a close projected lineup choice", () => {
+    const fresh: EvaluationTeam = {
+      ...team(),
+      coach: undefined,
+      chemistryVersion: 1,
+      chemistryGrowthVersion: 1,
+      engineRules: { abilities: false },
+    };
+    const experienced = {
+      ...fresh,
+      chemistryBonds: {
+        "65:68": 6000,
+        "68:135": 6000,
+        "68:149": 6000,
+        "6:68": 6000,
+      },
+    };
+    expect(
+      projectedLineupChemistry(fresh)!.players.find((p) => p.role === "PF")
+        ?.pokemonId,
+    ).toBe(131);
+    expect(
+      projectedLineupChemistry(experienced)!.players.find(
+        (p) => p.role === "PF",
+      )?.pokemonId,
+    ).toBe(68);
+  });
+
+  it("prefers a returning partner in a close roster move while stronger unfamiliar talent remains valuable", () => {
+    const fresh: EvaluationTeam = {
+      ...team(),
+      coach: undefined,
+      chemistryVersion: 1,
+      chemistryGrowthVersion: 1,
+      engineRules: { abilities: false },
+    };
+    const returning = {
+      ...fresh,
+      chemistryBonds: {
+        "6:376": 6000,
+        "65:376": 6000,
+        "68:376": 6000,
+        "121:376": 6000,
+        "131:376": 6000,
+        "143:376": 6000,
+        "149:376": 6000,
+      },
+    };
+    const replacement = (t: EvaluationTeam, id: number) => ({
+      ...t,
+      roster: { ...t.roster, SG: id },
+    });
+    const unfamiliar = compareTeamEvaluation(fresh, replacement(fresh, 376));
+    const reunited = compareTeamEvaluation(
+      returning,
+      replacement(returning, 376),
+    );
+    expect(unfamiliar.delta).toBeLessThan(0);
+    expect(reunited.delta).toBeGreaterThan(0);
+    expect(
+      compareTeamEvaluation(returning, replacement(returning, 150)).delta,
+    ).toBeGreaterThan(reunited.delta);
+    expect(
+      compareTeamEvaluation(returning, replacement(returning, 129)).delta,
+    ).toBeLessThan(0);
+  });
+
+  it("values earned familiarity without abilities and ignores unversioned history", () => {
+    const fresh = {
+      ...team(),
+      chemistryVersion: 1 as const,
+      chemistryGrowthVersion: 1 as const,
+      engineRules: { abilities: false },
+    };
+    const ids = Object.values(fresh.roster) as number[];
+    const chemistryBonds = Object.fromEntries(
+      ids.flatMap((a, index) =>
+        ids
+          .slice(index + 1)
+          .map((b) => [[a, b].sort((x, y) => x - y).join(":"), 600]),
+      ),
+    );
+    const experienced = { ...fresh, chemistryBonds };
+    const projection = projectedLineupChemistry(experienced)!;
+    expect(projection.chemistry.continuity?.score).toBeCloseTo(50);
+    expect(projection.chemistry.continuity?.sharedMinutes).toBe(600);
+    expect(projection.chemistry.links).toEqual([]);
+    expect(evaluateTeam(experienced).score).toBeGreaterThan(
+      evaluateTeam(fresh).score,
+    );
+    expect(
+      evaluateTeam({ ...experienced, chemistryGrowthVersion: undefined }),
+    ).toEqual(evaluateTeam({ ...fresh, chemistryGrowthVersion: undefined }));
+    const comparison = compareTeamEvaluation(experienced, fresh);
+    expect(
+      comparison.factors.find(
+        (factor) => factor.label === "Projected five-player chemistry",
+      )?.detail,
+    ).toMatch(/600\.0.*0\.0.*shared minutes/);
+  });
+
   it("chooses the more complementary trade when raw team value favors another player", () => {
     const paired: EvaluationTeam = {
       abilityVersion: 1,

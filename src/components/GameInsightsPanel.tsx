@@ -46,6 +46,8 @@ export function LineupInsightsTable({
         offensive possessions started by the group; a foul-out substitution can
         occur before a possession ends. Small samples are noisy. Scroll across
         for cohesion and expand an entry to see its combinations.
+        {rows.some((row) => row.chemistry?.continuity) &&
+          " Familiarity reflects each game’s pregame shared court history; season rows average it by time on court."}
       </p>
       {!rows.length ? (
         <p>No recorded five-player lineup samples.</p>
@@ -105,6 +107,8 @@ export function LineupInsightsTable({
                             <summary>
                               {row.chemistry.score.toFixed(0)} / 100 ·{" "}
                               {row.chemistry.links.length} combinations
+                              {row.chemistry.continuity &&
+                                ` · ${row.chemistry.continuity.score.toFixed(0)} familiarity`}
                             </summary>
                             {row.chemistryContext && (
                               <p>
@@ -117,6 +121,12 @@ export function LineupInsightsTable({
                               while these five shared the floor. They do not
                               attribute scored points to a partnership.
                             </p>
+                            {row.chemistry.skillScore !== undefined && (
+                              <p>
+                                Skill cohesion{" "}
+                                {row.chemistry.skillScore.toFixed(0)} / 100.
+                              </p>
+                            )}
                             <ChemistryDetails chemistry={row.chemistry} />
                           </details>
                         ) : (

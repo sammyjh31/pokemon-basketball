@@ -1,3 +1,9 @@
+import {
+  initialChemistryBanks,
+  recordChemistryGame,
+  snapshotChemistry,
+  teamsWithChemistry,
+} from "./teammateChemistry";
 import { recordScouting, scoutingForMatch } from "./opponentScouting";
 import type { ScoutingMemory, MatchScouting } from "./typeTacticsTypes";
 import { nextRandom } from "./random";
@@ -74,6 +80,7 @@ export function localSeasonBuilder(
   const inputs = structuredClone(teams),
     fixtures = localSchedule(format, seed),
     players = leaguePlayers(inputs);
+  const chemistryBonds = initialChemistryBanks(inputs);
   const byPlayer = new Map(players.map((p) => [p.playerId, p]));
   const standings: Standing[] = inputs.map((t) => ({
     teamId: t.id,
@@ -94,13 +101,34 @@ export function localSeasonBuilder(
   function play(fixture: LeagueFixture) {
     const h = fixture.homeTeamId,
       a = fixture.awayTeamId;
+    if (chemistryBonds && fixture.id !== fixtures[summaries.length]?.id)
+      throw new Error(
+        "Chemistry games must advance the schedule exactly once in order.",
+      );
+    const currentTeams = teamsWithChemistry(inputs, chemistryBonds);
+    const chemistry = snapshotChemistry(currentTeams[h], currentTeams[a]);
     const context = scouting ? scoutingForMatch(scouting, h, a) : undefined;
-    const match = simulateMatch(inputs[h], inputs[a], fixture.seed, {
-      scouting: context,
-    });
-    if (scouting) recordScouting(scouting, inputs[h], inputs[a], match);
+    const match = simulateMatch(
+      currentTeams[h],
+      currentTeams[a],
+      fixture.seed,
+      {
+        scouting: context,
+        chemistry,
+      },
+    );
+    if (scouting)
+      recordScouting(scouting, currentTeams[h], currentTeams[a], match);
+    if (chemistryBonds)
+      recordChemistryGame(
+        chemistryBonds,
+        currentTeams[h],
+        currentTeams[a],
+        match,
+      );
     summaries.push({
       ...fixture,
+      ...(chemistry ? { chemistry } : {}),
       ...(context ? { scouting: context } : {}),
       homeScore: match.homeScore,
       awayScore: match.awayScore,
@@ -166,6 +194,9 @@ export function localSeasonBuilder(
         ...(scouting ? { scouting } : {}),
         format: { ...format },
         teams: inputs,
+        ...(chemistryBonds
+          ? { chemistryBonds: structuredClone(chemistryBonds) }
+          : {}),
         games: summaries,
         players,
         standings,

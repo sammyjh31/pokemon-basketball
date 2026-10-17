@@ -8,7 +8,8 @@ import {
   type Run,
 } from "../game/types";
 import { SeasonPanel } from "./SeasonPanel";
-import { Leaders } from "./LeaguePanel";
+import { Leaders, LeaguePanel } from "./LeaguePanel";
+import { simulateMatch } from "../game/match";
 
 const ratings = {
   offense: 60,
@@ -165,6 +166,38 @@ const setup = (animate = false) =>
   );
 
 describe("league results", () => {
+  it("builds season insights from each fixture's earned familiarity snapshot", async () => {
+    const clubs: LeagueTeam[] = teams.map((team) => ({
+      ...team,
+      abilityVersion: 1,
+      chemistryVersion: 1,
+      chemistryGrowthVersion: 1,
+    }));
+    const chemistry = { home: Array(28).fill(600), away: Array(28).fill(600) };
+    const match = simulateMatch(clubs[0], clubs[1], 712, { chemistry });
+    const fixture = {
+      ...league.games[0],
+      round: 10,
+      seed: 712,
+      chemistry,
+      homeScore: match.homeScore,
+      awayScore: match.awayScore,
+      overtimePeriods: match.overtimePeriods,
+    };
+    render(
+      <LeaguePanel league={{ ...league, teams: clubs, games: [fixture] }} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Season insights" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Build season insights" }),
+    );
+    expect(
+      await screen.findByText(/1 of 1 games include recorded telemetry/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Earned familiarity 50 / 100").length,
+    ).toBeGreaterThan(0);
+  });
   it("shows sortable team efficiency and explains estimated denominators", () => {
     setup();
     fireEvent.click(screen.getByRole("button", { name: "Team analysis" }));

@@ -1,3 +1,9 @@
+import {
+  addSharedMinutes,
+  finishPairMinutes,
+  applyChemistrySnapshot,
+  type ChemistryFixture,
+} from "./teammateChemistry";
 import { chemistryEnabled } from "./lineupChemistry";
 import { getMatchChemistry, refreshLineupChemistry } from "./matchChemistry";
 import {
@@ -117,7 +123,7 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   const planKey = config.rotationPlan
     ? `:${ROSTER_SLOTS.map((slot) => config.rotationPlan!.minutes[slot]).join(",")}:${config.rotationPlan.closing.join(",")}`
     : "";
-  const key = `${chemistryEnabled(config) ? `chemistry1:${config.engineRules?.familiarity ?? 0}:` : ""}${physicalAbilitiesEnabled(config) ? "physical1:" : ""}${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
+  const key = `${config.chemistryGrowthVersion === 1 ? `growth1:${JSON.stringify(config.chemistryBonds ?? {})}:` : ""}${chemistryEnabled(config) ? `chemistry1:${config.engineRules?.familiarity ?? 0}:` : ""}${physicalAbilitiesEnabled(config) ? "physical1:" : ""}${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
   let targets = targetCache.get(key);
   if (!targets) {
     targets =
@@ -248,8 +254,26 @@ export function simulateMatch(
   home: LeagueTeam,
   away: LeagueTeam,
   seed: number,
-  options: { collectInsights?: boolean; scouting?: MatchScouting } = {},
+  options: {
+    collectInsights?: boolean;
+    scouting?: MatchScouting;
+    chemistry?: ChemistryFixture;
+  } = {},
 ): LeagueMatch {
+  if (
+    home.chemistryGrowthVersion !== away.chemistryGrowthVersion ||
+    (home.chemistryGrowthVersion !== undefined &&
+      home.chemistryGrowthVersion !== 1) ||
+    (home.chemistryGrowthVersion === 1 &&
+      (home.chemistryVersion !== 1 || away.chemistryVersion !== 1))
+  )
+    throw new Error(
+      "Both teams must use matching teammate chemistry growth rules.",
+    );
+  if (options.chemistry) {
+    home = applyChemistrySnapshot(home, options.chemistry.home);
+    away = applyChemistrySnapshot(away, options.chemistry.away);
+  }
   for (const team of [home, away]) {
     const rules = team.engineRules;
     if (
@@ -381,6 +405,9 @@ export function simulateMatch(
   refreshLineupChemistry(h);
   refreshLineupChemistry(a);
   const result: LeagueMatch = {
+    ...(home.chemistryGrowthVersion === 1
+      ? { chemistryMinutes: { home: {}, away: {} } }
+      : {}),
     ...(typed
       ? {
           typeMatchups: {
@@ -1062,6 +1089,12 @@ export function simulateMatch(
     );
     for (const team of [h, a]) {
       if (result.insights) lineup(team).seconds += seconds;
+      if (result.chemistryMinutes)
+        addSharedMinutes(
+          result.chemistryMinutes[team.side],
+          team.floor.map((p) => p.box.pokemonId),
+          seconds / 60,
+        );
       for (const player of team.players) {
         if (team.floor.includes(player)) {
           player.box.minutes += seconds / 60;
@@ -2218,6 +2251,13 @@ export function simulateMatch(
           lineup(h).seconds += 7.5;
           lineup(a).seconds += 7.5;
         }
+        if (result.chemistryMinutes)
+          for (const team of [h, a])
+            addSharedMinutes(
+              result.chemistryMinutes[team.side],
+              team.floor.map((p) => p.box.pokemonId),
+              0.125,
+            );
         for (const team of [h, a])
           for (const player of team.players) {
             if (team.floor.includes(player)) {
@@ -2295,6 +2335,11 @@ export function simulateMatch(
   if (possessionDepth)
     for (const p of [...h.players, ...a.players])
       playerDetail.get(p.box.playerId)!.games = Number(p.box.minutes > 0);
+  if (result.chemistryMinutes)
+    for (const side of ["home", "away"] as const)
+      result.chemistryMinutes[side] = finishPairMinutes(
+        result.chemistryMinutes[side],
+      );
   if (options.collectInsights === false) delete result.insights;
   if (result.typeTactics)
     for (const side of ["home", "away"] as const) {

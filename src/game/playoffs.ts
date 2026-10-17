@@ -1,3 +1,9 @@
+import {
+  initialChemistryBanks,
+  recordChemistryGame,
+  snapshotChemistry,
+  teamsWithChemistry,
+} from "./teammateChemistry";
 import { recordScouting, scoutingForMatch } from "./opponentScouting";
 import type { ScoutingMemory, MatchScouting } from "./typeTacticsTypes";
 import { validateLocalFormat } from "./localFormat";
@@ -109,6 +115,13 @@ export function createPlayoffs(
     }
   return {
     modelVersion: 1,
+    ...((league.chemistryBonds ?? initialChemistryBanks(league.teams))
+      ? {
+          chemistryBonds: structuredClone(
+            league.chemistryBonds ?? initialChemistryBanks(league.teams),
+          ),
+        }
+      : {}),
     ...(league.teams[0].typeTacticsVersion === 1
       ? {
           scouting: structuredClone(
@@ -245,6 +258,7 @@ export function resolvePlayoffMatch(
   if (!home || !away) throw new Error("Missing playoff team.");
   return simulateMatch(home, away, fixture.seed, {
     scouting: fixture.scouting,
+    chemistry: fixture.chemistry,
   });
 }
 
@@ -253,12 +267,20 @@ function playOne(playoffs: Playoffs, league: LeagueResult, seasonSeed: number) {
   if (!next) return false;
   const { series, fixture } = next,
     { homeTeamId: homeId, awayTeamId: awayId, round } = fixture;
+  const teams = teamsWithChemistry(league.teams, playoffs.chemistryBonds);
+  const home = teams.find((team) => team.id === homeId)!;
+  const away = teams.find((team) => team.id === awayId)!;
+  const chemistry = snapshotChemistry(home, away);
   const context = playoffs.scouting
     ? scoutingForMatch(playoffs.scouting, homeId, awayId)
     : undefined;
   const match = resolvePlayoffMatch(
-    { ...fixture, ...(context ? { scouting: context } : {}) },
-    league.teams,
+    {
+      ...fixture,
+      ...(context ? { scouting: context } : {}),
+      ...(chemistry ? { chemistry } : {}),
+    },
+    teams,
     playoffs.playedGames,
   );
   if (playoffs.scouting)
@@ -268,8 +290,11 @@ function playOne(playoffs: Playoffs, league: LeagueResult, seasonSeed: number) {
       league.teams.find((t) => t.id === awayId)!,
       match,
     );
+  if (playoffs.chemistryBonds)
+    recordChemistryGame(playoffs.chemistryBonds, home, away, match);
   series.games.push({
     ...fixture,
+    ...(chemistry ? { chemistry } : {}),
     ...(context ? { scouting: context } : {}),
     homeScore: match.homeScore,
     awayScore: match.awayScore,
@@ -475,8 +500,17 @@ function projectUserFixture(
   for (let i = 0; i <= 105; i++) {
     const next = nextPlayoffFixture(playoffs, seed);
     if (!next) return { playoffs, fixture: null };
-    if ([next.fixture.homeTeamId, next.fixture.awayTeamId].includes(0))
-      return { playoffs, fixture: next.fixture };
+    if ([next.fixture.homeTeamId, next.fixture.awayTeamId].includes(0)) {
+      const teams = teamsWithChemistry(league.teams, playoffs.chemistryBonds);
+      const chemistry = snapshotChemistry(
+        teams.find((team) => team.id === next.fixture.homeTeamId)!,
+        teams.find((team) => team.id === next.fixture.awayTeamId)!,
+      );
+      return {
+        playoffs,
+        fixture: { ...next.fixture, ...(chemistry ? { chemistry } : {}) },
+      };
+    }
     playOne(playoffs, league, seed);
   }
   throw new Error("Invalid playoff progression.");
@@ -500,7 +534,11 @@ export function submitPlayoffGame(
   const { playoffs, fixture } = projectUserFixture(league, seed, current);
   if (!fixture || playoffs.playedGames?.[fixture.id])
     throw new Error("No pending user playoff fixture.");
-  const validated = validateOfficialGame(game, fixture, league.teams);
+  const validated = validateOfficialGame(
+    game,
+    fixture,
+    teamsWithChemistry(league.teams, playoffs.chemistryBonds),
+  );
   playoffs.modelVersion = 2;
   playoffs.playedGames = { ...playoffs.playedGames, [fixture.id]: validated };
   playOne(playoffs, league, seed);

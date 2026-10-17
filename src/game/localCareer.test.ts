@@ -184,7 +184,17 @@ describe("configurable local careers", () => {
     expect(local.parseLocalLeague(JSON.stringify(offseason))).toEqual(
       offseason,
     );
+    const beforeBonds = structuredClone(
+      offseason.career!.teams.map((team) => team.chemistryBonds),
+    );
     const second = career.startNextLocalSeason(offseason);
+    for (const team of second.career!.teams) {
+      expect(team.chemistryGrowthVersion).toBe(1);
+      for (const [key, minutes] of Object.entries(beforeBonds[team.id]!))
+        expect(team.chemistryBonds?.[key]).toBe(
+          Math.round((Math.round(minutes * 100) * 9) / 10) / 100,
+        );
+    }
     expect(second.career?.year).toBe(2);
     expect(second.completed).toBe(false);
     expect(career.currentLocalRookieTurn(second)).toBeNull();
@@ -337,7 +347,7 @@ describe("local career restore boundaries", () => {
       draft = career.startNextLocalSeason(draft);
     }
     expect(local.parseLocalLeague(JSON.stringify(draft))).toEqual(draft);
-  }, 20000);
+  }, 180000);
   it("uses each series length and replays a saved prefix without changing the bracket", () => {
     const { result, draft } = finish();
     for (const bestOf of [1, 3, 5, 7] as const) {

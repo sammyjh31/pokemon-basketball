@@ -1,3 +1,8 @@
+import {
+  retainChemistry,
+  syncTeamBonds,
+  teamsWithChemistry,
+} from "./teammateChemistry";
 import { mergeAbilityActivations } from "./abilities";
 import { projectedCoaches } from "./coachOffice";
 import { reviewFranchiseCoaches } from "./coachFranchise";
@@ -260,7 +265,13 @@ export function enterOffseason(state: GameState): GameState {
   if (!league) return state;
   let teams: LeagueTeam[];
   try {
-    teams = validateLeagueTeams(league.teams, run.includeLegends);
+    teams = validateLeagueTeams(
+      teamsWithChemistry(
+        league.teams,
+        run.playoffs?.chemistryBonds ?? league.chemistryBonds,
+      ),
+      run.includeLegends,
+    );
   } catch {
     return state;
   }
@@ -268,10 +279,12 @@ export function enterOffseason(state: GameState): GameState {
   const year = previous?.year ?? 1,
     archive = seasonArchive(run, year);
   if (!archive) return state;
-  if (previous?.modelVersion === 3) archive.replay = captureSeasonReplay(run);
+  if (previous?.modelVersion === 3 || run.chemistryGrowthVersion === 1)
+    archive.replay = captureSeasonReplay(run);
   const franchise: Franchise = {
     ...(previous?.coachOffice ? { coachOffice: previous.coachOffice } : {}),
-    modelVersion: previous?.modelVersion ?? 1,
+    modelVersion:
+      run.chemistryGrowthVersion === 1 ? 3 : (previous?.modelVersion ?? 1),
     year,
     phase: "offseason",
     teams,
@@ -326,8 +339,8 @@ export function startFranchiseSeason(
     return state;
   }
   // Type rules roll forward only at the season boundary. Historical teams stay frozen.
-  teams = teams.map((team) => ({
-    ...team,
+  teams = syncTeamBonds(teams).map((team) => ({
+    ...retainChemistry(team),
     typeMatchupsVersion: 1 as const,
     typeTacticsVersion: 1 as const,
     abilityVersion: 1 as const,

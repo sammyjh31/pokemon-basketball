@@ -27,6 +27,7 @@ import { physicalAbilitiesEnabled } from "./physicalAbilities";
 import { physicalAbilityValue } from "./physicalAbilityEvaluation";
 import { chemistryEnabled, evaluateLineupChemistry } from "./lineupChemistry";
 import type { RotationPlan } from "./franchiseFeatures";
+import type { PairBonds } from "./teammateChemistry";
 export { abilityUsefulness } from "./abilityEvaluation";
 
 /** Deliberately independent of consumers and save formats. Context is a fresh snapshot. */
@@ -40,6 +41,8 @@ export interface EvaluationTeam {
   physicalAbilityVersion?: 1;
   evaluationVersion?: 1;
   chemistryVersion?: 1;
+  chemistryGrowthVersion?: 1;
+  chemistryBonds?: PairBonds;
   rotationPlan?: RotationPlan;
   engineRules?: { abilities: boolean; familiarity?: number };
 }
@@ -193,6 +196,9 @@ function projectedUnit(
           defense,
           abilities: abilitiesEnabled(team),
           familiarity: team.engineRules?.familiarity,
+          ...(team.chemistryGrowthVersion === 1
+            ? { bonds: team.chemistryBonds ?? {} }
+            : {}),
         },
       );
       return {
@@ -481,6 +487,9 @@ export function evaluateTeam(team: EvaluationTeam) {
     score: factors.reduce((n, f) => n + f.contribution, 0),
     factors,
     players: evaluations,
+    ...(projected?.chemistry.continuity
+      ? { continuity: projected.chemistry.continuity }
+      : {}),
   };
 }
 export function compareTeamEvaluation(
@@ -503,7 +512,11 @@ export function compareTeamEvaluation(
       label: f.label,
       change: f.value - old.value,
       contribution: f.contribution - old.contribution,
-      detail: `Shared evaluation: ${old.value.toFixed(1)} → ${f.value.toFixed(1)}.`,
+      detail: `Shared evaluation: ${old.value.toFixed(1)} → ${f.value.toFixed(1)}.${
+        f.key === "chemistry" && (a.continuity || b.continuity)
+          ? ` Earned familiarity: ${(a.continuity?.score ?? 0).toFixed(1)} → ${(b.continuity?.score ?? 0).toFixed(1)} / 100; ${(a.continuity?.sharedMinutes ?? 0).toFixed(1)} → ${(b.continuity?.sharedMinutes ?? 0).toFixed(1)} average retained shared minutes for the projected five. New connections can grow through official games.`
+          : ""
+      }`,
     };
   });
   return { before: a.score, after: b.score, delta: b.score - a.score, factors };

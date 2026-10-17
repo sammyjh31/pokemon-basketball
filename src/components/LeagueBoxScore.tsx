@@ -171,8 +171,11 @@ export function LeagueBoxScore({
   const match = useMemo(
     () =>
       providedMatch ??
-      simulateMatch(home, away, game.seed, { scouting: game.scouting }),
-    [home, away, game.seed, game.scouting, providedMatch],
+      simulateMatch(home, away, game.seed, {
+        scouting: game.scouting,
+        chemistry: game.chemistry,
+      }),
+    [home, away, game.seed, game.scouting, game.chemistry, providedMatch],
   );
   const dialog = useRef<HTMLDivElement>(null),
     titleId = useId(),

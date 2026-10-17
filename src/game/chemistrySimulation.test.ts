@@ -35,8 +35,18 @@ it("uses actual active-five chemistry in all simulated games and preserves compa
   expect(compact.homeBox).toEqual(game.homeBox);
   expect(compact.awayBox).toEqual(game.awayBox);
   const old = simulateMatch(
-    { ...h, chemistryVersion: undefined },
-    { ...a, chemistryVersion: undefined },
+    {
+      ...h,
+      chemistryVersion: undefined,
+      chemistryGrowthVersion: undefined,
+      chemistryBonds: undefined,
+    },
+    {
+      ...a,
+      chemistryVersion: undefined,
+      chemistryGrowthVersion: undefined,
+      chemistryBonds: undefined,
+    },
     112,
   );
   expect(old.insights!.lineups.every((r) => r.chemistry === undefined)).toBe(
@@ -70,6 +80,8 @@ it("keeps scheme-dependent chemistry separate when aggregating season lineups", 
   const { insightLeague, insightMatch } =
     await import("./insightAnalysis.testUtils");
   const [h, a] = teams();
+  delete h.chemistryGrowthVersion;
+  delete a.chemistryGrowthVersion;
   const chemistry = simulateMatch(h, a, 11).insights!.lineups[0].chemistry!;
   const data = await buildSeasonInsights(insightLeague(2), {
     resolveMatch: () => {
@@ -91,13 +103,12 @@ it("keeps scheme-dependent chemistry separate when aggregating season lineups", 
     },
   });
   expect(data.lineups).toHaveLength(2);
+  for (const row of data.lineups) expect(row.chemistry).toEqual(chemistry);
   expect(data.lineups.map((r) => r.chemistryContext!.tactic).sort()).toEqual([
     "interior",
     "pace",
   ]);
-  expect(
-    data.lineups.every(
-      (r) => r.games === 2 && r.seconds === 1200 && r.chemistry === chemistry,
-    ),
-  ).toBe(true);
+  expect(data.lineups.every((r) => r.games === 2 && r.seconds === 1200)).toBe(
+    true,
+  );
 });

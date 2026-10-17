@@ -4,6 +4,7 @@ import { emptyAbilityActivations } from "../abilities";
 import { clamp } from "../ratings";
 import { createEvaluationContext, evaluatePlayer } from "../teamEvaluation";
 import { POSITIONS, ROSTER_SLOTS } from "../types";
+import { snapshotChemistry, validatePairBonds } from "../teammateChemistry";
 import { refreshArcadeChemistry } from "./chemistry";
 import type {
   ArcadePlayer,
@@ -34,12 +35,28 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
     setup.teams?.length !== 2 ||
     !Number.isFinite(setup.seed) ||
     (setup.chemistryVersion !== undefined && setup.chemistryVersion !== 1) ||
+    (setup.chemistryGrowthVersion !== undefined &&
+      (setup.chemistryGrowthVersion !== 1 || setup.chemistryVersion !== 1)) ||
     (setup.abilityVersion !== undefined && setup.abilityVersion !== 1) ||
     (setup.physicalAbilityVersion !== undefined &&
       setup.physicalAbilityVersion !== 1) ||
     (setup.evaluationVersion !== undefined && setup.evaluationVersion !== 1)
   )
     throw new Error("Choose two complete teams to play.");
+  const bonds =
+    setup.chemistryGrowthVersion === 1
+      ? setup.teams.map((team) => {
+          const history = validatePairBonds(team.chemistryBonds ?? {});
+          const rosterIds = new Set(Object.values(team.roster));
+          // The live cache only needs this game's roster. Clubs keep archived
+          // relationships in their own bank for future reunions.
+          return Object.fromEntries(
+            Object.entries(history).filter(([key]) =>
+              key.split(":").every((id) => rosterIds.has(Number(id))),
+            ),
+          );
+        })
+      : undefined;
   setup.teams.forEach((team, side) => {
     const evaluation =
       setup.evaluationVersion === 1
@@ -50,6 +67,8 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
             abilityVersion: setup.abilityVersion,
             physicalAbilityVersion: setup.physicalAbilityVersion,
             chemistryVersion: setup.chemistryVersion,
+            chemistryGrowthVersion: setup.chemistryGrowthVersion,
+            chemistryBonds: bonds?.[side],
             engineRules: {
               ...team.engineRules,
               abilities: setup.abilityVersion === 1,
@@ -114,13 +133,32 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
     ...(setup.chemistryVersion === 1
       ? {
           chemistryVersion: 1 as const,
-          chemistryContexts: setup.teams.map((team) => ({
+          chemistryContexts: setup.teams.map((team, side) => ({
             tactic: team.tactic ?? "balanced",
             defense: team.defense ?? "man",
+            ...(bonds ? { bonds: bonds[side] } : {}),
             ...(team.engineRules?.familiarity === undefined
               ? {}
               : { familiarity: team.engineRules.familiarity }),
           })) as NonNullable<ArcadeState["chemistryContexts"]>,
+        }
+      : {}),
+    ...(setup.chemistryGrowthVersion === 1
+      ? {
+          chemistryGrowthVersion: 1 as const,
+          chemistryInitial: snapshotChemistry(
+            {
+              ...setup.teams[0],
+              chemistryGrowthVersion: 1,
+              chemistryBonds: bonds![0],
+            },
+            {
+              ...setup.teams[1],
+              chemistryGrowthVersion: 1,
+              chemistryBonds: bonds![1],
+            },
+          ),
+          chemistryMinutes: { home: {}, away: {} },
         }
       : {}),
     ...(setup.physicalAbilityVersion === 1

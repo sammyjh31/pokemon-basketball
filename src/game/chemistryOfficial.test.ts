@@ -67,6 +67,8 @@ it("preserves missing chemistry on historical official games", () => {
   const { teams, fixture } = officialFixture();
   teams.forEach((team) => {
     delete team.chemistryVersion;
+    delete team.chemistryGrowthVersion;
+    delete team.chemistryBonds;
   });
   const game = officialGameFromArcade(
     finishedGame(fixture, teams),

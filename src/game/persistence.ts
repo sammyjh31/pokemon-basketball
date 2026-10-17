@@ -9,7 +9,7 @@ import {
 } from "./season";
 import { replaySeasonProgress } from "./interactiveSeason";
 import { validateRotationPlan } from "./rotationPlan";
-import { validateOfficialGame } from "./officialGame";
+import { validateStoredOfficialGame } from "./officialGame";
 import { leagueSchedule } from "./league";
 import { replayPlayoffs, simulatePlayoffsAsync } from "./playoffs";
 import { replayArchivedSeason } from "./archive";
@@ -138,6 +138,12 @@ function validate(
     return fail();
   if (raw.chemistryVersion !== undefined && raw.chemistryVersion !== 1)
     return fail();
+  if (
+    (raw.chemistryGrowthVersion !== undefined &&
+      raw.chemistryGrowthVersion !== 1) ||
+    (raw.chemistryGrowthVersion === 1 && raw.chemistryVersion !== 1)
+  )
+    return fail();
   if (raw.evaluationVersion !== undefined && raw.evaluationVersion !== 1)
     return fail();
   if (raw.courtVersion !== undefined && raw.courtVersion !== 1) return fail();
@@ -177,6 +183,9 @@ function validate(
       ? { physicalAbilityVersion: 1 as const }
       : {}),
     ...(raw.chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
+    ...(raw.chemistryGrowthVersion === 1
+      ? { chemistryGrowthVersion: 1 as const }
+      : {}),
     ...(raw.evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
     ...(raw.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
     ...(raw.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
@@ -222,6 +231,7 @@ function validate(
           team.abilityVersion !== run.abilityVersion ||
           team.physicalAbilityVersion !== run.physicalAbilityVersion ||
           team.chemistryVersion !== run.chemistryVersion ||
+          team.chemistryGrowthVersion !== run.chemistryGrowthVersion ||
           team.evaluationVersion !== run.evaluationVersion ||
           team.courtVersion !== run.courtVersion ||
           team.matchupVersion !== run.matchupVersion ||
@@ -256,7 +266,7 @@ function validate(
       const fixture = fixtures.get(id);
       if (!fixture || (fixture.homeTeamId !== 0 && fixture.awayTeamId !== 0))
         return fail();
-      playedGames[id] = validateOfficialGame(game, fixture, teams);
+      playedGames[id] = validateStoredOfficialGame(game, fixture, teams);
     }
     run.seasonProgress = { modelVersion: 1, completedRounds, playedGames };
     if (completedRounds === 0 || completedRounds === 82) {

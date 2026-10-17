@@ -1,3 +1,5 @@
+import { verifyChemistryChronology } from "./chemistryChronology";
+import { validatePairBonds } from "./teammateChemistry";
 import {
   validateAbilityActivations,
   mergeAbilityActivations,
@@ -17,7 +19,7 @@ import { validateRotationPlan } from "./rotationPlan";
 import { validateTrainingPlans } from "./training";
 import { replayArchivedSeasonSync } from "./archive";
 import { leagueSchedule } from "./league";
-import { validateOfficialGame } from "./officialGame";
+import { validateStoredOfficialGame } from "./officialGame";
 import { replayPlayoffs } from "./playoffs";
 import type { SeasonReplayArchive } from "./franchiseFeatures";
 import type { Playoffs } from "./playoffTypes";
@@ -314,6 +316,12 @@ export function validateLeagueTeams(
   const abilityVersion = object(rows[0]).abilityVersion;
   const physicalAbilityVersion = object(rows[0]).physicalAbilityVersion;
   const chemistryVersion = object(rows[0]).chemistryVersion;
+  const chemistryGrowthVersion = object(rows[0]).chemistryGrowthVersion;
+  if (
+    (chemistryGrowthVersion !== undefined && chemistryGrowthVersion !== 1) ||
+    (chemistryGrowthVersion === 1 && chemistryVersion !== 1)
+  )
+    return fail();
   if (chemistryVersion !== undefined && chemistryVersion !== 1) return fail();
   const evaluationVersion = object(rows[0]).evaluationVersion;
   const courtVersion = object(rows[0]).courtVersion;
@@ -355,6 +363,8 @@ export function validateLeagueTeams(
       row.abilityVersion !== abilityVersion ||
       row.physicalAbilityVersion !== physicalAbilityVersion ||
       row.chemistryVersion !== chemistryVersion ||
+      row.chemistryGrowthVersion !== chemistryGrowthVersion ||
+      (chemistryGrowthVersion !== 1 && row.chemistryBonds !== undefined) ||
       row.evaluationVersion !== evaluationVersion ||
       row.courtVersion !== courtVersion ||
       row.matchupVersion !== matchupVersion ||
@@ -402,6 +412,12 @@ export function validateLeagueTeams(
         ? { physicalAbilityVersion: 1 as const }
         : {}),
       ...(chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
+      ...(chemistryGrowthVersion === 1
+        ? {
+            chemistryGrowthVersion: 1 as const,
+            chemistryBonds: validatePairBonds(row.chemistryBonds ?? {}),
+          }
+        : {}),
       ...(evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
       ...(courtVersion === 1 ? { courtVersion: 1 as const } : {}),
       ...(matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
@@ -616,7 +632,7 @@ function archivedReplay(
     const fixture = fixtures.get(id);
     if (!fixture || (fixture.homeTeamId !== 0 && fixture.awayTeamId !== 0))
       return fail();
-    playedGames[id] = validateOfficialGame(game, fixture, teams);
+    playedGames[id] = validateStoredOfficialGame(game, fixture, teams);
   }
   const bracket = object(row.playoffs);
   if (![1, 2].includes(bracket.modelVersion as number)) return fail();
@@ -1087,6 +1103,7 @@ export function validateFranchise(
         team.abilityVersion !== run.abilityVersion ||
         team.physicalAbilityVersion !== run.physicalAbilityVersion ||
         team.chemistryVersion !== run.chemistryVersion ||
+        team.chemistryGrowthVersion !== run.chemistryGrowthVersion ||
         team.evaluationVersion !== run.evaluationVersion ||
         team.courtVersion !== run.courtVersion ||
         team.matchupVersion !== run.matchupVersion ||
@@ -1265,6 +1282,15 @@ export function validateFranchise(
     row.phase,
     developmentHistory?.reports,
     freeAgency,
+  );
+  verifyChemistryChronology(
+    run,
+    teams,
+    history,
+    trades,
+    drafts,
+    freeAgency,
+    row.phase,
   );
   if (developmentHistory)
     for (const team of teams)

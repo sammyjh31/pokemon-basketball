@@ -72,6 +72,7 @@ it("opts new solo and local clubs into one chemistry version, rejecting mixed an
     ).chemistryVersion,
   ).toBe(1);
   delete draft.chemistryVersion;
+  delete draft.chemistryGrowthVersion;
   expect(
     local.parseLocalLeague(JSON.stringify(draft)).chemistryVersion,
   ).toBeUndefined();
@@ -91,7 +92,11 @@ it("preserves absent chemistry flags through saves and archives and rejects inva
     },
   };
   for (const version of [1, undefined] as const) {
-    const r = { ...run(), chemistryVersion: version };
+    const r = {
+      ...run(),
+      chemistryVersion: version,
+      chemistryGrowthVersion: undefined,
+    };
     saveGame(storage, { ...initialState(22), run: r });
     const loaded = loadGame(storage, 22);
     expect(loaded.notice).toBeNull();
@@ -145,6 +150,7 @@ it("restores historical local chemistry per season without rewriting the origina
     },
   );
   delete draft.chemistryVersion;
+  delete draft.chemistryGrowthVersion;
   while (local.currentLocalTurn(draft)) {
     draft = local.advanceLocalCpu(draft);
     const turn = local.currentLocalTurn(draft);
@@ -182,7 +188,11 @@ it("restores historical local chemistry per season without rewriting the origina
       .career!.teams.every((t) => t.chemistryVersion === 1),
   ).toBe(true);
   const historicSecond = structuredClone(next);
-  historicSecond.career!.teams.forEach((t) => delete t.chemistryVersion);
+  historicSecond.career!.teams.forEach((t) => {
+    delete t.chemistryVersion;
+    delete t.chemistryGrowthVersion;
+    delete t.chemistryBonds;
+  });
   expect(
     local
       .parseLocalLeague(JSON.stringify(historicSecond))

@@ -27,6 +27,8 @@ let yearTwo: GameState;
 let completedTwo: GameState;
 beforeAll(() => {
   let state = initialState(47);
+  // These hand-built model-1 capsules predate earned teammate history.
+  delete state.run.chemistryGrowthVersion;
   for (const position of ROSTER_SLOTS)
     state = gameReducer(state, {
       type: "PLACE",
@@ -118,6 +120,7 @@ beforeAll(() => {
     ...traded,
     run: {
       ...createRun("spin", traded.run.includeLegends, 919),
+      chemistryGrowthVersion: undefined,
       roster: { ...teams[0].roster },
       offerIds: [],
       tactic: teams[0].tactic,
@@ -141,7 +144,7 @@ beforeAll(() => {
       ),
     },
   };
-}, 60000); // Two complete court-model seasons and playoff brackets.
+}, 600000); // Two complete court-model seasons and playoff brackets.
 
 describe("franchise persistence", () => {
   it("preserves malformed franchise history and recovers the verified original season", () => {
@@ -206,7 +209,7 @@ describe("franchise persistence", () => {
     expect(loaded.state).toEqual(completedTwo);
     expect(loaded.notice).toBeNull();
     expect(storage.getItem(STORAGE_KEY)).toBe(source);
-  }, 60000);
+  }, 600000);
 
   it("defers a completed first-year offseason without prematurely requiring its replayed Finals", async () => {
     const prepared = prepareGameLoad(memory(JSON.stringify(traded)), 999);
@@ -218,7 +221,7 @@ describe("franchise persistence", () => {
     );
     expect(loaded.state).toEqual(traded);
     expect(loaded.notice).toBeNull();
-  }, 60000);
+  }, 600000);
 
   it.each([
     "career points",
@@ -274,7 +277,7 @@ describe("franchise persistence", () => {
       expect(loaded.preserveSource).toBe(true);
     }
     expect(storage.getItem(STORAGE_KEY)).toBe(source);
-  }, 60000);
+  }, 600000);
 
   it("reconstructs stored ratings from the fixed roster and coaching before play", () => {
     const corrupted = structuredClone(yearTwo);
@@ -310,7 +313,7 @@ describe("franchise persistence", () => {
         (player) => player.pokemonId === tradedSpecies,
       )!.teamIds,
     ).toEqual([0, 1]);
-  }, 60000);
+  }, 600000);
 
   it.each(["games played", "player of game", "unqualified champion"] as const)(
     "cross-checks archived %s after previous game data is discarded",

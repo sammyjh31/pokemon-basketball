@@ -6,6 +6,7 @@ import { createLeague } from "../game/league";
 import { simulateMatch } from "../game/match";
 import type { LeagueGameSummary } from "../game/types";
 import { LeagueBoxScore } from "./LeagueBoxScore";
+import { POKEMON_BY_ID } from "../data/pokemon";
 
 const run = {
   ...createRun("free", false, 11),
@@ -39,6 +40,55 @@ function Harness() {
   );
 }
 describe("league box scores", () => {
+  it("replays later fixtures using their pregame familiarity and refreshes when that snapshot changes", () => {
+    const chemistry = { home: Array(28).fill(600), away: Array(28).fill(600) };
+    const later = simulateMatch(teams[0], teams[1], 91, { chemistry });
+    const fixture = {
+      ...game,
+      round: 20,
+      chemistry,
+      homeScore: later.homeScore,
+      awayScore: later.awayScore,
+      overtimePeriods: later.overtimePeriods,
+    };
+    const view = render(
+      <LeagueBoxScore game={fixture} teams={teams} onClose={() => {}} />,
+    );
+    const homeTable = screen.getByRole("table", {
+      name: `${teams[0].name} player box score`,
+    });
+    const totals = within(homeTable)
+      .getByRole("rowheader", { name: "Team totals" })
+      .closest("tr")!;
+    expect(within(totals).getAllByRole("cell")[1]).toHaveTextContent(
+      String(later.homeScore),
+    );
+    for (const box of later.homeBox) {
+      const rows = within(homeTable).getAllByRole("row");
+      const row = rows.find((row) =>
+        row.textContent?.includes(POKEMON_BY_ID.get(box.pokemonId)!.name),
+      )!;
+      expect(within(row).getAllByRole("cell")[1]).toHaveTextContent(
+        String(box.points),
+      );
+    }
+    expect(
+      screen.getAllByText("Earned familiarity 50 / 100").length,
+    ).toBeGreaterThan(0);
+    view.rerender(
+      <LeagueBoxScore
+        game={{
+          ...fixture,
+          chemistry: { home: Array(28).fill(1200), away: Array(28).fill(1200) },
+        }}
+        teams={teams}
+        onClose={() => {}}
+      />,
+    );
+    expect(
+      screen.getAllByText("Earned familiarity 67 / 100").length,
+    ).toBeGreaterThan(0);
+  });
   it("replays all sixteen players with matching team and period totals and restores keyboard focus", () => {
     render(<Harness />);
     const opener = screen.getByRole("button", { name: "Open match" });

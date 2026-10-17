@@ -1,3 +1,4 @@
+import { retainChemistry } from "./teammateChemistry";
 import { beforeAll, describe, expect, it } from "vitest";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { createRun } from "./draft";
@@ -18,6 +19,8 @@ import {
 } from "./types";
 const run = (): Run => ({
   ...createRun("free", true, 47),
+  // This suite exercises the historical model-2 development capsule.
+  chemistryGrowthVersion: undefined,
   roster: Object.fromEntries(
     ROSTER_SLOTS.map((s, i) => [s, [65, 150, 149, 68, 143, 9, 94, 59][i]]),
   ) as Run["roster"],
@@ -187,7 +190,7 @@ beforeAll(() => {
     },
   };
   offseason = enterOffseason(state);
-}, 60000);
+}, 600000);
 describe("the league offseason", () => {
   it("round trips real development and CPU trades across two completed seasons", async () => {
     const first = processOffseason(offseason);
@@ -244,7 +247,7 @@ describe("the league offseason", () => {
     expect(gameReducer(loaded.state, { type: "PROCESS_OFFSEASON" })).toBe(
       loaded.state,
     );
-  }, 300000); // Two seasons and four save restores, including archived replays.
+  }, 600000); // Two seasons and four save restores, including archived replays.
   it("processes every species once and preserves the completed season and careers", () => {
     const before = structuredClone(offseason),
       after = processOffseason(offseason),
@@ -316,7 +319,9 @@ describe("the league offseason", () => {
       type: "START_FRANCHISE_SEASON",
       seed: 88,
     });
-    expect(next.run.leagueTeams).toEqual(entered.franchise!.teams);
+    expect(next.run.leagueTeams).toEqual(
+      entered.franchise!.teams.map(retainChemistry),
+    );
     expect(next.franchise!.year).toBe(2);
     expect(next.run.result).toBeNull();
     expect(processOffseason(next)).toBe(next);

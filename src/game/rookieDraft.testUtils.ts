@@ -9,6 +9,7 @@ export function rookieFixture(): GameState {
   delete run.evaluationVersion;
   delete run.physicalAbilityVersion;
   delete run.chemistryVersion;
+  delete run.chemistryGrowthVersion;
   [129, 25, 149, 68, 143, 9, 94, 59].forEach((id, index) => {
     run = placePokemon(run, id, ROSTER_SLOTS[index]);
   });

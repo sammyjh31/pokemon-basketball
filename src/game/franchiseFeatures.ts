@@ -36,6 +36,8 @@ export interface OfficialGame {
   physicalAbilityVersion?: 1;
   /** Active-five basketball chemistry; independent of the ability switch. */
   chemistryVersion?: 1;
+  chemistryGrowthVersion?: 1;
+  chemistry?: import("./teammateChemistry").ChemistryFixture;
   fixtureId: string;
   match: LeagueMatch;
   courtScore: [number, number];

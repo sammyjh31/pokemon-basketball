@@ -1,3 +1,9 @@
+import {
+  snapshotChemistry,
+  validatePairBonds,
+  type ChemistryFixture,
+  type PairBonds,
+} from "./teammateChemistry";
 import type { ArcadeState } from "./arcade/types";
 import { playerOfGame } from "./arcade/engine";
 import { emptyBox } from "./boxscore";
@@ -64,6 +70,70 @@ function officialChemistryVersion(
   return version;
 }
 
+function officialGrowthVersion(
+  fixture: LeagueFixture,
+  teams: LeagueTeam[],
+): 1 | undefined {
+  const home = teams.find((team) => team.id === fixture.homeTeamId);
+  const away = teams.find((team) => team.id === fixture.awayTeamId);
+  if (!home || !away) return fail();
+  const version = home.chemistryGrowthVersion;
+  if (
+    (version !== undefined && version !== 1) ||
+    version !== away.chemistryGrowthVersion ||
+    (version === 1 && officialChemistryVersion(fixture, teams) !== 1)
+  )
+    return fail();
+  return version;
+}
+function officialChemistry(
+  fixture: LeagueFixture,
+  teams: LeagueTeam[],
+): ChemistryFixture | undefined {
+  if (officialGrowthVersion(fixture, teams) !== 1) {
+    if (fixture.chemistry !== undefined) fail();
+    return undefined;
+  }
+  return (
+    fixture.chemistry ??
+    snapshotChemistry(
+      teams.find((team) => team.id === fixture.homeTeamId)!,
+      teams.find((team) => team.id === fixture.awayTeamId)!,
+    )
+  );
+}
+function sameChemistry(
+  actual: unknown,
+  expected: ChemistryFixture | undefined,
+) {
+  if (!expected) return actual === undefined;
+  if (!record(actual) || Object.keys(actual).length !== 2) return false;
+  return (["home", "away"] as const).every(
+    (side) =>
+      Array.isArray(actual[side]) &&
+      (actual[side] as unknown[]).length === 28 &&
+      (actual[side] as unknown[]).every(
+        (value, i) =>
+          typeof value === "number" &&
+          Number.isFinite(value) &&
+          value >= 0 &&
+          value <= 6000 &&
+          Math.abs(value - Math.round(value * 100) / 100) < 1e-7 &&
+          value === expected[side][i],
+      ),
+  );
+}
+function scaledMinutes(values: PairBonds): PairBonds {
+  return validatePairBonds(
+    Object.fromEntries(
+      Object.entries(values).map(([key, value]) => [
+        key,
+        Math.round(value * SCALE * 100) / 100,
+      ]),
+    ),
+  );
+}
+
 /** Stored scores and courtScore are always home/away; arcade side zero is always the coach. */
 export function officialGameFromArcade(
   state: ArcadeState,
@@ -74,6 +144,7 @@ export function officialGameFromArcade(
     !state.official ||
     state.physicalAbilityVersion !== officialPhysicalVersion(fixture, teams) ||
     state.chemistryVersion !== officialChemistryVersion(fixture, teams) ||
+    state.chemistryGrowthVersion !== officialGrowthVersion(fixture, teams) ||
     (state.abilityVersion !== undefined && state.abilityVersion !== 1) ||
     (state.abilityVersion === 1) !==
       abilitiesEnabled(teams.find((team) => team.id === 0) ?? {}) ||
@@ -87,6 +158,12 @@ export function officialGameFromArcade(
   )
     fail();
   const userHome = fixture.homeTeamId === 0;
+  const chemistry = state.chemistryInitial
+    ? userHome
+      ? state.chemistryInitial
+      : { home: state.chemistryInitial.away, away: state.chemistryInitial.home }
+    : undefined;
+  if (!sameChemistry(chemistry, officialChemistry(fixture, teams))) fail();
   const sideOf = (teamId: number) => (teamId === 0 ? 0 : 1);
   const overtimePeriods = state.period - 4;
   const elapsed = 240 + overtimePeriods * 25;
@@ -222,6 +299,20 @@ export function officialGameFromArcade(
     ? [...state.score]
     : [state.score[1], state.score[0]];
   const match: LeagueMatch = {
+    ...(state.chemistryGrowthVersion === 1
+      ? {
+          chemistryMinutes: state.chemistryMinutes
+            ? {
+                home: scaledMinutes(
+                  state.chemistryMinutes[userHome ? "home" : "away"],
+                ),
+                away: scaledMinutes(
+                  state.chemistryMinutes[userHome ? "away" : "home"],
+                ),
+              }
+            : fail(),
+        }
+      : {}),
     homeScore: courtScore[0] * SCALE,
     awayScore: courtScore[1] * SCALE,
     homeBox: boxFor(fixture.homeTeamId),
@@ -258,6 +349,9 @@ export function officialGameFromArcade(
         ? { physicalAbilityVersion: 1 as const }
         : {}),
       ...(state.chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
+      ...(state.chemistryGrowthVersion === 1
+        ? { chemistryGrowthVersion: 1 as const, chemistry }
+        : {}),
     },
     fixture,
     teams,
@@ -276,6 +370,8 @@ export function validateOfficialGame(
     value.scale !== SCALE ||
     value.physicalAbilityVersion !== officialPhysicalVersion(fixture, teams) ||
     value.chemistryVersion !== officialChemistryVersion(fixture, teams) ||
+    value.chemistryGrowthVersion !== officialGrowthVersion(fixture, teams) ||
+    !sameChemistry(value.chemistry, officialChemistry(fixture, teams)) ||
     (value.abilityVersion !== undefined && value.abilityVersion !== 1) ||
     (value.abilityVersion === 1) !==
       abilitiesEnabled(teams.find((team) => team.id === 0) ?? {}) ||
@@ -370,6 +466,44 @@ export function validateOfficialGame(
     )
       fail();
   }
+  if (game.chemistryGrowthVersion === 1) {
+    if (
+      !record(match.chemistryMinutes) ||
+      Object.keys(match.chemistryMinutes).length !== 2
+    )
+      fail();
+    for (const side of ["home", "away"] as const) {
+      const values = validatePairBonds(match.chemistryMinutes![side]);
+      const boxes = side === "home" ? match.homeBox : match.awayBox;
+      const members = new Map(boxes.map((box) => [box.pokemonId, box]));
+      const incident = new Map<number, number>();
+      for (const [key, minutes] of Object.entries(values)) {
+        const [a, b] = key.split(":").map(Number);
+        if (
+          !members.has(a) ||
+          !members.has(b) ||
+          minutes >
+            Math.min(members.get(a)!.minutes, members.get(b)!.minutes) + 0.15
+        )
+          fail();
+        incident.set(a, (incident.get(a) ?? 0) + minutes);
+        incident.set(b, (incident.get(b) ?? 0) + minutes);
+      }
+      if (
+        Math.abs(
+          Object.values(values).reduce((sum, minutes) => sum + minutes, 0) -
+            maxMinutes * 10,
+        ) > 0.15 ||
+        boxes.some(
+          (box) =>
+            (box.minutes === 0 && (incident.get(box.pokemonId) ?? 0) > 0) ||
+            Math.abs((incident.get(box.pokemonId) ?? 0) / 4 - box.minutes) >
+              0.15,
+        )
+      )
+        fail();
+    }
+  } else if (match.chemistryMinutes !== undefined) fail();
   if (game.abilityVersion === 1) {
     for (const [own, opposing] of [
       [match.homeBox, match.awayBox],
@@ -447,4 +581,18 @@ export function validateOfficialGame(
     )
       fail();
   return structuredClone(game);
+}
+
+/** Validate a stored override before sequential replay verifies its pregame history. */
+export function validateStoredOfficialGame(
+  value: unknown,
+  fixture: LeagueFixture,
+  teams: LeagueTeam[],
+): OfficialGame {
+  if (officialGrowthVersion(fixture, teams) !== 1)
+    return validateOfficialGame(value, fixture, teams);
+  if (!record(value) || !record(value.chemistry)) return fail();
+  const chemistry = value.chemistry as unknown as ChemistryFixture;
+  if (!sameChemistry(chemistry, chemistry)) return fail();
+  return validateOfficialGame(value, { ...fixture, chemistry }, teams);
 }

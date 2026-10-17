@@ -67,7 +67,11 @@ describe("local league pass-and-play", () => {
         format: { ...LOCAL_DEFAULT_OPTIONS.format, teamCount: 30 as const },
       },
     };
-    const legacy = { ...draft, chemistryVersion: undefined };
+    const legacy = {
+      ...draft,
+      chemistryVersion: undefined,
+      chemistryGrowthVersion: undefined,
+    };
     const view = render(
       <LocalLeagueMode
         onExit={() => {}}

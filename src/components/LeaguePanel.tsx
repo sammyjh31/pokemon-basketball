@@ -1114,7 +1114,7 @@ export function LeaguePanel({
         league.teams.find((t) => t.id === game.homeTeamId)!,
         league.teams.find((t) => t.id === game.awayTeamId)!,
         game.seed,
-        { scouting: game.scouting },
+        { scouting: game.scouting, chemistry: game.chemistry },
       ),
     [league, playedGames],
   );

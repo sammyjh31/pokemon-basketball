@@ -1,3 +1,4 @@
+import { snapshotChemistry, teamsWithChemistry } from "./teammateChemistry";
 import type { OfficialGame } from "./franchiseFeatures";
 import { leagueSchedule } from "./league";
 import { validateOfficialGame } from "./officialGame";
@@ -11,11 +12,29 @@ export function nextFranchiseFixture(run: Run): LeagueFixture | null {
   const completed = run.seasonProgress?.completedRounds ?? 0;
   if (!Number.isInteger(completed) || completed < 0 || completed > 82)
     throw new Error("Invalid season progress.");
-  return (
+  const fixture =
     leagueSchedule(run.seasonSeed)
       .slice(completed * 15, (completed + 1) * 15)
-      .find((f) => f.homeTeamId === 0 || f.awayTeamId === 0) ?? null
+      .find((f) => f.homeTeamId === 0 || f.awayTeamId === 0) ?? null;
+  if (!fixture || run.chemistryGrowthVersion !== 1) return fixture;
+  const latest =
+    run.seasonProgress?.result ??
+    (completed
+      ? replaySeasonProgress(
+          run,
+          completed,
+          run.seasonProgress?.playedGames ?? {},
+        )
+      : undefined);
+  const teams = teamsWithChemistry(
+    seasonTeams(run),
+    latest?.league?.chemistryBonds,
   );
+  const chemistry = snapshotChemistry(
+    teams[fixture.homeTeamId],
+    teams[fixture.awayTeamId],
+  );
+  return { ...fixture, ...(chemistry ? { chemistry } : {}) };
 }
 
 export function replaySeasonProgress(

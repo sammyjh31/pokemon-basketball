@@ -1,3 +1,4 @@
+import type { PairBonds, ChemistryFixture } from "./teammateChemistry";
 import type { AbilityActivations } from "./abilities";
 import type { CoachAssignment } from "./trainerCoaches";
 import type {
@@ -202,6 +203,8 @@ export interface Run {
   physicalAbilityVersion?: 1;
   /** Active-five basketball chemistry; independent of the ability switch. */
   chemistryVersion?: 1;
+  /** Earned shared court minutes; absent on historical seasons. */
+  chemistryGrowthVersion?: 1;
   /** Shared team evaluation; absent on historical seasons for exact replay. */
   evaluationVersion?: 1;
   id: string;
@@ -249,6 +252,7 @@ export const DEFENSE_LABELS: Record<DefenseScheme, string> = {
 export type PlayType =
   "transition" | "pickRoll" | "isolation" | "post" | "spotUp";
 export interface LeagueTeam {
+  chemistryBonds?: PairBonds;
   coach?: CoachAssignment;
   engineRules?: EngineRules;
   simulationVersion?: 2;
@@ -267,6 +271,8 @@ export interface LeagueTeam {
   physicalAbilityVersion?: 1;
   /** Active-five basketball chemistry; independent of the ability switch. */
   chemistryVersion?: 1;
+  /** Earned shared court minutes; absent on historical seasons. */
+  chemistryGrowthVersion?: 1;
   /** Shared team evaluation; absent on historical seasons for exact replay. */
   evaluationVersion?: 1;
   id: number;
@@ -281,6 +287,7 @@ export interface LeagueTeam {
   rotationPlan?: RotationPlan;
 }
 export interface LeagueFixture {
+  chemistry?: ChemistryFixture;
   id: string;
   round: number;
   homeTeamId: number;
@@ -305,6 +312,7 @@ export interface LeagueGameSummary extends LeagueFixture {
   overtimePeriods: number;
 }
 export interface LeagueMatch {
+  chemistryMinutes?: { home: PairBonds; away: PairBonds };
   typeTactics?: TypeTacticsReport;
   insights?: MatchInsights;
   typeMatchups?: Record<
@@ -362,6 +370,7 @@ export interface LeagueAward extends SeasonAward {
   }[];
 }
 export interface LeagueResult {
+  chemistryBonds?: Record<number, PairBonds>;
   scouting?: ScoutingMemory;
   format?: import("./localFormat").LocalFormat;
   teams: LeagueTeam[];

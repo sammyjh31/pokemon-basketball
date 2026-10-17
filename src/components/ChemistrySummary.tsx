@@ -18,8 +18,52 @@ export function ChemistryDetails({
 }: {
   chemistry: LineupChemistry;
 }) {
+  const continuity = chemistry.continuity;
+  const experienced =
+    continuity?.pairs.filter((pair) => pair.minutes > 0).length ?? 0;
   return (
     <div className="chemistry-details">
+      {continuity && (
+        <div className="chemistry-familiarity">
+          <strong>
+            Earned familiarity {continuity.score.toFixed(0)} / 100
+          </strong>
+          <p>
+            {continuity.sharedMinutes.toFixed(1)} average retained shared
+            minutes across this five’s ten pairs.
+          </p>
+          <p>
+            {experienced} experienced{" "}
+            {experienced === 1 ? "connection" : "connections"} ·{" "}
+            {continuity.pairs.length - experienced} new connections
+          </p>
+          <details>
+            <summary>Shared court history by pair</summary>
+            <ul className="chemistry-pairs">
+              {continuity.pairs.map((pair) => (
+                <li key={pair.pokemonIds.join(":")}>
+                  <span>
+                    {pair.pokemonIds.map(name).join(" + ")}:{" "}
+                    {pair.minutes.toFixed(1)} retained shared minutes
+                  </span>
+                  <small>
+                    {pair.minutes > 0
+                      ? "Experienced connection"
+                      : "New connection"}{" "}
+                    · {(pair.bond * 100).toFixed(0)}% familiarity
+                  </small>
+                </li>
+              ))}
+            </ul>
+          </details>
+          <p>
+            Familiarity grows from shared active court time in official games.
+            Returning partners keep their connection; unfamiliar teammates begin
+            at zero. Retained shared minutes decrease by 10% each offseason;
+            they measure current familiarity, not lifetime playing time.
+          </p>
+        </div>
+      )}
       <p>
         <strong>Strengths:</strong>{" "}
         {chemistry.strengths.join(" · ") ||
@@ -68,6 +112,12 @@ export function ProjectedChemistrySummary({
         Complementary skills and active partnerships guide this projection.
         Matchups, minutes, energy and fouls can change the five on court.
       </p>
+      {projection.chemistry.skillScore !== undefined && (
+        <p className="chemistry-scheme">
+          Skill cohesion {projection.chemistry.skillScore.toFixed(0)} / 100 ·
+          Earned familiarity adds to this basketball balance.
+        </p>
+      )}
       {plan && (
         <p className="chemistry-scheme">
           {TACTIC_LABELS[plan.tactic]} · {DEFENSE_LABELS[plan.defense]}
@@ -89,9 +139,10 @@ export function ProjectedChemistrySummary({
         </p>
       )}
       <p className="chemistry-note">
-        Cohesion describes the five’s basketball balance. Partnerships supply
-        bounded passing, movement, screen, coverage, rebound and energy
-        modifiers; these are opportunities, not points scored.
+        Cohesion describes the five’s basketball balance
+        {projection.chemistry.continuity ? " and earned familiarity" : ""}.
+        Partnerships supply bounded passing, movement, screen, coverage, rebound
+        and energy modifiers; these are opportunities, not points scored.
       </p>
     </section>
   );

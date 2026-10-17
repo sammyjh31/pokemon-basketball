@@ -37,6 +37,7 @@ export function createRun(
     abilityVersion: 1,
     physicalAbilityVersion: 1,
     chemistryVersion: 1,
+    chemistryGrowthVersion: 1,
     evaluationVersion: 1,
     courtVersion: 1,
     matchupVersion: 1,

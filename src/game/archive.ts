@@ -55,6 +55,9 @@ export function archivedSeasonRun(season: FranchiseSeason): Run {
       ? { physicalAbilityVersion: 1 as const }
       : {}),
     ...(user.chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
+    ...(user.chemistryGrowthVersion === 1
+      ? { chemistryGrowthVersion: 1 as const }
+      : {}),
     ...(user.evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
     ...(user.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
     ...(user.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
@@ -118,7 +121,7 @@ export function resolveArchivedMatch(
       replay.teams[game.homeTeamId],
       replay.teams[game.awayTeamId],
       game.seed,
-      { scouting: game.scouting },
+      { scouting: game.scouting, chemistry: game.chemistry },
     )
   );
 }

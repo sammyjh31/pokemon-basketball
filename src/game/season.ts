@@ -1,3 +1,9 @@
+import {
+  initialChemistryBanks,
+  recordChemistryGame,
+  snapshotChemistry,
+  teamsWithChemistry,
+} from "./teammateChemistry";
 import { recordScouting, scoutingForMatch } from "./opponentScouting";
 import type { ScoutingMemory, MatchScouting } from "./typeTacticsTypes";
 import { createLeague, leagueSchedule } from "./league";
@@ -87,8 +93,10 @@ export function seasonBuilder(
     const fixture = eligible.get(id);
     if (!fixture)
       throw new Error("Official game is outside the completed season prefix.");
-    validateOfficialGame(game, fixture, teams);
+    if (!teams.some((team) => team.chemistryGrowthVersion === 1))
+      validateOfficialGame(game, fixture, teams);
   }
+  const chemistryBonds = initialChemistryBanks(teams);
   const byPlayer = new Map(players.map((p) => [p.playerId, p]));
   const standings: Standing[] = teams.map((t) => ({
     teamId: t.id,
@@ -108,15 +116,34 @@ export function seasonBuilder(
     teams[0].typeTacticsVersion === 1 ? {} : undefined;
   const play = (fixture: LeagueFixture) => {
     const { homeTeamId: h, awayTeamId: a } = fixture;
+    if (chemistryBonds && fixture.id !== fixtures[summaries.length]?.id)
+      throw new Error(
+        "Chemistry games must advance the schedule exactly once in order.",
+      );
+    const currentTeams = teamsWithChemistry(teams, chemistryBonds);
+    const chemistry = snapshotChemistry(currentTeams[h], currentTeams[a]);
     const context = scouting ? scoutingForMatch(scouting, h, a) : undefined;
     const match = resolveSeasonMatch(
-      { ...fixture, ...(context ? { scouting: context } : {}) },
-      teams,
+      {
+        ...fixture,
+        ...(context ? { scouting: context } : {}),
+        ...(chemistry ? { chemistry } : {}),
+      },
+      currentTeams,
       playedGames,
     );
-    if (scouting) recordScouting(scouting, teams[h], teams[a], match);
+    if (scouting)
+      recordScouting(scouting, currentTeams[h], currentTeams[a], match);
+    if (chemistryBonds)
+      recordChemistryGame(
+        chemistryBonds,
+        currentTeams[h],
+        currentTeams[a],
+        match,
+      );
     summaries.push({
       ...fixture,
+      ...(chemistry ? { chemistry } : {}),
       ...(context ? { scouting: context } : {}),
       homeScore: match.homeScore,
       awayScore: match.awayScore,
@@ -196,6 +223,9 @@ export function seasonBuilder(
       awards: honors.awards,
       league: {
         teams,
+        ...(chemistryBonds
+          ? { chemistryBonds: structuredClone(chemistryBonds) }
+          : {}),
         games: summaries,
         players,
         standings,
@@ -245,5 +275,6 @@ export function resolveSeasonMatch(
   if (!home || !away) throw new Error("Missing fixture team.");
   return simulateMatch(home, away, fixture.seed, {
     scouting: fixture.scouting,
+    chemistry: fixture.chemistry,
   });
 }

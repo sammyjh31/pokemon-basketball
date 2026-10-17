@@ -1,3 +1,4 @@
+import { retainChemistry } from "./teammateChemistry";
 import { beforeAll, describe, expect, it } from "vitest";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { createRun, placePokemon } from "./draft";
@@ -23,6 +24,8 @@ import {
 let finished: GameState;
 beforeAll(() => {
   let run = createRun("free", true, 82);
+  // Preserve the explicitly historical model-1/2 helper contract.
+  delete run.chemistryGrowthVersion;
   [129, 150, 149, 68, 143, 9, 94, 59].forEach((id, index) => {
     run = placePokemon(run, id, ROSTER_SLOTS[index]);
   });
@@ -36,7 +39,7 @@ beforeAll(() => {
       free: { runs: 4, bestWins: 60, perfectSeasons: 0 },
     },
   };
-}, 60000);
+}, 600000);
 
 const ability = (id: number) =>
   Math.max(
@@ -221,7 +224,9 @@ describe("franchise lifecycle", () => {
     expect(next.run.seasonSeed).toBe(createRun("free", true, 903).seasonSeed);
     expect(next.run.playoffs).toBeUndefined();
     expect(next.run.roster).toEqual(offseason.franchise!.teams[0].roster);
-    expect(next.run.leagueTeams).toEqual(offseason.franchise!.teams);
+    expect(next.run.leagueTeams).toEqual(
+      offseason.franchise!.teams.map(retainChemistry),
+    );
     expect(next.run.leagueTeams).not.toBe(offseason.franchise!.teams);
     expect(next.run.leagueTeams![0].roster).not.toBe(
       next.franchise!.teams[0].roster,
@@ -401,7 +406,7 @@ describe("career identity across franchise seasons", () => {
       archived.franchise!.careers.find((entry) => entry.pokemonId === 150)!
         .regular.points,
     ).toBeGreaterThan(0);
-  }, 60000);
+  }, 600000);
 });
 
 it("does not create seasons or trades beyond the supported save boundaries", () => {

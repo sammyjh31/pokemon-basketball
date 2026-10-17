@@ -1,3 +1,4 @@
+import { withKnownBonds } from "./teammateChemistry";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { attributes, positionRating, teamRatings } from "./ratings";
 import { clubTradeProfile } from "./tradeMarket";
@@ -104,6 +105,7 @@ function replacePlayer(
   team: LeagueTeam,
   slot: RosterSlot,
   agent: FreeAgent,
+  sources: readonly LeagueTeam[] = [team],
 ): LeagueTeam {
   const roster = { ...team.roster, [slot]: agent.pokemonId };
   const development = Object.fromEntries(
@@ -119,18 +121,21 @@ function replacePlayer(
       ];
     }),
   );
-  return {
-    ...team,
-    roster,
-    development,
-    ratings: teamRatings(
+  return withKnownBonds(
+    {
+      ...team,
       roster,
-      team.tactic,
-      team.rotation,
       development,
-      team.rotationPlan,
-    ),
-  };
+      ratings: teamRatings(
+        roster,
+        team.tactic,
+        team.rotation,
+        development,
+        team.rotationPlan,
+      ),
+    },
+    sources,
+  );
 }
 function skillProfile(id: number, offsets: DevelopmentRatings = {}) {
   const mon = POKEMON_BY_ID.get(id)!;
@@ -232,7 +237,7 @@ export function evaluateFreeAgentSigning(
   );
   if (!agent)
     return reject("That Pokémon is no longer an available free agent.");
-  const next = replacePlayer(team, slot, agent);
+  const next = replacePlayer(team, slot, agent, f.teams);
   if (team.evaluationVersion === 1) {
     const shared = compareTeamEvaluation(team, next);
     return {
@@ -287,7 +292,7 @@ function recordSigning(
     ...f,
     modelVersion: 3,
     teams: f.teams.map((t) =>
-      t.id === teamId ? replacePlayer(t, slot, agent) : t,
+      t.id === teamId ? replacePlayer(t, slot, agent, f.teams) : t,
     ),
     freeAgency: {
       modelVersion: 1,
@@ -394,7 +399,7 @@ export function processCpuFreeAgency(state: GameState): GameState {
             team.evaluationVersion === 1
               ? compareTeamEvaluation(
                   team,
-                  replacePlayer(team, out.slot, agent),
+                  replacePlayer(team, out.slot, agent, f!.teams),
                 ).delta
               : fitScore(team, out.slot, profile, out.profile).score,
         }));

@@ -108,7 +108,7 @@ describe("official postseason games", () => {
         current.playedGames,
       ),
     ).toEqual(current);
-  });
+  }, 180000); // Sixteen played games repeatedly project and replay the CPU bracket.
   it("rejects unconsumed or wrong playoff override identities", () => {
     const { run, teams, league } = setup();
     const fixture = nextUserPlayoffFixture(league, run.seasonSeed)!;

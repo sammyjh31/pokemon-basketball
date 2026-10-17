@@ -1,5 +1,6 @@
 import { mergePossessionInsights } from "./possessionAnalysis";
 import type { PossessionInsights } from "./possessionTypes";
+import type { ChemistryEffects, LineupChemistry } from "./lineupChemistry";
 import { simulateMatch } from "./match";
 import type {
   DefenseSummary,
@@ -118,6 +119,67 @@ const seasonCache = new WeakMap<
 const yieldToBrowser = () =>
   new Promise<void>((resolve) => setTimeout(resolve, 0));
 
+/** Pregame history varies between fixtures; a season row describes the time sampled. */
+function averageRecordedChemistry(
+  previous: LineupChemistry,
+  incoming: LineupChemistry,
+  previousSeconds: number,
+  incomingSeconds: number,
+): LineupChemistry {
+  if (!previous.continuity || !incoming.continuity) return previous;
+  if (previousSeconds <= 0) return incoming;
+  if (incomingSeconds <= 0) return previous;
+  const average = (a: number, b: number) =>
+    (a * previousSeconds + b * incomingSeconds) /
+    (previousSeconds + incomingSeconds);
+  const nextPairs = new Map(
+    incoming.continuity.pairs.map((pair) => [pair.pokemonIds.join(":"), pair]),
+  );
+  return {
+    ...previous,
+    score: average(previous.score, incoming.score),
+    value: average(previous.value, incoming.value),
+    ...(previous.skillScore !== undefined && incoming.skillScore !== undefined
+      ? { skillScore: average(previous.skillScore, incoming.skillScore) }
+      : {}),
+    links: [
+      ...new Map(
+        [...previous.links, ...incoming.links].map((link) => [link.id, link]),
+      ).values(),
+    ],
+    effects: Object.fromEntries(
+      Object.entries(previous.effects).map(([id, effects]) => [
+        id,
+        Object.fromEntries(
+          Object.entries(effects).map(([field, value]) => [
+            field,
+            average(
+              value,
+              incoming.effects[Number(id)]?.[field as keyof ChemistryEffects] ??
+                value,
+            ),
+          ]),
+        ) as unknown as ChemistryEffects,
+      ]),
+    ),
+    continuity: {
+      score: average(previous.continuity.score, incoming.continuity.score),
+      sharedMinutes: average(
+        previous.continuity.sharedMinutes,
+        incoming.continuity.sharedMinutes,
+      ),
+      pairs: previous.continuity.pairs.map((pair) => {
+        const next = nextPairs.get(pair.pokemonIds.join(":"));
+        return {
+          ...pair,
+          minutes: average(pair.minutes, next?.minutes ?? 0),
+          bond: average(pair.bond, next?.bond ?? 0),
+        };
+      }),
+    },
+  };
+}
+
 /** Holds compact summaries only. Official results must be supplied by their authoritative resolver. */
 export async function buildSeasonInsights(
   league: LeagueResult,
@@ -158,7 +220,10 @@ export async function buildSeasonInsights(
     if (home && away) {
       match = resolveMatch
         ? resolveMatch(game)
-        : simulateMatch(home, away, game.seed, { scouting: game.scouting });
+        : simulateMatch(home, away, game.seed, {
+            scouting: game.scouting,
+            chemistry: game.chemistry,
+          });
       if (
         match &&
         (match.homeScore !== game.homeScore ||
@@ -219,6 +284,13 @@ export async function buildSeasonInsights(
         pointsAgainst: 0,
         games: 0,
       };
+      if (total.chemistry?.continuity && row.chemistry?.continuity)
+        total.chemistry = averageRecordedChemistry(
+          total.chemistry,
+          row.chemistry,
+          total.seconds,
+          row.seconds,
+        );
       for (const key of [
         "seconds",
         "possessions",

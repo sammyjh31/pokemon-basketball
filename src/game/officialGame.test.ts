@@ -1,3 +1,4 @@
+import { pairKey } from "./teammateChemistry";
 import { describe, expect, it } from "vitest";
 import { createGame } from "./arcade/setup";
 import { continuePeriod, stepGame } from "./arcade/engine";
@@ -137,6 +138,7 @@ describe("official arcade boxes", () => {
       const state = createGame({
         official: true,
         chemistryVersion: 1,
+        chemistryGrowthVersion: 1,
         ...(enabled
           ? { abilityVersion: 1 as const, physicalAbilityVersion: 1 as const }
           : {}),
@@ -172,6 +174,10 @@ describe("official arcade boxes", () => {
       (g: typeof game) => (g.match.homeBox[0].plusMinus += 12),
       (g: typeof game) => (g.match.homeBox[0].minutes -= 0.125),
       (g: typeof game) => (g.match.homeBox[7].points = 12),
+      (g: typeof game) =>
+        (g.match.chemistryMinutes!.home[
+          pairKey(g.match.homeBox[0].pokemonId, g.match.homeBox[7].pokemonId)
+        ] = 0.01),
     ]) {
       const bad = structuredClone(game);
       corrupt(bad);

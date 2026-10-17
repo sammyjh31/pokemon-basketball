@@ -3,6 +3,7 @@ import type { AbilityActivations } from "../abilities";
 import type { EvaluationTeam } from "../teamEvaluation";
 import type { PlayerProfile } from "../playerProfile";
 import type { ChemistryContext, LineupChemistry } from "../lineupChemistry";
+import type { ChemistryFixture, PairBonds } from "../teammateChemistry";
 export type Side = 0 | 1;
 export type Phase = "tipoff" | "live" | "inbound" | "break" | "final";
 export type PlayerAction =
@@ -17,6 +18,7 @@ export interface ArcadeTeam extends Omit<
 }
 export interface ArcadeSetup {
   chemistryVersion?: 1;
+  chemistryGrowthVersion?: 1;
   abilityVersion?: 1;
   physicalAbilityVersion?: 1;
   evaluationVersion?: 1;
@@ -127,6 +129,12 @@ export interface ArcadeEvent {
 }
 export interface ArcadeState {
   chemistryVersion?: 1;
+  chemistryGrowthVersion?: 1;
+  /** Frozen pregame roster-pair snapshot; home is arcade side 0, away is side 1. */
+  chemistryInitial?: ChemistryFixture;
+  /** Raw arcade minutes, by side 0/home and side 1/away. Official conversion scales
+   * by 12 before rounding; these accumulated minutes never alter this game's bonds. */
+  chemistryMinutes?: { home: PairBonds; away: PairBonds };
   chemistryContexts?: [
     Omit<ChemistryContext, "abilities">,
     Omit<ChemistryContext, "abilities">,

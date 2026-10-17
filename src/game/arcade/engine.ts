@@ -23,6 +23,7 @@ import { aiDecisions, movePlayers } from "./ai";
 import { chooseCpuSubstitution } from "./coaching";
 import { changeArcadeEnergy } from "./abilities";
 import { refreshArcadeChemistry } from "./chemistry";
+import { addSharedMinutes } from "../teammateChemistry";
 export { activePlayers, attackDirection, basket, passTarget } from "./helpers";
 export function setPaused(s: ArcadeState, paused: boolean) {
   s.paused = paused;
@@ -307,6 +308,17 @@ export function stepGame(
     s.shotClock = Math.max(0, s.shotClock - dt);
   s.elapsed += liveDt;
   for (const p of activePlayers(s)) p.stats.seconds += liveDt;
+  if (s.chemistryGrowthVersion === 1 && s.chemistryMinutes && liveDt > 0) {
+    for (const [side, key] of [
+      [0, "home"],
+      [1, "away"],
+    ] as const)
+      addSharedMinutes(
+        s.chemistryMinutes[key],
+        activePlayers(s, side).map((p) => p.pokemonId),
+        liveDt / 60,
+      );
+  }
   for (const team of [0, 1] as Side[])
     if (s.fire[team] > 0) {
       s.fire[team] = Math.max(0, s.fire[team] - liveDt);

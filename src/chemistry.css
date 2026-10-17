@@ -55,6 +55,25 @@
 .chemistry-links li {
   margin: 10px 0;
 }
+.chemistry-familiarity {
+  margin: 12px 0;
+  padding: 12px;
+  border-left: 3px solid var(--gold);
+  background: color-mix(in srgb, var(--gold) 5%, transparent);
+}
+.chemistry-familiarity > strong {
+  color: var(--gold);
+}
+.chemistry-pairs {
+  padding-left: 18px;
+}
+.chemistry-pairs li {
+  margin: 8px 0;
+}
+.chemistry-pairs small {
+  display: block;
+  color: var(--muted);
+}
 .chemistry-links span {
   margin: 3px 0;
 }

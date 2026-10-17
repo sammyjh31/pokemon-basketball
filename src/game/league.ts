@@ -159,6 +159,12 @@ export function createLeague(run: Run): LeagueTeam[] {
     if (run.abilityVersion === 1) team.abilityVersion = 1;
     if (run.physicalAbilityVersion === 1) team.physicalAbilityVersion = 1;
     if (run.chemistryVersion === 1) team.chemistryVersion = 1;
+    if (run.chemistryGrowthVersion === 1) {
+      if (run.chemistryVersion !== 1)
+        throw new Error("Chemistry growth requires lineup chemistry.");
+      team.chemistryGrowthVersion = 1;
+      team.chemistryBonds = {};
+    }
     if (run.evaluationVersion === 1) team.evaluationVersion = 1;
     if (run.courtVersion === 1) team.courtVersion = 1;
     if (run.matchupVersion === 1) team.matchupVersion = 1;

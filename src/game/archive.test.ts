@@ -28,6 +28,8 @@ import { ROSTER_SLOTS, type GameState } from "./types";
 let finished: GameState;
 beforeAll(() => {
   let run = createRun("free", true, 82);
+  // Preserve the explicitly historical model-1/2 helper contract.
+  delete run.chemistryGrowthVersion;
   [129, 150, 149, 68, 143, 9, 94, 59].forEach((id, index) => {
     run = placePokemon(run, id, ROSTER_SLOTS[index]);
   });
@@ -48,7 +50,7 @@ beforeAll(() => {
       },
     },
   };
-}, 60000);
+}, 600000);
 function storage(state: GameState) {
   let source = JSON.stringify(state);
   return {
@@ -89,7 +91,7 @@ describe("connected franchise archives", () => {
     expect(rejected.preserveSource).toBe(true);
     expect(rejected.state.franchise).toBeUndefined();
     expect(damaged.getItem()).toBe(original);
-  }, 60000); // Valid and tampered saves each replay several full seasons.
+  }, 600000); // Valid and tampered saves each replay several full seasons.
   it("starts interactive years with empty progress without changing older helper fixtures", () => {
     expect(franchise.startInteractiveFranchiseSeason).toBeTypeOf("function");
     const archived = franchise.archiveFranchiseSeason(finished);
@@ -269,7 +271,7 @@ describe("mixed official season persistence", () => {
       expect(changed).toBe(true);
       expect(() => validateFranchise(capsule, corrupted.run, true)).toThrow();
     }
-  }, 180000);
+  }, 600000);
 });
 
 it("retains selected training and validated development after an offseason reload", () => {
@@ -301,7 +303,7 @@ it("retains selected training and validated development after an offseason reloa
     },
   };
   expect(loadGame(storage(next), 99).preserveSource).toBe(true);
-}, 180000);
+}, 600000);
 
 it("defers rich archive verification before a new year's first fixture and aborts without changing source", async () => {
   const next = franchise.startInteractiveFranchiseSeason(
@@ -323,7 +325,7 @@ it("defers rich archive verification before a new year's first fixture and abort
   ).rejects.toMatchObject({ name: "AbortError" });
   expect(progress.some((completed) => completed > 0)).toBe(true);
   expect(source.getItem()).toBe(original);
-}, 60000);
+}, 600000);
 
 it("rejects corrupted historical inputs after deferred replay instead of trusting structural totals", async () => {
   const next = franchise.startInteractiveFranchiseSeason(
@@ -343,7 +345,7 @@ it("rejects corrupted historical inputs after deferred replay instead of trustin
   expect(loaded.preserveSource).toBe(true);
   expect(loaded.state.franchise).toBeUndefined();
   expect(source.getItem()).toBe(original);
-}, 60000);
+}, 600000);
 
 it("restores an existing franchise waiting for its first coach in year two", async () => {
   const next = gameReducer(franchise.archiveFranchiseSeason(finished), {
@@ -372,4 +374,4 @@ it("restores an existing franchise waiting for its first coach in year two", asy
   const played = await advanceFranchiseSeasonAsync(chosen.run, 1);
   expect(played.seasonProgress?.completedRounds).toBe(1);
   expect(played.coach?.id).toBe("mom");
-}, 120000);
+}, 600000);

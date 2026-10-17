@@ -28,6 +28,7 @@ export interface FinalsMvp {
   value: string;
 }
 export interface Playoffs {
+  chemistryBonds?: Record<number, import("./teammateChemistry").PairBonds>;
   scouting?: import("./typeTacticsTypes").ScoutingMemory;
   modelVersion: 1 | 2;
   format?: import("./localFormat").LocalFormat;

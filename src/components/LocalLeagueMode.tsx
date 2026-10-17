@@ -6,6 +6,7 @@ import { appointLocalCoach, reviewLocalCoaches } from "../game/coachLocal";
 import { CoachDraft } from "./CoachDraft";
 import { CoachSummary } from "./CoachSummary";
 import { ProjectedChemistrySummary } from "./ChemistrySummary";
+import { teamsWithChemistry, type PairBonds } from "../game/teammateChemistry";
 import { localCoachTurn, selectLocalCoach } from "../game/coachSelection";
 import { useMemo, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -50,10 +51,12 @@ function ReviewTeams({
   draft,
   change,
   disabled,
+  chemistryBonds,
 }: {
   draft: LocalLeague;
   change: (next: (draft: LocalLeague) => LocalLeague) => void;
   disabled: boolean;
+  chemistryBonds?: Record<number, PairBonds>;
 }) {
   const [teamId, setTeamId] = useState(draft.managers[0].teamId);
   const teams = useMemo(
@@ -64,8 +67,8 @@ function ReviewTeams({
             draft.career.coachOffice,
             draft.career.year,
           )
-        : localLeagueTeams(draft),
-    [draft],
+        : teamsWithChemistry(localLeagueTeams(draft), chemistryBonds),
+    [draft, chemistryBonds],
   );
   const team = teams[teamId];
   return (
@@ -259,6 +262,9 @@ export function LocalLeagueMode({
     progress,
     notice,
     error,
+    restoration,
+    cancelRestore,
+    retryRestore,
   } = useLocalLeague(storage);
   const [confirm, setConfirm] = useState(false);
   const league = result?.league;
@@ -278,7 +284,7 @@ export function LocalLeagueMode({
           <div className="local-header-actions">
             <button
               className="button secondary"
-              disabled={busy}
+              disabled={busy && !restoration}
               onClick={onExit}
             >
               Back to game
@@ -305,7 +311,7 @@ export function LocalLeagueMode({
               {error}
             </p>
           )}
-          {(!draft || draft.version === 2) && <MatchupLab />}
+          {!restoration && (!draft || draft.version === 2) && <MatchupLab />}
           {draft &&
             ready &&
             !draft.coachDraftRequired &&
@@ -332,7 +338,64 @@ export function LocalLeagueMode({
                 />
               </details>
             )}
-          {!draft ? (
+          {restoration ? (
+            <section
+              className="local-panel"
+              aria-label="Local league restoration"
+            >
+              <h2>
+                {restoration.status === "loading"
+                  ? "Restoring your local league"
+                  : restoration.status === "cancelled"
+                    ? "Restoration cancelled"
+                    : "Unable to restore your local league"}
+              </h2>
+              <p>
+                Your saved career and teammate history are being verified before
+                play resumes. Your original save stays in place until
+                verification succeeds.
+              </p>
+              {restoration.status === "loading" ? (
+                <div className="local-progress">
+                  <p role="status">
+                    {restoration.total
+                      ? `Verified ${restoration.completed} of ${restoration.total} archived seasons.`
+                      : "Preparing saved career verification…"}
+                  </p>
+                  <progress
+                    aria-label="Local career verification progress"
+                    {...(restoration.total
+                      ? { value: restoration.completed, max: restoration.total }
+                      : {})}
+                  />
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={cancelRestore}
+                  >
+                    Cancel restore
+                  </button>
+                </div>
+              ) : (
+                <div className="local-header-actions">
+                  <button
+                    type="button"
+                    className="button primary"
+                    onClick={retryRestore}
+                  >
+                    Retry restore
+                  </button>
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={() => setConfirm(true)}
+                  >
+                    Start a new local league
+                  </button>
+                </div>
+              )}
+            </section>
+          ) : !draft ? (
             <LocalLeagueSetup onStart={change} />
           ) : draft.coachDraftRequired ? (
             <CoachDraft
@@ -408,6 +471,19 @@ export function LocalLeagueMode({
             </>
           ) : (
             <>
+              {!offseason && (
+                <details className="local-panel">
+                  <summary>Current teams · coaching and familiarity</summary>
+                  <ReviewTeams
+                    draft={draft}
+                    change={change}
+                    disabled
+                    chemistryBonds={
+                      playoffs?.chemistryBonds ?? league.chemistryBonds
+                    }
+                  />
+                </details>
+              )}
               {offseason && (
                 <>
                   <LocalCareerPanel draft={draft} change={change} />

@@ -52,6 +52,7 @@ function drafted(
   delete draft.evaluationVersion;
   delete draft.physicalAbilityVersion;
   delete draft.chemistryVersion;
+  delete draft.chemistryGrowthVersion;
   // Exact counterexample choices below belong to the original frozen season rules.
   if (originalRules) delete draft.abilityVersion;
   if (originalRules) delete draft.courtVersion;

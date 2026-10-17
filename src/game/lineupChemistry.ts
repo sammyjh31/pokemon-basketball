@@ -1,3 +1,4 @@
+import { pairKey, pairBond, type PairBonds } from "./teammateChemistry";
 import { speciesAbility, type AbilityMechanic } from "./abilities";
 import type { PlayerProfile } from "./playerProfile";
 import { clamp } from "./ratings";
@@ -12,6 +13,7 @@ export interface ChemistryContext {
   defense: DefenseScheme;
   abilities: boolean;
   familiarity?: number;
+  bonds?: PairBonds;
 }
 export interface ChemistryEffects {
   passing: number;
@@ -29,6 +31,12 @@ export interface ChemistryLink {
   description: string;
 }
 export interface LineupChemistry {
+  skillScore?: number;
+  continuity?: {
+    score: number;
+    sharedMinutes: number;
+    pairs: { pokemonIds: [number, number]; minutes: number; bond: number }[];
+  };
   score: number;
   value: number;
   strengths: string[];
@@ -121,13 +129,38 @@ export function evaluateLineupChemistry(
     poise = average(
       players.map((p) => quality(p.profile.attributes.composure)),
     ),
-    familiarity = clamp(context.familiarity ?? 0, 0, 1);
-  const score = clamp(
+    // Earned pair history replaces the older coarse local continuity bonus.
+    familiarity =
+      context.bonds === undefined ? clamp(context.familiarity ?? 0, 0, 1) : 0;
+  const skillScore = clamp(
     (triangle * 0.35 + spacing * 0.2 + defensePair * 0.25 + poise * 0.2) * 100 +
       familiarity * 4,
     0,
     100,
   );
+  const pairs =
+    context.bonds === undefined
+      ? undefined
+      : players.flatMap((a, i) =>
+          players.slice(i + 1).map((b) => {
+            const minutes =
+              context.bonds![pairKey(a.pokemonId, b.pokemonId)] ?? 0;
+            return {
+              pokemonIds: [a.pokemonId, b.pokemonId] as [number, number],
+              minutes,
+              bond: pairBond(minutes),
+            };
+          }),
+        );
+  const learnedFamiliarity = pairs ? average(pairs.map((p) => p.bond)) : 0;
+  const continuity = pairs
+    ? {
+        score: learnedFamiliarity * 100,
+        sharedMinutes: average(pairs.map((p) => p.minutes)),
+        pairs,
+      }
+    : undefined;
+  const score = clamp(skillScore + learnedFamiliarity * 6, 0, 100);
   const coordination = clamp((score - 60) / 40, -1, 1);
   const base: ChemistryEffects = {
     ...NEUTRAL_CHEMISTRY_EFFECTS,
@@ -160,6 +193,18 @@ export function evaluateLineupChemistry(
       da: Partial<ChemistryEffects>,
       db: Partial<ChemistryEffects>,
     ) => {
+      const learned =
+        context.bonds === undefined
+          ? 1
+          : 1 +
+            0.25 *
+              pairBond(context.bonds[pairKey(a.pokemonId, b.pokemonId)] ?? 0);
+      const scale = (delta: Partial<ChemistryEffects>) =>
+        learned === 1
+          ? delta
+          : Object.fromEntries(
+              Object.entries(delta).map(([k, v]) => [k, v * learned]),
+            );
       candidates.push({
         link: {
           id: `${kind}:${a.pokemonId}:${b.pokemonId}`,
@@ -168,8 +213,8 @@ export function evaluateLineupChemistry(
           description,
         },
         bonuses: [
-          { id: a.pokemonId, delta: da },
-          { id: b.pokemonId, delta: db },
+          { id: a.pokemonId, delta: scale(da) },
+          { id: b.pokemonId, delta: scale(db) },
         ],
       });
     };
@@ -338,7 +383,12 @@ export function evaluateLineupChemistry(
   );
   return {
     score,
-    value: clamp(coordination * 2 + synergyValue, -2, 5),
+    ...(continuity ? { skillScore, continuity } : {}),
+    value: clamp(
+      coordination * 2 + synergyValue + learnedFamiliarity * 1.5,
+      -2,
+      5,
+    ),
     strengths,
     weaknesses,
     links: candidates.filter((c) => active.has(c)).map((c) => c.link),

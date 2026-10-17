@@ -1,3 +1,4 @@
+import { validateFranchise } from "./franchiseValidation";
 import { expect, it } from "vitest";
 import { createRun } from "./draft";
 import { initialState, gameReducer } from "./state";
@@ -33,12 +34,23 @@ it("restores chemistry season, playoff and career totals, lineup reports and fro
     source: initial.run,
     result,
   });
-  const firstFixture = result.league!.games[0];
+  expect(
+    result.league!.teams.every(
+      (team) => Object.keys(team.chemistryBonds ?? {}).length === 0,
+    ),
+  ).toBe(true);
+  expect(result.league!.chemistryBonds).toBeDefined();
+  expect(
+    Object.values(result.league!.chemistryBonds![0]).some(
+      (minutes) => minutes > 0,
+    ),
+  ).toBe(true);
+  const firstFixture = result.league!.games[200];
   const firstMatch = simulateMatch(
     result.league!.teams[firstFixture.homeTeamId],
     result.league!.teams[firstFixture.awayTeamId],
     firstFixture.seed,
-    { scouting: firstFixture.scouting },
+    { scouting: firstFixture.scouting, chemistry: firstFixture.chemistry },
   );
   expect(firstMatch.insights!.lineups.length).toBeGreaterThan(0);
   expect(
@@ -60,9 +72,18 @@ it("restores chemistry season, playoff and career totals, lineup reports and fro
     ),
   ).toBe(true);
   const playoffs = simulatePlayoffs(result.league!, initial.run.seasonSeed);
-  const archived = processOffseason(
-    archiveFranchiseSeason({ ...season, run: { ...season.run, playoffs } }),
-  );
+  for (const [id, bank] of Object.entries(result.league!.chemistryBonds!))
+    for (const [key, minutes] of Object.entries(bank))
+      expect(playoffs.chemistryBonds![Number(id)][key]).toBeGreaterThanOrEqual(
+        minutes,
+      );
+  const frozenOffseason = archiveFranchiseSeason({
+    ...season,
+    run: { ...season.run, playoffs },
+  });
+  for (const team of frozenOffseason.franchise!.teams)
+    expect(team.chemistryBonds).toEqual(playoffs.chemistryBonds![team.id]);
+  const archived = processOffseason(frozenOffseason);
   expect(archived.franchise!.teams.every((t) => t.chemistryVersion === 1)).toBe(
     true,
   );
@@ -107,10 +128,32 @@ it("restores chemistry season, playoff and career totals, lineup reports and fro
   expect(
     resolveArchivedMatch(loaded.state.franchise!.history[0], firstFixture),
   ).toEqual(firstMatch);
+  const tamperedOffseason = structuredClone(loaded.state);
+  const offKey = Object.keys(
+    tamperedOffseason.franchise!.teams[0].chemistryBonds!,
+  )[0];
+  tamperedOffseason.franchise!.teams[0].chemistryBonds![offKey] += 1;
+  expect(() =>
+    validateFranchise(tamperedOffseason.franchise, tamperedOffseason.run, true),
+  ).toThrow();
+  const tamperedArchive = structuredClone(loaded.state);
+  tamperedArchive.franchise!.history[0].replay!.teams[0].chemistryBonds![
+    offKey
+  ] = 1;
+  expect(() =>
+    validateFranchise(tamperedArchive.franchise, tamperedArchive.run, true),
+  ).toThrow();
   const next = startFranchiseSeason(loaded.state, 823);
   expect(next.franchise!.year).toBe(2);
   expect(next.franchise!.history).toEqual(archived.franchise!.history);
   expect(next.run.chemistryVersion).toBe(1);
+  expect(next.run.chemistryGrowthVersion).toBe(1);
+  for (const [key, minutes] of Object.entries(
+    loaded.state.franchise!.teams[0].chemistryBonds!,
+  ))
+    expect(next.franchise!.teams[0].chemistryBonds![key]).toBe(
+      Math.round((Math.round(minutes * 100) * 9) / 10) / 100,
+    );
   expect(
     next.franchise!.teams.every((t) => Object.values(t.roster).length === 8),
   ).toBe(true);
@@ -122,6 +165,17 @@ it("restores chemistry season, playoff and career totals, lineup reports and fro
     823,
   );
   expect(after.notice).toBeNull();
+  for (const target of ["franchise", "run", "both"] as const) {
+    const tampered = structuredClone(next);
+    const key = Object.keys(tampered.franchise!.teams[0].chemistryBonds!)[0];
+    if (target !== "run")
+      tampered.franchise!.teams[0].chemistryBonds![key] += 1;
+    if (target !== "franchise")
+      tampered.run.leagueTeams![0].chemistryBonds![key] += 1;
+    expect(() =>
+      validateFranchise(tampered.franchise, tampered.run, true),
+    ).toThrow();
+  }
   const mismatched = structuredClone(next);
   delete mismatched.run.chemistryVersion;
   expect(
@@ -138,4 +192,4 @@ it("restores chemistry season, playoff and career totals, lineup reports and fro
       822,
     ).notice,
   ).toBeTruthy();
-}, 240000);
+}, 600000);

@@ -15,6 +15,10 @@ import {
 import type { PlayoffMode, Playoffs } from "../game/playoffTypes";
 import type { StorageLike } from "../game/persistence";
 import type { SeasonResult } from "../game/types";
+import {
+  needsBackgroundLocalRestore,
+  restoreLocalLeagueInBackground,
+} from "../game/localLeagueRestore";
 
 const browserStorage: StorageLike = {
   getItem: (key) => window.localStorage.getItem(key),
@@ -24,15 +28,19 @@ export function useLocalLeague(storage: StorageLike = browserStorage) {
   const [loaded] = useState(() => {
     try {
       const raw = storage.getItem(LOCAL_LEAGUE_KEY);
+      if (raw && needsBackgroundLocalRestore(raw))
+        return { draft: null, notice: "", backgroundRaw: raw };
       return {
         draft: raw ? advanceLocalCpu(parseLocalLeague(raw)) : null,
         notice: "",
+        backgroundRaw: null,
       };
     } catch {
       return {
         draft: null,
         notice:
           "Your saved local league could not be loaded. Its saved data is unchanged. Starting a new draft will replace it.",
+        backgroundRaw: null,
       };
     }
   });
@@ -41,7 +49,15 @@ export function useLocalLeague(storage: StorageLike = browserStorage) {
   const [error, setError] = useState("");
   const [result, setResult] = useState<SeasonResult | null>(null);
   const [playoffs, setPlayoffs] = useState<Playoffs | undefined>();
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(Boolean(loaded.backgroundRaw));
+  const [restoreAttempt, setRestoreAttempt] = useState(0);
+  const [restoration, setRestoration] = useState<{
+    status: "loading" | "cancelled" | "error";
+    completed: number;
+    total: number;
+  } | null>(
+    loaded.backgroundRaw ? { status: "loading", completed: 0, total: 0 } : null,
+  );
   const [progress, setProgress] = useState({ completed: 0, total: 1230 });
   const controller = useRef<AbortController | null>(null);
   useEffect(
@@ -52,8 +68,49 @@ export function useLocalLeague(storage: StorageLike = browserStorage) {
     [],
   );
   useEffect(() => {
+    if (!loaded.backgroundRaw) return;
+    const active = new AbortController();
+    controller.current = active;
+    setBusy(true);
+    void restoreLocalLeagueInBackground(
+      loaded.backgroundRaw,
+      active.signal,
+      (completed, total) => {
+        if (controller.current === active && !active.signal.aborted)
+          setRestoration({ status: "loading", completed, total });
+      },
+    )
+      .then((verified) => {
+        if (controller.current !== active || active.signal.aborted) return;
+        controller.current = null;
+        setBusy(false);
+        setDraft(verified);
+        setRestoration(null);
+        setNotice("");
+        setError("");
+      })
+      .catch((error) => {
+        if (controller.current !== active || active.signal.aborted) return;
+        setRestoration((value) => ({
+          status: "error",
+          completed: value?.completed ?? 0,
+          total: value?.total ?? 0,
+        }));
+        setError(
+          `${error instanceof Error ? error.message : "This saved local league could not be verified."} Your original saved data is unchanged.`,
+        );
+      })
+      .finally(() => {
+        if (controller.current === active) {
+          controller.current = null;
+          setBusy(false);
+        }
+      });
+    return () => active.abort();
+  }, [loaded, restoreAttempt]);
+  useEffect(() => {
     // Completed saves are not trusted until both season and playoff replay succeed.
-    if (!draft || (draft.completed && !result)) return;
+    if (restoration || !draft || (draft.completed && !result)) return;
     try {
       storage.setItem(LOCAL_LEAGUE_KEY, JSON.stringify(draft));
       setNotice("");
@@ -62,11 +119,11 @@ export function useLocalLeague(storage: StorageLike = browserStorage) {
         "Could not save this local league in your browser. You can keep playing, but refreshing or leaving may lose progress.",
       );
     }
-  }, [draft, storage, result]);
+  }, [draft, storage, result, restoration]);
   const change = (
     next: LocalLeague | ((current: LocalLeague) => LocalLeague),
   ) => {
-    if (controller.current) return;
+    if (controller.current || restoration) return;
     try {
       const updated =
         typeof next === "function" ? (draft ? next(draft) : null) : next;
@@ -181,6 +238,7 @@ export function useLocalLeague(storage: StorageLike = browserStorage) {
     setDraft(null);
     setResult(null);
     setPlayoffs(undefined);
+    setRestoration(null);
     setError("");
     try {
       storage.setItem(LOCAL_LEAGUE_KEY, "");
@@ -190,6 +248,25 @@ export function useLocalLeague(storage: StorageLike = browserStorage) {
         "Could not clear the old local save. A new draft will try to replace it when saving is available.",
       );
     }
+  };
+  const cancelRestore = () => {
+    if (restoration?.status !== "loading") return;
+    controller.current?.abort();
+    controller.current = null;
+    setBusy(false);
+    setRestoration((value) => ({
+      status: "cancelled",
+      completed: value?.completed ?? 0,
+      total: value?.total ?? 0,
+    }));
+    setNotice("Restoration cancelled. Your original saved data is unchanged.");
+  };
+  const retryRestore = () => {
+    if (!loaded.backgroundRaw || controller.current || !restoration) return;
+    setRestoration({ status: "loading", completed: 0, total: 0 });
+    setNotice("");
+    setError("");
+    setRestoreAttempt((attempt) => attempt + 1);
   };
   return {
     draft,
@@ -203,5 +280,8 @@ export function useLocalLeague(storage: StorageLike = browserStorage) {
     progress,
     notice,
     error,
+    restoration,
+    cancelRestore,
+    retryRestore,
   };
 }

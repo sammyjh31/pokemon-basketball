@@ -7,6 +7,8 @@ import { FranchiseSchedule } from "./components/FranchiseSchedule";
 import { nextFranchiseFixture } from "./game/interactiveSeason";
 import { nextUserPlayoffFixture } from "./game/playoffs";
 import { seasonTeams } from "./game/season";
+import { teamsWithChemistry } from "./game/teammateChemistry";
+import { currentChemistryBanks } from "./game/currentChemistry";
 import type { OfficialArcadeProps } from "./components/ArcadeMode";
 import { lazy, Suspense, useState, useMemo } from "react";
 import { POKEMON_BY_ID } from "./data/pokemon";
@@ -66,7 +68,22 @@ export default function App({
   const coachTeam = {
     ...(state.franchise?.phase === "offseason"
       ? state.franchise.teams[0]
-      : run.leagueTeams?.[0]),
+      : teamsWithChemistry(
+          run.leagueTeams ??
+            run.result?.league?.teams ??
+            run.seasonProgress?.result?.league?.teams ??
+            [],
+          currentChemistryBanks(run),
+        )[0]),
+    ...(state.franchise?.phase !== "offseason"
+      ? {
+          chemistryVersion: run.chemistryVersion,
+          chemistryGrowthVersion: run.chemistryGrowthVersion,
+          abilityVersion: run.abilityVersion,
+          physicalAbilityVersion: run.physicalAbilityVersion,
+          evaluationVersion: run.evaluationVersion,
+        }
+      : {}),
     id: 0,
     name: "Kanto Basketball Club",
     roster:
@@ -199,7 +216,10 @@ export default function App({
     if (!fixture) return;
     setOfficialGame({
       fixture,
-      teams: league?.teams ?? seasonTeams(run),
+      teams: teamsWithChemistry(
+        league?.teams ?? seasonTeams(run),
+        currentChemistryBanks(run),
+      ),
       label: `Year ${state.franchise.year} · ${league ? "Playoffs" : `Game ${(run.seasonProgress?.completedRounds ?? 0) + 1} of 82`}`,
       onComplete: (game) =>
         league

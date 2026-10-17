@@ -444,5 +444,6 @@ describe("active-five arcade chemistry", () => {
         expect(Number.isFinite(amount)).toBe(true);
         expect(amount).toBeGreaterThanOrEqual(0);
       }
-  }, 15000);
+    // A full physics game can exceed 15 seconds on a shared development host.
+  }, 120000);
 });

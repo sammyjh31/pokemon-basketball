@@ -1,3 +1,4 @@
+import { withKnownBonds } from "./teammateChemistry";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { teamRatings, positionRating } from "./ratings";
 import {
@@ -44,18 +45,21 @@ export function exchangePlayers(
       };
       delete development[from];
     }
-    return {
-      ...team,
-      roster,
-      ...(development ? { development } : {}),
-      ratings: teamRatings(
+    return withKnownBonds(
+      {
+        ...team,
         roster,
-        team.tactic,
-        team.rotation,
-        development,
-        team.rotationPlan,
-      ),
-    };
+        ...(development ? { development } : {}),
+        ratings: teamRatings(
+          roster,
+          team.tactic,
+          team.rotation,
+          development,
+          team.rotationPlan,
+        ),
+      },
+      teams,
+    );
   });
 }
 
@@ -289,21 +293,26 @@ export function exchangePackage(
         }, 0);
       const score =
         team.evaluationVersion === 1
-          ? evaluateTeam({
-              ...team,
-              roster: {
-                ...team.roster,
-                ...Object.fromEntries(
-                  slots.map((slot, index) => [slot, order[index]]),
-                ),
-              },
-              development: {
-                ...team.development,
-                ...Object.fromEntries(
-                  incoming.map((id) => [id, other.development?.[id] ?? {}]),
-                ),
-              },
-            }).score
+          ? evaluateTeam(
+              withKnownBonds(
+                {
+                  ...team,
+                  roster: {
+                    ...team.roster,
+                    ...Object.fromEntries(
+                      slots.map((slot, index) => [slot, order[index]]),
+                    ),
+                  },
+                  development: {
+                    ...team.development,
+                    ...Object.fromEntries(
+                      incoming.map((id) => [id, other.development?.[id] ?? {}]),
+                    ),
+                  },
+                },
+                teams,
+              ),
+            ).score
           : legacyScore();
       if (score > bestScore + 1e-9) {
         best = order;
@@ -327,18 +336,21 @@ export function exchangePackage(
         development[id] = { ...(other.development?.[id] ?? {}) };
       });
     }
-    return {
-      ...team,
-      roster,
-      ...(development ? { development } : {}),
-      ratings: teamRatings(
+    return withKnownBonds(
+      {
+        ...team,
         roster,
-        team.tactic,
-        team.rotation,
-        development,
-        team.rotationPlan,
-      ),
-    };
+        ...(development ? { development } : {}),
+        ratings: teamRatings(
+          roster,
+          team.tactic,
+          team.rotation,
+          development,
+          team.rotationPlan,
+        ),
+      },
+      teams,
+    );
   };
   return teams.map((team) =>
     team.id === fromTeamId

@@ -1,3 +1,9 @@
+import {
+  retainChemistry,
+  syncTeamBonds,
+  teamsWithChemistry,
+  validatePairBonds,
+} from "./teammateChemistry";
 import { compareTeamEvaluation } from "./teamEvaluation";
 import {
   coachTrainingPlans,
@@ -251,9 +257,13 @@ export function beginLocalOffseason(
     (draft.playoffGames !== undefined && draft.playoffGames !== count)
   )
     fail("The championship does not match this season.");
+  const finalTeams = teamsWithChemistry(
+    teams,
+    verified.chemistryBonds ?? league.chemistryBonds,
+  );
   const assignments = Object.assign(
     {},
-    ...teams.map((team) => coachTrainingPlans(team, league.players)),
+    ...finalTeams.map((team) => coachTrainingPlans(team, league.players)),
   ) as ReturnType<typeof coachTrainingPlans>;
   const development: LocalDevelopment[] = league.players.map((player) => ({
     teamId: player.teamId,
@@ -296,7 +306,7 @@ export function beginLocalOffseason(
       version: 1,
       year,
       phase: "offseason",
-      teams: withDevelopment(teams, development),
+      teams: withDevelopment(finalTeams, development),
       history: [...(draft.career?.history ?? []), archived],
     },
   };
@@ -329,7 +339,9 @@ function appendRookie(
     ...draft,
     career: {
       ...career,
-      teams: career.teams.map((t) => (t.id === team.id ? updated : t)),
+      teams: syncTeamBonds(
+        career.teams.map((t) => (t.id === team.id ? updated : t)),
+      ),
       history: [
         ...career.history.slice(0, -1),
         {
@@ -674,6 +686,7 @@ function nextYearTeams(
   adoptEvaluation = true,
   adoptPhysicalAbilities = true,
   adoptChemistry = true,
+  adoptChemistryGrowth = true,
 ): LeagueTeam[] {
   const archived = career.history.at(-1)!;
   const appointed = projectedCoaches(
@@ -683,13 +696,13 @@ function nextYearTeams(
   );
   if (career.teams.some((t) => t.coach) && appointed.some((t) => !t.coach))
     fail("Hire a head coach for every club before starting the next season.");
-  return appointed.map((team) => {
+  return syncTeamBonds(appointed).map((team) => {
     const retained =
       Object.values(team.roster).filter((id) =>
         Object.values(archived.teams[team.id].roster).includes(id),
       ).length / 8;
     return {
-      ...team,
+      ...(adoptChemistryGrowth ? retainChemistry(team) : team),
       ...(adoptAbilities ? { abilityVersion: 1 as const } : {}),
       ...(adoptPhysicalAbilities ? { physicalAbilityVersion: 1 as const } : {}),
       ...(adoptChemistry ? { chemistryVersion: 1 as const } : {}),
@@ -892,6 +905,14 @@ function parseTeams(
     array(value, format.teamCount)[0],
   ).chemistryVersion;
   if (chemistryVersion !== undefined && chemistryVersion !== 1) fail();
+  const chemistryGrowthVersion = object(
+    array(value, format.teamCount)[0],
+  ).chemistryGrowthVersion;
+  if (
+    (chemistryGrowthVersion !== undefined && chemistryGrowthVersion !== 1) ||
+    (chemistryGrowthVersion === 1 && chemistryVersion !== 1)
+  )
+    fail();
   const evaluationVersion = object(
     array(value, format.teamCount)[0],
   ).evaluationVersion;
@@ -910,6 +931,8 @@ function parseTeams(
       row.abilityVersion !== abilityVersion ||
       row.physicalAbilityVersion !== physicalAbilityVersion ||
       row.chemistryVersion !== chemistryVersion ||
+      row.chemistryGrowthVersion !== chemistryGrowthVersion ||
+      (chemistryGrowthVersion !== 1 && row.chemistryBonds !== undefined) ||
       row.evaluationVersion !== evaluationVersion ||
       row.courtVersion !== draft.courtVersion ||
       row.matchupVersion !== draft.matchupVersion ||
@@ -974,6 +997,12 @@ function parseTeams(
         ? { physicalAbilityVersion: 1 as const }
         : {}),
       ...(chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
+      ...(chemistryGrowthVersion === 1
+        ? {
+            chemistryGrowthVersion: 1 as const,
+            chemistryBonds: validatePairBonds(row.chemistryBonds ?? {}),
+          }
+        : {}),
       ...(evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
       ...(draft.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
       ...(draft.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
@@ -1006,6 +1035,8 @@ function sameRosterState(actual: LeagueTeam[], expected: LeagueTeam[]) {
       a.abilityVersion !== e.abilityVersion ||
       a.physicalAbilityVersion !== e.physicalAbilityVersion ||
       a.chemistryVersion !== e.chemistryVersion ||
+      a.chemistryGrowthVersion !== e.chemistryGrowthVersion ||
+      JSON.stringify(a.chemistryBonds) !== JSON.stringify(e.chemistryBonds) ||
       a.evaluationVersion !== e.evaluationVersion ||
       JSON.stringify(a.engineRules) !== JSON.stringify(e.engineRules) ||
       a.coach?.id !== e.coach?.id
@@ -1095,6 +1126,7 @@ export function parseLocalCareer(
   draft: LocalLeague,
   completed: boolean,
   playoffGames: number | undefined,
+  onProgress?: (completed: number, total: number) => void,
 ): LocalCareer {
   if (!draft.options || draft.picks.length !== localDraftSize(draft)) fail();
   const raw = object(value),
@@ -1121,6 +1153,7 @@ export function parseLocalCareer(
         );
   let expected = localLeagueTeams(draft);
   const history: LocalSeasonArchive[] = [];
+  onProgress?.(0, rawHistory.length);
   for (let i = 0; i < rawHistory.length; i++) {
     const row = object(rawHistory[i]),
       archiveYear = i + 1,
@@ -1255,6 +1288,22 @@ export function parseLocalCareer(
       trades: [],
       ...(rivalScouting ? { rivalScouting } : {}),
     };
+    let finalTeams = teams;
+    if (teams[0].chemistryGrowthVersion === 1) {
+      const season = localSeasonBuilder(
+        teams,
+        draft.options.format,
+        row.seasonSeed,
+      );
+      season.fixtures.forEach(season.play);
+      const league = season.finish().league!;
+      const playoffs = replayPlayoffs(league, row.seasonSeed, playoffGames);
+      if (playoffs.championId !== championId) fail();
+      finalTeams = teamsWithChemistry(
+        teams,
+        playoffs.chemistryBonds ?? league.chemistryBonds,
+      );
+    }
     let replay: LocalLeague = {
       ...draft,
       completed: true,
@@ -1264,7 +1313,7 @@ export function parseLocalCareer(
         year: archiveYear,
         ...(coachOffice ? { coachOffice } : {}),
         phase: "offseason",
-        teams: withDevelopment(teams, development),
+        teams: withDevelopment(finalTeams, development),
         history: [...history, archived],
       },
     };
@@ -1319,8 +1368,11 @@ export function parseLocalCareer(
         nextEvaluation === 1,
         nextPhysicalAbilities === 1,
         nextChemistry === 1,
+        object(array(nextRawTeams, draft.options.format.teamCount)[0])
+          .chemistryGrowthVersion === 1,
       );
     } else expected = replay.career!.teams;
+    onProgress?.(i + 1, rawHistory.length);
   }
   const current = parseTeams(
     raw.teams,

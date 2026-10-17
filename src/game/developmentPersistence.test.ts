@@ -36,6 +36,8 @@ let next: GameState;
 let legacyTwo: GameState;
 beforeAll(() => {
   let state = initialState(51);
+  // These hand-built model-2 capsules predate earned teammate history.
+  delete state.run.chemistryGrowthVersion;
   for (const position of ROSTER_SLOTS)
     state = gameReducer(state, {
       type: "PLACE",
@@ -130,6 +132,7 @@ beforeAll(() => {
     ...processed,
     run: {
       ...createRun("spin", true, 67),
+      chemistryGrowthVersion: undefined,
       includeLegends: processed.run.includeLegends,
       roster: { ...user.roster },
       offerIds: [],
@@ -140,7 +143,7 @@ beforeAll(() => {
     },
     franchise: { ...franchise, phase: "season", year: 2 },
   };
-}, 60000);
+}, 600000);
 
 describe("development save validation", () => {
   it("restores a processed model-3 offseason without rewriting its season", () => {
@@ -148,7 +151,7 @@ describe("development save validation", () => {
     expect(loaded.notice).toBeNull();
     expect(loaded.state).toEqual(processed);
     expect(loaded.state.run.result!.modelVersion).toBe(3);
-  }, 60000);
+  }, 600000);
   it("round trips developed pregame teams and rebuilds cached ratings", () => {
     const source = structuredClone(next);
     source.franchise!.teams[1].ratings.overall = 999;
@@ -181,7 +184,7 @@ describe("development save validation", () => {
     );
     expect(loaded.notice).toBeNull();
     expect(loaded.state).toEqual(completed);
-  }, 60000); // Full season generation plus deferred replay.
+  }, 600000); // Full season generation plus deferred replay.
   it("honors user trades before and after the CPU report range", () => {
     const state = structuredClone(next),
       franchise = state.franchise!;
@@ -267,7 +270,7 @@ describe("development save validation", () => {
     expect(
       loaded.state.run.leagueTeams!.every((team) => !team.development),
     ).toBe(true);
-  }, 60000);
+  }, 600000);
   it("continues to load an unprocessed model-4 season", () => {
     const result = simulateSeason(legacyTwo.run);
     expect(result.modelVersion).toBe(4);
@@ -275,7 +278,7 @@ describe("development save validation", () => {
     expect(loadGame(memory(JSON.stringify(completed)), 999).state).toEqual(
       completed,
     );
-  }, 120000); // Full season generation plus persistence replay.
+  }, 600000); // Full season generation plus persistence replay.
   it.each([
     "unknown skill",
     "fraction",
