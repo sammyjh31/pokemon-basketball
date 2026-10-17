@@ -10,6 +10,7 @@ import { simulateMatch } from "../game/match";
 import { insightTeams, insightLeague } from "../game/insightAnalysis.testUtils";
 import { initialState } from "../game/state";
 import type { LeagueTeam } from "../game/types";
+import "../test/preloadPanels";
 
 const morale = (score: number) => ({
   score,
