@@ -4,6 +4,7 @@ import App from "../App";
 import { initialState } from "../game/state";
 import { insightLeague } from "../game/insightAnalysis.testUtils";
 import type { LeagueTeam } from "../game/types";
+import "../test/preloadPanels";
 
 it("refreshes the coach preview from completed games even when the draft has no frozen league teams", () => {
   const state = initialState(7);

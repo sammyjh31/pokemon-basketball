@@ -1,3 +1,4 @@
+import { Dialog } from "./Dialog";
 const POSITION_GUIDE = [
   [
     "PG · Lead creator",
@@ -24,29 +25,32 @@ const POSITION_GUIDE = [
     "Reserves are rated at their best position. Add shooting, another creator and defensive coverage to support the starters.",
   ],
 ];
-export function RulesPanel() {
+export function RulesPanel({ onClose }: { onClose: () => void }) {
   return (
-    <details className="rules-panel" id="rules">
-      <summary>
-        <span>
-          <span className="eyebrow">THE PLAYBOOK</span>
-          <strong>Basketball brains. Pokémon stats.</strong>
-        </span>
-        <span className="rules-plus" aria-hidden="true">
-          +
-        </span>
-      </summary>
+    <Dialog
+      className="confirm-dialog rules-dialog"
+      eyebrow="THE PLAYBOOK"
+      title="Basketball brains. Pokémon stats."
+      onClose={onClose}
+    >
+      <button
+        type="button"
+        className="text-button rules-close"
+        onClick={onClose}
+      >
+        Close guide
+      </button>
       <div className="rules-content">
         <div className="rule-columns">
           <div>
             <h3>Build an eight-player rotation</h3>
             <p>
-              <b>Spin & Pick:</b> choose one of four Pokémon for each slot. Fill
-              five starters and three reserves using two re-rolls for the entire
-              draft.
+              <b>82–0 Challenge:</b> choose one of four Pokémon for each slot.
+              Fill five starters and three reserves using two re-rolls for the
+              entire draft.
             </p>
             <p>
-              <b>Free Draft:</b> search all 251 Generation I and II Pokémon,
+              <b>Lineup builder:</b> search all 251 Generation I and II Pokémon,
               pick or replace any player, swap occupied slots, and use auto-fill
               for an open bench.
             </p>
@@ -54,8 +58,9 @@ export function RulesPanel() {
               Each Pokémon can appear only once across the entire league. Your
               eight picks are reserved before the other 29 teams draft their
               rosters. The legendary toggle also controls mythical species. All
-              eight slots must be filled before you simulate. Changing modes or
-              the legendary pool starts a new run.
+              eight slots must be filled before you simulate. Changing modes
+              starts a new run. In the Lineup builder the legendary toggle only
+              changes the pool and keeps your other picks.
             </p>
           </div>
           <div>
@@ -432,9 +437,9 @@ export function RulesPanel() {
           Newly archived seasons preserve frozen rosters, coaching and full game
           details. Earlier saves without detailed archives still retain their
           records, rosters, honors and career totals. Franchise seasons do not
-          add attempts to your Spin & Pick or Free Draft records. Progress saves
-          in this browser; ending a franchise replaces its history with a new
-          draft.
+          add attempts to your 82–0 Challenge or Lineup builder records.
+          Progress saves in this browser; ending a franchise replaces its
+          history with a new draft.
         </p>
         <p>
           Older saves keep their original results and records. Completed league
@@ -445,6 +450,6 @@ export function RulesPanel() {
           earn league honors.
         </p>
       </div>
-    </details>
+    </Dialog>
   );
 }

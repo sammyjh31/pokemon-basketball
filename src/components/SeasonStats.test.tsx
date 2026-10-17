@@ -8,6 +8,7 @@ import {
   type TeamRatings,
 } from "../game/types";
 import { SeasonPanel } from "./SeasonPanel";
+import "../test/preloadPanels";
 
 const ratings: TeamRatings = {
   offense: 60,

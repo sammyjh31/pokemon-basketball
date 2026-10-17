@@ -88,3 +88,27 @@ it("applies an asynchronous result only to its unchanged source run, once", () =
     gameReducer(applied, { type: "APPLY_SEASON", source: source.run, result }),
   ).toBe(applied);
 });
+
+it("changes the Lineup builder legendary pool without clearing other picks", () => {
+  let state = gameReducer(initialState(5), {
+    type: "NEW_RUN",
+    mode: "free",
+    includeLegends: true,
+    seed: 5,
+  });
+  state = gameReducer(state, { type: "PLACE", pokemonId: 150, position: "PG" });
+  state = gameReducer(state, { type: "PLACE", pokemonId: 143, position: "C" });
+  const off = gameReducer(state, { type: "LEGENDS", includeLegends: false });
+  expect(off.run.id).toBe(state.run.id);
+  expect(off.run.includeLegends).toBe(false);
+  expect(off.run.roster.PG).toBeNull();
+  expect(off.run.roster.C).toBe(143);
+  const on = gameReducer(off, { type: "LEGENDS", includeLegends: true });
+  expect(on.run.includeLegends).toBe(true);
+  expect(on.run.roster.C).toBe(143);
+  // The 82–0 Challenge deals offers from a fixed pool, so it needs a new run.
+  const spin = initialState(5);
+  expect(gameReducer(spin, { type: "LEGENDS", includeLegends: false })).toBe(
+    spin,
+  );
+});

@@ -54,6 +54,7 @@ it("completes the real new-run coach step and removes manual coaching controls",
 
 import { gameReducer } from "../game/state";
 import { rookieFixture } from "../game/rookieDraft.testUtils";
+import "../test/preloadPanels";
 it("gates the franchise overview's simulation shortcut until a coach is chosen", () => {
   const initial = gameReducer(rookieFixture(), {
     type: "START_FRANCHISE_SEASON",

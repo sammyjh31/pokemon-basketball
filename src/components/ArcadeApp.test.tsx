@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import App from "../App";
 import { initialState } from "../game/state";
 import { simulateSeason } from "../game/legacySeason";
+import "../test/preloadPanels";
 describe("arcade entry", () => {
   it("requires a complete eight-player roster", () => {
     render(

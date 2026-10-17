@@ -1,0 +1,238 @@
+/* Header: mode buttons stay grouped; page links and dialogs sit apart. */
+.page-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.page-links a,
+.page-links button {
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  padding: 10px 10px;
+  color: #c3c9d2;
+  font: 700 13px var(--display);
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.page-links a:hover,
+.page-links button:hover {
+  background: #181e26;
+  color: #fff;
+}
+.mode-lock {
+  margin: 0;
+  max-width: 340px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #c3c9d2;
+}
+.mode-lock strong {
+  color: var(--gold);
+}
+.panel-loading {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 20px 0;
+}
+
+/* First-run chooser */
+.confirm-dialog.play-chooser {
+  max-width: 620px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+.play-options {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.play-option {
+  width: 100%;
+  height: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  background: #0b0f14;
+  border: 1px solid #414954;
+  border-radius: 6px;
+  color: #f0f2f6;
+}
+.play-option strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font: 800 18px var(--display);
+  text-transform: uppercase;
+}
+.play-option strong small {
+  font:
+    700 12px Inter,
+    system-ui,
+    sans-serif;
+  text-transform: none;
+  color: #101115;
+  background: var(--blue);
+  border-radius: 3px;
+  padding: 1px 6px;
+}
+.play-option span {
+  font:
+    400 13px Inter,
+    system-ui,
+    sans-serif;
+  text-transform: none;
+  line-height: 1.45;
+  color: #b8c1cf;
+}
+.play-option:hover,
+.play-option:focus-visible {
+  border-color: var(--gold);
+  background: #141a21;
+}
+.play-option[aria-current="true"] {
+  border-color: var(--gold);
+}
+.play-chooser .dialog-actions {
+  justify-content: flex-end;
+}
+.play-chooser .dialog-actions button {
+  flex: 0 0 auto;
+}
+
+/* Getting-started checklist */
+.getting-started {
+  border: 1px solid #3b352b;
+  background: var(--panel);
+  border-radius: 7px;
+  padding: 14px 18px;
+  margin-bottom: 22px;
+}
+.getting-started-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.getting-started h2 {
+  margin: 0;
+  font: 700 16px var(--display);
+  text-transform: uppercase;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.getting-started ol {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.getting-started li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+}
+.getting-started li.current {
+  border-color: var(--gold);
+}
+.getting-started li > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.getting-started strong {
+  font-size: 14px;
+}
+.getting-started strong a {
+  color: inherit;
+}
+.getting-started small {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.step-marker {
+  flex: 0 0 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid #5a636f;
+  font: 800 13px var(--display);
+}
+.getting-started li.done .step-marker {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #101115;
+}
+.getting-started li.done strong {
+  color: #c3c9d2;
+}
+
+/* The playbook, now a dialog instead of a long page section */
+.confirm-dialog.rules-dialog {
+  max-width: 920px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  position: relative;
+}
+.rules-dialog .rules-close {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+}
+.rules-dialog .rules-content {
+  padding: 0;
+}
+
+.legend-toggle {
+  flex-wrap: wrap;
+}
+.legend-note {
+  flex-basis: 100%;
+  padding-left: 25px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+@media (max-width: 940px) {
+  .page-links {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+  .mode-lock {
+    order: 2;
+    max-width: none;
+    width: 100%;
+  }
+}
+@media (max-width: 640px) {
+  .play-options,
+  .getting-started ol {
+    grid-template-columns: 1fr;
+  }
+  .confirm-dialog.play-chooser,
+  .confirm-dialog.rules-dialog {
+    padding: 22px 18px;
+  }
+  .rules-dialog .rule-columns {
+    grid-template-columns: 1fr;
+  }
+}
+main:focus {
+  outline: none;
+}

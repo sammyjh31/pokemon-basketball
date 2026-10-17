@@ -1,4 +1,5 @@
 import { createLineupDraftProjector } from "./draftLineup";
+import { runDraftPoolJob, type DraftPoolJob } from "./draftPoolJobs";
 import type { DraftImpactFocus } from "./draftImpact";
 import type { Roster, RosterSlot, RotationStyle, Tactic } from "./types";
 
@@ -10,7 +11,12 @@ export interface DraftLineupJob {
   focus: DraftImpactFocus;
   lockedSlots?: readonly RosterSlot[];
 }
-self.onmessage = ({ data }: MessageEvent<DraftLineupJob>) => {
+self.onmessage = ({ data }: MessageEvent<DraftLineupJob | DraftPoolJob>) => {
+  // Advice and fixed-position rankings are single-shot replies.
+  if ("kind" in data) {
+    self.postMessage({ result: runDraftPoolJob(data) });
+    return;
+  }
   const project = createLineupDraftProjector(
     data.roster,
     data.tactic,

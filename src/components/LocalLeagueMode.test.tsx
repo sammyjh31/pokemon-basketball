@@ -21,6 +21,7 @@ import { ROSTER_SLOTS } from "../game/types";
 import type { StorageLike } from "../game/persistence";
 import { initialState } from "../game/state";
 import { LOCAL_DEFAULT_OPTIONS } from "../game/localFormat";
+import "../test/preloadPanels";
 
 function memory(seed: Record<string, string> = {}) {
   const data = new Map(Object.entries(seed));

@@ -12,12 +12,12 @@ import {
 import { Portrait } from "./Portrait";
 import { SeasonStats } from "./SeasonStats";
 import { BoxScore } from "./BoxScore";
-import { LeaguePanel } from "./LeaguePanel";
+import { LeaguePanel } from "./lazyPanels";
 import { LeagueBoxScore } from "./LeagueBoxScore";
 import { leagueSchedule } from "../game/league";
 import { seasonTeams } from "../game/season";
 import type { PlayoffMode } from "../game/playoffTypes";
-import { PlayoffPanel } from "./PlayoffPanel";
+import { PlayoffPanel } from "./lazyPanels";
 export function SeasonPanel({
   run,
   ratings,
@@ -127,7 +127,7 @@ export function SeasonPanel({
     league?.games.find((game) => game.id === selectedGame.leagueGameId);
   const recap =
     done && result
-      ? `82–0 Pokémon Basketball\n${result.wins}–${result.losses} · ${run.mode === "spin" ? "Spin & Pick" : "Free Draft"}\n${Object.entries(
+      ? `82–0 Pokémon Basketball\n${result.wins}–${result.losses} · ${run.mode === "spin" ? "82–0 Challenge" : "Lineup builder"}\n${Object.entries(
           run.roster,
         )
           .filter(([, id]) => id != null)
@@ -274,7 +274,7 @@ export function SeasonPanel({
                 {done
                   ? wins === 82
                     ? "THE PERFECT SEASON."
-                    : `${Math.round((wins / 82) * 100)}% win rate · ${run.mode === "spin" ? "Spin & Pick" : "Free Draft"}`
+                    : `${Math.round((wins / 82) * 100)}% win rate · ${run.mode === "spin" ? "82–0 Challenge" : "Lineup builder"}`
                   : result
                     ? "One game at a time."
                     : "Rotation, role fit and coaching"}

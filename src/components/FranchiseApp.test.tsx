@@ -77,7 +77,11 @@ it("continues a completed league into the next season and restores its careers w
   expect(ready.run.leagueTeams).toEqual(ready.franchise!.teams);
   expect(ready.franchise!.teams[0]).toEqual(drafted.franchise!.teams[0]);
   expect(ready.franchise!.freeAgency?.cpuYears).toEqual([1]);
-  expect(screen.getByRole("button", { name: "Lineup builder" })).toBeDisabled();
+  // Mode tabs are hidden, not greyed out, while a franchise is active.
+  expect(
+    screen.queryByRole("button", { name: "Lineup builder" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByText(/Franchise in progress\./)).toBeInTheDocument();
   fireEvent.click(
     screen.getByRole("button", { name: "Draft Delia Ketchum (Mom)" }),
   );
@@ -195,6 +199,7 @@ import {
   evaluateTrade,
   startFranchiseSeason,
 } from "../game/franchise";
+import "../test/preloadPanels";
 
 it.each(["offseason", "season"] as const)(
   "preserves the %s franchise and uses its traded rosters when entering and leaving arcade",

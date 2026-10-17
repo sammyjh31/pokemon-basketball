@@ -4,7 +4,7 @@ import { nextFranchiseFixture } from "../game/interactiveSeason";
 import { seasonTeams } from "../game/season";
 import type { LeagueGameSummary, Run } from "../game/types";
 import { LeagueBoxScore } from "./LeagueBoxScore";
-import { LeaguePanel } from "./LeaguePanel";
+import { LeaguePanel } from "./lazyPanels";
 import "../franchiseGames.css";
 
 export function FranchiseSchedule({
