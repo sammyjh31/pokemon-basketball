@@ -143,7 +143,7 @@ a:hover {
   top: 10px;
 }
 .eyebrow {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
   letter-spacing: 0.6px;
   color: var(--muted);
@@ -379,7 +379,7 @@ main {
   justify-content: space-between;
   gap: 4px;
   color: var(--muted);
-  font: 700 10px var(--display);
+  font: 700 12px var(--display);
 }
 .best-position {
   color: var(--blue);
@@ -439,7 +439,7 @@ main {
   min-height: 15px;
 }
 .types span {
-  font: 700 10px var(--display);
+  font: 700 12px var(--display);
   text-transform: uppercase;
   letter-spacing: 0.3px;
   max-width: 100%;
@@ -451,7 +451,7 @@ main {
   border-top: 1px solid var(--line);
   padding: 8px 0;
   color: #aeb7c3;
-  font: 700 10px var(--display);
+  font: 700 12px var(--display);
   margin-top: 8px;
 }
 .card-stats span {
@@ -467,7 +467,7 @@ main {
   display: none;
 }
 .draft-footnote {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   margin: 12px 0 16px;
   line-height: 1.5;
@@ -495,7 +495,7 @@ main {
   font: 700 17px var(--display);
 }
 .preview-heading > span {
-  font: 700 10px var(--display);
+  font: 700 12px var(--display);
   color: var(--gold);
 }
 .placement-positions {
@@ -518,13 +518,13 @@ main {
   color: #fff;
 }
 .placement-positions button span {
-  font-size: 11px;
+  font-size: 12px;
 }
 .attribute-list {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 7px 14px;
-  font-size: 10px;
+  font-size: 12px;
   color: #bfc5cd;
   margin-top: 12px;
 }
@@ -582,7 +582,7 @@ main {
   border: 0;
 }
 .personal-records dt {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   text-transform: uppercase;
 }
@@ -600,7 +600,7 @@ main {
   gap: 8px;
 }
 .how-it-works a {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--gold);
   text-decoration: none;
 }
@@ -646,7 +646,7 @@ main {
   background: #101419;
 }
 .panel-heading .eyebrow {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 1px;
 }
 .panel-heading h2 {
@@ -661,7 +661,7 @@ main {
   border-radius: 4px;
   padding: 3px 6px;
   color: #b4becb;
-  font: 700 11px var(--display);
+  font: 700 12px var(--display);
 }
 .text-button {
   padding: 10px 0;
@@ -733,7 +733,7 @@ main {
 }
 .court-label span {
   font-weight: 700;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 1px;
 }
 .court-slot {
@@ -773,7 +773,7 @@ main {
   position: absolute;
   z-index: 3;
   bottom: 9px;
-  font: 700 11px var(--display);
+  font: 700 12px var(--display);
   color: #9bd4f3;
   pointer-events: none;
 }
@@ -815,7 +815,7 @@ main {
   position: absolute;
   top: 100%;
   margin-top: 5px;
-  font: 700 10px var(--display);
+  font: 700 12px var(--display);
   color: #27180d;
   letter-spacing: 0.2px;
   white-space: nowrap;
@@ -872,7 +872,7 @@ main {
   width: 17px;
   height: 17px;
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 12px;
 }
 .team-ratings {
   display: grid;
@@ -889,7 +889,7 @@ main {
   margin: 3px 0 8px;
 }
 .team-ratings strong small {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 400;
   color: #a6b2c1;
   margin-left: 5px;
@@ -910,7 +910,7 @@ main {
   background: var(--gold);
 }
 .rating-caption {
-  font-size: 11px;
+  font-size: 12px;
   color: #a6b0bd;
   text-align: center;
   padding: 0 16px 15px;
@@ -1108,7 +1108,7 @@ main {
 }
 .schedule-table th {
   text-align: left;
-  font: 700 11px var(--display);
+  font: 700 12px var(--display);
   color: #bac4d1;
   padding: 13px 20px;
 }
@@ -1140,7 +1140,7 @@ main {
 }
 .opponent-name small {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 5px;
 }
@@ -1178,37 +1178,6 @@ main {
   border-radius: 5px;
   padding: 12px;
   margin-top: 8px;
-}
-.rules-panel {
-  margin: 30px 0;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--panel);
-  scroll-margin-top: 20px;
-}
-.rules-panel summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22px;
-  cursor: pointer;
-  list-style: none;
-}
-.rules-panel summary::-webkit-details-marker {
-  display: none;
-}
-.rules-panel summary .eyebrow {
-  display: block;
-}
-.rules-panel summary strong {
-  display: block;
-  font: 700 22px var(--display);
-  text-transform: uppercase;
-  margin-top: 4px;
-}
-.rules-plus {
-  color: var(--gold);
-  font-size: 26px;
 }
 .rules-content {
   padding: 0 23px 25px;
@@ -1262,13 +1231,13 @@ footer {
 }
 .footer-brand span {
   display: block;
-  font: 700 10px var(--display);
+  font: 700 12px var(--display);
   letter-spacing: 1px;
   color: var(--muted);
   margin-top: 6px;
 }
 footer p {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.8;
   color: #a4adba;
   text-align: right;
@@ -1348,7 +1317,7 @@ footer a {
     font-size: 12px;
   }
   .header-play {
-    font-size: 11px;
+    font-size: 12px;
     padding: 12px 10px;
   }
   .draft-layout {
@@ -1485,7 +1454,7 @@ footer a {
     font-size: 22px;
   }
   .card-top {
-    font-size: 10px;
+    font-size: 12px;
   }
   .portrait-stage {
     height: 75px;
@@ -1521,7 +1490,7 @@ footer a {
     gap: 12px;
   }
   .header-play {
-    font-size: 11px;
+    font-size: 12px;
     padding: 10px;
   }
   .header-play span {
@@ -1532,7 +1501,7 @@ footer a {
   }
   .mode-tabs button,
   .mode-tabs a {
-    font-size: 11px;
+    font-size: 12px;
     padding: 12px 6px;
     white-space: normal;
     text-align: center;
@@ -1577,17 +1546,17 @@ footer a {
     bottom: 0;
   }
   .slot-name {
-    font-size: 11px;
+    font-size: 12px;
     min-width: 78px;
     max-width: 100px;
     padding: 5px 6px 17px;
   }
   .slot-role {
-    font-size: 9px;
+    font-size: 12px;
     bottom: 6px;
   }
   .slot-rating {
-    font-size: 8px;
+    font-size: 12px;
     margin-top: 3px;
   }
   .slot-PG {
@@ -1607,11 +1576,11 @@ footer a {
     letter-spacing: 1.5px;
   }
   .court-label span {
-    font-size: 8px;
+    font-size: 12px;
   }
   .court-instruction {
     padding: 11px;
-    font-size: 11px;
+    font-size: 12px;
     gap: 8px;
   }
   .team-ratings {
@@ -1622,7 +1591,7 @@ footer a {
     font-size: 23px;
   }
   .rating-caption {
-    font-size: 10px;
+    font-size: 12px;
     padding-bottom: 12px;
   }
   .candidate-grid {
@@ -1646,10 +1615,10 @@ footer a {
     padding: 11px 12px 0;
   }
   .card-top {
-    font-size: 11px;
+    font-size: 12px;
   }
   .card-stats {
-    font-size: 11px;
+    font-size: 12px;
   }
   .card-stats b {
     font-size: 14px;
@@ -1676,7 +1645,7 @@ footer a {
     font-size: 17px;
   }
   .season-empty p {
-    font-size: 11px;
+    font-size: 12px;
   }
   .empty-progress {
     gap: 4px;
@@ -1703,37 +1672,31 @@ footer a {
     padding: 11px 9px;
   }
   .schedule-table th {
-    font-size: 10px;
+    font-size: 12px;
   }
   .schedule-table {
-    font-size: 11px;
+    font-size: 12px;
   }
   .opponent-mark {
     display: none;
   }
   .opponent-name small {
-    font-size: 9px;
+    font-size: 12px;
     max-width: 150px;
   }
   .pending-game,
   .odds {
-    font-size: 10px;
+    font-size: 12px;
   }
   .schedule-table th:nth-child(1),
   .schedule-table td:nth-child(1) {
     width: 34px;
   }
   .game-score {
-    font-size: 11px;
+    font-size: 12px;
   }
   .game-score b {
     margin-right: 3px;
-  }
-  .rules-panel summary {
-    padding: 18px;
-  }
-  .rules-panel summary strong {
-    font-size: 19px;
   }
   .rules-content {
     padding: 0 18px 18px;
@@ -1755,7 +1718,7 @@ footer a {
   }
   footer p {
     text-align: left;
-    font-size: 10px;
+    font-size: 12px;
   }
   .footer-brand {
     font-size: 20px;
@@ -1801,10 +1764,44 @@ footer a {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
-.arcade-entry { display:flex; justify-content:space-between; align-items:center; gap:24px; margin:24px 0; padding:28px; border:2px solid #bd592c; border-radius:10px; background:#172a39; color:#fff4df; }
-.arcade-entry h2 { color:#fff4df; margin:6px 0; font-size:clamp(1.3rem,3vw,2rem); }
-.arcade-entry p { color:#ded2bd; margin:6px 0; }
-.arcade-entry .eyebrow { color:#ffb375; }
-.arcade-entry .button { white-space:nowrap; }
-.arcade-entry-note { max-width:220px; font-size:.85rem; }
-@media(max-width:600px){ .arcade-entry{flex-direction:column; align-items:stretch; padding:20px;} .arcade-entry .button{width:100%;} }
+.arcade-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin: 24px 0;
+  padding: 28px;
+  border: 2px solid #bd592c;
+  border-radius: 10px;
+  background: #172a39;
+  color: #fff4df;
+}
+.arcade-entry h2 {
+  color: #fff4df;
+  margin: 6px 0;
+  font-size: clamp(1.3rem, 3vw, 2rem);
+}
+.arcade-entry p {
+  color: #ded2bd;
+  margin: 6px 0;
+}
+.arcade-entry .eyebrow {
+  color: #ffb375;
+}
+.arcade-entry .button {
+  white-space: nowrap;
+}
+.arcade-entry-note {
+  max-width: 220px;
+  font-size: 12px;
+}
+@media (max-width: 600px) {
+  .arcade-entry {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px;
+  }
+  .arcade-entry .button {
+    width: 100%;
+  }
+}

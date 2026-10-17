@@ -548,9 +548,21 @@ describe("offseason development review", () => {
     const state = fixture();
     const onProcessOffseason = vi.fn();
     const { props, rerender } = setup(state, { onProcessOffseason });
+    const start = screen.getByRole("button", { name: "Start season 2" });
+    expect(start).toBeDisabled();
+    // The disabled button explains itself, and every step shows its status.
+    expect(start).toHaveAccessibleDescription(
+      "Run offseason development first.",
+    );
+    const steps = within(
+      screen.getByRole("list", { name: "Offseason steps" }),
+    ).getAllByRole("listitem");
     expect(
-      screen.getByRole("button", { name: "Start season 2" }),
-    ).toBeDisabled();
+      steps.map((step) => step.querySelector("strong")!.textContent),
+    ).toEqual(expect.arrayContaining(["Development", "Review", "Start"]));
+    expect(steps[0]).toHaveTextContent("Status: To do");
+    expect(steps[0]).toHaveAttribute("aria-current", "step");
+    expect(steps.at(-1)).toHaveTextContent("Status: Locked");
     fireEvent.click(
       screen.getByRole("button", { name: "Run offseason development" }),
     );
@@ -562,6 +574,14 @@ describe("offseason development review", () => {
     expect(
       screen.getByRole("button", { name: "Start season 2" }),
     ).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Start season 2" }),
+    ).not.toHaveAttribute("aria-describedby");
+    expect(
+      within(
+        screen.getByRole("list", { name: "Offseason steps" }),
+      ).getAllByRole("listitem")[0],
+    ).toHaveTextContent("Status: Done");
   });
 
   it("filters development by last-season team and player and exposes skill changes and CPU reasoning", () => {

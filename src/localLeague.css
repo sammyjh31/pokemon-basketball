@@ -231,7 +231,7 @@
   display: block;
 }
 .local-recent span {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   line-height: 1.5;
   margin-top: 3px;

@@ -3,6 +3,7 @@ import { expect, it, vi } from "vitest";
 import { officialFixture } from "../game/officialGame.testUtils";
 import { replaySeasonProgress } from "../game/interactiveSeason";
 import { FranchiseSchedule } from "./FranchiseSchedule";
+import "../test/preloadPanels";
 
 it("shows completed-game records before ten games and exposes separate play/simulate actions", () => {
   const { run } = officialFixture();

@@ -17,6 +17,7 @@ import {
 } from "../game/types";
 import { SeasonPanel } from "./SeasonPanel";
 import { PlayoffPanel } from "./PlayoffPanel";
+import "../test/preloadPanels";
 
 const baseRun = {
   ...createRun("free", false, 11),

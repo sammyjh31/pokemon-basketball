@@ -13,7 +13,7 @@
 }
 .type-matchup-insight p,
 .type-scouting p {
-  font-size: 0.85rem;
+  font-size: 12px;
   line-height: 1.6;
   margin-bottom: 0;
 }
@@ -28,7 +28,7 @@
   margin: 0.7rem 0;
 }
 .type-scouting > div > strong {
-  font-size: 0.8rem;
+  font-size: 12px;
   min-width: 8.5rem;
 }
 .type-scouting .types {

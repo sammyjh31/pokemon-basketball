@@ -6,6 +6,7 @@ import { createRun } from "../game/draft";
 import { simulateSeason } from "../game/legacySeason";
 import { teamRatings } from "../game/ratings";
 import type { Run } from "../game/types";
+import "../test/preloadPanels";
 
 afterEach(() => vi.useRealTimers());
 

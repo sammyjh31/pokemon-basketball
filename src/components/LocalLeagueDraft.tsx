@@ -28,14 +28,12 @@ import { Portrait, TypeBadges } from "./Portrait";
 import { playerProfile } from "../game/playerProfile";
 import { ScoutReport } from "./ScoutReport";
 import { localGeneration } from "../game/localFormat";
-import { recommendRosterPicks } from "../game/draftAdvice";
 import { DepthScouting } from "./DepthScouting";
 import { DraftTeamImpact } from "./DraftTeamImpact";
 import {
   DRAFT_IMPACT_PRIORITIES,
   bestDraftImpacts,
   projectDraftImpact,
-  projectDraftPool,
   rankDraftImpacts,
   type DraftImpactFocus,
   type DraftImpactPosition,
@@ -44,8 +42,12 @@ import { DraftImpactComparison } from "./DraftImpactComparison";
 import { draftImpactChangeLabel } from "./draftImpactFormat";
 
 import { useDraftLineup } from "./useDraftLineup";
+import { useDraftPool } from "./useDraftPool";
+import { DraftTerm, DRAFT_TERMS } from "./DraftTerm";
 import { DraftLineupPreview } from "./DraftLineupPreview";
 import { DraftPositionLocks } from "./DraftPositionLocks";
+
+const ADVANCED_SCOUTING_KEY = "pokemon-basketball:advanced-scouting";
 
 export function LocalLeagueDraft({
   draft,
@@ -75,6 +77,25 @@ export function LocalLeagueDraft({
   const [limit, setLimit] = useState(24);
   const [compared, setCompared] = useState<number[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
+  // A per-browser convenience: scouts who use the advanced tools keep them open.
+  const [advancedOpen, setAdvancedOpenState] = useState(() => {
+    try {
+      return window.localStorage.getItem(ADVANCED_SCOUTING_KEY) === "open";
+    } catch {
+      return false;
+    }
+  });
+  const setAdvancedOpen = (open: boolean) => {
+    setAdvancedOpenState(open);
+    try {
+      window.localStorage.setItem(
+        ADVANCED_SCOUTING_KEY,
+        open ? "open" : "closed",
+      );
+    } catch {
+      // Storage may be unavailable; the disclosure still works for this visit.
+    }
+  };
   const [comparePosition, setComparePosition] = useState<Position>("PG");
   const selectedHeading = useRef<HTMLHeadingElement>(null);
   const boardHeading = useRef<HTMLHeadingElement>(null);
@@ -136,16 +157,22 @@ export function LocalLeagueDraft({
       ),
     [draft.positionLocks, roster, turn.teamId],
   );
-  const advice = useMemo(
-    () =>
-      recommendRosterPicks(pool, roster, tactic, pool.length, {
+  // Pool-wide advice and rankings run in the draft worker, off the main thread.
+  const adviceJob = useMemo(
+    () => ({
+      kind: "advice" as const,
+      pool,
+      roster,
+      tactic,
+      team: {
         roster,
         ...draft.coaching[turn.teamId],
         evaluationVersion: draft.evaluationVersion,
         abilityVersion: draft.abilityVersion,
         physicalAbilityVersion: draft.physicalAbilityVersion,
         engineRules: draft.options?.engineRules,
-      }),
+      },
+    }),
     [
       pool,
       roster,
@@ -158,6 +185,8 @@ export function LocalLeagueDraft({
       turn.teamId,
     ],
   );
+  const adviceSearch = useDraftPool(adviceJob);
+  const advice = useMemo(() => adviceSearch.value ?? [], [adviceSearch.value]);
   const adviceById = useMemo(
     () => new Map(advice.map((pick) => [pick.pokemonId, pick])),
     [advice],
@@ -178,21 +207,31 @@ export function LocalLeagueDraft({
     [pool, roster, impactSlot, tactic, rotation, impactFocus, lockedSlots],
   );
   const lineupSearch = useDraftLineup(lineupJob);
-  const fixedProjections = useMemo(
+  const fixedJob = useMemo(
     () =>
       impactSlot === "best-lineup"
-        ? []
-        : projectDraftPool(
-            pool.map((p) => p.id),
+        ? null
+        : {
+            kind: "fixed" as const,
+            ids: pool.map((p) => p.id),
             roster,
-            impactSlot,
+            position: impactSlot,
             tactic,
             rotation,
-          ),
+          },
     [pool, roster, impactSlot, tactic, rotation],
+  );
+  const fixedSearch = useDraftPool(fixedJob);
+  const fixedProjections = useMemo(
+    () => fixedSearch.value ?? [],
+    [fixedSearch.value],
   );
   const poolProjections =
     impactSlot === "best-lineup" ? lineupSearch.projections : fixedProjections;
+  const rankingPending =
+    impactSlot === "best-lineup" ? lineupSearch.pending : fixedSearch.pending;
+  const scoutingPending =
+    adviceSearch.pending || (sort === "impact" && rankingPending);
   const projectionById = useMemo(
     () =>
       new Map(
@@ -236,7 +275,8 @@ export function LocalLeagueDraft({
               ? (impactById.get(b.id)?.metric.after ?? 0) -
                 (impactById.get(a.id)?.metric.after ?? 0)
               : sort === "fit"
-                ? adviceById.get(b.id)!.score - adviceById.get(a.id)!.score
+                ? (adviceById.get(b.id)?.score ?? 0) -
+                  (adviceById.get(a.id)?.score ?? 0)
                 : positionRating(b, sort === "best" ? bestPosition(b) : sort) -
                   positionRating(
                     a,
@@ -282,6 +322,8 @@ export function LocalLeagueDraft({
     );
   };
   const toggleCompare = (id: number) => {
+    // The shortlist lives under Advanced scouting; reveal it when used.
+    if (!compared.includes(id)) setAdvancedOpen(true);
     if (compared.includes(id) && compared.length <= 2) setCompareOpen(false);
     setCompared((current) =>
       current.includes(id)
@@ -353,9 +395,9 @@ export function LocalLeagueDraft({
             <span className="draft-style">{TACTIC_LABELS[tactic]}</span>
           </div>
           <p className="draft-board-intro">
-            Team impact ranks every available Pokémon by their projected effect
-            on your best lineup found, including moves for current players. Pick
-            a priority, scout the tradeoffs, then compare up to three.
+            Start with the top three below. Each is ranked by projected team
+            impact on your best lineup. Open Advanced scouting to rank the whole
+            pool, lock positions or compare up to three players.
           </p>
           <div className="draft-open-roles" aria-label="Open roster positions">
             <span>Lineup / open roles</span>
@@ -396,11 +438,6 @@ export function LocalLeagueDraft({
               </button>
             ))}
           </div>
-          <DraftPositionLocks
-            roster={roster}
-            lockedSlots={lockedSlots}
-            onChange={onLocksChange}
-          />
           {sort === "impact" && (
             <p className="draft-impact-leaders-label">
               {impactPriority.label} at {impactSlotLabel} · top choices from all{" "}
@@ -452,139 +489,21 @@ export function LocalLeagueDraft({
                       </small>
                       <strong>{POKEMON_BY_ID.get(pick.pokemonId)!.name}</strong>
                     </span>
-                    <b>{Math.round(pick.fit)}</b>
+                    <b title={DRAFT_TERMS.fit}>
+                      {Math.round(pick.fit)}
+                      <span className="sr-only"> fit</span>
+                    </b>
                   </button>
                 ))}
           </div>
-          <details className="local-draft-advice">
-            <summary>
-              Draft recommendations for {LOCAL_TEAMS[turn.teamId].name}
-            </summary>
-            <p>
-              Based on open roles, coaching fit, and complementary skills.
-              Alternatives count players available now, not who will survive
-              until your next pick.
-            </p>
-            {advice.slice(0, 3).map((pick) => (
-              <article key={pick.pokemonId}>
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={() => choose(pick.pokemonId, pick.slot)}
-                >
-                  Scout {POKEMON_BY_ID.get(pick.pokemonId)!.name} · {pick.slot}{" "}
-                  fit {pick.fit.toFixed(0)}
-                </button>
-                <ul>
-                  {pick.reasons.map((reason) => (
-                    <li key={reason}>{reason}</li>
-                  ))}
-                </ul>
-                <p>{pick.physical}</p>
-                {!!pick.alternatives.length && (
-                  <p>
-                    Other options:{" "}
-                    {pick.alternatives
-                      .map((id) => POKEMON_BY_ID.get(id)!.name)
-                      .join(", ")}
-                    .
-                  </p>
-                )}
-              </article>
-            ))}
-          </details>
-          <section
-            className={`draft-shortlist ${compareOpen && compared.length >= 2 ? "is-open" : ""}`}
-            aria-label="Comparison shortlist"
-            ref={comparisonPanel}
-          >
-            <div className="draft-shortlist-heading">
-              <strong>
-                Compare players{" "}
-                <span aria-live="polite">{compared.length}/3</span>
-              </strong>
-              <button
-                className="text-button"
-                disabled={compared.length < 2}
-                aria-expanded={compareOpen && compared.length >= 2}
-                aria-controls="draft-comparison-content"
-                onClick={() => setCompareOpen(!compareOpen)}
-              >
-                {compareOpen && compared.length >= 2
-                  ? "Hide comparison"
-                  : "Compare shortlist"}
-              </button>
-            </div>
-            <div className="draft-shortlist-chips">
-              {compared.map((id) => (
-                <button
-                  key={id}
-                  onClick={() => toggleCompare(id)}
-                  aria-label={`Remove ${POKEMON_BY_ID.get(id)!.name} from comparison`}
-                >
-                  <Portrait mon={POKEMON_BY_ID.get(id)!} />
-                  {POKEMON_BY_ID.get(id)!.name}
-                  <span aria-hidden="true">×</span>
-                </button>
-              ))}
-              {compared.length < 2 && (
-                <p>
-                  Add {compared.length ? "one more player" : "players"} using +
-                  Compare on their cards.
-                </p>
-              )}
-              {compared.length === 3 && (
-                <p>Shortlist full. Remove a player to add another.</p>
-              )}
-            </div>
-            <div id="draft-comparison-content">
-              {compareOpen && compared.length >= 2 && (
-                <>
-                  <DraftImpactComparison
-                    lockedSlots={lockedSlots}
-                    projections={poolProjections.filter((p) =>
-                      compared.includes(p.pokemonId),
-                    )}
-                    pending={lineupSearch.pending}
-                    mons={compared.map((id) => POKEMON_BY_ID.get(id)!)}
-                    roster={roster}
-                    slot={impactSlot}
-                    focus={impactFocus}
-                    onSlot={(next) => {
-                      setRankingSlot(next);
-                      setLimit(24);
-                    }}
-                    onFocus={(next) => {
-                      setImpactFocus(next);
-                      setLimit(24);
-                    }}
-                    onReview={(id, previewSlot) => {
-                      setCompareOpen(false);
-                      choose(id, previewSlot, impactSlot === "best-lineup");
-                    }}
-                  />
-                  <details className="draft-individual-comparison">
-                    <summary>
-                      Compare individual skills & physical profiles
-                    </summary>
-                    <DraftComparison
-                      mons={compared.map((id) => POKEMON_BY_ID.get(id)!)}
-                      advice={adviceById}
-                      position={comparePosition}
-                      onPosition={setComparePosition}
-                      abilities={draft.options?.engineRules.abilities ?? false}
-                      abilityVersion={draft.abilityVersion}
-                      physicalAbilityVersion={draft.physicalAbilityVersion}
-                      onScout={(id) => {
-                        setCompareOpen(false);
-                        choose(id);
-                      }}
-                    />
-                  </details>
-                </>
-              )}
-            </div>
-          </section>
+          <p className="draft-term-glossary">
+            <span>What these mean:</span>
+            <DraftTerm term="fit">Fit</DraftTerm>
+            <DraftTerm term="impact">Impact</DraftTerm>
+            {impactSlot === "best-lineup" && (
+              <DraftTerm term="baseline">vs rearranged baseline</DraftTerm>
+            )}
+          </p>
           <div className="local-pool-controls">
             <label>
               Search available Pokémon
@@ -633,94 +552,251 @@ export function LocalLeagueDraft({
               </select>
             </label>
           </div>
-          {sort === "impact" && (
-            <section
-              className="draft-impact-ranking"
-              aria-label="Team impact ranking"
-            >
-              <div className="draft-impact-ranking-heading">
-                <div>
-                  <span className="eyebrow">RANK THE WHOLE POOL</span>
-                  <h4>Find the biggest upgrade</h4>
+          <details
+            className="advanced-scouting"
+            open={advancedOpen}
+            onToggle={(e) => setAdvancedOpen(e.currentTarget.open)}
+          >
+            <summary>
+              <span>
+                <strong>Advanced scouting</strong>
+                <small>
+                  Full-pool rank, recommendation reasons, position locks and
+                  shortlist
+                  {compared.length ? ` · ${compared.length}/3 compared` : ""}
+                  {lockedSlots.length ? ` · ${lockedSlots.length} locked` : ""}
+                </small>
+              </span>
+            </summary>
+            <DraftPositionLocks
+              roster={roster}
+              lockedSlots={lockedSlots}
+              onChange={onLocksChange}
+            />
+            {sort === "impact" && (
+              <section
+                className="draft-impact-ranking"
+                aria-label="Team impact ranking"
+              >
+                <div className="draft-impact-ranking-heading">
+                  <div>
+                    <span className="eyebrow">RANK THE WHOLE POOL</span>
+                    <h4>Find the biggest upgrade</h4>
+                  </div>
+                  <span>{pool.length} eligible players</span>
                 </div>
-                <span>{pool.length} eligible players</span>
-              </div>
-              <div className="draft-impact-compare-controls">
-                <label>
-                  Rank for position
-                  <select
-                    value={impactSlot}
-                    onChange={(e) => {
-                      setRankingSlot(e.target.value as DraftImpactPosition);
-                      setLimit(24);
-                    }}
-                  >
-                    <option value="best-lineup">
-                      Best lineup found · allow moves
-                    </option>
-                    <option value="best-open">
-                      Best open position · automatic
-                    </option>
-                    {vacancies.map((s) => (
-                      <option value={s} key={s}>
-                        {s} · {SLOT_NAMES[s]}
+                <div className="draft-impact-compare-controls">
+                  <label>
+                    Rank for position
+                    <select
+                      value={impactSlot}
+                      onChange={(e) => {
+                        setRankingSlot(e.target.value as DraftImpactPosition);
+                        setLimit(24);
+                      }}
+                    >
+                      <option value="best-lineup">
+                        Best lineup found · allow moves
                       </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Ranking priority
-                  <select
-                    value={impactFocus}
-                    onChange={(e) => {
-                      setImpactFocus(e.target.value as DraftImpactFocus);
-                      setLimit(24);
-                    }}
-                  >
-                    {DRAFT_IMPACT_PRIORITIES.map((priority) => (
-                      <option value={priority.key} key={priority.key}>
-                        {priority.label}
+                      <option value="best-open">
+                        Best open position · automatic
                       </option>
+                      {vacancies.map((s) => (
+                        <option value={s} key={s}>
+                          {s} · {SLOT_NAMES[s]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Ranking priority
+                    <select
+                      value={impactFocus}
+                      onChange={(e) => {
+                        setImpactFocus(e.target.value as DraftImpactFocus);
+                        setLimit(24);
+                      }}
+                    >
+                      {DRAFT_IMPACT_PRIORITIES.map((priority) => (
+                        <option value={priority.key} key={priority.key}>
+                          {priority.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <p role="status">
+                  {lineupSearch.pending
+                    ? `Finding lineups… ${lineupSearch.done} of ${pool.length} players evaluated. `
+                    : rankingPending
+                      ? "Ranking players… "
+                      : ""}
+                  {!!lockedSlots.length &&
+                    `${lockedSlots.length} ${lockedSlots.length === 1 ? "player locked" : "players locked"}. `}
+                  {impactPriority.label} at {impactSlotLabel} ·{" "}
+                  {picks.length
+                    ? "largest change first"
+                    : "first pick: strongest starting profile first"}
+                  . Ranks cover all {pool.length} available players; filters
+                  preserve those ranks. Equal displayed scores share a rank.
+                </p>
+                <p className="draft-ranking-method">
+                  {draft.evaluationVersion === 1 &&
+                    "These are universal team ratings; coach recommendations use contextual team value. "}
+                  Balanced offense + defense weights them equally. A negative
+                  change lowers that average; a specialist may still fill a
+                  need. Ratings are roster estimates, not predicted wins.
+                  Position and priority carry into comparison.
+                  {impactSlot === "best-lineup" &&
+                    " Both your current roster and each possible pick are searched for the selected priority, using actual team ratings and the same position locks. Only unlocked players can move. Several starting arrangements and position swaps find strong lineups; this is not an exhaustive guarantee. Ties favor balanced strength, fewer moves, then fewer bench players. No moves happen until you confirm."}
+                  {impactSlot === "best-open" &&
+                    " Each Pokémon tries every vacant starter and bench slot. Its best slot maximizes your selected priority; ties favor balanced offense and defense, then starter slots and roster order."}
+                </p>
+              </section>
+            )}
+            <details className="local-draft-advice">
+              <summary>
+                Draft recommendations for {LOCAL_TEAMS[turn.teamId].name}
+              </summary>
+              <p>
+                Based on open roles, coaching fit, and complementary skills.
+                Alternatives count players available now, not who will survive
+                until your next pick.
+              </p>
+              {advice.slice(0, 3).map((pick) => (
+                <article key={pick.pokemonId}>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => choose(pick.pokemonId, pick.slot)}
+                  >
+                    Scout {POKEMON_BY_ID.get(pick.pokemonId)!.name} ·{" "}
+                    {pick.slot} fit {pick.fit.toFixed(0)}
+                  </button>
+                  <ul>
+                    {pick.reasons.map((reason) => (
+                      <li key={reason}>{reason}</li>
                     ))}
-                  </select>
-                </label>
+                  </ul>
+                  <p>{pick.physical}</p>
+                  {!!pick.alternatives.length && (
+                    <p>
+                      Other options:{" "}
+                      {pick.alternatives
+                        .map((id) => POKEMON_BY_ID.get(id)!.name)
+                        .join(", ")}
+                      .
+                    </p>
+                  )}
+                </article>
+              ))}
+            </details>
+            <section
+              className={`draft-shortlist ${compareOpen && compared.length >= 2 ? "is-open" : ""}`}
+              aria-label="Comparison shortlist"
+              ref={comparisonPanel}
+            >
+              <div className="draft-shortlist-heading">
+                <strong>
+                  Compare players{" "}
+                  <span aria-live="polite">{compared.length}/3</span>
+                </strong>
+                <button
+                  className="text-button"
+                  disabled={compared.length < 2}
+                  aria-expanded={compareOpen && compared.length >= 2}
+                  aria-controls="draft-comparison-content"
+                  onClick={() => setCompareOpen(!compareOpen)}
+                >
+                  {compareOpen && compared.length >= 2
+                    ? "Hide comparison"
+                    : "Compare shortlist"}
+                </button>
               </div>
-              <p role="status">
-                {lineupSearch.pending
-                  ? `Finding lineups… ${lineupSearch.done} of ${pool.length} players evaluated. `
-                  : ""}
-                {!!lockedSlots.length &&
-                  `${lockedSlots.length} ${lockedSlots.length === 1 ? "player locked" : "players locked"}. `}
-                {impactPriority.label} at {impactSlotLabel} ·{" "}
-                {picks.length
-                  ? "largest change first"
-                  : "first pick: strongest starting profile first"}
-                . Ranks cover all {pool.length} available players; filters
-                preserve those ranks. Equal displayed scores share a rank.
-              </p>
-              <p className="draft-ranking-method">
-                {draft.evaluationVersion === 1 &&
-                  "These are universal team ratings; coach recommendations use contextual team value. "}
-                Balanced offense + defense weights them equally. A negative
-                change lowers that average; a specialist may still fill a need.
-                Ratings are roster estimates, not predicted wins. Position and
-                priority carry into comparison.
-                {impactSlot === "best-lineup" &&
-                  " Both your current roster and each possible pick are searched for the selected priority, using actual team ratings and the same position locks. Only unlocked players can move. Several starting arrangements and position swaps find strong lineups; this is not an exhaustive guarantee. Ties favor balanced strength, fewer moves, then fewer bench players. No moves happen until you confirm."}
-                {impactSlot === "best-open" &&
-                  " Each Pokémon tries every vacant starter and bench slot. Its best slot maximizes your selected priority; ties favor balanced offense and defense, then starter slots and roster order."}
-              </p>
+              <div className="draft-shortlist-chips">
+                {compared.map((id) => (
+                  <button
+                    key={id}
+                    onClick={() => toggleCompare(id)}
+                    aria-label={`Remove ${POKEMON_BY_ID.get(id)!.name} from comparison`}
+                  >
+                    <Portrait mon={POKEMON_BY_ID.get(id)!} />
+                    {POKEMON_BY_ID.get(id)!.name}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                ))}
+                {compared.length < 2 && (
+                  <p>
+                    Add {compared.length ? "one more player" : "players"} using
+                    + Compare on their cards.
+                  </p>
+                )}
+                {compared.length === 3 && (
+                  <p>Shortlist full. Remove a player to add another.</p>
+                )}
+              </div>
+              <div id="draft-comparison-content">
+                {compareOpen && compared.length >= 2 && (
+                  <>
+                    <DraftImpactComparison
+                      lockedSlots={lockedSlots}
+                      projections={poolProjections.filter((p) =>
+                        compared.includes(p.pokemonId),
+                      )}
+                      pending={rankingPending}
+                      mons={compared.map((id) => POKEMON_BY_ID.get(id)!)}
+                      roster={roster}
+                      slot={impactSlot}
+                      focus={impactFocus}
+                      onSlot={(next) => {
+                        setRankingSlot(next);
+                        setLimit(24);
+                      }}
+                      onFocus={(next) => {
+                        setImpactFocus(next);
+                        setLimit(24);
+                      }}
+                      onReview={(id, previewSlot) => {
+                        setCompareOpen(false);
+                        choose(id, previewSlot, impactSlot === "best-lineup");
+                      }}
+                    />
+                    <details className="draft-individual-comparison">
+                      <summary>
+                        Compare individual skills & physical profiles
+                      </summary>
+                      <DraftComparison
+                        mons={compared.map((id) => POKEMON_BY_ID.get(id)!)}
+                        advice={adviceById}
+                        position={comparePosition}
+                        onPosition={setComparePosition}
+                        abilities={
+                          draft.options?.engineRules.abilities ?? false
+                        }
+                        abilityVersion={draft.abilityVersion}
+                        physicalAbilityVersion={draft.physicalAbilityVersion}
+                        onScout={(id) => {
+                          setCompareOpen(false);
+                          choose(id);
+                        }}
+                      />
+                    </details>
+                  </>
+                )}
+              </div>
             </section>
+          </details>
+          {scoutingPending && (
+            <p className="local-pool-pending" aria-live="polite">
+              Scouting all {pool.length} available players…
+            </p>
           )}
           <p className="local-pool-count">
             {candidates.length} available · CPU picks happen automatically
             between friends' turns.
           </p>
           <div className="candidate-grid free-pool local-candidates">
-            {(sort === "impact" && lineupSearch.pending
-              ? []
-              : candidates.slice(0, limit)
-            ).map((p) => (
+            {(scoutingPending ? [] : candidates.slice(0, limit)).map((p) => (
               <DraftProspectCard
                 mon={p}
                 key={p.id}

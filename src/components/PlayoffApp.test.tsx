@@ -5,6 +5,7 @@ import App from "../App";
 import { gameReducer, initialState } from "../game/state";
 import { ROSTER_SLOTS, type GameState } from "../game/types";
 import { STORAGE_KEY, type StorageLike } from "../game/persistence";
+import "../test/preloadPanels";
 
 const memory = (value: string | null = null): StorageLike => ({
   getItem: () => value,

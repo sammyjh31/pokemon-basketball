@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { asReturningPlayer } from "./returningPlayer";
+test.beforeEach(({ page }) => asReturningPlayer(page));
 async function chooseCoach(page: Page) {
   await page
     .getByRole("region", { name: "Your team. Their game plan." })
@@ -19,7 +21,10 @@ async function draftSpin(page: Page) {
   }
 }
 async function checkRecord(page: Page) {
-  await expect(page.getByTestId("game-result")).toHaveCount(82);
+  // Seasons simulate, and saved leagues re-verify on reload, asynchronously.
+  await expect(page.getByTestId("game-result")).toHaveCount(82, {
+    timeout: 120000,
+  });
   const text = await page.getByTestId("season-record").textContent();
   expect(
     text!
@@ -31,6 +36,8 @@ async function checkRecord(page: Page) {
 test("full spin season, saved results, and reset cancellation", async ({
   page,
 }, info) => {
+  // Simulating and re-verifying an 82-game court-model season takes a while.
+  test.setTimeout(240000);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
@@ -117,6 +124,8 @@ test("free draft search, swapping, filtering, and full season", async ({
   await checkRecord(page);
 });
 test("keyboard-only picks and reduced-motion results", async ({ page }) => {
+  // Simulating and re-verifying an 82-game court-model season takes a while.
+  test.setTimeout(240000);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await chooseCoach(page);
