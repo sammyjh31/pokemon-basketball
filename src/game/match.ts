@@ -19,6 +19,26 @@ import {
   type ChemistryFixture,
 } from "./teammateChemistry";
 import { chemistryEnabled } from "./lineupChemistry";
+import {
+  alternateTactic,
+  arenaCondition,
+  eliminationGame,
+  fieldAbilityBonus,
+  fieldEffects,
+  floorCondition,
+  NEUTRAL_FLOW,
+  playoffTargets,
+  refereeCrew,
+  restTargets,
+  seriesAdjustment,
+  startingEnergy,
+  timeoutDecision,
+  validateGameFlowFixture,
+  type FieldCondition,
+  type GameFlowFixture,
+  type GameFlowReport,
+  type TimeoutReason,
+} from "./gameFlow";
 import { getMatchChemistry, refreshLineupChemistry } from "./matchChemistry";
 import {
   physicalAbilitiesEnabled,
@@ -303,6 +323,7 @@ export function simulateMatch(
     chemistry?: ChemistryFixture;
     morale?: MoraleFixture;
     mastery?: MasteryFixture;
+    flow?: GameFlowFixture;
   } = {},
 ): LeagueMatch {
   if (
@@ -431,11 +452,33 @@ export function simulateMatch(
     (home.chemistryVersion !== undefined && home.chemistryVersion !== 1)
   )
     throw new Error("Both teams must use valid, matching chemistry rules.");
+  if (
+    home.gameFlowVersion !== away.gameFlowVersion ||
+    (home.gameFlowVersion !== undefined && home.gameFlowVersion !== 1) ||
+    (home.gameFlowVersion === 1 && home.courtVersion === undefined)
+  )
+    throw new Error("Both teams must use valid, matching game flow rules.");
+  if (home.gameFlowVersion !== 1 && options.flow !== undefined)
+    throw new Error("Game flow context requires game flow rules.");
+  // Fixture context is frozen; the crew and arena derive from the seed and home club.
+  const flow =
+    home.gameFlowVersion === 1
+      ? validateGameFlowFixture(options.flow ?? NEUTRAL_FLOW)
+      : undefined;
+  const playoff = flow?.stage === "playoff";
+  const elimination = flow
+    ? eliminationGame(flow)
+    : { home: false, away: false };
+  const crew = flow ? refereeCrew(seed, flow.stage) : undefined;
+  const arena: FieldCondition = flow ? arenaCondition(home) : "neutral";
+  const flowNotes: string[] = [];
   const courtEnabled = home.courtVersion !== undefined;
   // Version 2 adds ball pressure, shot-zone intent, catch assists and foul spreading.
   const courtV2 = home.courtVersion === 2 || home.courtVersion === 3;
   // Version 3 keeps v2 rules and adds the size/rebound and blowout balance pass.
   const courtV3 = home.courtVersion === 3;
+  // Game flow on court v2 and v3 adds zone shells, cuts, post seals and form.
+  const playDepth = flow !== undefined && courtV2;
   const bodyEnabled = home.matchupVersion === 1;
   const possessionDepth = home.possessionVersion === 1;
   const advanced = home.typeTacticsVersion === 1;
@@ -454,12 +497,54 @@ export function simulateMatch(
   for (const team of [home, away])
     if (team.coach !== undefined && !validateCoach(team.coach))
       throw new Error("Unsupported trainer coach.");
-  const prepared = (team: LeagueTeam, opponent: LeagueTeam) =>
-    team.coach
-      ? { ...team, ...coachGamePlan(team, opponent), rotationPlan: undefined }
-      : team;
+  const prepared = (team: LeagueTeam, opponent: LeagueTeam) => {
+    if (!team.coach) return team;
+    const plan = coachGamePlan(team, opponent);
+    if (playoff) {
+      // Between-game series adjustments use only completed games' evidence.
+      const adjusted = seriesAdjustment(
+        plan,
+        getCoach(team.coach.id)!,
+        team.id,
+        flow!,
+        scouting?.[team === home ? "home" : "away"],
+        () => alternateTactic(team, plan.tactic),
+      );
+      if (adjusted.note) flowNotes.push(`${team.name}: ${adjusted.note}`);
+      return {
+        ...team,
+        ...plan,
+        tactic: adjusted.tactic,
+        defense: adjusted.defense,
+        rotationPlan: undefined,
+      };
+    }
+    return { ...team, ...plan, rotationPlan: undefined };
+  };
   const h = buildTeam(prepared(home, away), "home"),
     a = buildTeam(prepared(away, home), "away");
+  const loadManaged = { home: false, away: false };
+  if (flow)
+    for (const team of [h, a]) {
+      const coach = getCoach(team.config.coach?.id ?? "");
+      const side = team.side;
+      let targets = team.players.map((p) => p.target);
+      if (coach && playoff)
+        targets = playoffTargets(targets, coach.rest, elimination[side]);
+      else if (coach && flow.rest[side] === 0 && coach.rest >= 0.6) {
+        targets = restTargets(targets, coach.rest);
+        loadManaged[side] = true;
+      }
+      team.players.forEach((p, i) => {
+        p.target = targets[i];
+        p.energy = startingEnergy(
+          p.target,
+          p.profile.attributes.stamina,
+          flow.rest[side],
+          flow.trip[side],
+        );
+      });
+    }
   // A fixed roster has only 128 directed matchups. Resolve these once rather
   // than allocating chart lookup keys during thousands of possession checks.
   if (typed) {
@@ -658,6 +743,7 @@ export function simulateMatch(
           t.side === "home" ? home : away,
           t.side === "home" ? away : home,
         ),
+        ...(flow ? { tactic: t.config.tactic, defense: t.config.defense } : {}),
         starters: t.players
           .filter((p) => p.box.started)
           .map((p) => p.box.pokemonId),
@@ -981,6 +1067,10 @@ export function simulateMatch(
     if (activeCourt?.offenseTeamId === offense.config.id)
       activeCourt.points += points;
     player.box.points += points;
+    if (flow) {
+      runAgainst.set(offense, 0);
+      runAgainst.set(defense, runAgainst.get(defense)! + points);
+    }
     if (offense.side === "home") result.homeScore += points;
     else result.awayScore += points;
     result.periods[period][offense.side] += points;
@@ -1057,6 +1147,9 @@ export function simulateMatch(
           defenseTactic: defense.config.tactic,
           freeThrow: freeThrowMiss,
           ...(courtV3 ? { balanced: true } : {}),
+          ...(playDepth && defense.config.defense === "zone"
+            ? { zoneDefense: true }
+            : {}),
         },
         random,
       );
@@ -1139,6 +1232,7 @@ export function simulateMatch(
     passer: Player | undefined,
     assistChance: number,
   ) => {
+    if (playDepth) recordForm(shooter, made, zone === "three" ? 3 : 2);
     shooter.box.fga++;
     if (zone === "rim") shooter.box.rimFga++;
     else if (zone === "mid") shooter.box.midFga++;
@@ -1166,7 +1260,9 @@ export function simulateMatch(
     const changed = abilityEnergyChange(
       player.box.pokemonId,
       player.energy,
-      delta < 0 ? delta * (player.chemistry?.drain ?? 1) : delta,
+      delta < 0
+        ? delta * (player.chemistry?.drain ?? 1) * (player.field?.drain ?? 1)
+        : delta,
       player.physicalAbilities === true,
       floor,
       player.masteryXp,
@@ -1201,7 +1297,11 @@ export function simulateMatch(
               (team.config.tactic === "pace" || team.config.defense === "press"
                 ? 1.8
                 : 1);
-          changeEnergy(player, -(drain * seconds) / 60);
+          changeEnergy(
+            player,
+            (-(drain * seconds) / 60) *
+              (playDepth && team.config.defense === "zone" ? 0.95 : 1),
+          );
         } else {
           player.consecutive = 0;
           changeEnergy(
@@ -1214,9 +1314,167 @@ export function simulateMatch(
     courtSecondsInPeriod += seconds;
     tickInPeriod = courtSecondsInPeriod / 7.5;
   };
+  // Game flow state: run tracking, timeouts, after-timeout plays and the floor condition.
+  const runAgainst = new Map<Team, number>([
+    [h, 0],
+    [a, 0],
+  ]);
+  const timeoutState = new Map(
+    [h, a].map((t) => [
+      t,
+      { left: 6, fourth: 0, restPeriod: -1, latePeriod: -1 },
+    ]),
+  );
+  const flowReport: GameFlowReport | undefined = flow
+    ? {
+        version: 1,
+        stage: flow.stage,
+        ...(flow.playoff ? { playoff: structuredClone(flow.playoff) } : {}),
+        rest: { ...flow.rest },
+        trip: { ...flow.trip },
+        elimination: { ...elimination },
+        referee: { ...crew! },
+        arena: { teamId: home.id, condition: arena },
+        setterPossessions: 0,
+        loadManaged,
+        timeouts: [],
+        notes: flowNotes,
+        ...(playDepth ? { heat: [] } : {}),
+      }
+    : undefined;
+  let ato: { team: Team; late: boolean } | undefined;
+  let fieldCondition: FieldCondition | undefined;
+  // Shooting form: hot after four straight makes, or three that include two threes;
+  // cooled by a miss or two quiet minutes; cold after five straight misses.
+  const form = new Map<
+    Player,
+    {
+      streak: number;
+      streakPoints: number;
+      misses: number;
+      last: number;
+      state: "hot" | "cold" | "neutral";
+    }
+  >();
+  const formOf = (p: Player) => {
+    const f = form.get(p);
+    if (!f) return 1;
+    if (f.state === "hot" && elapsedSeconds() - f.last > 120)
+      f.state = "neutral";
+    return f.state === "hot" ? 1.3 : f.state === "cold" ? 0.85 : 1;
+  };
+  const recordForm = (p: Player, made: boolean, points: number) => {
+    const t = elapsedSeconds();
+    const f = form.get(p) ?? {
+      streak: 0,
+      streakPoints: 0,
+      misses: 0,
+      last: t,
+      state: "neutral" as const,
+    };
+    form.set(p, f);
+    const before = formOf(p) > 1 ? "hot" : f.state;
+    if (before === "hot") {
+      const row = hotShots.get(p.box.playerId) ?? { attempts: 0, made: 0 };
+      row.attempts++;
+      row.made += Number(made);
+      hotShots.set(p.box.playerId, row);
+    }
+    f.last = t;
+    if (made) {
+      f.streak++;
+      f.streakPoints += points;
+      f.misses = 0;
+      if (f.state === "cold") f.state = "neutral";
+      if (f.streak >= 4 || (f.streak >= 3 && f.streakPoints >= 8))
+        f.state = "hot";
+    } else {
+      f.streak = 0;
+      f.streakPoints = 0;
+      f.misses++;
+      f.state = f.misses >= 5 ? "cold" : "neutral";
+    }
+    if (f.state !== before && (f.state === "hot" || f.state === "cold"))
+      flowReport!.heat!.push({
+        playerId: p.box.playerId,
+        period: period + 1,
+        elapsedSeconds: t,
+        state: f.state,
+      });
+  };
+  const hotShots = new Map<string, { attempts: number; made: number }>();
+  const refreshField = () => {
+    if (!flow) return;
+    const next = floorCondition(
+      arena,
+      h.floor.map((p) => p.box.pokemonId),
+      a.floor.map((p) => p.box.pokemonId),
+    );
+    if (next !== arena) flowReport!.setterPossessions++;
+    if (next === fieldCondition) return;
+    fieldCondition = next;
+    for (const team of [h, a])
+      for (const p of team.players)
+        p.field = fieldEffects(
+          p.box.pokemonId,
+          p.types,
+          next,
+          p.physicalAbilities === true,
+        );
+  };
+  const floorEnergy = (team: Team) =>
+    team.floor.reduce((n, p) => n + p.energy, 0) / 5;
+  const callTimeout = (team: Team, opponent: Team) => {
+    const coach = getCoach(team.config.coach?.id ?? "");
+    if (!flow || !coach) return;
+    const state = timeoutState.get(team)!;
+    const remaining = periodTicks * 7.5 - courtSecondsInPeriod;
+    const reason: TimeoutReason | undefined = timeoutDecision(coach, {
+      period,
+      remaining,
+      untilWindow: 60 - (elapsedSeconds() % 60),
+      margin: margin(team),
+      run: runAgainst.get(team)!,
+      energy: floorEnergy(team),
+      left: state.left,
+      fourthUsed: state.fourth,
+      restUsedThisPeriod: state.restPeriod === period,
+      lateUsedThisPeriod: state.latePeriod === period,
+    });
+    if (!reason) return;
+    state.left--;
+    if (period === 3) state.fourth++;
+    if (reason === "rest") state.restPeriod = period;
+    if (reason === "late") state.latePeriod = period;
+    flowReport!.timeouts.push({
+      teamId: team.config.id,
+      period: period + 1,
+      elapsedSeconds: elapsedSeconds(),
+      reason,
+      energy: Math.round(floorEnergy(team) * 10) / 10,
+      margin: margin(team),
+      run: runAgainst.get(team)!,
+    });
+    if (reason === "run") runAgainst.set(team, 0);
+    // Both benches use the stoppage: rest, re-plan and substitute without waiting for the next minute.
+    for (const t of [h, a])
+      for (const p of t.players) changeEnergy(p, t.floor.includes(p) ? 3 : 1);
+    trainerAdapt(team, opponent);
+    const minute = Math.floor(elapsedSeconds() / 60);
+    const close =
+      minute >= 44 && Math.abs(result.homeScore - result.awayScore) <= 12;
+    const homeFloor = h.floor,
+      awayFloor = a.floor;
+    chooseLineup(h, minute, close, awayFloor);
+    chooseLineup(a, minute, close, homeFloor);
+    ato = { team, late: reason === "late" };
+  };
   const possession = (offense: Team, defense: Team) => {
     refreshLineupChemistry(offense);
     refreshLineupChemistry(defense);
+    refreshField();
+    const atoPlay = ato?.team === offense ? ato : undefined;
+    ato = undefined;
     if (result.insights) lineup(offense).possessions++;
     let secondChance = false;
     const origin = origins.get(offense);
@@ -1254,19 +1512,45 @@ export function simulateMatch(
       let switched = false;
       let kickoutPasser: Player | undefined;
       let help: ReturnType<typeof chooseTypeHelp>;
-      const handler = pick(
-        offense.floor,
-        (p, role) =>
-          Math.pow(
-            skill(p, "ballHandling") * 0.45 +
-              skill(p, "passing") * 0.35 +
-              p.profile.traits.usage * 0.2,
-            3,
-          ) *
-          (role === 0 ? 1.6 : 1) *
-          (p.depth?.tendencies.passing ?? 1),
-      );
-      const screener = pick(
+      // A late after-timeout play runs through the floor's best clutch option.
+      const hottest =
+        atoPlay?.late &&
+        firstAction &&
+        playDepth &&
+        (getCoach(offense.config.coach?.id ?? "")?.adaptability ?? 0) >= 0.7
+          ? offense.floor.find((p) => formOf(p) > 1)
+          : undefined;
+      const designed =
+        hottest ??
+        (atoPlay?.late && firstAction
+          ? offense.floor.reduce((best, p) => {
+              const value = (q: Player) =>
+                q.profile.attributes.composure * 0.5 +
+                Math.max(
+                  skill(q, "threePoint"),
+                  skill(q, "midRange"),
+                  skill(q, "finishing"),
+                ) *
+                  0.5;
+              return value(p) > value(best) ? p : best;
+            })
+          : undefined);
+      const handler =
+        designed ??
+        pick(
+          offense.floor,
+          (p, role) =>
+            Math.pow(
+              skill(p, "ballHandling") * 0.45 +
+                skill(p, "passing") * 0.35 +
+                p.profile.traits.usage * 0.2,
+              playoff ? 3.6 : 3,
+            ) *
+            (role === 0 ? 1.6 : 1) *
+            (p.depth?.tendencies.passing ?? 1) *
+            (playDepth ? formOf(p) : 1),
+        );
+      let screener = pick(
         offense.floor.filter((p) => p !== handler),
         (p) =>
           Math.pow(
@@ -1345,6 +1629,13 @@ export function simulateMatch(
         }
       }
       if (chaseThree) weights[4] += 45;
+      if (playoff) weights[0] *= 0.9;
+      const atoShot = !!atoPlay && firstAction && !secondChance;
+      if (atoShot) {
+        // The coach draws up the roster's best available action.
+        const best = weights.indexOf(Math.max(...weights));
+        weights[best] *= 1.6;
+      }
       const play = pick(
         possessionDepth
           ? PLAY_TYPES.filter((_, i) => weights[i] > 0)
@@ -1356,6 +1647,16 @@ export function simulateMatch(
         if (phase.transition && firstAction)
           teamDetail.get(offense.config.id)!.transitionPossessions++;
       }
+      if (playDepth && play === "post")
+        // Post plays go to the best post player, chosen without a random draw.
+        screener = offense.floor
+          .filter((p) => p !== handler)
+          .reduce((best, p) =>
+            p.profile.traits.postGame * 0.6 + skill(p, "strength") * 0.4 >
+            best.profile.traits.postGame * 0.6 + skill(best, "strength") * 0.4
+              ? p
+              : best,
+          );
       firstAction = false;
       result.plays[play][offense.side]++;
       offense.transition = 0;
@@ -1402,6 +1703,11 @@ export function simulateMatch(
           shotWeights[2] *= matchupPreference(shooter, defender, "spotUp");
         }
         if (chaseThree) shotWeights[2] *= 3;
+        if (playDepth && formOf(shooter) > 1) {
+          // Heat checks: hot shooters look for longer shots, not better odds.
+          shotWeights[1] *= 1.2;
+          shotWeights[2] *= 1.5;
+        }
         return shotWeights as [number, number, number];
       };
       let court: ReturnType<typeof resolveCourtPossession> | undefined;
@@ -1433,6 +1739,9 @@ export function simulateMatch(
                     ),
                 }
               : {}),
+            ...(playoff ? { advanceDelta: 0.5 } : {}),
+            ...(playDepth ? { depth: { form: formOf } } : {}),
+            ...(atoShot && atoPlay!.late ? { frontCourt: true } : {}),
           },
           random,
         );
@@ -1774,8 +2083,14 @@ export function simulateMatch(
       // Illegal screens and charges are personal fouls, without defensive bonus FTs.
       if (
         random() <
-        (play === "pickRoll" ? 0.012 : 0.007) +
-          (70 - carrier.profile.traits.discipline) * 0.00012
+        (crew
+          ? (play === "pickRoll" ? 0.012 : 0.007) *
+              (1 + 0.15 * crew.tightness) +
+            (70 - carrier.profile.traits.discipline) *
+              0.00012 *
+              (1 + 0.4 * crew.tightness)
+          : (play === "pickRoll" ? 0.012 : 0.007) +
+            (70 - carrier.profile.traits.discipline) * 0.00012)
       ) {
         const offender = play === "pickRoll" ? screener : carrier;
         if (activeCourt) {
@@ -1811,10 +2126,16 @@ export function simulateMatch(
         margin(defense) < -2 &&
         margin(defense) >= -9 &&
         periodTicks - tickInPeriod <= 5;
-      const reachRate =
-        0.032 +
-        (defense.config.defense === "press" ? 0.025 : 0) +
-        (65 - defender.profile.traits.discipline) * 0.0003;
+      const reachRate = crew
+        ? ((0.032 + (defense.config.defense === "press" ? 0.025 : 0)) *
+            (1 + 0.2 * crew.tightness) +
+            (65 - defender.profile.traits.discipline) *
+              0.0003 *
+              (1 + 0.4 * crew.tightness)) *
+          (playDepth && defense.config.defense === "zone" ? 0.85 : 1)
+        : 0.032 +
+          (defense.config.defense === "press" ? 0.025 : 0) +
+          (65 - defender.profile.traits.discipline) * 0.0003;
       if (intentional || random() < reachRate) {
         const fouler =
           courtV2 && !intentional
@@ -2048,6 +2369,21 @@ export function simulateMatch(
           0.1,
           0.88,
         );
+      if (flow) {
+        const composure = shooter.profile.attributes.composure - 60;
+        // Playoff defense tightens for both teams; crowds, pressure and designed looks are bounded.
+        const flowLogOdds =
+          (playoff ? -0.02 + (offense.side === "home" ? 0.015 : 0) : 0) +
+          (playoff && isClutch ? composure * 0.00125 : 0) +
+          (elimination.home || elimination.away ? composure * 0.0017 : 0) +
+          (atoShot ? 0.06 : 0);
+        if (flowLogOdds)
+          accuracy = clamp(
+            applyTypeShotEffect(accuracy, flowLogOdds),
+            0.1,
+            0.88,
+          );
+      }
       const beforePhysical = accuracy;
       if (bodyMatch)
         accuracy = clamp(
@@ -2141,24 +2477,33 @@ export function simulateMatch(
       ];
       for (const [player, role, team] of candidates) {
         if (!player || !abilitiesEnabled(team.config)) continue;
-        const delta = abilityImpact(
-          player.box.pokemonId,
-          role,
-          {
-            zone,
-            play,
-            contested,
-            energy: player.energy,
-            clutch: isClutch,
-            secondChance,
-            period: period + 1,
-            margin:
-              team.side === "home"
-                ? result.homeScore - result.awayScore
-                : result.awayScore - result.homeScore,
-          },
-          player.masteryXp,
-        );
+        const delta =
+          abilityImpact(
+            player.box.pokemonId,
+            role,
+            {
+              zone,
+              play,
+              contested,
+              energy: player.energy,
+              clutch: isClutch,
+              secondChance,
+              period: period + 1,
+              margin:
+                team.side === "home"
+                  ? result.homeScore - result.awayScore
+                  : result.awayScore - result.homeScore,
+            },
+            player.masteryXp,
+          ) +
+          (fieldCondition
+            ? fieldAbilityBonus(
+                player.box.pokemonId,
+                role,
+                { zone, play, contested, energy: player.energy },
+                fieldCondition,
+              )
+            : 0);
         const next = clamp(accuracy + delta, 0.1, 0.88);
         const applied = next - accuracy;
         if (!applied) continue;
@@ -2188,16 +2533,29 @@ export function simulateMatch(
             }
           : {};
       };
-      const shootingFoulRate = clamp(
-        (zone === "rim" ? 0.16 : zone === "mid" ? 0.075 : 0.035) +
-          (bodyMatch?.foulDelta ?? 0) +
-          (shooter.profile.traits.drawFoul -
-            defender.profile.traits.discipline) *
-            0.0007 +
-          (defense.config.defense === "press" ? 0.01 : 0),
-        0.015,
-        0.25,
-      );
+      const shootingFoulRate = crew
+        ? clamp(
+            ((zone === "rim" ? 0.16 : zone === "mid" ? 0.075 : 0.035) +
+              (bodyMatch?.foulDelta ?? 0) +
+              (defense.config.defense === "press" ? 0.01 : 0)) *
+              (1 + 0.12 * crew.tightness) +
+              (shooter.profile.traits.drawFoul -
+                defender.profile.traits.discipline) *
+                0.0007 *
+                (1 + 0.4 * crew.tightness),
+            0.015,
+            0.25,
+          )
+        : clamp(
+            (zone === "rim" ? 0.16 : zone === "mid" ? 0.075 : 0.035) +
+              (bodyMatch?.foulDelta ?? 0) +
+              (shooter.profile.traits.drawFoul -
+                defender.profile.traits.discipline) *
+                0.0007 +
+              (defense.config.defense === "press" ? 0.01 : 0),
+            0.015,
+            0.25,
+          );
       if (random() < shootingFoulRate) {
         const foulProbability = accuracy * (zone === "rim" ? 0.4 : 0.25);
         const andOne = random() < foulProbability;
@@ -2346,6 +2704,8 @@ export function simulateMatch(
     adapt(a, h, previousHomeCoverage);
     result.periods.push({ home: 0, away: 0 });
     h.fouls = a.fouls = 0;
+    if (flow && period >= 4)
+      for (const state of timeoutState.values()) state.left += 2;
     if (possessionDepth) {
       origins.clear();
       phase = undefined;
@@ -2384,6 +2744,7 @@ export function simulateMatch(
           gameMinute = minute;
         }
         const defense = offense === h ? a : h;
+        if (flow) callTimeout(offense, defense);
         possession(offense, defense);
         completedPossessions++;
         offense = defense;
@@ -2529,6 +2890,12 @@ export function simulateMatch(
           "Read the help rotation and pass to the uncovered shooter.",
         );
     }
+  if (flowReport && playDepth)
+    flowReport.hotShots = [...hotShots].map(([playerId, row]) => ({
+      playerId,
+      ...row,
+    }));
+  if (flowReport) result.gameFlow = flowReport;
   if (home.moraleVersion === 1)
     result.moraleReport = moraleGameReport(home, away, result);
   if (home.abilityMasteryVersion === 1)

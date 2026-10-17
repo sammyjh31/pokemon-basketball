@@ -368,6 +368,7 @@ export function validateLeagueTeams(
   const courtVersion = object(rows[0]).courtVersion;
   const matchupVersion = object(rows[0]).matchupVersion;
   const possessionVersion = object(rows[0]).possessionVersion;
+  const gameFlowVersion = object(rows[0]).gameFlowVersion;
   if (abilityVersion !== undefined && abilityVersion !== 1) return fail();
   if (
     (physicalAbilityVersion !== undefined && physicalAbilityVersion !== 1) ||
@@ -379,6 +380,11 @@ export function validateLeagueTeams(
     return fail();
   if (matchupVersion !== undefined && matchupVersion !== 1) return fail();
   if (possessionVersion !== undefined && possessionVersion !== 1) return fail();
+  if (
+    (gameFlowVersion !== undefined && gameFlowVersion !== 1) ||
+    (gameFlowVersion === 1 && courtVersion === undefined)
+  )
+    return fail();
   const tacticsVersion = object(rows[0]).typeTacticsVersion;
   if (
     (tacticsVersion !== undefined && tacticsVersion !== 1) ||
@@ -416,6 +422,7 @@ export function validateLeagueTeams(
       row.courtVersion !== courtVersion ||
       row.matchupVersion !== matchupVersion ||
       row.possessionVersion !== possessionVersion ||
+      row.gameFlowVersion !== gameFlowVersion ||
       row.typeTacticsVersion !== tacticsVersion
     )
       return fail();
@@ -484,6 +491,7 @@ export function validateLeagueTeams(
       ...(isCourtVersion(courtVersion) ? { courtVersion } : {}),
       ...(matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
       ...(possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
+      ...(gameFlowVersion === 1 ? { gameFlowVersion: 1 as const } : {}),
     };
   });
 }
@@ -1213,7 +1221,8 @@ export function validateFranchise(
         team.evaluationVersion !== run.evaluationVersion ||
         team.courtVersion !== run.courtVersion ||
         team.matchupVersion !== run.matchupVersion ||
-        team.possessionVersion !== run.possessionVersion,
+        team.possessionVersion !== run.possessionVersion ||
+        team.gameFlowVersion !== run.gameFlowVersion,
     )
   )
     return fail();

@@ -31,6 +31,7 @@ const clubs = (
 ): LeagueTeam[] => {
   const run = { ...createRun("free", true, seed), roster };
   if (!current) {
+    delete run.gameFlowVersion;
     delete run.abilityMasteryVersion;
     delete run.abilityVersion;
     delete run.physicalAbilityVersion;

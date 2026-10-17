@@ -21,7 +21,7 @@
 ## Tasks
 
 - [x] 1. Merge PR #2, reproduce the CPU legacy mismatch, confirm its exact source, resolve it, and verify balance/replay/typecheck/build.
-- [ ] 2. Merge PR #6 onto the integrated result, resolve court and lifecycle conflicts, then verify game-flow and old-save tests.
+- [x] 2. Merge PR #6 onto the integrated result, resolve court and lifecycle conflicts, then verify game-flow and old-save tests.
 - [ ] 3. Run the full suite and end-to-end tests, fix confirmed failures, obtain a fresh review, and merge/push both PRs in dependency order.
 
 ## Progress and decisions
@@ -31,3 +31,7 @@
 
 - Task 1 verified: 29/29 balance tests, original CPU legacy offseason and next-season hashes (1/1 selected regression), typecheck and build passed. Red run reproduced the historical capsule mismatch; pinning the generator's original court-v2 inputs and next-year output restored BOTH original hashes without changing expected fingerprints. Current-season adoption remains covered separately.
 - Merge resolution: retained mastery reports and accepted development report models 1/2; retained both CPU front-office and court-balance documentation.
+
+- Task 2 verified: 55/55 tests across 13 game-flow, play-depth, mastery and historical replay files; typecheck and build passed. Original game-flow release fingerprint restored by reconstructing its actual court-v2, pre-mastery rules. No recorded hashes changed.
+- Merge resolution: retained BOTH mastery and flow fixture snapshots across regular season, playoffs, archives and box-score replay; retained independent adoption arguments in local-career validation. Court-v3 rebound/garbage-time rules coexist with game flow. Play-depth tests now exercise court versions 2 and 3.
+- Integration method: merge current main into each PR's history rather than rewriting Claude branches; final branch updates can fast-forward and preserve all original commits.

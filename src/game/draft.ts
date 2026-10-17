@@ -46,6 +46,7 @@ export function createRun(
     courtVersion: COURT_VERSION,
     matchupVersion: 1,
     possessionVersion: 1,
+    gameFlowVersion: 1,
     mode,
     includeLegends,
     roster: emptyRoster(),
