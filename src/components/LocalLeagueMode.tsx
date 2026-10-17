@@ -33,6 +33,7 @@ import {
   TACTICS,
   TACTIC_LABELS,
 } from "../game/types";
+import { SaveMenu } from "./SaveMenu";
 import type { StorageLike } from "../game/persistence";
 import { beginLocalOffseason, localSeasonSeed } from "../game/localCareer";
 import { lineupChemistry } from "../game/engineDepth";
@@ -277,6 +278,7 @@ export function LocalLeagueMode({
     restoration,
     cancelRestore,
     retryRestore,
+    saveControls,
   } = useLocalLeague(storage);
   const [confirm, setConfirm] = useState(false);
   const league = result?.league;
@@ -323,6 +325,7 @@ export function LocalLeagueMode({
               {error}
             </p>
           )}
+          <SaveMenu {...saveControls} />
           {!restoration && (!draft || draft.version === 2) && <MatchupLab />}
           {draft &&
             ready &&

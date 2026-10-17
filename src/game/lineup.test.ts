@@ -34,12 +34,15 @@ describe("shareable basketball lineups", () => {
     ])
       expect(parseLineup(`?lineup=${value}`)).toBeNull();
     expect(parseLineup("")).toBeNull();
-    expect(parseLineup("?lineup=0,0,0,0,0")).toEqual({
+    // An all-empty link would replace a draft with nothing.
+    expect(parseLineup("?lineup=0,0,0,0,0")).toBeNull();
+    expect(parseLineup("?lineup=0,0,0,0,0,0,0,0")).toBeNull();
+    expect(parseLineup("?lineup=0,0,0,0,25")).toEqual({
       PG: null,
       SG: null,
       SF: null,
       PF: null,
-      C: null,
+      C: 25,
       B1: null,
       B2: null,
       B3: null,

@@ -25,7 +25,11 @@ export function parseLineup(search: string): Roster | null {
   if (!source || !/^\d{1,3}(,\d{1,3}){4}(,\d{1,3}){0,3}$/.test(source))
     return null;
   const ids = source.split(",").map(Number);
-  if ((ids.length !== 5 && ids.length !== 8) || ids.some((id) => id > 251))
+  if (
+    (ids.length !== 5 && ids.length !== 8) ||
+    ids.some((id) => id > 251) ||
+    ids.every((id) => id === 0)
+  )
     return null;
   const roster = Object.fromEntries(
     ROSTER_SLOTS.map((p, i) => [p, ids[i] || null]),

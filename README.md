@@ -26,7 +26,18 @@ Open [the local game](http://127.0.0.1:5173/). In a cloud workspace, bind the se
 - Refreshing restores your saved progress. After the Finals, **Continue as franchise** keeps all 30 rosters for multiple seasons, with offseason trades, career stats and championship history. **New run** starts a fresh draft; ending an active franchise explicitly replaces its career history while preserving separate challenge records.
 - Ratings, normalization, and simulation rules are explained in the expandable playbook. New simulated seasons use bounded type advantages and physical matchups in basketball decisions and outcomes; they do not use battle damage or automatic elemental stops.
 
-All game data and portraits are bundled locally. Gameplay needs no external API, accounts, database, or secrets. LocalStorage keeps a versioned save in the current browser; clearing site data clears progress. If saving is unavailable, play continues in memory with a notice. This is not a multiplayer leaderboard or an anti-cheat system.
+All game data and portraits are bundled locally. Gameplay needs no external API, accounts, database, or secrets. Progress is saved in the current browser (see [Saving](#saving)); clearing site data clears progress. If saving is unavailable, play continues in memory with a notice. This is not a multiplayer leaderboard or an anti-cheat system.
+
+## Saving
+
+Solo/franchise progress and the local league are saved separately in this browser, after every change. Open **Save options** above the game (or the local league) to manage them.
+
+- **Storage:** small saves stay in `localStorage` under their original keys (`pokemon-basketball:v3`, older `v2`/`v1` saves, and `pokemon-basketball:local-league:v1`), so existing saves load unchanged. A save too large for the browser's shared ~5M-character `localStorage` quota moves to IndexedDB (`pokemon-basketball-saves`), and its `localStorage` key holds an `@indexeddb:` pointer. With coach careers, chemistry, morale and personalities, franchise saves reach about 6.9M characters by year 2 and about 28.5M by year 20; a 50-season, 30-club local career is about 10.8M.
+- **Last verified backup:** whenever a save loads and passes full validation (including replaying its seasons), a copy is kept under `<key>:backup`. Saves made during play are not copied until they have been verified on a later load.
+- **Damaged saves:** a save that fails validation is moved to `<key>:quarantine` before anything can overwrite it. A notice explains what happened; **Restore last verified backup** replaces the current save with the backup and reloads, **Download set-aside save** keeps a copy of the damaged one, and **Discard it** deletes it.
+- **Export / import:** **Export save** downloads the current save as a JSON file. **Import save** accepts an exported file (or a raw save copied from storage), validates it with the same checks as loading, and asks before replacing anything. Solo/franchise and local league saves import only into their own mode.
+- **Several tabs:** if another tab changes the same save, this tab stops saving, so it cannot overwrite the newer progress, and offers **Reload to continue**.
+- **Faster restore:** saved leagues are re-simulated to validate them on load. This replay runs in a background worker with progress, so the page stays responsive; it falls back to the page when workers are unavailable, with the same result.
 
 ## Player personalities and captains
 
@@ -136,7 +147,7 @@ After completing the Finals, choose **Continue as franchise**. The completed sea
 - **Next season:** finish the rookie draft, then start a new year with your offseason roster and coaching choices. Any pending CPU free-agent and coaching reviews complete first. You can still adjust positions and coaching before tipoff. A fresh seed generates another 82-game season and best-of-seven playoffs. Franchise years do not inflate challenge attempt counters.
 - **Careers:** league-wide regular-season and playoff totals follow Pokémon across trades and remain available after a player is released in a rookie draft. Open a **Career page** for season-by-season teams and production, shooting percentages, skills, development trajectory, awards and championship rings. Live season production contributes immediately; DNPs do not count as appearances.
 - **History:** open **View Year N games** for any newly archived season. Filter by club and regular season/playoffs, then open both-team box scores. Historical games use frozen rosters, ratings, rotations and played results. Older years whose original saves discarded detailed stats are clearly marked unavailable; their existing career totals and honors remain.
-- **Saving:** the existing v3 browser key supports franchise model 3, interactive season model 6 and played playoff model 2. Prior model paths retain their original outcomes. Completed game prefixes and frozen archives validate against simulation inputs and stored official results. Save failures remain visible with **Retry saving**; play can continue in memory. Saves stay in this browser and are not synchronized through GitHub.
+- **Saving:** the existing v3 browser key supports franchise model 3, interactive season model 6 and played playoff model 2. Prior model paths retain their original outcomes. Completed game prefixes and frozen archives validate against simulation inputs and stored official results. Save failures remain visible with **Retry saving**; play can continue in memory. Saves stay in this browser and are not synchronized through GitHub; use **Export save** to move one. See [Saving](#saving) for backups and recovery.
 
 Injuries, aging, contracts, free agency, generations beyond IX, multiplayer accounts and public hosting are not included.
 

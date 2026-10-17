@@ -27,11 +27,17 @@ import {
   type Run,
   type SeasonResult,
 } from "./types";
-export interface StorageLike {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-}
+import type { StorageLike } from "./saveStorage";
+export type { StorageLike } from "./saveStorage";
 export const STORAGE_KEY = "pokemon-basketball:v3";
+/** The saved game text, including saves written by earlier key versions. */
+export function savedGameSource(storage: StorageLike): string | null {
+  return (
+    storage.getItem(STORAGE_KEY) ??
+    storage.getItem("pokemon-basketball:v2") ??
+    storage.getItem("pokemon-basketball:v1")
+  );
+}
 import { validateV2 } from "./v2Persistence";
 const fail = (): never => {
   throw new Error("Invalid saved game");
@@ -434,10 +440,7 @@ function readGame(
 ): PreparedGameLoad {
   let source: string | null;
   try {
-    source =
-      storage.getItem(STORAGE_KEY) ??
-      storage.getItem("pokemon-basketball:v2") ??
-      storage.getItem("pokemon-basketball:v1");
+    source = savedGameSource(storage);
   } catch {
     return {
       state: initialState(fallbackSeed),
