@@ -1,3 +1,4 @@
+import { CoachTrainingPanel } from "./CoachTrainingPanel";
 import { CoachOfficePanel } from "./CoachOfficePanel";
 import { projectedCoaches } from "../game/coachOffice";
 import { localCoachRecords } from "../game/coachCareers";
@@ -76,7 +77,7 @@ function ReviewTeams({
           <h2>Set your lineup. Settle the debate.</h2>
           <p>
             {team.coach
-              ? "Your trainer manages the rotation and game plan automatically."
+              ? "Your trainer manages the rotation, game plan and individual training automatically."
               : "Every friend can adjust their lineup and coaching before the season."}
           </p>
         </div>
@@ -151,10 +152,16 @@ function ReviewTeams({
           </p>
         )}
         {team.coach ? (
-          <CoachSummary
-            team={team}
-            nextSeason={draft.career?.phase === "offseason"}
-          />
+          <>
+            <CoachSummary
+              team={team}
+              nextSeason={draft.career?.phase === "offseason"}
+            />
+            <details className="coach-training-local">
+              <summary>Automatic individual training · {team.name}</summary>
+              <CoachTrainingPanel team={team} />
+            </details>
+          </>
         ) : draft.career?.phase === "offseason" &&
           draft.career.teams[teamId].coach ? (
           <p className="notice">Hire a head coach in the coaching office.</p>

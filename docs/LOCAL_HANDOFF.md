@@ -1,5 +1,9 @@
 # Local and cloud handoff — 2026-10-16
 
+## Automatic coach training (October 16)
+
+`coachTraining.ts` owns deterministic previews and camp assignments; both solo `processOffseason` and local `beginLocalOffseason` feed those plans to the existing development model. No match-engine version or random stream changes. The completed season’s coach resolves camp before staff changes; hires direct the next camp. Optional versioned `training` metadata on development rows preserves coach, plan and explanations. Both save parsers validate it while accepting old reports without metadata. Uncoached solo saves keep manual training. Solo Training and local team review show automatic previews; development reports show actual archived assignments.
+
 Basketball development uses the attached checkout `/Users/sam/.codex/worktrees/pokemon-matchup-engine/PokeBBall`, synchronized with `main` at `https://github.com/sammyjh31/pokemon-basketball.git`. The primary directory currently contains concurrent basketball draft work and a separate Grand Table project; do not reset, switch or clean it as part of basketball work.
 
 ## Coaching office and career records
@@ -8,7 +12,7 @@ Solo **Franchise → Coaches** and local **Coaches · hiring and career records*
 
 `coachOffice.ts` keeps versioned appointment events separate from the frozen active teams; `coachFranchise.ts` / `coachLocal.ts` project appointments only at season boundaries. Validation checks event ownership, unique employment and cross-season identity. `coachCareers.ts` derives solo histories from existing replay archives; local archives now capture compact validated series results. Career totals follow trainer IDs, never current club assignments, and include the active season once. Old local years explicitly flag unavailable series detail. No match engine policy/version changed.
 
-The shared coaching office explains existing automation: roster-sensitive plans/workload, starters/closers/substitutions, defensive schemes and screen preferences, score/clock/energy/shot-mix adjustments. Types, physical matchups, court positioning and multi-action possessions are resolved by the shared engine. Training, roster moves and manual arcade controls remain manager responsibilities.
+The shared coaching office explains existing automation: roster-sensitive plans/workload, starters/closers/substitutions, defensive schemes and screen preferences, score/clock/energy/shot-mix adjustments. Types, physical matchups, court positioning and multi-action possessions are resolved by the shared engine. Trainers also automatically set individual development focus/intensity from style, developed player skills, role, roster shortages and actual season workload. Managers retain roster moves and manual arcade controls.
 
 Validation includes actual full solo archive/save/reload, two local seasons with a trainer transfer, frozen historical replay, vacancy rejection after reload/import, legacy CPU retention and component fire/hire/start guards. Final review findings were reproduced before fixes. Desktop and 390px phone checks ran against an isolated QA origin; user saves were untouched. Final validation: 56 targeted regression tests plus 2 full solo franchise tests passed; production build passed. Screenshot: `docs/design/coaching-office.png` (fixture preview). CPU pressure/fit scoring remains a transparent heuristic, with balance tuning deferred to play feedback.
 

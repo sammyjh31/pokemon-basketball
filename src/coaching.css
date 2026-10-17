@@ -196,3 +196,33 @@
     grid-template-columns: 1fr;
   }
 }
+
+.coach-training-player {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.coach-training-intensity {
+  color: var(--gold);
+  font-size: 12px;
+}
+.coach-training-player summary,
+.coach-training-local > summary {
+  cursor: pointer;
+  color: #c6d1dd;
+  font-size: 12px;
+  padding: 8px 0;
+}
+.coach-training-reasons {
+  font-size: 12px;
+  line-height: 1.65;
+  color: #b8c3d0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.coach-training-reasons ul {
+  padding-left: 18px;
+}
+.coach-training-reasons li + li {
+  margin-top: 6px;
+}

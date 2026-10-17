@@ -1,3 +1,4 @@
+import { CoachTrainingPanel } from "./CoachTrainingPanel";
 import { CoachOfficePanel } from "./CoachOfficePanel";
 import { projectedCoaches } from "../game/coachOffice";
 import { franchiseCoachRecords } from "../game/coachCareers";
@@ -1373,6 +1374,16 @@ export function FranchisePanel({
       </section>
     );
   }
+  const trainingTeam =
+    franchise.phase === "offseason"
+      ? projectedCoaches(
+          franchise.teams,
+          franchise.coachOffice,
+          franchise.year,
+        )[0]
+      : { ...(run.leagueTeams?.[0] ?? franchise.teams[0]), roster: run.roster };
+  const trainingCoach = trainingTeam.coach ?? franchise.pendingCoach;
+  const automaticTraining = !!(trainingCoach || franchise.teams[0].coach);
   return (
     <section id="franchise" className="franchise-panel" aria-label="Franchise">
       <header className="franchise-heading">
@@ -1398,7 +1409,7 @@ export function FranchisePanel({
               label: franchise.phase === "offseason" ? "Offseason" : "Overview",
             },
             { id: "development", label: "Development report" },
-            ...(onTraining
+            ...(onTraining || automaticTraining
               ? [{ id: "training" as const, label: "Training plans" }]
               : []),
             { id: "coaches", label: "Coaches" },
@@ -1500,18 +1511,29 @@ export function FranchisePanel({
           onReview={onReviewCoaches}
         />
       )}
-      {view === "training" && onTraining && (
-        <TrainingPanel
-          roster={
-            franchise.phase === "offseason"
-              ? franchise.teams[0].roster
-              : run.roster
-          }
-          plans={franchise.trainingPlans}
-          disabled={disabled}
-          onChange={onTraining}
-        />
-      )}
+      {view === "training" &&
+        (automaticTraining ? (
+          <CoachTrainingPanel
+            team={{ ...trainingTeam, coach: trainingCoach }}
+            players={
+              franchise.phase === "season"
+                ? (run.result?.league?.players ??
+                  run.seasonProgress?.result?.league?.players)
+                : undefined
+            }
+          />
+        ) : onTraining ? (
+          <TrainingPanel
+            roster={
+              franchise.phase === "offseason"
+                ? franchise.teams[0].roster
+                : run.roster
+            }
+            plans={franchise.trainingPlans}
+            disabled={disabled}
+            onChange={onTraining}
+          />
+        ) : null)}
       {view === "development" && <OffseasonReport franchise={franchise} />}
       {view === "careers" && <Careers franchise={franchise} run={run} />}
       {view === "history" && <History franchise={franchise} />}

@@ -1,3 +1,4 @@
+import { CoachTrainingDetails } from "./CoachTrainingPanel";
 import { projectedCoaches } from "../game/coachOffice";
 import { useEffect, useRef, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -264,8 +265,9 @@ export function LocalCareerPanel({ draft, change }: Props) {
             evaluated
           </summary>
           <p>
-            Season performance produces small, bounded skill changes. Changes
-            below are rating points, already applied once for this offseason.
+            Season performance and trainer-led practice produce bounded skill
+            changes. Changes below are rating points, already applied once for
+            this offseason.
           </p>
           <div
             className="results-table-wrap"
@@ -279,6 +281,7 @@ export function LocalCareerPanel({ draft, change }: Props) {
                   <th>Team</th>
                   <th>Player</th>
                   <th>Skill changes</th>
+                  <th>Completed training</th>
                 </tr>
               </thead>
               <tbody>
@@ -294,6 +297,16 @@ export function LocalCareerPanel({ draft, change }: Props) {
                             `${skill.replace(/([A-Z])/g, " $1")} ${value! > 0 ? "+" : ""}${value}`,
                         )
                         .join(", ") || "No change"}
+                    </td>
+                    <td>
+                      {row.training ? (
+                        <details>
+                          <summary>Coach's plan</summary>
+                          <CoachTrainingDetails assignment={row.training} />
+                        </details>
+                      ) : (
+                        "No archived coach plan"
+                      )}
                     </td>
                   </tr>
                 ))}

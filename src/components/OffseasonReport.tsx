@@ -1,3 +1,4 @@
+import { CoachTrainingDetails } from "./CoachTrainingPanel";
 import { useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { ATTRIBUTE_LABELS } from "../game/ratings";
@@ -116,6 +117,9 @@ function PlayerChange({
           </ul>
           {!changes.length && (
             <p>No individual skill changes this offseason.</p>
+          )}
+          {player.training && (
+            <CoachTrainingDetails assignment={player.training} />
           )}
           <ul className="development-reasons">
             {player.reasons.map((reason, index) => (

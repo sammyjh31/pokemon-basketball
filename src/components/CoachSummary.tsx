@@ -43,7 +43,7 @@ export function CoachSummary({
         <span>Preferred screen coverage: {c.coverage}</span>
       </div>
       <p className="coach-footnote">
-        You manage roster moves and optional training. Your trainer handles game
+        You manage roster moves. Your trainer handles individual training, game
         plans and substitutions.{" "}
         {nextSeason
           ? "Takes over at the next season boundary."

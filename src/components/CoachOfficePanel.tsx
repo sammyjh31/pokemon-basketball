@@ -30,8 +30,9 @@ export function CoachScope() {
       <p>
         These are coded decision rules, not a coach reasoning about every
         option. Trainer coverage preferences work with the matchup logic;
-        adaptability differs by trainer. You still manage roster moves and
-        individual training. Manual arcade controls remain yours.
+        adaptability differs by trainer. Your trainer also sets individual
+        training from their style, player skills, team needs and season
+        workload. You manage roster moves and manual arcade controls.
       </p>
     </details>
   );
