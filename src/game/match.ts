@@ -110,9 +110,9 @@ const baseShotMix: Record<PlayType, number[]> = {
 };
 /** Share of the carrier-pressure turnover rate applied on top of version-2 court risks. */
 const COURT_PRESSURE_SHARE = 0.4;
-/** Version 3: shot accuracy shifts 0.15 points per point of lead, at most 3. */
-const SCORE_STATE_PER_POINT = 0.0015;
-const SCORE_STATE_CAP = 0.03;
+/** Version 3: shot accuracy shifts 0.25 points per point of lead, at most 3.5. */
+const SCORE_STATE_PER_POINT = 0.0025;
+const SCORE_STATE_CAP = 0.035;
 /** Version 2: a pass that leads straight to the shot is usually an assist. */
 function catchAssistChance(
   droveAfterCatch: boolean,
