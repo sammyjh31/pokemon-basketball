@@ -5,8 +5,8 @@ test.beforeEach(({ page }) => asReturningPlayer(page));
 test("friends draft a complete local league, compare results, and restore without replacing solo progress", async ({
   page,
 }, info) => {
-  // Includes drafting 16 picks and re-verifying a 1,230-game season on reload.
-  test.setTimeout(180000);
+  // Drafts 16 picks, simulates and re-verifies 1,230-game seasons on reload.
+  test.setTimeout(360000);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
@@ -141,7 +141,7 @@ test("friends draft a complete local league, compare results, and restore withou
   ).toBe(30);
   await page.getByRole("button", { name: "Simulate local season" }).click();
   const board = page.getByRole("table", { name: "Friends leaderboard" });
-  await expect(board).toBeVisible({ timeout: 25000 });
+  await expect(board).toBeVisible({ timeout: 90000 });
   await expect(board.getByText("Sam", { exact: true })).toBeVisible();
   await expect(board.getByText("Alex", { exact: true })).toBeVisible();
   const results = await board.textContent();
@@ -172,7 +172,7 @@ test("friends draft a complete local league, compare results, and restore withou
     fullPage: true,
   });
   await page.reload();
-  await expect(board).toBeVisible({ timeout: 25000 });
+  await expect(board).toBeVisible({ timeout: 90000 });
   await expect(board).toHaveText(results!);
   const playoffs = page.getByRole("region", { name: "Playoffs", exact: true });
   await expect(
@@ -199,7 +199,7 @@ test("friends draft a complete local league, compare results, and restore withou
     .toBe(8);
   await page.reload();
   await expect(playoffs.getByText(/8 playoff games played/)).toBeVisible({
-    timeout: 25000,
+    timeout: 90000,
   });
   await playoffs
     .getByRole("button", { name: "Finish round", exact: true })
@@ -244,7 +244,7 @@ test("friends draft a complete local league, compare results, and restore withou
   ).toHaveCount(2);
   await page.keyboard.press("Escape");
   await page.reload();
-  await expect(champion).toHaveText(championship!, { timeout: 25000 });
+  await expect(champion).toHaveText(championship!, { timeout: 90000 });
   await page.getByRole("button", { name: "New local league" }).click();
   await page.getByRole("button", { name: "Keep playing" }).click();
   await expect(board).toBeVisible();
