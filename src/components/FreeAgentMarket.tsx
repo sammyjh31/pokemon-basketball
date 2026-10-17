@@ -5,7 +5,13 @@ import {
   evaluateFreeAgentSigning,
   freeAgencyReady,
   freeAgentMarket,
+  userSigningsThisYear,
 } from "../game/freeAgency";
+import { cpuRulesApply } from "../game/cpuRules";
+import {
+  CPU_FREE_AGENT_SIGNINGS,
+  USER_FREE_AGENT_SIGNINGS,
+} from "../game/freeAgencyTypes";
 import { bestPosition, positionRating } from "../game/ratings";
 import {
   POSITIONS,
@@ -46,6 +52,11 @@ function MarketRoom({
   const ready = freeAgencyReady(franchise);
   const cpuComplete =
     franchise.freeAgency?.cpuYears.includes(franchise.year) ?? false;
+  const capped = cpuRulesApply(franchise),
+    signingsLeft = Math.max(
+      0,
+      USER_FREE_AGENT_SIGNINGS - userSigningsThisYear(franchise),
+    );
   const market = useMemo(
     () => freeAgentMarket(franchise, state.run.includeLegends),
     [franchise, state.run.includeLegends],
@@ -177,13 +188,24 @@ function MarketRoom({
           <h4>
             {cpuComplete
               ? "The CPU round is complete."
-              : "Your club gets the first move."}
+              : capped
+                ? "CPU clubs move first."
+                : "Your club gets the first move."}
           </h4>
-          <p>
-            CPU clubs make up to one signing each, once per offseason. This runs
-            automatically when you start the next season. You can still sign
-            players after the CPU round.
-          </p>
+          {capped ? (
+            <p>
+              When the draft closes, CPU clubs sign first, worst record first,
+              up to {CPU_FREE_AGENT_SIGNINGS} each (a second only for a clear
+              upgrade). You may then sign up to {USER_FREE_AGENT_SIGNINGS} per
+              offseason: {signingsLeft} remaining.
+            </p>
+          ) : (
+            <p>
+              CPU clubs make up to one signing each, once per offseason. This
+              runs automatically when you start the next season. You can still
+              sign players after the CPU round.
+            </p>
+          )}
         </div>
         <button
           type="button"

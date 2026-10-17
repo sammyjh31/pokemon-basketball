@@ -1,5 +1,7 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
+  CPU_FREE_AGENT_SIGNINGS,
+  USER_FREE_AGENT_SIGNINGS,
   MAX_FREE_AGENT_SIGNINGS,
   type FreeAgency,
   type FreeAgentSigning,
@@ -30,6 +32,7 @@ export function validateFreeAgency(
   historyCount: number,
   tradeCount: number,
   includeLegends: boolean,
+  cpuSince?: number,
 ): FreeAgency {
   const row = object(value);
   if (
@@ -45,7 +48,8 @@ export function validateFreeAgency(
   );
   let previousYear = 1,
     previousTrade = 0;
-  const cpuTeams = new Set<string>(),
+  const cpuTeams = new Map<string, number>(),
+    userSignings = new Map<number, number>(),
     closedCpuYears = new Set<number>();
   const cpuTradeIndices = new Map<number, number>();
   let last: FreeAgentSigning | undefined;
@@ -78,17 +82,30 @@ export function validateFreeAgency(
       return fail();
     if (last?.source === "cpu" && (source !== "cpu" || year !== last.year))
       closedCpuYears.add(last.year);
+    // CPU rules v1: CPU clubs move first, up to two signings each; the user
+    // then makes at most two signings in that offseason.
+    const fair = cpuSince !== undefined && year >= cpuSince;
     if (source === "cpu") {
-      const key = `${year}:${teamId}`;
+      const key = `${year}:${teamId}`,
+        count = cpuTeams.get(key) ?? 0;
       if (
         !cpuYears.includes(year) ||
-        cpuTeams.has(key) ||
+        count >= (fair ? CPU_FREE_AGENT_SIGNINGS : 1) ||
         closedCpuYears.has(year) ||
+        (fair && userSignings.has(year)) ||
         (cpuTradeIndices.has(year) && cpuTradeIndices.get(year) !== tradeIndex)
       )
         return fail();
-      cpuTeams.add(key);
+      cpuTeams.set(key, count + 1);
       cpuTradeIndices.set(year, tradeIndex);
+    } else {
+      const count = userSignings.get(year) ?? 0;
+      if (
+        fair &&
+        (!cpuYears.includes(year) || count >= USER_FREE_AGENT_SIGNINGS)
+      )
+        return fail();
+      userSignings.set(year, count + 1);
     }
     last = {
       year,

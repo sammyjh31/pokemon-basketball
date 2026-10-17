@@ -246,6 +246,7 @@ describe("generational rookie drafts", () => {
     expect(recommendedRookiePick(f, 0, false)).toEqual({
       pokemonId: 289,
       releasedId: 129,
+      score: expect.any(Number),
     });
   });
 

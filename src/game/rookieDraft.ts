@@ -3,6 +3,9 @@ import { createRivalStrategy } from "./rivalRosterStrategy";
 import { compareTeamEvaluation } from "./teamEvaluation";
 import type { TradeFactor } from "./tradeTypes";
 import { projectedCoaches } from "./coachOffice";
+import { cpuRulesApply } from "./cpuRules";
+import { lotteryOrder, recordOrder } from "./draftLottery";
+import { processCpuFreeAgency } from "./freeAgency";
 import {
   POKEMON_BY_ID,
   ROOKIE_GENERATIONS,
@@ -36,6 +39,11 @@ export function rookieGenerationLabel(generation: number): string {
   return generation === 0
     ? "Remaining prospects"
     : `Generation ${["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"][generation] ?? generation}`;
+}
+
+/** Zero-based turn: picks made plus turns passed. */
+export function draftTurn(draft: RookieDraft): number {
+  return draft.picks.length + (draft.passes?.length ?? 0);
 }
 
 function currentDraft(franchise: Franchise): RookieDraft | undefined {
@@ -151,6 +159,8 @@ export function recommendedRookiePick(
 ): {
   pokemonId: number;
   releasedId: number;
+  /** Club's own valuation of the swap; at or below zero it would not help. */
+  score: number;
   rivalGain?: number;
   reason?: string;
   sharedDelta?: number;
@@ -210,6 +220,7 @@ export function recommendedRookiePick(
     return {
       pokemonId: best.pokemonId,
       releasedId: best.releasedId,
+      score: best.score,
       sharedDelta: best.evaluation.delta,
       factors: best.evaluation.factors,
       ...(strategy.active ? { rivalGain: best.rivalGain } : {}),
@@ -309,6 +320,7 @@ export function recommendedRookiePick(
     ? {
         pokemonId: best.pokemonId,
         releasedId: best.releasedId,
+        score: best.score,
         ...(strategy.active
           ? {
               rivalGain: strategy.change([best.releasedId], [best.pokemonId]),
@@ -331,8 +343,9 @@ function recordPick(
   pokemonId: number,
   releasedId: number,
 ): Franchise {
-  const draft = currentDraft(franchise)!;
-  const teamId = draft.order[draft.picks.length % 30],
+  const draft = currentDraft(franchise)!,
+    turn = draftTurn(draft);
+  const teamId = draft.order[turn % 30],
     team = franchise.teams[teamId];
   const slot = ROSTER_SLOTS.find((key) => team.roster[key] === releasedId)!;
   const updated = replaceDraft(franchise, {
@@ -340,14 +353,14 @@ function recordPick(
     picks: [
       ...draft.picks,
       {
-        pick: draft.picks.length + 1,
-        round: draft.picks.length < 30 ? 1 : 2,
+        pick: turn + 1,
+        round: turn < 30 ? 1 : 2,
         teamId,
         pokemonId,
         releasedId,
       },
     ],
-    complete: draft.picks.length === 59,
+    complete: turn === 59,
   });
   return {
     ...updated,
@@ -366,6 +379,17 @@ function recordPick(
   };
 }
 
+/** Model-2 drafts only: the club on the clock keeps its roster unchanged. */
+function recordPass(franchise: Franchise): Franchise {
+  const draft = currentDraft(franchise)!,
+    turn = draftTurn(draft);
+  return replaceDraft(franchise, {
+    ...draft,
+    passes: [...(draft.passes ?? []), turn + 1],
+    complete: turn === 59,
+  });
+}
+
 export function beginRookieDraft(state: GameState): GameState {
   const f = state.franchise;
   if (
@@ -375,15 +399,11 @@ export function beginRookieDraft(state: GameState): GameState {
     f.rookieDrafts?.some((draft) => !draft.complete)
   )
     return state;
-  const standings = f.history.at(-1)!.standings;
-  const order = [...standings]
-    .sort(
-      (a, b) =>
-        a.wins - b.wins ||
-        a.pointsFor - a.pointsAgainst - (b.pointsFor - b.pointsAgainst) ||
-        a.teamId - b.teamId,
-    )
-    .map((row) => row.teamId);
+  const season = f.history.at(-1)!,
+    lottery = cpuRulesApply(f);
+  const order = lottery
+    ? lotteryOrder(season.standings, season.seasonSeed)
+    : recordOrder(season.standings);
   if (
     order.length !== 30 ||
     new Set(order).size !== 30 ||
@@ -391,13 +411,14 @@ export function beginRookieDraft(state: GameState): GameState {
   )
     return state;
   const draft: RookieDraft = {
-    modelVersion: 1,
+    modelVersion: lottery ? 2 : 1,
     year: f.year,
     generation: generationForDraft(f.rookieDrafts?.length ?? 0),
     order,
     picks: [],
     complete: false,
     tradeIndex: f.trades.length,
+    ...(lottery ? { passes: [] } : {}),
   };
   return advanceRookieDraft({
     ...state,
@@ -420,13 +441,38 @@ export function advanceRookieDraft(state: GameState): GameState {
       f = replaceDraft(f, { ...draft, complete: true, exhausted: true });
       break;
     }
-    const teamId = draft.order[draft.picks.length % 30];
+    const teamId = draft.order[draftTurn(draft) % 30];
     if (teamId === 0) break;
     const pick = recommendedRookiePick(f, teamId, state.run.includeLegends);
     if (!pick) break;
-    f = recordPick(f, pick.pokemonId, pick.releasedId);
+    // Model-2 clubs pass rather than release a player they value more.
+    f =
+      draft.modelVersion === 2 && pick.score <= 0
+        ? recordPass(f)
+        : recordPick(f, pick.pokemonId, pick.releasedId);
   }
-  return f === state.franchise ? state : { ...state, franchise: f };
+  const next = f === state.franchise ? state : { ...state, franchise: f };
+  // Under CPU rules v1, clubs sign free agents as soon as the market opens,
+  // before the user's own moves.
+  return cpuRulesApply(f) && currentDraft(f)?.complete
+    ? processCpuFreeAgency(next)
+    : next;
+}
+
+/** The user's turn in a model-2 draft: keep the current roster. */
+export function passRookiePick(state: GameState): GameState {
+  const f = state.franchise,
+    draft = f && currentDraft(f);
+  if (
+    !f ||
+    !ready(f) ||
+    !draft ||
+    draft.complete ||
+    draft.modelVersion !== 2 ||
+    draft.order[draftTurn(draft) % 30] !== 0
+  )
+    return state;
+  return advanceRookieDraft({ ...state, franchise: recordPass(f) });
 }
 
 export function selectRookie(
@@ -441,7 +487,7 @@ export function selectRookie(
     !ready(f) ||
     !draft ||
     draft.complete ||
-    draft.order[draft.picks.length % 30] !== 0 ||
+    draft.order[draftTurn(draft) % 30] !== 0 ||
     !Object.values(f.teams[0].roster).includes(releasedId) ||
     !rookieProspects(f, state.run.includeLegends).some(
       (mon) => mon.id === pokemonId,

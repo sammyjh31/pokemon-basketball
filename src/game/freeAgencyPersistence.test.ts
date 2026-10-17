@@ -28,24 +28,32 @@ beforeAll(() => {
     ) as GameState["run"]["roster"],
   };
   const result = simulateSeason(run);
+  // These cases cover the pre-CPU-rules ledger (user first, one CPU round),
+  // which older franchises keep; cpuRules.test.ts covers rules v1.
+  const legacy = (state: GameState) => {
+    delete state.franchise!.cpuRules;
+    return state;
+  };
   drafted = beginRookieDraft(
     processOffseason(
-      archiveFranchiseSeason({
-        ...initialState(47),
-        records: {
-          ...initialState(47).records,
-          free: {
-            runs: 1,
-            bestWins: result.wins,
-            perfectSeasons: Number(result.wins === 82),
+      legacy(
+        archiveFranchiseSeason({
+          ...initialState(47),
+          records: {
+            ...initialState(47).records,
+            free: {
+              runs: 1,
+              bestWins: result.wins,
+              perfectSeasons: Number(result.wins === 82),
+            },
           },
-        },
-        run: {
-          ...run,
-          result,
-          playoffs: simulatePlayoffs(result.league!, run.seasonSeed),
-        },
-      }),
+          run: {
+            ...run,
+            result,
+            playoffs: simulatePlayoffs(result.league!, run.seasonSeed),
+          },
+        }),
+      ),
     ),
   );
   while (!drafted.franchise!.rookieDrafts!.at(-1)!.complete) {

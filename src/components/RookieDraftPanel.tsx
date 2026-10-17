@@ -1,7 +1,10 @@
 import { EvaluationFactors } from "./EvaluationFactors";
 import { useMemo, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
+import { cpuRulesApply } from "../game/cpuRules";
+import { lotteryOrder, recordOrder } from "../game/draftLottery";
 import {
+  draftTurn,
   generationForDraft,
   recommendedRookiePick,
   rookieGenerationLabel,
@@ -24,6 +27,8 @@ export interface RookieDraftPanelProps {
   onBegin: () => void;
   onAdvance: () => void;
   onPick: (pokemonId: number, releaseId: number) => void;
+  /** Model-2 drafts let the user keep their roster for a turn. */
+  onPass?: () => void;
 }
 
 export function RookieDraftPanel(props: RookieDraftPanelProps) {
@@ -31,7 +36,10 @@ export function RookieDraftPanel(props: RookieDraftPanelProps) {
   if (!f || f.phase !== "offseason") return null;
   const draft = f.rookieDrafts?.find((record) => record.year === f.year);
   return (
-    <DraftRoom key={`${f.year}:${draft?.picks.length ?? "ready"}`} {...props} />
+    <DraftRoom
+      key={`${f.year}:${draft ? draftTurn(draft) : "ready"}`}
+      {...props}
+    />
   );
 }
 
@@ -41,6 +49,7 @@ function DraftRoom({
   onBegin,
   onAdvance,
   onPick,
+  onPass,
 }: RookieDraftPanelProps) {
   const f = state.franchise!,
     user = f.teams[0];
@@ -48,8 +57,9 @@ function DraftRoom({
   const generation =
     draft?.generation ?? generationForDraft(f.rookieDrafts?.length ?? 0);
   const processed = !!f.offseasons?.some((report) => report.year === f.year);
-  const userTurn =
-    !!draft && !draft.complete && draft.order[draft.picks.length % 30] === 0;
+  const turn = draft ? draftTurn(draft) : 0,
+    lottery = draft ? draft.modelVersion === 2 : cpuRulesApply(f);
+  const userTurn = !!draft && !draft.complete && draft.order[turn % 30] === 0;
   const prospects = useMemo(
     () => rookieProspects(f, state.run.includeLegends),
     [f, state.run.includeLegends],
@@ -81,16 +91,12 @@ function DraftRoom({
             positionRating(a, position || bestPosition(a)) || a.id - b.id,
       );
   }, [prospects, search, position]);
+  const season = f.history.at(-1);
   const order =
     draft?.order ??
-    [...(f.history.at(-1)?.standings ?? [])]
-      .sort(
-        (a, b) =>
-          a.wins - b.wins ||
-          a.pointsFor - a.pointsAgainst - (b.pointsFor - b.pointsAgainst) ||
-          a.teamId - b.teamId,
-      )
-      .map((row) => row.teamId);
+    (lottery && season
+      ? lotteryOrder(season.standings, season.seasonSeed)
+      : recordOrder(season?.standings ?? []));
   const releasedSlot = ROSTER_SLOTS.find(
     (slot) => user.roster[slot] === releasedId,
   );
@@ -108,7 +114,10 @@ function DraftRoom({
       </div>
       <p className="rookie-intro">
         Two rounds, 30 picks per round. Each rookie replaces one player on an
-        eight-player roster. The worst record picks first in both rounds.
+        eight-player roster.{" "}
+        {lottery
+          ? "The 14 clubs that missed the playoffs draw weighted lottery odds for the first four picks; the rest follow reverse record order in both rounds. A club may pass instead of releasing a player it values more."
+          : "The worst record picks first in both rounds."}
       </p>
       {!draft ? (
         <div className="rookie-ready">
@@ -135,26 +144,29 @@ function DraftRoom({
             <strong>
               {draft.complete
                 ? "Draft complete"
-                : `Round ${draft.picks.length < 30 ? 1 : 2} · Pick ${draft.picks.length + 1} of 60`}
+                : `Round ${turn < 30 ? 1 : 2} · Pick ${turn + 1} of 60`}
             </strong>
-            <span>{draft.picks.length} of 60 picks made</span>
+            <span>
+              {draft.picks.length} of 60 picks made
+              {draft.passes?.length ? ` · ${draft.passes.length} passed` : ""}
+            </span>
             <progress
               max={60}
-              value={draft.complete ? 60 : draft.picks.length}
+              value={draft.complete ? 60 : turn}
               aria-label="Rookie draft progress"
             />
             {!draft.complete && (
               <p>
                 {userTurn
                   ? "You are on the clock."
-                  : `${f.teams[draft.order[draft.picks.length % 30]]?.name ?? "CPU club"} is on the clock.`}
+                  : `${f.teams[draft.order[turn % 30]]?.name ?? "CPU club"} is on the clock.`}
               </p>
             )}
           </div>
           {draft.exhausted && (
             <p className="rookie-note">
-              No eligible rookies remain. {60 - draft.picks.length} remaining
-              picks skipped. The franchise can continue.
+              No eligible rookies remain. {60 - turn} remaining picks skipped.
+              The franchise can continue.
             </p>
           )}
           {!draft.complete && (!userTurn || prospects.length === 0) && (
@@ -202,6 +214,17 @@ function DraftRoom({
                     }
                   >
                     Draft recommended pick
+                  </button>
+                </div>
+              )}
+              {lottery && onPass && (
+                <div className="rookie-recommendation">
+                  <p>
+                    Keep your current eight instead and pass this pick. The turn
+                    is used and nobody is released.
+                  </p>
+                  <button className="button" onClick={onPass}>
+                    Pass this pick
                   </button>
                 </div>
               )}

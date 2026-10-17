@@ -51,6 +51,7 @@ import {
   type CareerTotals,
   type Franchise,
   type FranchiseSeason,
+  type CpuRules,
   type FranchiseTrade,
   type HistoricalHonor,
 } from "./franchiseTypes";
@@ -1292,12 +1293,23 @@ export function validateFranchise(
       : undefined;
   if (Object.hasOwn(row, "rookieDrafts") && row.rookieDrafts === undefined)
     return fail();
+  let cpuRules: CpuRules | undefined;
+  if (Object.hasOwn(row, "cpuRules")) {
+    const rules = object(row.cpuRules);
+    if (rules.modelVersion !== 1 || Object.keys(rules).length !== 2)
+      return fail();
+    cpuRules = {
+      modelVersion: 1,
+      since: integer(rules.since, 1, historyCount),
+    };
+  }
   const freeAgency = Object.hasOwn(row, "freeAgency")
     ? validateFreeAgency(
         row.freeAgency,
         historyCount,
         trades.length,
         run.includeLegends,
+        cpuRules?.since,
       )
     : undefined;
   const { drafts, expected } = validateRosterTransactions(
@@ -1310,6 +1322,7 @@ export function validateFranchise(
     row.phase,
     developmentHistory?.reports,
     freeAgency,
+    cpuRules?.since,
   );
   verifyMoraleChronology(
     run,
@@ -1397,6 +1410,7 @@ export function validateFranchise(
     ...(pendingCoach ? { pendingCoach } : {}),
     ...(coachOffice ? { coachOffice } : {}),
     modelVersion: row.modelVersion as Franchise["modelVersion"],
+    ...(cpuRules ? { cpuRules } : {}),
     year,
     phase: row.phase,
     teams,
