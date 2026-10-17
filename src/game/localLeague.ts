@@ -591,7 +591,7 @@ export function updateLocalCoaching(
 }
 
 /**
- * Upper bound on saved text. A 50-season, 30-club career measures about 9.1M
+ * Upper bound on saved text. A 50-season, 30-club career measures about 10.8M
  * characters; large saves are stored in IndexedDB rather than localStorage.
  */
 export const LOCAL_SAVE_MAX_LENGTH = 16_000_000;
