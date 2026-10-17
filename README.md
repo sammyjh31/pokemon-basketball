@@ -28,6 +28,12 @@ Open [the local game](http://127.0.0.1:5173/). In a cloud workspace, bind the se
 
 All game data and portraits are bundled locally. Gameplay needs no external API, accounts, database, or secrets. LocalStorage keeps a versioned save in the current browser; clearing site data clears progress. If saving is unavailable, play continues in memory with a notice. This is not a multiplayer leaderboard or an anti-cheat system.
 
+## Shared team evaluation
+
+New games use one team-value assessment for trainer game plans, coaching hires, draft recommendations, CPU picks, trades, free agency, rotations and automatic training. It combines developed basketball talent, positional role, coaching scheme, roster needs, positional depth and enabled species abilities. Size, weight and typing remain part of the underlying basketball skills. Offseason recruiting accounts for newly hired trainers; trade fairness, availability, rival scouting and roster limits still apply.
+
+Expand **How your coach values this roster** to see each player's contributions. Trade, rookie and free-agent assessments explain changes in **shared team value**, separately from universal OVR. Training targets attainable improvements in that same value, with diminishing upside for already strong skills and the existing workload/risk limits. Simulated substitutions and playable-game CPU substitutions use shared role values alongside fatigue and matchup constraints. Existing seasons and historical games retain their original rules; existing franchises adopt the model at their next season boundary.
+
 ## Validate
 
 ```sh

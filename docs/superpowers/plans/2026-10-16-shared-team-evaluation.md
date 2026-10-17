@@ -41,3 +41,19 @@ Files: coachPolicy, coachTraining, coachOffice, match, matchLineups, CoachSummar
 ### Task 5: Validate, review, commit and push
 
 Run focused domain/lifecycle tests and real franchise save restore, production build. Inspect UI without touching user save. Fresh most-capable reviewer checks full diff against Review Focus. Fix actionable findings with regressions. Update LOCAL_HANDOFF; commit coherent verified chunks and push HEAD:main after verifying remote ancestry. Expected: origin/main equals local HEAD, only existing node_modules symlink untracked.
+
+## Final verification and decisions
+
+Completed in `c1e3b8c` (pure model) and `a855ad4` (consumers/lifecycle/UI), followed by the final documentation and historical-fixture commit. Production build passed; existing large-bundle advisory remains. Root policy/simulation/UI suite: 70 tests across 14 files. Markets: 49 tests across 6 files. Arcade/UI: 57 tests across 10 files. Lifecycle/draft/history: 24 tests across 6 files, plus local draft UI 10 and local league 7. A real modern 82-game season, playoffs, camp, CPU trades, archive/save/restore and next-season launch passed in 64.65 s. Frozen legacy hashes remain exact. Isolated desktop/mobile browser inspection found 8 rows, no document overflow and no page errors. No user save was changed.
+
+Fresh independent review of both implementation commits found no Critical, Important or Minor issue. Reviewer independently passed 14 core/coaching/replay tests and the full modern draft/FA/trade-search integration. The historical rival fixture update was separately verified against untouched e741795: its three failures predated this work. Omitting the newer ability/evaluation flags from that explicit original-rules fixture restored its unchanged assertions.
+
+Decisions retained after review:
+
+- Local modern trade replay validates legality and recorded consent but does not re-negotiate with a later hire. The save format lacks hire/trade interleaving; requiring today's approval would invalidate legitimate saves. Edited local save files can bypass this fairness check, as recorded user transactions already can.
+- Trade suggestions screen a bounded set with shared player values and then compare full rosters. This keeps three-player suggestions around 0.83 s in the implementation benchmark but can omit acceptable combinations. Package assignment checks at most six permutations, not a whole-roster factorial search.
+- Recruiting projects offseason appointments while transactions preserve historical coach metadata. Incoming-player permutation choice depends on role fit; all coach-sensitive aggregate components are permutation-invariant. Universal positional ratings choose the same best role as shared valuation because its other terms are independent of role.
+- Training uses headroom-adjusted estimates of marginal shared value, not promised skill gains. Actual development retains its existing random outcomes, workload, risk and caps. A changed roster need can change a focus's value without displacing a clearly better focus.
+- Within-game snapshots remain valid; simulated role values refresh when the active scheme changes, and every new game gets fresh developed profiles/context. Arcade keeps its distinct physics and human controls while sharing CPU rotation values.
+
+No deferred review findings. Earlier overly broad archive and free-agency persistence runs were stopped without results; they are not counted as passing. Focused lifecycle coverage and the completed full modern franchise restore provide the relevant evidence.

@@ -70,7 +70,9 @@ export function CoachSummary({
             OVR remains a separate rating. These values use each player’s
             strongest role.
           </p>
-          <p className="coach-evaluation-hint">Scroll across to see every contribution.</p>
+          <p className="coach-evaluation-hint">
+            Scroll across to see every contribution.
+          </p>
           <div
             className="coach-evaluation-scroll"
             role="region"
