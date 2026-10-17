@@ -91,7 +91,19 @@ const saved = (page: Page, key: string) =>
       };
     });
   }, key);
+/** New runs start by drafting a trainer coach. */
+async function chooseCoachIfOffered(page: Page) {
+  const coaches = page.getByRole("region", {
+    name: "Your team. Their game plan.",
+  });
+  if (await coaches.isVisible())
+    await coaches
+      .getByRole("button", { name: /^Draft / })
+      .first()
+      .click();
+}
 async function draftOne(page: Page, slot: string) {
+  await chooseCoachIfOffered(page);
   await page
     .getByRole("button", { name: /^Draft / })
     .first()
@@ -168,10 +180,15 @@ test("loads an old-version save and keeps it as the verified backup", async ({
   const { legacy } = await fixtures(page);
   await seed(page, { "pokemon-basketball:v1": legacy });
   await expect(
-    page.getByRole("button", { name: "Draft Pikachu", exact: true }),
+    page.getByRole("region", { name: "Your team. Their game plan." }),
   ).toBeVisible();
   await expect(page.getByText(/could not be restored/)).toHaveCount(0);
   expect(await stored(page, `${KEY}:backup`)).toBe(legacy);
+  // The saved offers survive once a trainer is drafted.
+  await chooseCoachIfOffered(page);
+  await expect(
+    page.getByRole("button", { name: "Draft Pikachu", exact: true }),
+  ).toBeVisible();
 });
 
 test("exports a save and imports it back after confirming", async ({
@@ -192,8 +209,9 @@ test("exports a save and imports it back after confirming", async ({
     page.getByRole("dialog", { name: "Replace your current save?" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Replace save" }).click();
+  // The exported save predates drafting a trainer, so the picker returns.
   await expect(
-    page.getByRole("button", { name: "SG slot: Empty", exact: true }),
+    page.getByRole("region", { name: "Your team. Their game plan." }),
   ).toBeVisible();
   await expect
     .poll(async () => JSON.parse((await stored(page, KEY))!).run.roster.SG)
