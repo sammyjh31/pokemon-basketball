@@ -2,6 +2,7 @@ import { reboundBody, type BodyProfile } from "./bodyMatchups";
 import { clamp } from "./ratings";
 import type { Tactic } from "./types";
 export interface ReboundPlayer {
+  abilityRebound?: number;
   id: string;
   body?: BodyProfile;
   offense: number;
@@ -44,10 +45,11 @@ export function resolveRebound(
         : 2;
   const long = c.zone === "three" && !c.freeThrow;
   const pursuit = (p: ReboundPlayer, offense: boolean) =>
-    (offense ? p.offense : p.defense) * 0.6 +
-    p.vertical * 0.15 +
-    (long ? p.speed : p.strength) * 0.25 +
-    (p.body ? reboundBody(p.body, long) : 0);
+    ((offense ? p.offense : p.defense) * 0.6 +
+      p.vertical * 0.15 +
+      (long ? p.speed : p.strength) * 0.25 +
+      (p.body ? reboundBody(p.body, long) : 0)) *
+    (p.abilityRebound ?? 1);
   const candidates = attack
     .map((p, i) => ({ i, value: pursuit(p, true) }))
     .sort((a, b) => b.value - a.value || a.i - b.i)

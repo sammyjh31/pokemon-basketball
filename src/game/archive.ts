@@ -51,6 +51,9 @@ export function archivedSeasonRun(season: FranchiseSeason): Run {
     defense: user.defense,
     leagueTeams: replay.teams,
     ...(user.abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+    ...(user.physicalAbilityVersion === 1
+      ? { physicalAbilityVersion: 1 as const }
+      : {}),
     ...(user.evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
     ...(user.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
     ...(user.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),

@@ -12,6 +12,7 @@ import { loadGame, saveGame } from "./persistence";
 import type { FranchiseSeason } from "./franchiseTypes";
 const run = () => ({
   ...createRun("free", true, 22),
+  physicalAbilityVersion: undefined,
   roster: { PG: 65, SG: 135, SF: 149, PF: 68, C: 143, B1: 121, B2: 6, B3: 131 },
 });
 it("enables the same model on all new clubs and CPU regular-season and playoff games", () => {
@@ -87,6 +88,7 @@ it("opts new local leagues in, but never upgrades a saved local career implicitl
   );
   expect(d.abilityVersion).toBe(1);
   expect(parseLocalLeague(JSON.stringify(d)).abilityVersion).toBe(1);
+  delete d.physicalAbilityVersion;
   delete d.abilityVersion;
   expect(parseLocalLeague(JSON.stringify(d)).abilityVersion).toBeUndefined();
   expect(() =>
@@ -135,6 +137,7 @@ it("restores old local seasons and adopts abilities only at the next season boun
       },
     },
   );
+  delete draft.physicalAbilityVersion;
   delete draft.abilityVersion;
   while (local.currentLocalTurn(draft)) {
     draft = local.advanceLocalCpu(draft);
@@ -176,7 +179,10 @@ it("restores old local seasons and adopts abilities only at the next season boun
   );
   // An older already-started year two can still be restored without upgrading it.
   const oldYearTwo = structuredClone(next);
-  oldYearTwo.career!.teams.forEach((t) => delete t.abilityVersion);
+  oldYearTwo.career!.teams.forEach((t) => {
+    delete t.abilityVersion;
+    delete t.physicalAbilityVersion;
+  });
   expect(
     local
       .parseLocalLeague(JSON.stringify(oldYearTwo))

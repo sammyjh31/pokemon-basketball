@@ -29,6 +29,25 @@ const integer = (value: unknown, min = 0, max = 1_000_000): value is number =>
 const record = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === "object" && !Array.isArray(value);
 
+function officialPhysicalVersion(
+  fixture: LeagueFixture,
+  teams: LeagueTeam[],
+): 1 | undefined {
+  const home = teams.find((team) => team.id === fixture.homeTeamId);
+  const away = teams.find((team) => team.id === fixture.awayTeamId);
+  if (!home || !away) return fail();
+  const version = home.physicalAbilityVersion;
+  if (
+    (version !== undefined && version !== 1) ||
+    version !== away.physicalAbilityVersion ||
+    (version === 1 &&
+      (home.abilityVersion !== 1 || away.abilityVersion !== 1)) ||
+    (version === 1 && abilitiesEnabled(home) !== abilitiesEnabled(away))
+  )
+    return fail();
+  return version === 1 && abilitiesEnabled(home) ? 1 : undefined;
+}
+
 /** Stored scores and courtScore are always home/away; arcade side zero is always the coach. */
 export function officialGameFromArcade(
   state: ArcadeState,
@@ -37,6 +56,7 @@ export function officialGameFromArcade(
 ): OfficialGame {
   if (
     !state.official ||
+    state.physicalAbilityVersion !== officialPhysicalVersion(fixture, teams) ||
     (state.abilityVersion !== undefined && state.abilityVersion !== 1) ||
     (state.abilityVersion === 1) !==
       abilitiesEnabled(teams.find((team) => team.id === 0) ?? {}) ||
@@ -103,6 +123,11 @@ export function officialGameFromArcade(
       donor.units--;
       remaining++;
     }
+    if (
+      state.physicalAbilityVersion !== 1 &&
+      units.some(({ p }) => p.stats.abilityActivations?.physical !== undefined)
+    )
+      fail();
     return units.map(({ p, slot, units: minutes }) => ({
       ...emptyBox(p.pokemonId, slot),
       ...(state.abilityVersion === 1
@@ -212,6 +237,9 @@ export function officialGameFromArcade(
       scale: SCALE,
       match,
       ...(state.abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+      ...(state.physicalAbilityVersion === 1
+        ? { physicalAbilityVersion: 1 as const }
+        : {}),
     },
     fixture,
     teams,
@@ -228,6 +256,7 @@ export function validateOfficialGame(
     !record(value) ||
     value.fixtureId !== fixture.id ||
     value.scale !== SCALE ||
+    value.physicalAbilityVersion !== officialPhysicalVersion(fixture, teams) ||
     (value.abilityVersion !== undefined && value.abilityVersion !== 1) ||
     (value.abilityVersion === 1) !==
       abilitiesEnabled(teams.find((team) => team.id === 0) ?? {}) ||
@@ -289,6 +318,11 @@ export function validateOfficialGame(
       if (game.abilityVersion === 1) {
         const activations = validateAbilityActivations(box.abilityActivations);
         if (
+          (activations.physical !== undefined &&
+            game.physicalAbilityVersion !== 1) ||
+          (box.minutes === 0 &&
+            activations.physical !== undefined &&
+            Object.values(activations.physical).some((value) => value !== 0)) ||
           activations.offense > box.fga / SCALE ||
           (box.minutes === 0 && abilityTotal(box) !== 0)
         )

@@ -1,5 +1,11 @@
 import {
+  physicalAbilitiesEnabled,
+  physicalPlayerEffects,
+  abilityEnergyChange,
+} from "./physicalAbilities";
+import {
   abilitiesEnabled,
+  recordPhysicalAbility,
   abilityImpact,
   addAbilityActivation,
   emptyAbilityActivations,
@@ -109,7 +115,7 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   const planKey = config.rotationPlan
     ? `:${ROSTER_SLOTS.map((slot) => config.rotationPlan!.minutes[slot]).join(",")}:${config.rotationPlan.closing.join(",")}`
     : "";
-  const key = `${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
+  const key = `${physicalAbilitiesEnabled(config) ? "physical1:" : ""}${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
   let targets = targetCache.get(key);
   if (!targets) {
     targets =
@@ -128,6 +134,9 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   const players = ROSTER_SLOTS.map((slot, index): Player => {
     const pokemonId = ids[index]!;
     return {
+      ...(physicalAbilitiesEnabled(config)
+        ? { physicalAbilities: true as const }
+        : {}),
       types: POKEMON_BY_ID.get(pokemonId)!.types,
       body:
         config.matchupVersion === 1
@@ -287,6 +296,15 @@ export function simulateMatch(
   )
     throw new Error(
       "Both teams must use valid, matching team evaluation rules.",
+    );
+  if (
+    home.physicalAbilityVersion !== away.physicalAbilityVersion ||
+    (home.physicalAbilityVersion !== undefined &&
+      home.physicalAbilityVersion !== 1) ||
+    (home.physicalAbilityVersion === 1 && home.abilityVersion !== 1)
+  )
+    throw new Error(
+      "Both teams must use valid, matching physical ability rules.",
     );
   const courtEnabled = home.courtVersion === 1;
   const bodyEnabled = home.matchupVersion === 1;
@@ -872,6 +890,9 @@ export function simulateMatch(
     if (possessionDepth) {
       const profile = (p: Player) => ({
         id: p.box.playerId,
+        ...(p.physicalAbilities
+          ? { abilityRebound: physicalPlayerEffects(p).rebound }
+          : {}),
         ...(p.body ? { body: p.body } : {}),
         offense: skill(p, "offensiveRebound"),
         defense: skill(p, "defensiveRebound"),
@@ -893,12 +914,17 @@ export function simulateMatch(
         random,
       );
       offense.floor.forEach((p, i) => {
-        if (battle.attackWeights[i] > 0)
+        if (battle.attackWeights[i] > 0) {
           playerDetail.get(p.box.playerId)!.reboundChances++;
+          if (physicalPlayerEffects(p).rebound !== 1)
+            recordPhysicalAbility(p.box, "rebounds");
+        }
       });
       defense.floor.forEach((p, i) => {
         const row = playerDetail.get(p.box.playerId)!;
         row.reboundChances++;
+        if (physicalPlayerEffects(p).rebound !== 1)
+          recordPhysicalAbility(p.box, "rebounds");
         if (battle.boxOuts[i]) row.boxOuts++;
       });
       const winner = (battle.offensive ? offense : defense).floor[
@@ -912,8 +938,17 @@ export function simulateMatch(
         origins.set(defense, { edge: battle.transitionEdge, turnover: false });
       return battle.offensive;
     }
-    const attack = average(offense.floor, (p) => skill(p, "offensiveRebound"));
-    const defend = average(defense.floor, (p) => skill(p, "defensiveRebound"));
+    const pursuit = (p: Player, key: "offensiveRebound" | "defensiveRebound") =>
+      skill(p, key) * physicalPlayerEffects(p).rebound;
+    for (const p of [...offense.floor, ...defense.floor])
+      if (physicalPlayerEffects(p).rebound !== 1)
+        recordPhysicalAbility(p.box, "rebounds");
+    const attack = average(offense.floor, (p) =>
+      pursuit(p, "offensiveRebound"),
+    );
+    const defend = average(defense.floor, (p) =>
+      pursuit(p, "defensiveRebound"),
+    );
     const probability = clamp(
       (freeThrowMiss ? 0.13 : 0.235) +
         (attack - defend) * 0.0022 +
@@ -926,11 +961,11 @@ export function simulateMatch(
       0.42,
     );
     if (random() < probability) {
-      pick(offense.floor, (p) => Math.pow(skill(p, "offensiveRebound"), 2)).box
-        .offensiveRebounds++;
+      pick(offense.floor, (p) => Math.pow(pursuit(p, "offensiveRebound"), 2))
+        .box.offensiveRebounds++;
       return true;
     }
-    pick(defense.floor, (p) => Math.pow(skill(p, "defensiveRebound"), 2)).box
+    pick(defense.floor, (p) => Math.pow(pursuit(p, "defensiveRebound"), 2)).box
       .defensiveRebounds++;
     defense.transition = 0.55;
     return false;
@@ -978,6 +1013,18 @@ export function simulateMatch(
     } else if (passer && passer !== shooter && random() < assistChance)
       passer.box.assists++;
   };
+  const changeEnergy = (player: Player, delta: number, floor = 25) => {
+    const changed = abilityEnergyChange(
+      player.box.pokemonId,
+      player.energy,
+      delta,
+      player.physicalAbilities === true,
+      floor,
+    );
+    player.energy = changed.energy;
+    if (changed.saved > 0)
+      recordPhysicalAbility(player.box, "energySaved", changed.saved);
+  };
   const advanceCourtClock = (duration: number) => {
     const seconds = Math.min(
       duration,
@@ -998,14 +1045,12 @@ export function simulateMatch(
               (team.config.tactic === "pace" || team.config.defense === "press"
                 ? 1.8
                 : 1);
-          player.energy = Math.max(25, player.energy - (drain * seconds) / 60);
+          changeEnergy(player, -(drain * seconds) / 60);
         } else {
           player.consecutive = 0;
-          player.energy = Math.min(
-            100,
-            player.energy +
-              ((4.7 + player.profile.attributes.stamina * 0.012) * seconds) /
-                60,
+          changeEnergy(
+            player,
+            ((4.7 + player.profile.attributes.stamina * 0.012) * seconds) / 60,
           );
         }
       }
@@ -1065,7 +1110,8 @@ export function simulateMatch(
         offense.floor.filter((p) => p !== handler),
         (p) =>
           Math.pow(
-            p.profile.traits.screening + (p.depth?.physical.screening ?? 0),
+            (p.profile.traits.screening + (p.depth?.physical.screening ?? 0)) *
+              physicalPlayerEffects(p).screen,
             3,
           ) *
           (bodyEnabled ? 0.75 + screenLeverage(p, guards!.get(handler)!) : 1) *
@@ -2153,12 +2199,11 @@ export function simulateMatch(
                       ? 1.8
                       : 1)
                   : (player.depth?.physical.fatigue ?? 0));
-              player.energy = Math.max(25, player.energy - drain * 0.125);
+              changeEnergy(player, -drain * 0.125);
             } else
-              player.energy = Math.min(
-                100,
-                player.energy +
-                  (4.7 + player.profile.attributes.stamina * 0.012) * 0.125,
+              changeEnergy(
+                player,
+                (4.7 + player.profile.attributes.stamina * 0.012) * 0.125,
               );
           }
         const defense = offense === h ? a : h;
@@ -2180,8 +2225,7 @@ export function simulateMatch(
         }
       }
     for (const team of [h, a])
-      for (const p of team.players)
-        p.energy = Math.min(100, p.energy + (period === 1 ? 12 : 5));
+      for (const p of team.players) changeEnergy(p, period === 1 ? 12 : 5);
     period++;
   }
   if (courtEnabled)

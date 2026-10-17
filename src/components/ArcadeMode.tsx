@@ -380,6 +380,15 @@ export function ArcadeMode({
         ...(!official || (user && abilitiesEnabled(user))
           ? { abilityVersion: 1 as const }
           : {}),
+        ...((
+          official
+            ? user &&
+              abilitiesEnabled(user) &&
+              user.physicalAbilityVersion === 1
+            : run.physicalAbilityVersion === 1
+        )
+          ? { physicalAbilityVersion: 1 as const }
+          : {}),
         ...(official ? { official: true } : {}),
       });
       if (!audio.current) audio.current = new ArcadeAudio();

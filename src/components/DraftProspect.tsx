@@ -1,4 +1,5 @@
 import { speciesAbility } from "../game/abilities";
+import { physicalAbilityDescription } from "../game/physicalAbilities";
 import type { CSSProperties } from "react";
 import type { DraftRecommendation } from "../game/draftAdvice";
 import { engineProfile } from "../game/engineDepth";
@@ -248,6 +249,7 @@ export function DraftComparison({
   position,
   abilities,
   abilityVersion,
+  physicalAbilityVersion,
   onPosition,
   onScout,
 }: {
@@ -256,6 +258,7 @@ export function DraftComparison({
   position: Position;
   abilities: boolean;
   abilityVersion?: 1;
+  physicalAbilityVersion?: 1;
   onPosition: (position: Position) => void;
   onScout: (id: number) => void;
 }) {
@@ -378,6 +381,9 @@ export function DraftComparison({
                         ).description
                       }
                     </small>
+                    {abilityVersion === 1 && physicalAbilityVersion === 1 && (
+                      <small>{physicalAbilityDescription(mon.id)}</small>
+                    )}
                   </td>
                 ))}
               </tr>

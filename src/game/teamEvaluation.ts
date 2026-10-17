@@ -23,6 +23,8 @@ import {
   type Tactic,
 } from "./types";
 import { abilityUsefulness } from "./abilityEvaluation";
+import { physicalAbilitiesEnabled } from "./physicalAbilities";
+import { physicalAbilityValue } from "./physicalAbilityEvaluation";
 export { abilityUsefulness } from "./abilityEvaluation";
 
 /** Deliberately independent of consumers and save formats. Context is a fresh snapshot. */
@@ -33,6 +35,7 @@ export interface EvaluationTeam {
   coach?: CoachAssignment;
   development?: PlayerDevelopment;
   abilityVersion?: 1;
+  physicalAbilityVersion?: 1;
   evaluationVersion?: 1;
   engineRules?: { abilities: boolean };
 }
@@ -49,6 +52,7 @@ export interface EvaluationContext {
   tactic: Tactic;
   defense: DefenseScheme;
   abilities: boolean;
+  physicalAbilities?: boolean;
   development: PlayerDevelopment;
   needs: Record<NeedSkill, { average: number; weight: number }>;
 }
@@ -122,7 +126,8 @@ export function evaluationGamePlan(team: EvaluationTeam) {
       reason: "Team instructions inform the shared evaluation.",
     };
   const players = rosterProfiles(team),
-    enabled = abilitiesEnabled(team);
+    enabled = abilitiesEnabled(team),
+    physical = physicalAbilitiesEnabled(team);
   const tactic = TACTICS.map((tactic) => ({
     tactic,
     score:
@@ -133,6 +138,9 @@ export function evaluationGamePlan(team: EvaluationTeam) {
             (enabled
               ? abilityUsefulness(mon.id, p) *
                 (speciesAbility(mon.id).tactics.includes(tactic) ? 4 : 1)
+              : 0) +
+            (physical
+              ? physicalAbilityValue(mon.id, p, tactic, team.defense ?? "man")
               : 0),
         ),
       ) + (tactic === coach.tactic ? 18 - 10 * coach.adaptability : 0),
@@ -140,13 +148,18 @@ export function evaluationGamePlan(team: EvaluationTeam) {
   const defense = DEFENSE_SCHEMES.map((defense) => ({
     defense,
     score:
-      mean(players.map(({ p }) => defenseFit(p, defense))) +
-      (defense === coach.defense ? 18 - 10 * coach.adaptability : 0),
+      mean(
+        players.map(
+          ({ mon, p }) =>
+            defenseFit(p, defense) +
+            (physical ? physicalAbilityValue(mon.id, p, tactic, defense) : 0),
+        ),
+      ) + (defense === coach.defense ? 18 - 10 * coach.adaptability : 0),
   })).sort((a, b) => b.score - a.score)[0].defense;
   return {
     tactic,
     defense,
-    reason: `${coach.name}: shared roster evaluation favors ${tactic} offense and ${defense} defense, balancing coaching style, developed skills and enabled abilities.`,
+    reason: `${coach.name}: shared roster evaluation favors ${tactic} offense and ${defense} defense, balancing coaching style, developed skills and enabled abilities.${physical ? " Physical movement, screens, rebounding and energy effects inform the plan." : ""}`,
   };
 }
 export function createEvaluationContext(
@@ -159,6 +172,7 @@ export function createEvaluationContext(
     tactic: plan.tactic,
     defense: plan.defense,
     abilities: abilitiesEnabled(team),
+    ...(physicalAbilitiesEnabled(team) ? { physicalAbilities: true } : {}),
     development: Object.fromEntries(
       Object.entries(team.development ?? {}).map(([id, offsets]) => [
         id,
@@ -234,6 +248,23 @@ function scoreProfile(
       contribution: ability * 4,
     },
   ];
+  const physical = context.physicalAbilities
+    ? physicalAbilityValue(
+        pokemonId,
+        p,
+        context.tactic,
+        context.defense,
+        actualRole,
+        context.needs,
+      )
+    : 0;
+  if (context.physicalAbilities)
+    factors.push({
+      key: "physical",
+      label: "Physical ability fit",
+      value: physical * 25,
+      contribution: physical,
+    });
   return {
     pokemonId,
     role: actualRole,
@@ -248,6 +279,11 @@ function scoreProfile(
       context.abilities
         ? `${speciesAbility(pokemonId).name} adds ${(ability * 4).toFixed(1)} team-value points for likely usefulness.`
         : "Abilities are disabled for this league.",
+      ...(context.physicalAbilities
+        ? [
+            `Physical effects add ${physical.toFixed(1)} team-value points from developed skills, role, scheme and roster needs.`,
+          ]
+        : []),
     ],
   };
 }
@@ -276,7 +312,14 @@ export function evaluateTeam(team: EvaluationTeam) {
       POSITIONS.includes(slot as Position) ? (slot as Position) : undefined,
     ),
   );
-  const keys = ["talent", "role", "scheme", "needs", "ability"];
+  const keys = [
+    "talent",
+    "role",
+    "scheme",
+    "needs",
+    "ability",
+    ...(context.physicalAbilities ? ["physical"] : []),
+  ];
   const factors: EvaluationFactor[] = keys.map((key) => ({
     key,
     label:
@@ -323,8 +366,16 @@ export function compareTeamEvaluation(
 ) {
   const a = evaluateTeam(before),
     b = evaluateTeam(after);
-  const factors = b.factors.map((f) => {
-    const old = a.factors.find((x) => x.key === f.key)!;
+  const factors = [
+    ...b.factors,
+    ...a.factors
+      .filter((old) => !b.factors.some((next) => next.key === old.key))
+      .map((old) => ({ ...old, value: 0, contribution: 0 })),
+  ].map((f) => {
+    const old = a.factors.find((x) => x.key === f.key) ?? {
+      value: 0,
+      contribution: 0,
+    };
     return {
       label: f.label,
       change: f.value - old.value,

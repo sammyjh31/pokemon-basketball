@@ -22,7 +22,7 @@ export function AbilityStats({
   if (!rows.length) return null;
   return (
     <section className="ability-stats" aria-label={label}>
-      <h4>Species ability activations</h4>
+      <h4>Species ability shot activations</h4>
       <p className="stat-legend">
         Counts record applied effects, including misses; they do not measure
         baskets made or points caused. Offense = shooter, support = passer,
@@ -96,6 +96,57 @@ export function AbilityStats({
                 </tr>
               );
             })}
+          </tbody>
+        </table>
+      </div>
+      <h4>Physical ability effects</h4>
+      <p className="stat-legend">
+        Extra distance actually traveled (feet), affected screen contacts and
+        rebound contests, and energy conserved or restored after caps. These
+        totals are separate from shot activations and are never scaled with
+        scoring. A dash means no physical data was recorded; older seasons keep
+        their original rules. Zero means recorded play with no benefit.
+      </p>
+      <div
+        className="results-table-wrap ability-stats-scroll"
+        role="region"
+        tabIndex={0}
+        aria-label={`Scrollable ${label.toLowerCase()} physical effects`}
+      >
+        <table className="results-table ability-stats-table">
+          <caption className="sr-only">{label} physical effects</caption>
+          <thead>
+            <tr>
+              <th scope="col">PLAYER / SEASON</th>
+              <th scope="col">EXTRA FEET</th>
+              <th scope="col">SCREEN CONTACTS</th>
+              <th scope="col">REBOUND CONTESTS</th>
+              <th scope="col">ENERGY SAVED</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.key}>
+                <th scope="row">{row.label}</th>
+                {(
+                  ["movement", "screens", "rebounds", "energySaved"] as const
+                ).map((key) => (
+                  <td
+                    key={key}
+                    className={
+                      row.abilityActivations?.physical
+                        ? undefined
+                        : "ability-unavailable"
+                    }
+                  >
+                    {row.abilityActivations?.physical?.[key].toLocaleString(
+                      "en-US",
+                      { maximumFractionDigits: 1 },
+                    ) ?? "—"}
+                  </td>
+                ))}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

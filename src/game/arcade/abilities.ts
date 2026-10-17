@@ -1,11 +1,33 @@
 import {
   abilityImpact,
   addAbilityActivation,
+  recordPhysicalAbility,
   type AbilityContext,
   type AbilityRole,
 } from "../abilities";
+import {
+  abilityEnergyChange,
+  physicalAbilitiesEnabled,
+} from "../physicalAbilities";
 import type { ArcadePlayer, ArcadeState } from "./types";
 import { clamp, distance, other } from "./helpers";
+
+/** Apply energy at its actual resolution point so caps cannot invent savings. */
+export function changeArcadeEnergy(
+  state: ArcadeState,
+  player: ArcadePlayer,
+  delta: number,
+) {
+  const result = abilityEnergyChange(
+    player.pokemonId,
+    player.energy,
+    delta,
+    physicalAbilitiesEnabled(state),
+  );
+  player.energy = result.energy;
+  if (result.saved > 0)
+    recordPhysicalAbility(player.stats, "energySaved", result.saved);
+}
 
 /** Shot-release context comes only from completed actions and current court state. */
 export function applyArcadeAbilities(

@@ -312,11 +312,17 @@ export function validateLeagueTeams(
   const typeVersion = object(rows[0]).typeMatchupsVersion;
   if (typeVersion !== undefined && typeVersion !== 1) return fail();
   const abilityVersion = object(rows[0]).abilityVersion;
+  const physicalAbilityVersion = object(rows[0]).physicalAbilityVersion;
   const evaluationVersion = object(rows[0]).evaluationVersion;
   const courtVersion = object(rows[0]).courtVersion;
   const matchupVersion = object(rows[0]).matchupVersion;
   const possessionVersion = object(rows[0]).possessionVersion;
   if (abilityVersion !== undefined && abilityVersion !== 1) return fail();
+  if (
+    (physicalAbilityVersion !== undefined && physicalAbilityVersion !== 1) ||
+    (physicalAbilityVersion === 1 && abilityVersion !== 1)
+  )
+    return fail();
   if (evaluationVersion !== undefined && evaluationVersion !== 1) return fail();
   if (courtVersion !== undefined && courtVersion !== 1) return fail();
   if (matchupVersion !== undefined && matchupVersion !== 1) return fail();
@@ -345,6 +351,7 @@ export function validateLeagueTeams(
       row.simulationVersion !== simulationVersion ||
       row.typeMatchupsVersion !== typeVersion ||
       row.abilityVersion !== abilityVersion ||
+      row.physicalAbilityVersion !== physicalAbilityVersion ||
       row.evaluationVersion !== evaluationVersion ||
       row.courtVersion !== courtVersion ||
       row.matchupVersion !== matchupVersion ||
@@ -388,6 +395,9 @@ export function validateLeagueTeams(
       ...(typeVersion === 1 ? { typeMatchupsVersion: 1 as const } : {}),
       ...(tacticsVersion === 1 ? { typeTacticsVersion: 1 as const } : {}),
       ...(abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+      ...(physicalAbilityVersion === 1
+        ? { physicalAbilityVersion: 1 as const }
+        : {}),
       ...(evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
       ...(courtVersion === 1 ? { courtVersion: 1 as const } : {}),
       ...(matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
@@ -1024,6 +1034,17 @@ function verifyCurrentArchive(franchise: Franchise, run: Run): void {
             return fail();
         }
       }
+      for (const key of [
+        "movement",
+        "screens",
+        "rebounds",
+        "energySaved",
+      ] as const) {
+        const actual = total.abilityActivations?.physical?.[key] ?? 0;
+        const expected = player.abilityActivations?.physical?.[key] ?? 0;
+        if (franchise.year === 1 ? actual !== expected : actual < expected)
+          return fail();
+      }
       for (const key of CAREER_KEYS) {
         if (
           franchise.year === 1
@@ -1060,6 +1081,7 @@ export function validateFranchise(
       (team) =>
         team.typeTacticsVersion !== run.typeTacticsVersion ||
         team.abilityVersion !== run.abilityVersion ||
+        team.physicalAbilityVersion !== run.physicalAbilityVersion ||
         team.evaluationVersion !== run.evaluationVersion ||
         team.courtVersion !== run.courtVersion ||
         team.matchupVersion !== run.matchupVersion ||

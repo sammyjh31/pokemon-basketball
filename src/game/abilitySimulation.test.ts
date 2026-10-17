@@ -7,6 +7,7 @@ import { abilityTotal } from "./abilities";
 import { ROSTER_SLOTS } from "./types";
 const teams = () => {
   const run = createRun("free", true, 2719);
+  delete run.physicalAbilityVersion;
   run.roster = Object.fromEntries(
     ROSTER_SLOTS.map((slot, i) => [slot, [25, 92, 130, 1, 95, 81, 65, 143][i]]),
   ) as typeof run.roster;

@@ -8,6 +8,7 @@ import { typeLineupBonuses } from "./typeCoaching";
 import { POSITIONS, type LeagueBox, type LeagueTeam } from "./types";
 type Side = "home" | "away";
 export interface Player {
+  physicalAbilities?: true;
   depth?: EngineProfile;
   body?: BodyProfile;
   types: readonly string[];

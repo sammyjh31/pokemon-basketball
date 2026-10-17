@@ -7,6 +7,30 @@ export interface AbilityActivations {
   offense: number;
   support: number;
   defense: number;
+  physical?: PhysicalAbilityStats;
+}
+export interface PhysicalAbilityStats {
+  /** Extra distance actually travelled, in feet, after court bounds. */
+  movement: number;
+  screens: number;
+  rebounds: number;
+  /** Conserved/restored energy after the floor and cap. */
+  energySaved: number;
+}
+export function recordPhysicalAbility(
+  box: AbilityBox,
+  key: keyof PhysicalAbilityStats,
+  amount = 1,
+) {
+  if (!(amount > 0) || !Number.isFinite(amount)) return;
+  const stats = (box.abilityActivations ??= emptyAbilityActivations());
+  const physical = (stats.physical ??= {
+    movement: 0,
+    screens: 0,
+    rebounds: 0,
+    energySaved: 0,
+  });
+  physical[key] = Math.round((physical[key] + amount) * 1e6) / 1e6;
 }
 export interface AbilityBox {
   abilityActivations?: AbilityActivations;
@@ -306,6 +330,24 @@ export function mergeAbilityActivations(
   const stats = (target.abilityActivations ??= emptyAbilityActivations());
   for (const key of ["offense", "support", "defense"] as const)
     stats[key] += source.abilityActivations[key];
+  if (source.abilityActivations.physical) {
+    const physical = (stats.physical ??= {
+      movement: 0,
+      screens: 0,
+      rebounds: 0,
+      energySaved: 0,
+    });
+    for (const key of [
+      "movement",
+      "screens",
+      "rebounds",
+      "energySaved",
+    ] as const)
+      physical[key] =
+        Math.round(
+          (physical[key] + source.abilityActivations.physical[key]) * 1e6,
+        ) / 1e6;
+  }
 }
 export function validateAbilityActivations(raw: unknown): AbilityActivations {
   if (!raw || typeof raw !== "object" || Array.isArray(raw))
@@ -313,7 +355,7 @@ export function validateAbilityActivations(raw: unknown): AbilityActivations {
   const value = raw as Record<string, unknown>;
   const keys = ["offense", "support", "defense"] as const;
   if (
-    Object.keys(value).length !== 3 ||
+    Object.keys(value).some((k) => ![...keys, "physical"].includes(k)) ||
     keys.some(
       (k) =>
         !Number.isSafeInteger(value[k]) ||
@@ -322,9 +364,37 @@ export function validateAbilityActivations(raw: unknown): AbilityActivations {
     )
   )
     throw new Error("Invalid ability statistics.");
+  let physical: PhysicalAbilityStats | undefined;
+  if (value.physical !== undefined) {
+    if (
+      !value.physical ||
+      typeof value.physical !== "object" ||
+      Array.isArray(value.physical)
+    )
+      throw new Error("Invalid physical ability statistics.");
+    const p = value.physical as Record<string, unknown>;
+    const fields = ["movement", "screens", "rebounds", "energySaved"] as const;
+    if (
+      Object.keys(p).length !== 4 ||
+      fields.some(
+        (k) =>
+          typeof p[k] !== "number" ||
+          !Number.isFinite(p[k]) ||
+          (p[k] as number) < 0 ||
+          (p[k] as number) > 1e9,
+      ) ||
+      !Number.isSafeInteger(p.screens) ||
+      !Number.isSafeInteger(p.rebounds)
+    )
+      throw new Error("Invalid physical ability statistics.");
+    physical = Object.fromEntries(
+      fields.map((k) => [k, p[k]]),
+    ) as unknown as PhysicalAbilityStats;
+  }
   return {
     offense: value.offense as number,
     support: value.support as number,
     defense: value.defense as number,
+    ...(physical ? { physical } : {}),
   };
 }

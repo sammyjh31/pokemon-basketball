@@ -65,7 +65,10 @@ describe("official arcade boxes", () => {
   });
   it("keeps historical official games without the ability version or statistics valid", () => {
     const { teams, fixture } = officialFixture();
-    for (const team of teams) delete team.abilityVersion;
+    for (const team of teams) {
+      delete team.abilityVersion;
+      delete team.physicalAbilityVersion;
+    }
     const state = finishedGame(fixture, teams);
     const game = officialGameFromArcade(state, fixture, teams);
     expect(game).not.toHaveProperty("abilityVersion");
@@ -126,10 +129,16 @@ describe("official arcade boxes", () => {
     (enabled) => {
       const { teams, fixture } = officialFixture();
       if (enabled) teams[0].abilityVersion = 1;
-      else for (const team of teams) delete team.abilityVersion;
+      else
+        for (const team of teams) {
+          delete team.abilityVersion;
+          delete team.physicalAbilityVersion;
+        }
       const state = createGame({
         official: true,
-        ...(enabled ? { abilityVersion: 1 as const } : {}),
+        ...(enabled
+          ? { abilityVersion: 1 as const, physicalAbilityVersion: 1 as const }
+          : {}),
         seed: fixture.seed,
         teams: [teams[0], teams[fixture.awayTeamId]],
       });

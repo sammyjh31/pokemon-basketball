@@ -21,6 +21,7 @@ import {
 } from "./actions";
 import { aiDecisions, movePlayers } from "./ai";
 import { chooseCpuSubstitution } from "./coaching";
+import { changeArcadeEnergy } from "./abilities";
 export { activePlayers, attackDirection, basket, passTarget } from "./helpers";
 export function setPaused(s: ArcadeState, paused: boolean) {
   s.paused = paused;
@@ -85,6 +86,7 @@ function commitSubs(s: ArcadeState) {
     b.y = a.y;
     b.vx = 0;
     b.vy = 0;
+    delete b.physicalNeutralVelocity;
     a.charge = null;
     b.charge = null;
     if (s.controlled === a.id) s.controlled = b.id;
@@ -108,6 +110,7 @@ function formation(s: ArcadeState, team: Side) {
     p.x = dir > 0 ? spots[i][0] : 28 - spots[i][0];
     p.y = spots[i][1];
     p.vx = p.vy = p.z = p.jumpTime = 0;
+    delete p.physicalNeutralVelocity;
     p.charge = null;
     p.facing = dir;
   });
@@ -115,11 +118,13 @@ function formation(s: ArcadeState, team: Side) {
     p.x = dir > 0 ? spots[i][0] + 4 : 24 - spots[i][0];
     p.y = spots[i][1];
     p.vx = p.vy = p.z = p.jumpTime = 0;
+    delete p.physicalNeutralVelocity;
     p.charge = null;
     p.facing = -dir;
   });
 }
 function inbound(s: ArcadeState, team: Side) {
+  if (s.physicalScreenContacts) s.physicalScreenContacts = [];
   if (s.abilityVersion === 1)
     s.abilityPossession = { transitionAt: null, secondChance: false };
   applySubs(s);
@@ -168,7 +173,7 @@ export function continuePeriod(s: ArcadeState) {
   s.clock = s.period > 4 ? (s.official ? 25 : 30) : 60;
   s.pendingHorn = false;
   s.paused = false;
-  for (const p of s.players) p.energy = Math.min(100, p.energy + 18);
+  for (const p of s.players) changeArcadeEnergy(s, p, 18);
   inbound(s, s.period % 2 === 1 ? s.openingTeam : other(s.openingTeam));
   notify(s, s.period > 4 ? `OVERTIME ${s.period - 4}` : `QUARTER ${s.period}`);
 }

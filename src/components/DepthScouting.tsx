@@ -1,4 +1,8 @@
 import { speciesAbility } from "../game/abilities";
+import {
+  physicalAbilitiesEnabled,
+  physicalAbilityDescription,
+} from "../game/physicalAbilities";
 import { engineProfile } from "../game/engineDepth";
 import type { Pokemon } from "../game/types";
 
@@ -6,10 +10,12 @@ export function DepthScouting({
   mon,
   abilities,
   abilityVersion,
+  physicalAbilityVersion,
 }: {
   mon: Pokemon;
   abilities: boolean;
   abilityVersion?: 1;
+  physicalAbilityVersion?: 1;
 }) {
   const profile = engineProfile(mon);
   const ability =
@@ -38,6 +44,13 @@ export function DepthScouting({
             ? "Species abilities are disabled in this league."
             : "Legacy signature abilities are disabled in this league."}
       </p>
+      {physicalAbilitiesEnabled({
+        abilityVersion,
+        physicalAbilityVersion,
+        engineRules: { abilities },
+      }) && (
+        <p>Physical ability adaptation: {physicalAbilityDescription(mon.id)}</p>
+      )}
       <p className="stat-legend">
         These are bounded basketball effects. Skills, matchups, lineup balance,
         and randomness still decide games.

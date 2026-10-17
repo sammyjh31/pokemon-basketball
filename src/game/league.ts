@@ -68,6 +68,9 @@ export function createLeague(run: Run): LeagueTeam[] {
       ...team,
       evaluationVersion: 1,
       ...(run.abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+      ...(run.physicalAbilityVersion === 1
+        ? { physicalAbilityVersion: 1 as const }
+        : {}),
     }));
     if (run.coach)
       teams = assignLeagueCoaches(
@@ -153,6 +156,7 @@ export function createLeague(run: Run): LeagueTeam[] {
     if (run.typeMatchupsVersion === 1) team.typeMatchupsVersion = 1;
     if (run.typeTacticsVersion === 1) team.typeTacticsVersion = 1;
     if (run.abilityVersion === 1) team.abilityVersion = 1;
+    if (run.physicalAbilityVersion === 1) team.physicalAbilityVersion = 1;
     if (run.evaluationVersion === 1) team.evaluationVersion = 1;
     if (run.courtVersion === 1) team.courtVersion = 1;
     if (run.matchupVersion === 1) team.matchupVersion = 1;

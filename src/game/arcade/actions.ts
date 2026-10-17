@@ -16,7 +16,12 @@ import {
 } from "./helpers";
 import { TUNE } from "./tuning";
 import { emit } from "./events";
-import { applyArcadeAbilities } from "./abilities";
+import { applyArcadeAbilities, changeArcadeEnergy } from "./abilities";
+import { recordPhysicalAbility } from "../abilities";
+import {
+  physicalAbilitiesEnabled,
+  physicalAbilityEffects,
+} from "../physicalAbilities";
 const typesOf = (p: ArcadePlayer) =>
   POKEMON_BY_ID.get(p.pokemonId)?.types ?? [p.type];
 
@@ -192,7 +197,7 @@ export function releaseShot(
   p.actionTime = 0.65;
   p.jumpTime = TUNE.jump;
   p.cooldown = 0.55;
-  if (dunk) p.energy = Math.max(0, p.energy - 10);
+  if (dunk) changeArcadeEnergy(s, p, -10);
   emit(s, {
     kind: "shot",
     team: p.team,
@@ -403,14 +408,28 @@ export function advanceBall(
           distance(p, b) < TUNE.pickup + p.attributes.rebounding * 0.002 &&
           p.cooldown < 0.5,
       );
+      const physicalRebound =
+        b.reboundOf !== null && physicalAbilitiesEnabled(s);
+      const reboundBonus = (p: ArcadePlayer) =>
+        physicalRebound
+          ? p.attributes.rebounding *
+            0.002 *
+            (physicalAbilityEffects(p.pokemonId, p.energy).rebound - 1)
+          : 0;
       candidates.sort(
         (a, c) =>
           distance(a, b) -
           distance(c, b) -
           (a.z - c.z) * 0.2 -
-          (a.attributes.rebounding - c.attributes.rebounding) * 0.002,
+          (a.attributes.rebounding - c.attributes.rebounding) * 0.002 -
+          reboundBonus(a) +
+          reboundBonus(c),
       );
       if (candidates[0]) {
+        if (physicalRebound && candidates.length > 1)
+          for (const candidate of candidates)
+            if (reboundBonus(candidate) !== 0)
+              recordPhysicalAbility(candidate.stats, "rebounds");
         const p = candidates[0];
         if (b.reboundOf !== null)
           emit(s, {

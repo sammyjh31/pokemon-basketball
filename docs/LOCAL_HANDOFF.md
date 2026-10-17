@@ -1,5 +1,19 @@
 # Local and cloud handoff — 2026-10-16
 
+## Physical ability effects (October 16)
+
+`physicalAbilityVersion: 1`, alongside enabled `abilityVersion: 1`, extends the pinned basketball ability adaptations into movement, screen strength/navigation, rebound pursuit, fatigue drain and recovery. `physicalAbilities.ts` is the shared, immutable multiplier table and capped energy calculation. It draws no RNG and does not rewrite ratings. Court movement records only extra actual feet before arrival/bounds. Drop, hedge and trap screen contact changes separation; coverage selection considers the same contact/navigation/movement benefits. Rebound multipliers affect pursuit, crashing selection and contest weights. Fatigue applies to active drain, bench recovery and period breaks.
+
+Arcade uses the same table in movement physics, opposing screen collisions, missed-shot loose-ball contests and turbo/dunk/idle/bench/break energy. Contact hysteresis avoids counting every physics frame; movement telemetry retains a neutral velocity to account for inertia. New arcade fields remain absent from old replays. Official played-game physical counters stay actual (never 12×) and require matching enabled participant rules.
+
+`physicalAbilityEvaluation.ts` adds a bounded 0–4 team-value factor from developed skills, role, scheme and roster needs, using the same effects. Shared game plans, coverage, minutes, training, drafting, trade and free-agent decisions inherit it. No-flag evaluation remains identical. The actual tests demonstrate offense/defense scheme changes, changed training focus, changed minute allocation and recruiting scores.
+
+Optional `abilityActivations.physical` contains extra movement feet, screen-contact count, rebound-contest count and saved energy. Existing offense/support/defense shot counts and `abilityTotal` retain their definitions. Movement and energy retain six decimal places; all aggregation deep-merges and archive validation reconciles physical career totals, including summary-only current archives. Keep validator field order consistent with generation because older career checks compare serialized totals.
+
+New solo/local drafts opt in. Existing franchises adopt at the next-season boundary without modifying archived teams or original local drafts. Persistence, local transitions, replay, official games and mixed-version validation all carry the independent flag. Prior current-release coached draft/matches SHA remains `46a2bf40c70d72697fcfe24ec498618a50c183b0928eca380cd651cf5219b646`; pre-evaluation SHA remains unchanged as documented below. Preserve neutral arithmetic order in screen geometry: regrouping floating-point sums breaks exact archived replay.
+
+Screenshots `docs/design/physical-abilities-desktop.png` and `physical-abilities-mobile.png` show actual simulated-game stats and coaching value at 1440px/390px, with eight rows, no page overflow or browser errors. Temporary preview uses isolated data and does not load or alter user saves. Verification results and review are recorded in the implementation plan.
+
 ## Shared team evaluation (October 16)
 
 `evaluationVersion: 1` enables one pure `teamEvaluation.ts` model across trainer game plans, coach hiring fit, player draft advice/CPU drafting/bench fill, rookie recommendations, package trades, free agency, rotation targets, actual substitutions and automatic training. New solo/local runs opt in; old active and archived inputs keep the previous policies. Solo and local careers explicitly adopt at the next season boundary; local flags are per-season, independently of the original draft. Match validation rejects mixed versions, and target caches include evaluation and scheme context. The pre-evaluation coached/species-ability draft+match SHA stays `dbe264bc7ab12e412177d397922d3a0f03f31383bbf820b2f7cc64c6d78750a0`.

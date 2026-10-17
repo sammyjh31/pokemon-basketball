@@ -69,6 +69,41 @@ function marketFixture() {
 }
 
 describe("shared market evaluation", () => {
+  it("carries physical ability value into trade and free-agent previews", () => {
+    const legacy = marketFixture().franchise!;
+    const physical = {
+      ...legacy,
+      teams: legacy.teams.map((team) => ({
+        ...team,
+        physicalAbilityVersion: 1 as const,
+      })),
+    };
+    const id = freeAgentMarket(legacy)[0].pokemonId;
+    const release = legacy.teams[0].roster.PG!;
+    const signing = evaluateFreeAgentSigning(physical, 0, id, release);
+    expect(signing.eligible).toBe(true);
+    expect(signing.score).not.toBe(
+      evaluateFreeAgentSigning(legacy, 0, id, release).score,
+    );
+    expect(
+      signing.factors?.find((factor) => factor.label === "Physical ability fit")
+        ?.contribution ?? 0,
+    ).not.toBe(0);
+    const offer = {
+      teamId: 1,
+      giveIds: [149],
+      receiveIds: [legacy.teams[1].roster.B3!],
+    };
+    const traded = evaluateTradePackage(physical, offer);
+    expect(traded.userDelta).not.toBe(
+      evaluateTradePackage(legacy, offer).userDelta,
+    );
+    expect(
+      traded.factors.find((factor) => factor.label === "Physical ability fit")
+        ?.contribution ?? 0,
+    ).not.toBe(0);
+  });
+
   it("does not offer a cached free agent after another club acquires it in an edited snapshot", () => {
     const f = marketFixture().franchise!;
     const agent = freeAgentMarket(f)[0];

@@ -143,6 +143,7 @@ export function LocalLeagueDraft({
         ...draft.coaching[turn.teamId],
         evaluationVersion: draft.evaluationVersion,
         abilityVersion: draft.abilityVersion,
+        physicalAbilityVersion: draft.physicalAbilityVersion,
         engineRules: draft.options?.engineRules,
       }),
     [
@@ -152,6 +153,7 @@ export function LocalLeagueDraft({
       draft.coaching,
       draft.evaluationVersion,
       draft.abilityVersion,
+      draft.physicalAbilityVersion,
       draft.options,
       turn.teamId,
     ],
@@ -572,6 +574,7 @@ export function LocalLeagueDraft({
                       onPosition={setComparePosition}
                       abilities={draft.options?.engineRules.abilities ?? false}
                       abilityVersion={draft.abilityVersion}
+                      physicalAbilityVersion={draft.physicalAbilityVersion}
                       onScout={(id) => {
                         setCompareOpen(false);
                         choose(id);
@@ -901,6 +904,7 @@ export function LocalLeagueDraft({
                   mon={mon}
                   abilities={draft.options.engineRules.abilities}
                   abilityVersion={draft.abilityVersion}
+                  physicalAbilityVersion={draft.physicalAbilityVersion}
                 />
               )}
             </details>

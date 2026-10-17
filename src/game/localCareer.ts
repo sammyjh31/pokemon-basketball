@@ -672,6 +672,7 @@ function nextYearTeams(
   career: LocalCareer,
   adoptAbilities = true,
   adoptEvaluation = true,
+  adoptPhysicalAbilities = true,
 ): LeagueTeam[] {
   const archived = career.history.at(-1)!;
   const appointed = projectedCoaches(
@@ -689,6 +690,7 @@ function nextYearTeams(
     return {
       ...team,
       ...(adoptAbilities ? { abilityVersion: 1 as const } : {}),
+      ...(adoptPhysicalAbilities ? { physicalAbilityVersion: 1 as const } : {}),
       ...(adoptEvaluation ? { evaluationVersion: 1 as const } : {}),
       ...(team.engineRules
         ? {
@@ -876,6 +878,14 @@ function parseTeams(
     array(value, format.teamCount)[0],
   ).abilityVersion;
   if (abilityVersion !== undefined && abilityVersion !== 1) fail();
+  const physicalAbilityVersion = object(
+    array(value, format.teamCount)[0],
+  ).physicalAbilityVersion;
+  if (
+    (physicalAbilityVersion !== undefined && physicalAbilityVersion !== 1) ||
+    (physicalAbilityVersion === 1 && abilityVersion !== 1)
+  )
+    fail();
   const evaluationVersion = object(
     array(value, format.teamCount)[0],
   ).evaluationVersion;
@@ -892,6 +902,7 @@ function parseTeams(
       row.typeMatchupsVersion !== draft.typeMatchupsVersion ||
       row.typeTacticsVersion !== draft.typeTacticsVersion ||
       row.abilityVersion !== abilityVersion ||
+      row.physicalAbilityVersion !== physicalAbilityVersion ||
       row.evaluationVersion !== evaluationVersion ||
       row.courtVersion !== draft.courtVersion ||
       row.matchupVersion !== draft.matchupVersion ||
@@ -952,6 +963,9 @@ function parseTeams(
         ? { typeMatchupsVersion: 1 as const }
         : {}),
       ...(abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+      ...(physicalAbilityVersion === 1
+        ? { physicalAbilityVersion: 1 as const }
+        : {}),
       ...(evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
       ...(draft.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
       ...(draft.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
@@ -982,6 +996,7 @@ function sameRosterState(actual: LeagueTeam[], expected: LeagueTeam[]) {
       e = expected[i];
     if (
       a.abilityVersion !== e.abilityVersion ||
+      a.physicalAbilityVersion !== e.physicalAbilityVersion ||
       a.evaluationVersion !== e.evaluationVersion ||
       JSON.stringify(a.engineRules) !== JSON.stringify(e.engineRules) ||
       a.coach?.id !== e.coach?.id
@@ -1280,6 +1295,9 @@ export function parseLocalCareer(
       const nextVersion = object(
         array(nextRawTeams, draft.options.format.teamCount)[0],
       ).abilityVersion;
+      const nextPhysicalAbilities = object(
+        array(nextRawTeams, draft.options.format.teamCount)[0],
+      ).physicalAbilityVersion;
       const nextEvaluation = object(
         array(nextRawTeams, draft.options.format.teamCount)[0],
       ).evaluationVersion;
@@ -1287,6 +1305,7 @@ export function parseLocalCareer(
         replay.career!,
         nextVersion === 1,
         nextEvaluation === 1,
+        nextPhysicalAbilities === 1,
       );
     } else expected = replay.career!.teams;
   }

@@ -28,6 +28,16 @@ Open [the local game](http://127.0.0.1:5173/). In a cloud workspace, bind the se
 
 All game data and portraits are bundled locally. Gameplay needs no external API, accounts, database, or secrets. LocalStorage keeps a versioned save in the current browser; clearing site data clears progress. If saving is unavailable, play continues in memory with a notice. This is not a multiplayer leaderboard or an anti-cheat system.
 
+## Physical species abilities
+
+New games extend species abilities beyond shot probability. Levitate improves movement, screen navigation and rebound pursuit; Guts strengthens screens and rebounding; Pickup improves rebound contests; Natural Cure reduces energy drain and accelerates recovery. Conditional abilities such as Overgrow only boost movement when the player is tired. Body size, skills, typing, energy and positioning still determine the underlying matchup.
+
+The same bounded effect profiles drive simulated regular-season/playoff games and playable arcade games. Coaches include these benefits in plans, screen coverage, rotations and individual training. Shared team value also carries that assessment into drafting, trades and free agency.
+
+Ability reports now separate shot activations from **extra feet travelled, affected screen contacts, rebound contests and energy saved**. These are actual recorded effects, not extra shots or guaranteed wins; rebound contests are opportunities, not rebounds won. Playable-game effects are never multiplied by the official scoring scale. New-season scouting explains each physical adaptation.
+
+Existing active seasons and historical replays keep their original behavior. Solo and local franchises adopt the new physical abilities when starting the next season; turning abilities off disables these effects and their coaching value too.
+
 ## Shared team evaluation
 
 New games use one team-value assessment for trainer game plans, coaching hires, draft recommendations, CPU picks, trades, free agency, rotations and automatic training. It combines developed basketball talent, positional role, coaching scheme, roster needs, positional depth and enabled species abilities. Size, weight and typing remain part of the underlying basketball skills. Offseason recruiting accounts for newly hired trainers; trade fairness, availability, rival scouting and roster limits still apply.

@@ -130,6 +130,12 @@ function validate(
     return fail();
   if (raw.abilityVersion !== undefined && raw.abilityVersion !== 1)
     return fail();
+  if (
+    (raw.physicalAbilityVersion !== undefined &&
+      raw.physicalAbilityVersion !== 1) ||
+    (raw.physicalAbilityVersion === 1 && raw.abilityVersion !== 1)
+  )
+    return fail();
   if (raw.evaluationVersion !== undefined && raw.evaluationVersion !== 1)
     return fail();
   if (raw.courtVersion !== undefined && raw.courtVersion !== 1) return fail();
@@ -165,6 +171,9 @@ function validate(
     ...(coach ? { coach } : {}),
     ...(raw.coachDraftRequired ? { coachDraftRequired: true as const } : {}),
     ...(raw.abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+    ...(raw.physicalAbilityVersion === 1
+      ? { physicalAbilityVersion: 1 as const }
+      : {}),
     ...(raw.evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
     ...(raw.courtVersion === 1 ? { courtVersion: 1 as const } : {}),
     ...(raw.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
@@ -208,6 +217,7 @@ function validate(
         (team) =>
           team.typeTacticsVersion !== run.typeTacticsVersion ||
           team.abilityVersion !== run.abilityVersion ||
+          team.physicalAbilityVersion !== run.physicalAbilityVersion ||
           team.evaluationVersion !== run.evaluationVersion ||
           team.courtVersion !== run.courtVersion ||
           team.matchupVersion !== run.matchupVersion ||

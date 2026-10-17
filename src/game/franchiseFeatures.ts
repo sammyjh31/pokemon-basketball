@@ -32,6 +32,8 @@ export interface PlayerTrainingPlan {
 export type TrainingPlans = Partial<Record<number, PlayerTrainingPlan>>;
 export interface OfficialGame {
   abilityVersion?: 1;
+  /** Physical species abilities; absent on historical seasons for exact replay. */
+  physicalAbilityVersion?: 1;
   fixtureId: string;
   match: LeagueMatch;
   courtScore: [number, number];

@@ -10,6 +10,12 @@ import {
   random,
 } from "./helpers";
 import { attemptSteal, jump, makePass, releaseShot } from "./actions";
+import { recordPhysicalAbility } from "../abilities";
+import {
+  physicalAbilitiesEnabled,
+  physicalAbilityEffects,
+} from "../physicalAbilities";
+import { changeArcadeEnergy } from "./abilities";
 export interface Motion {
   x: number;
   y: number;
@@ -151,11 +157,12 @@ export function movePlayers(
   dt: number,
 ): boolean {
   let out = false;
+  const physical = physicalAbilitiesEnabled(s);
   for (const p of s.players) {
     p.cooldown = Math.max(0, p.cooldown - dt);
     p.actionTime = Math.max(0, p.actionTime - dt);
     if (!p.active) {
-      p.energy = Math.min(100, p.energy + dt * 12);
+      changeArcadeEnergy(s, p, dt * 12);
       continue;
     }
     p.jumpTime = Math.max(0, p.jumpTime - dt);
@@ -177,8 +184,22 @@ export function movePlayers(
       (turbo ? 1.45 : 1) *
       (0.8 + p.energy * 0.002) *
       (p.charge !== null ? 0.35 : 1);
-    p.vx += (motion.x * scale * speed - p.vx) * Math.min(1, dt * 16);
-    p.vy += (motion.y * scale * speed - p.vy) * Math.min(1, dt * 16);
+    const movement = physical
+      ? physicalAbilityEffects(p.pokemonId, p.energy).movement
+      : 1;
+    const oldX = p.x,
+      oldY = p.y;
+    if (physical && (movement !== 1 || p.physicalNeutralVelocity)) {
+      const neutral = p.physicalNeutralVelocity ?? { x: p.vx, y: p.vy };
+      // Keep inertia in the counterfactual, including after an energy threshold changes.
+      neutral.x +=
+        (motion.x * scale * speed - neutral.x) * Math.min(1, dt * 16);
+      neutral.y +=
+        (motion.y * scale * speed - neutral.y) * Math.min(1, dt * 16);
+      p.physicalNeutralVelocity = neutral;
+    }
+    p.vx += (motion.x * scale * speed * movement - p.vx) * Math.min(1, dt * 16);
+    p.vy += (motion.y * scale * speed * movement - p.vy) * Math.min(1, dt * 16);
     const nx = p.x + p.vx * dt,
       ny = p.y + p.vy * dt;
     if (
@@ -188,20 +209,31 @@ export function movePlayers(
       out = true;
     p.x = clamp(nx, 0.4, 27.6);
     p.y = clamp(ny, 0.4, 14.6);
+    if (physical && p.physicalNeutralVelocity) {
+      const neutral = p.physicalNeutralVelocity;
+      const extra =
+        Math.hypot(p.x - oldX, p.y - oldY) -
+        Math.hypot(
+          clamp(oldX + neutral.x * dt, 0.4, 27.6) - oldX,
+          clamp(oldY + neutral.y * dt, 0.4, 14.6) - oldY,
+        );
+      if (extra > 0)
+        recordPhysicalAbility(p.stats, "movement", extra * 3.28084);
+    }
     if (Math.abs(p.vx) > 0.1) p.facing = Math.sign(p.vx);
-    p.energy = clamp(
-      p.energy +
-        dt *
-          (turbo
-            ? -(23 - p.attributes.stamina * 0.07) *
-              (s.fire[p.team] > 0 ? 0.5 : 1)
-            : 5),
-      0,
-      100,
+    changeArcadeEnergy(
+      s,
+      p,
+      dt *
+        (turbo
+          ? -(23 - p.attributes.stamina * 0.07) * (s.fire[p.team] > 0 ? 0.5 : 1)
+          : 5),
     );
     if (p.actionTime <= 0) p.action = magnitude > 0.1 ? "run" : "idle";
   }
   const all = activePlayers(s);
+  const contacts = new Set(s.physicalScreenContacts ?? []);
+  const remainingContacts = new Set<string>();
   for (let i = 0; i < all.length; i++)
     for (let j = i + 1; j < all.length; j++) {
       const a = all[i],
@@ -210,20 +242,62 @@ export function movePlayers(
         dy = b.y - a.y,
         d = Math.hypot(dx, dy),
         min = 0.84;
+      const contact = `${a.id}:${b.id}`;
+      const screen =
+        physical &&
+        a.team !== b.team &&
+        (a.action === "screen" || b.action === "screen");
+      // A little separation hysteresis prevents adjacent physics frames from recounting a screen.
+      if (screen && d < 1.04 && contacts.has(contact))
+        remainingContacts.add(contact);
       if (d < min) {
         const ux = d > 0.001 ? dx / d : 1,
           uy = d > 0.001 ? dy / d : 0,
           push = min - d,
-          weight = clamp(
+          baseWeight = clamp(
             0.5 + (b.attributes.strength - a.attributes.strength) * 0.002,
             0.35,
             0.65,
           );
+        let weight = baseWeight;
+        if (screen) {
+          const screener = a.action === "screen" ? a : b;
+          const navigator = screener === a ? b : a;
+          const contactEffect = physicalAbilityEffects(
+            screener.pokemonId,
+            screener.energy,
+          ).screen;
+          const navigation = physicalAbilityEffects(
+            navigator.pokemonId,
+            navigator.energy,
+          ).navigation;
+          const resolve = (contactFactor: number, navigationFactor: number) =>
+            clamp(
+              screener === a
+                ? (baseWeight * navigationFactor) / contactFactor
+                : 1 - ((1 - baseWeight) * navigationFactor) / contactFactor,
+              0.2,
+              0.8,
+            );
+          if (contactEffect !== 1 || navigation !== 1)
+            weight = resolve(contactEffect, navigation);
+          if (weight !== baseWeight) {
+            remainingContacts.add(contact);
+            if (!contacts.has(contact)) {
+              if (weight !== resolve(1, navigation))
+                recordPhysicalAbility(screener.stats, "screens");
+              if (weight !== resolve(contactEffect, 1))
+                recordPhysicalAbility(navigator.stats, "screens");
+            }
+          }
+        }
         a.x = clamp(a.x - ux * push * weight, 0.4, 27.6);
         a.y = clamp(a.y - uy * push * weight, 0.4, 14.6);
         b.x = clamp(b.x + ux * push * (1 - weight), 0.4, 27.6);
         b.y = clamp(b.y + uy * push * (1 - weight), 0.4, 14.6);
       }
     }
+  if (physical && (remainingContacts.size || s.physicalScreenContacts))
+    s.physicalScreenContacts = [...remainingContacts];
   return out;
 }

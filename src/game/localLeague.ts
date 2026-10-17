@@ -53,6 +53,8 @@ export interface LocalLeague {
   typeMatchupsVersion?: 1;
   typeTacticsVersion?: 1;
   abilityVersion?: 1;
+  /** Physical species abilities; absent on historical seasons for exact replay. */
+  physicalAbilityVersion?: 1;
   evaluationVersion?: 1;
   courtVersion?: 1;
   matchupVersion?: 1;
@@ -143,6 +145,7 @@ export function createLocalLeague(
           typeMatchupsVersion: 1 as const,
           typeTacticsVersion: 1 as const,
           abilityVersion: 1 as const,
+          physicalAbilityVersion: 1 as const,
           evaluationVersion: 1 as const,
           courtVersion: 1 as const,
           matchupVersion: 1 as const,
@@ -373,6 +376,9 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
         ? { typeMatchupsVersion: 1 as const }
         : {}),
       ...(draft.abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+      ...(draft.physicalAbilityVersion === 1
+        ? { physicalAbilityVersion: 1 as const }
+        : {}),
       ...(draft.evaluationVersion === 1
         ? { evaluationVersion: 1 as const }
         : {}),
@@ -411,6 +417,7 @@ export function localLeagueRun(draft: LocalLeague): Run {
   delete run.typeMatchupsVersion;
   delete run.typeTacticsVersion;
   delete run.abilityVersion;
+  delete run.physicalAbilityVersion;
   delete run.evaluationVersion;
   delete run.courtVersion;
   delete run.matchupVersion;
@@ -421,6 +428,9 @@ export function localLeagueRun(draft: LocalLeague): Run {
       ? { typeMatchupsVersion: 1 as const }
       : {}),
     ...(teams[0].abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+    ...(teams[0].physicalAbilityVersion === 1
+      ? { physicalAbilityVersion: 1 as const }
+      : {}),
     ...(teams[0].evaluationVersion === 1
       ? { evaluationVersion: 1 as const }
       : {}),
@@ -544,6 +554,9 @@ export function parseLocalLeague(raw: string): LocalLeague {
   if (
     !value ||
     (value.abilityVersion !== undefined && value.abilityVersion !== 1) ||
+    (value.physicalAbilityVersion !== undefined &&
+      value.physicalAbilityVersion !== 1) ||
+    (value.physicalAbilityVersion === 1 && value.abilityVersion !== 1) ||
     (value.evaluationVersion !== undefined && value.evaluationVersion !== 1) ||
     (value.courtVersion !== undefined && value.courtVersion !== 1) ||
     (value.matchupVersion !== undefined && value.matchupVersion !== 1) ||
@@ -573,11 +586,13 @@ export function parseLocalLeague(raw: string): LocalLeague {
   delete draft.typeMatchupsVersion;
   delete draft.typeTacticsVersion;
   delete draft.abilityVersion;
+  delete draft.physicalAbilityVersion;
   delete draft.evaluationVersion;
   delete draft.courtVersion;
   delete draft.matchupVersion;
   delete draft.possessionVersion;
   if (value.abilityVersion === 1) draft.abilityVersion = 1;
+  if (value.physicalAbilityVersion === 1) draft.physicalAbilityVersion = 1;
   if (value.evaluationVersion === 1) draft.evaluationVersion = 1;
   if (value.courtVersion === 1) draft.courtVersion = 1;
   if (value.matchupVersion === 1) draft.matchupVersion = 1;

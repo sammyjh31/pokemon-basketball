@@ -52,7 +52,9 @@ function completedGame(): ArcadeState {
     teams: [teams[0], teams[1]],
     seed: fixture.seed,
     official: true,
-    ...(abilitiesEnabled(teams[0]) ? { abilityVersion: 1 as const } : {}),
+    ...(abilitiesEnabled(teams[0])
+      ? { abilityVersion: 1 as const, physicalAbilityVersion: 1 as const }
+      : {}),
   });
   state.phase = "final";
   state.period = 4;
@@ -127,6 +129,7 @@ describe("official arcade flow", () => {
       const state = create.mock.results[0].value as ArcadeState;
       expect(state.evaluationVersion).toBe(modern ? 1 : undefined);
       expect(state).not.toHaveProperty("abilityVersion");
+      expect(state).not.toHaveProperty("physicalAbilityVersion");
       if (modern) {
         const context = createEvaluationContext(actualTeams[1]);
         expect(state.players[8].roleScores?.PG).toBeCloseTo(

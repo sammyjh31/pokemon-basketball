@@ -69,6 +69,8 @@ export function CoachSummary({
             trades, minutes and training. It changes with your coach and roster;
             OVR remains a separate rating. These values use each player’s
             strongest role.
+            {context.physicalAbilities &&
+              " Physical ability fit includes usable movement, screens, rebounding and energy benefits; training can improve the skills that put them to use."}
           </p>
           <p className="coach-evaluation-hint">
             Scroll across to see every contribution.

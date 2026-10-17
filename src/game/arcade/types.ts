@@ -11,6 +11,7 @@ export interface ArcadeTeam extends Omit<EvaluationTeam, "tactic"> {
 }
 export interface ArcadeSetup {
   abilityVersion?: 1;
+  physicalAbilityVersion?: 1;
   evaluationVersion?: 1;
   typeMatchupsVersion?: 1;
   official?: boolean;
@@ -60,6 +61,8 @@ export interface ArcadePlayer {
   z: number;
   facing: number;
   energy: number;
+  /** Neutral velocity used to measure actual movement added by physical abilities. */
+  physicalNeutralVelocity?: { x: number; y: number };
   attributes: Attributes;
   /** Frozen shared values for CPU substitution roles; absent in historical games. */
   roleScores?: Record<Position, number>;
@@ -115,6 +118,9 @@ export interface ArcadeEvent {
 }
 export interface ArcadeState {
   abilityVersion?: 1;
+  physicalAbilityVersion?: 1;
+  /** Opposing screen contacts remain one encounter until the players separate. */
+  physicalScreenContacts?: string[];
   evaluationVersion?: 1;
   abilityPossession?: { transitionAt: number | null; secondChance: boolean };
   typeMatchupsVersion?: 1;

@@ -1,3 +1,5 @@
+import { physicalPlayerEffects } from "./physicalAbilities";
+import { recordPhysicalAbility } from "./abilities";
 import { getCoach, type CoachAssignment } from "./trainerCoaches";
 import { matchupEdges, screenLeverage } from "./bodyMatchups";
 import type { Player } from "./matchLineups";
@@ -43,14 +45,26 @@ export function moveToward(
   seconds: number,
 ): CourtPoint {
   const span = distance(from, to),
-    fraction = Math.min(
-      1,
-      (mobility(player) * seconds) / Math.max(0.001, span),
-    );
-  return bounded({
+    speed = mobility(player),
+    boost = physicalPlayerEffects(player).movement,
+    fraction = Math.min(1, (speed * boost * seconds) / Math.max(0.001, span));
+  const point = bounded({
     x: from.x + (to.x - from.x) * fraction,
     y: from.y + (to.y - from.y) * fraction,
   });
+  if (boost !== 1) {
+    const neutral = Math.min(1, (speed * seconds) / Math.max(0.001, span));
+    const ordinary = bounded({
+      x: from.x + (to.x - from.x) * neutral,
+      y: from.y + (to.y - from.y) * neutral,
+    });
+    recordPhysicalAbility(
+      player.box,
+      "movement",
+      Math.max(0, distance(from, point) - distance(from, ordinary)),
+    );
+  }
+  return point;
 }
 const zoneAt = (p: CourtPoint): "rim" | "mid" | "three" =>
   distance(p, basket) < 9
@@ -185,6 +199,26 @@ export function chooseScreenCoverage(c: CourtContext): {
       (60 - decision) * 0.045 -
       (skill(c.screener, "passing") - 60) * 0.045,
   };
+  const handlerAbility = physicalPlayerEffects(c.handler),
+    screenerAbility = physicalPlayerEffects(c.screener),
+    guardAbility = physicalPlayerEffects(guard),
+    bigAbility = physicalPlayerEffects(big);
+  // Strong contact favors avoiding the screen; quick bigs can show and recover.
+  // These are planning scores, separate from the contact resolved below.
+  scores.switch +=
+    (screenerAbility.screen - 1) * 8 -
+    (guardAbility.navigation - 1) * 6 +
+    (bigAbility.movement - handlerAbility.movement) * 12;
+  scores.hedge +=
+    (bigAbility.movement - 1) * 14 + (guardAbility.navigation - 1) * 8;
+  scores.drop -= (handlerAbility.movement - 1) * 10;
+  scores.trap -= (handlerAbility.movement - 1) * 8;
+  const physicalRead = [
+    handlerAbility.movement,
+    screenerAbility.screen,
+    guardAbility.navigation,
+    bigAbility.movement,
+  ].some((v) => v !== 1);
   const coach = getCoach(c.coach?.id ?? "");
   if (coach) scores[coach.coverage] += 2.8 - coach.adaptability;
   const coverage = (Object.keys(scores) as ScreenCoverage[]).sort(
@@ -202,6 +236,9 @@ export function chooseScreenCoverage(c: CourtContext): {
     coverage,
     reason:
       reasons[coverage] +
+      (physicalRead
+        ? " Ability movement, screen contact and navigation inform this coverage."
+        : "") +
       (coach?.coverage === coverage
         ? ` ${coach.name} favors this coverage when the matchup allows it.`
         : ""),
@@ -215,6 +252,14 @@ export function applyScreenCoverage(
   const ball = court.get(c.handler)!,
     guard = c.guards.get(c.handler)!,
     big = c.guards.get(c.screener)!;
+  const contactAdjustment = (base: number) => {
+    const screen = physicalPlayerEffects(c.screener).screen,
+      navigation = physicalPlayerEffects(guard).navigation;
+    const gap = (base * screen) / navigation;
+    if (screen !== 1) recordPhysicalAbility(c.screener.box, "screens");
+    if (navigation !== 1) recordPhysicalAbility(guard.box, "screens");
+    return gap - base;
+  };
   court.set(c.screener, { x: 6, y: 17 });
   if (coverage === "switch") {
     court.set(big, { x: ball.x + 1.5, y: ball.y - 1 });
@@ -224,14 +269,19 @@ export function applyScreenCoverage(
   } else if (coverage === "drop") {
     court.set(guard, {
       x: ball.x + 2,
-      y: ball.y + 2 + screenLeverage(c.screener, guard) * 2,
+      // Keep the original addition order for archived replay precision.
+      y:
+        ball.y +
+        2 +
+        screenLeverage(c.screener, guard) * 2 +
+        contactAdjustment(2 + screenLeverage(c.screener, guard) * 2),
     });
     court.set(big, { x: 3, y: 13 });
   } else if (coverage === "under") {
     court.set(guard, { x: ball.x, y: ball.y - 7 });
     court.set(big, { x: 5, y: 14 });
   } else {
-    court.set(guard, { x: ball.x - 1, y: ball.y - 1 });
+    court.set(guard, { x: ball.x - 1, y: ball.y - 1 - contactAdjustment(2) });
     court.set(big, { x: ball.x + 1.5, y: ball.y - 2 });
   }
 }

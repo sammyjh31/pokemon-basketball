@@ -33,6 +33,8 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
     setup.teams?.length !== 2 ||
     !Number.isFinite(setup.seed) ||
     (setup.abilityVersion !== undefined && setup.abilityVersion !== 1) ||
+    (setup.physicalAbilityVersion !== undefined &&
+      setup.physicalAbilityVersion !== 1) ||
     (setup.evaluationVersion !== undefined && setup.evaluationVersion !== 1)
   )
     throw new Error("Choose two complete teams to play.");
@@ -44,6 +46,7 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
             tactic: team.tactic ?? "balanced",
             // Evaluate the abilities actually active on this court.
             abilityVersion: setup.abilityVersion,
+            physicalAbilityVersion: setup.physicalAbilityVersion,
             engineRules: { abilities: setup.abilityVersion === 1 },
           })
         : undefined;
@@ -99,6 +102,9 @@ export function createGame(setup: ArcadeSetup): ArcadeState {
   });
   const s: ArcadeState = {
     modelVersion: 1,
+    ...(setup.physicalAbilityVersion === 1
+      ? { physicalAbilityVersion: 1 as const }
+      : {}),
     ...(setup.evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
     ...(setup.abilityVersion === 1
       ? {

@@ -1,5 +1,6 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { speciesAbility } from "../game/abilities";
+import { physicalAbilityDescription } from "../game/physicalAbilities";
 import { TACTIC_LABELS } from "../game/types";
 import "../speciesAbilities.css";
 
@@ -13,11 +14,13 @@ export function SpeciesAbility({ pokemonId }: { pokemonId: number }) {
       <span className="eyebrow">SPECIES ABILITY · BASKETBALL ADAPTATION</span>
       <strong>{ability.name}</strong>
       <p>{ability.description}</p>
+      <p>Physical ability rules: {physicalAbilityDescription(pokemonId)}</p>
       <small>
         Fits{" "}
         {ability.tactics.map((tactic) => TACTIC_LABELS[tactic]).join(" / ")}.
-        Applies in games using species ability rules; older saves retain their
-        original rules.
+        Shot effects apply with species ability rules; physical effects also
+        require physical ability rules. Older seasons retain their original
+        rules.
       </small>
     </section>
   );

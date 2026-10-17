@@ -33,6 +33,9 @@ export function finishedGame(
   const state = createGame({
     official: true,
     ...(abilitiesEnabled(teams[0]) ? { abilityVersion: 1 as const } : {}),
+    ...(abilitiesEnabled(teams[0]) && teams[0].physicalAbilityVersion === 1
+      ? { physicalAbilityVersion: 1 as const }
+      : {}),
     seed: fixture.seed,
     teams: [teams[0], opponent],
   });

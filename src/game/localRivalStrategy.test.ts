@@ -50,6 +50,7 @@ function drafted(
   );
   // These fixtures preserve the policies before shared team evaluation.
   delete draft.evaluationVersion;
+  delete draft.physicalAbilityVersion;
   // Exact counterexample choices below belong to the original frozen season rules.
   if (originalRules) delete draft.abilityVersion;
   if (originalRules) delete draft.courtVersion;

@@ -1,6 +1,10 @@
 import { evaluationTrainingOptions } from "./teamEvaluation";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { abilitiesEnabled, speciesAbility } from "./abilities";
+import {
+  physicalAbilitiesEnabled,
+  physicalAbilityDescription,
+} from "./physicalAbilities";
 import { coachAbilityFit } from "./coachPolicy";
 import type { PlayerTrainingPlan } from "./franchiseFeatures";
 import type { DevelopmentSkill } from "./developmentTypes";
@@ -155,6 +159,10 @@ export function coachTrainingPlans(
             : `${intensity === "aggressive" ? "Aggressive work accepts larger gains or setbacks" : intensity === "steady" ? "Steady work reduces volatility" : "Standard work balances growth and volatility"}, following the coach's risk and rest preferences.`,
       ];
       if (shared) reasons.push(shared[0].reasons[0]);
+      if (shared && physicalAbilitiesEnabled(team))
+        reasons.push(
+          `Physical basketball adaptation: ${physicalAbilityDescription(mon.id)} Projected practice gains include how developed skills use these effects in this role and scheme.`,
+        );
       if (species)
         reasons.push(
           chosen.focus === species.training
