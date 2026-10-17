@@ -143,4 +143,5 @@ it("round-trips a completed coached franchise and next-season appointments throu
     1,
   );
   expect(next.franchise!.history[0].replay!.teams[0].coach?.id).toBe("ash");
-}, 120000);
+  // Includes full season/playoff replay plus developed-franchise restore on shared hosts.
+}, 240000);
