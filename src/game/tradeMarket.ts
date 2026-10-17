@@ -36,12 +36,16 @@ import type {
 import type { DevelopmentRatings } from "./developmentTypes";
 import { projectedCoaches } from "./coachOffice";
 import { playerProfile } from "./playerProfile";
+import { cpuRulesApply } from "./cpuRules";
 
 function evaluationTeams(franchise: Franchise) {
   return franchise.teams.some((team) => team.evaluationVersion === 1)
     ? projectedCoaches(franchise.teams, franchise.coachOffice, franchise.year)
     : franchise.teams;
 }
+
+/** Rules v1 asking-price base for an "available" player (previously -1.6). */
+export const CPU_TRADE_ASKING_BASE = -0.5;
 
 const average = (values: number[]) =>
   values.reduce((sum, value) => sum + value, 0) / (values.length || 1);
@@ -538,8 +542,9 @@ export function evaluateTradePackage(
   }
   result.score = result.factors.reduce((sum, f) => sum + f.contribution, 0);
   const prices = { available: 0, listening: 0.65, core: 1.8 };
+  // Rules v1 clubs no longer accept clear small losses for available players.
   result.threshold =
-    -1.6 +
+    (cpuRulesApply(franchise) ? CPU_TRADE_ASKING_BASE : -1.6) +
     average(
       receive.map((id) => prices[availability(franchise, partner, id, ctx)]),
     ) +
