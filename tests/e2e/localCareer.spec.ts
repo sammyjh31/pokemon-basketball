@@ -19,7 +19,7 @@ for (const mode of ["generational", "full-pool"] as const) {
     await page.getByLabel("Games per team").selectOption("14");
     await page.getByLabel("Playoff series").selectOption("1");
     await expect(
-      page.getByLabel("Signature abilities", { exact: true }),
+      page.getByLabel("Species abilities", { exact: true }),
     ).toBeChecked();
     await page.getByRole("button", { name: "Start snake draft" }).click();
     await page

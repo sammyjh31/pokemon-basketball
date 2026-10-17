@@ -207,7 +207,6 @@ export default function App({
   const hasProgress =
     Object.values(run.roster).some((id) => id != null) ||
     run.rerollsLeft < 2 ||
-    !!run.coach ||
     !!run.result;
   /** Starts a new run, confirming with copy that names what will be lost. */
   const requestReset = (
