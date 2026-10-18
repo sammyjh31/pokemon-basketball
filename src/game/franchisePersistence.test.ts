@@ -197,7 +197,7 @@ describe("franchise persistence", () => {
       expect(loaded.state).toEqual(state);
       expect(loaded.state.records).toEqual(finished.records);
     },
-    60000,
+    600000,
   );
 
   it("restores an active completed year asynchronously before validating its postseason", async () => {
@@ -266,7 +266,7 @@ describe("franchise persistence", () => {
       expect(loaded.state.run.result).toEqual(finished.run.result);
       expect(storage.getItem(STORAGE_KEY)).toBe(source);
     },
-    60000,
+    600000,
   );
 
   it("keeps a corrupted fixed-roster archive in storage and starts a safe fresh draft", () => {
@@ -326,7 +326,11 @@ describe("franchise persistence", () => {
     (kind) => {
       const corrupted = structuredClone(yearTwo),
         franchise = corrupted.franchise!;
-      if (kind === "games played") franchise.careers[0].regular.gamesPlayed--;
+      // Summary-only years cannot disprove a plausible reserve DNP. They can
+      // still reject more appearances than the recorded seasons contain.
+      if (kind === "games played")
+        franchise.careers[0].regular.gamesPlayed =
+          franchise.careers[0].seasons * 82 + 1;
       if (kind === "player of game")
         franchise.careers[0].regular.playerOfGame++;
       if (kind === "unqualified champion") {

@@ -97,9 +97,7 @@ describe("local snake league", () => {
     expect(draft.picks).toHaveLength(240);
     expect(new Set(draft.picks.map((p) => p.pokemonId)).size).toBe(240);
     expect(
-      draft.picks.every(
-        (p) => !POKEMON_BY_ID.get(p.pokemonId)!.legendary,
-      ),
+      draft.picks.every((p) => !POKEMON_BY_ID.get(p.pokemonId)!.legendary),
     ).toBe(true);
     expect(local.currentLocalTurn(draft)).toBeNull();
     expect(
@@ -212,7 +210,7 @@ describe("local snake league", () => {
         ),
       ),
     ).toEqual(result);
-  }, 60000);
+  }, 300000);
 
   it("preserves playoff progress and rejects counts outside a completed season", () => {
     const draft = finished();

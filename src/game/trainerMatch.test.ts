@@ -2,20 +2,18 @@ import { expect, it } from "vitest";
 import { createRun } from "./draft";
 import { createLeague } from "./league";
 import { simulateMatch } from "./match";
-const clubs = () =>
-  createLeague({
-    ...createRun("free", true, 882),
-    roster: {
-      PG: 65,
-      SG: 135,
-      SF: 149,
-      PF: 68,
-      C: 143,
-      B1: 121,
-      B2: 6,
-      B3: 131,
-    },
-  });
+const clubs = (
+  roster = {
+    PG: 65,
+    SG: 135,
+    SF: 149,
+    PF: 68,
+    C: 143,
+    B1: 121,
+    B2: 6,
+    B3: 131,
+  },
+) => createLeague({ ...createRun("free", true, 882), roster });
 it("coaches both teams in the shared engine with deterministic, report-independent decisions", () => {
   const teams = clubs();
   const h = { ...teams[0], coach: { version: 1 as const, id: "ash" } },
@@ -53,20 +51,19 @@ it("coaches both teams in the shared engine with deterministic, report-independe
   ).toThrow();
 });
 it("coach minutes can elevate a stronger reserve instead of preserving a weak nominal starter", () => {
-  const [h, a] = clubs();
+  const [h, a] = clubs({
+    PG: 10,
+    SG: 13,
+    SF: 11,
+    PF: 14,
+    C: 129,
+    B1: 150,
+    B2: 149,
+    B3: 249,
+  });
   const m = simulateMatch(
     {
       ...h,
-      roster: {
-        PG: 10,
-        SG: 13,
-        SF: 11,
-        PF: 14,
-        C: 129,
-        B1: 150,
-        B2: 149,
-        B3: 249,
-      },
       coach: { version: 1, id: "cynthia" },
     },
     a,

@@ -58,6 +58,26 @@ test("full spin season, saved results, and reset cancellation", async ({
     .click();
   await page.getByRole("button", { name: "Skip reveal" }).click();
   await checkRecord(page);
+  await page.getByRole("button", { name: "League games", exact: true }).click();
+  await page
+    .getByRole("button", { name: /^View box score:/ })
+    .first()
+    .click();
+  const context = page.getByRole("region", {
+    name: "Game context",
+    exact: true,
+  });
+  await expect(context).toBeVisible();
+  await expect(context.getByText("Officials", { exact: true })).toBeVisible();
+  await expect(context.getByText("Arena", { exact: true })).toBeVisible();
+  await context.scrollIntoViewIfNeeded();
+  await page.screenshot({
+    path: `test-results/${info.project.name}-game-context.png`,
+    fullPage: true,
+  });
+  await page
+    .getByRole("button", { name: "Close box score", exact: true })
+    .click();
   const before = await page.getByTestId("season-record").textContent();
   await page.reload();
   await checkRecord(page);
@@ -80,6 +100,7 @@ test("full spin season, saved results, and reset cancellation", async ({
 test("free draft search, swapping, filtering, and full season", async ({
   page,
 }) => {
+  test.setTimeout(240000);
   await page.goto("/");
   await chooseCoach(page);
   await page
@@ -185,6 +206,7 @@ test("portraits render without external image requests", async ({ page }) => {
 test("informative text and type labels meet normal-text contrast", async ({
   page,
 }) => {
+  test.setTimeout(240000);
   const checkContrast = async () => {
     const failures = await page.evaluate(() => {
       const selectors = [

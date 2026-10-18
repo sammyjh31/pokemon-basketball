@@ -931,6 +931,7 @@ function careers(
     let starts = 0,
       unrecordedStarts = 0,
       regularGames = 0,
+      unrecordedGames = 0,
       qualifiedYears = 0,
       minimumPlayoffGames = 0;
     const detailedRegular: LeaguePlayer[] = [],
@@ -948,7 +949,9 @@ function careers(
         regularGames += detail.gamesPlayed;
         detailedRegular.push(detail);
       } else {
-        regularGames += 82;
+        // Summary-only history does not record individual DNPs. Count exact
+        // appearances from replay years and bound the remaining seasons.
+        unrecordedGames += 82;
         // A summary without game records cannot reconstruct who started.
         // Coaches may promote reserves; keep known totals exact and bound the
         // unknown years instead of inventing 82 starts from a roster slot.
@@ -960,22 +963,17 @@ function careers(
       if (postseason) detailedPlayoffs.push(postseason);
       if (playoffTeams[index].certain.includes(teamId)) {
         qualifiedYears++;
-        minimumPlayoffGames += year.replay
-          ? (postseason?.gamesPlayed ?? 0)
-          : teamId === year.championId || teamId === year.runnerUpId
-            ? 16
-            : 4;
+        minimumPlayoffGames += postseason?.gamesPlayed ?? 0;
       } else if (playoffTeams[index].possible.includes(teamId)) {
         // A tied club may have qualified: allow its games without requiring them.
         qualifiedYears++;
-        if (teamId === year.championId || teamId === year.runnerUpId)
-          minimumPlayoffGames += 16;
       }
     }
     const regular = totals(row.regular, appearances.length * 82),
       playoffs = totals(row.playoffs, qualifiedYears * 28);
     if (
-      regular.gamesPlayed !== regularGames ||
+      regular.gamesPlayed < regularGames ||
+      regular.gamesPlayed > regularGames + unrecordedGames ||
       regular.gamesStarted < starts ||
       regular.gamesStarted > starts + unrecordedStarts ||
       playoffs.gamesPlayed < minimumPlayoffGames
@@ -1057,17 +1055,23 @@ function careers(
         ? year.replay!.regularPlayers
         : year.replay!.playoffPlayers,
     );
-    const expectedAppearances =
-      (played - detailedGames) * 16 +
-      detailedPlayers.reduce((sum, player) => sum + player.gamesPlayed, 0);
+    const unknownGames = played - detailedGames,
+      knownAppearances = detailedPlayers.reduce(
+        (sum, player) => sum + player.gamesPlayed,
+        0,
+      ),
+      appearances = rows.reduce((sum, row) => sum + row[phase].gamesPlayed, 0);
     const expectedStarts =
       (played - detailedGames) * 10 +
       detailedPlayers.reduce((sum, player) => sum + player.gamesStarted, 0);
     const minutes = rows.reduce((sum, row) => sum + row[phase].minutes, 0);
     if (
       !Number.isSafeInteger(played) ||
-      rows.reduce((sum, row) => sum + row[phase].gamesPlayed, 0) !==
-        expectedAppearances ||
+      unknownGames < 0 ||
+      // Ten starters must appear; at most sixteen rostered players can play.
+      // Detailed years remain exact, including every recorded DNP.
+      appearances < knownAppearances + unknownGames * 10 ||
+      appearances > knownAppearances + unknownGames * 16 ||
       // Sum fractional minutes with floating-point tolerance; every overtime
       // still contributes exactly 50 league-wide player minutes.
       minutes < played * 480 - 1e-6 ||

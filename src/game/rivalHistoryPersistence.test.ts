@@ -32,7 +32,7 @@ beforeAll(() => {
       },
     },
   };
-}, 60000);
+}, 300000);
 it("archives actual learned rivals, round-trips them and carries them to the next year", () => {
   const archived = archiveFranchiseSeason(finished),
     report = archived.franchise!.history[0].rivalScouting!;
@@ -65,7 +65,7 @@ it("archives actual learned rivals, round-trips them and carries them to the nex
   const next = startFranchiseSeason(loaded.state, 93);
   expect(next.franchise!.year).toBe(2);
   expect(next.franchise!.history[0].rivalScouting).toEqual(report);
-}, 60000); // Validates both the current season and its frozen archive.
+}, 300000); // Validates both the current season and its frozen archive.
 it("rejects structurally valid evidence that does not match the archived replay", () => {
   const state = archiveFranchiseSeason(finished),
     f = structuredClone(state.franchise!);

@@ -56,6 +56,7 @@ function completedGame(): ArcadeState {
     teams: [teams[0], teams[1]],
     seed: fixture.seed,
     official: true,
+    abilityMasteryVersion: teams[0].abilityMasteryVersion,
     chemistryVersion: 1,
     ...(abilitiesEnabled(teams[0])
       ? { abilityVersion: 1 as const, physicalAbilityVersion: 1 as const }

@@ -66,14 +66,26 @@ beforeAll(() => {
   };
   legacy = enterOffseason(state);
   legacyTwo = startFranchiseSeason(legacy, 91);
-  // The manually authored model-4 reports below predate mastery progression.
-  delete legacyTwo.run.abilityMasteryVersion;
+  // Reconstruct a genuinely historical model-4 save. New season boundaries
+  // otherwise adopt earned history that requires a rich model-3 archive.
+  for (const key of [
+    "abilityMasteryVersion",
+    "chemistryGrowthVersion",
+    "moraleVersion",
+    "personalityVersion",
+  ] as const)
+    delete legacyTwo.run[key];
   for (const team of [
     ...legacyTwo.franchise!.teams,
     ...(legacyTwo.run.leagueTeams ?? []),
   ]) {
     delete team.abilityMasteryVersion;
     delete team.abilityMastery;
+    delete team.chemistryGrowthVersion;
+    delete team.chemistryBonds;
+    delete team.moraleVersion;
+    delete team.morale;
+    delete team.personalityVersion;
   }
   processed = structuredClone(legacy);
   const franchise = processed.franchise!;
@@ -244,6 +256,8 @@ describe("development save validation", () => {
     const state = enterOffseason(completed),
       franchise = state.franchise!;
     expect(franchise.history).toHaveLength(2);
+    expect(franchise.modelVersion).toBe(1);
+    expect(franchise.history.every((year) => !year.replay)).toBe(true);
     franchise.modelVersion = 2;
     franchise.offseasons = [
       {

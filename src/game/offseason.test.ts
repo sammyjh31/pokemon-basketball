@@ -1,5 +1,8 @@
 import { retainMorale } from "./playerMorale";
 import { retainChemistry } from "./teammateChemistry";
+import { retainMastery } from "./abilityMastery";
+import { compareTeamEvaluation } from "./teamEvaluation";
+import { exchangePlayers } from "./rosterTrades";
 import { beforeAll, describe, expect, it } from "vitest";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { createRun } from "./draft";
@@ -288,19 +291,17 @@ describe("the league offseason", () => {
       used.add(trade.teamId);
       const a = f.teams[trade.fromTeamId!],
         b = f.teams[trade.teamId];
-      const beforeA = { ...a.roster },
-        beforeB = { ...b.roster };
-      const aSlot = ROSTER_SLOTS.find((s) => beforeA[s] === trade.receiveId)!,
-        bSlot = ROSTER_SLOTS.find((s) => beforeB[s] === trade.giveId)!;
-      beforeA[aSlot] = trade.giveId;
-      beforeB[bSlot] = trade.receiveId;
-      const allDev = Object.assign({}, ...f.teams.map((t) => t.development));
-      const aGain =
-        teamRatings(a.roster, a.tactic, a.rotation, allDev).overall -
-        teamRatings(beforeA, a.tactic, a.rotation, allDev).overall;
-      const bGain =
-        teamRatings(b.roster, b.tactic, b.rotation, allDev).overall -
-        teamRatings(beforeB, b.tactic, b.rotation, allDev).overall;
+      // Trades are disjoint, so reverse this exchange to recover both
+      // developed rosters and evaluate the actual shared-value policy.
+      const before = exchangePlayers(
+        f.teams,
+        trade.fromTeamId!,
+        trade.teamId,
+        trade.receiveId,
+        trade.giveId,
+      );
+      const aGain = compareTeamEvaluation(before[a.id], a).delta,
+        bGain = compareTeamEvaluation(before[b.id], b).delta;
       expect(aGain).toBeGreaterThanOrEqual(0.05);
       expect(bGain).toBeGreaterThanOrEqual(0.05);
       expect(aGain + bGain).toBeGreaterThanOrEqual(0.15);
@@ -327,6 +328,7 @@ describe("the league offseason", () => {
       entered
         .franchise!.teams.map(retainChemistry)
         .map(retainMorale)
+        .map(retainMastery)
         .map((team) => ({ ...team, personalityVersion: 1 as const })),
     );
     expect(next.franchise!.year).toBe(2);

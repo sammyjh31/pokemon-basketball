@@ -75,6 +75,21 @@ describe("connected franchise archives", () => {
     expect(replay.playoffPlayers).toEqual(finished.run.playoffs!.players);
     expect(replay.playedGames).toEqual({});
     expect(replay.teams).not.toBe(finished.run.result!.league!.teams);
+    expect(() =>
+      validateFranchise(archived.franchise, archived.run, true),
+    ).not.toThrow();
+    const altered = structuredClone(archived);
+    const reserve = altered.franchise!.careers.find(
+      (p) =>
+        p.regular.gamesPlayed > p.regular.gamesStarted + 1 &&
+        p.regular.highPoints * (p.regular.gamesPlayed - 1) >= p.regular.points,
+    )!;
+    expect(reserve).toBeDefined();
+    reserve.regular.gamesPlayed--;
+    // A plausible DNP is still detectable when exact archive rows exist.
+    expect(() =>
+      validateFranchise(altered.franchise, altered.run, true),
+    ).toThrow();
     replay.teams[0].roster.PG = 1;
     expect(finished).toEqual(before);
     expect(franchise.enterOffseason(finished).franchise!.modelVersion).toBe(1);
@@ -111,6 +126,9 @@ describe("connected franchise archives", () => {
   });
   it("enriches the still-present last year after restoring a legacy offseason save", () => {
     const old = franchise.enterOffseason(finished);
+    expect(
+      finished.run.result!.league!.players.some((p) => p.gamesPlayed < 82),
+    ).toBe(true);
     const restored = loadGame(storage(old), 99);
     expect(restored.notice).toBeNull();
     const next = franchise.startInteractiveFranchiseSeason(restored.state, 94);
@@ -335,8 +353,10 @@ it("rejects corrupted historical inputs after deferred replay instead of trustin
     franchise.archiveFranchiseSeason(finished),
     93,
   );
-  next.franchise!.history[0].seasonSeed =
-    (next.franchise!.history[0].seasonSeed ^ 42) >>> 0;
+  // A different seed now invalidates news fixture identities immediately.
+  // Change a valid frozen tactic instead, so only actual replay exposes it.
+  const team = next.franchise!.history[0].replay!.teams[1];
+  team.tactic = team.tactic === "pace" ? "interior" : "pace";
   const source = storage(next),
     original = source.getItem();
   const prepared = prepareGameLoad(source, 99);

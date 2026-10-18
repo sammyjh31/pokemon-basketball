@@ -1,3 +1,6 @@
+import { teamsWithMastery } from "./abilityMastery";
+import { teamsWithMorale } from "./playerMorale";
+import { teamsWithChemistry } from "./teammateChemistry";
 import { coachTrainingPlans } from "./coachTraining";
 import { developPlayer } from "./development";
 import { appointLocalCoach, reviewLocalCoaches } from "./coachLocal";
@@ -36,173 +39,205 @@ it("defers an offseason hire until next year and freezes coached inputs after th
   expect(replaySeasonProgress(run, 1, {})).toEqual(run.seasonProgress!.result);
   expect(selectTrainerCoach({ ...next, run }, "ash").run).toBe(run);
 });
-it("preserves local trainers through actual season, playoff, offseason and career reload", () => {
-  let d: local.LocalLeague = {
-    ...local.createLocalLeague(
-      [
-        { name: "Sam", teamId: 1 },
-        { name: "Lee", teamId: 3 },
-      ],
-      true,
-      42,
-      2,
-      {
-        mode: "full-pool",
-        format: { teamCount: 4, gamesPerTeam: 14, playoffTeams: 4, bestOf: 1 },
-        engineRules: {
-          version: 1,
-          abilities: true,
-          adaptiveCoaching: true,
-          familiarity: 0,
+it.each([false, true])(
+  "preserves local trainers through season, playoffs, offseason and reload (mastery: %s)",
+  (mastery) => {
+    let d: local.LocalLeague = {
+      ...local.createLocalLeague(
+        [
+          { name: "Sam", teamId: 1 },
+          { name: "Lee", teamId: 3 },
+        ],
+        true,
+        42,
+        2,
+        {
+          mode: "full-pool",
+          format: {
+            teamCount: 4,
+            gamesPerTeam: 14,
+            playoffTeams: 4,
+            bestOf: 1,
+          },
+          engineRules: {
+            version: 1,
+            abilities: true,
+            adaptiveCoaching: true,
+            familiarity: 0,
+          },
         },
-      },
-    ),
-    coachDraftRequired: true,
-  };
-  for (let turn = localCoachTurn(d); turn; turn = localCoachTurn(d))
-    d = selectLocalCoach(d, turn.teamId, turn.teamId === 1 ? "ash" : "mom");
-  while (local.currentLocalTurn(d)) {
-    d = local.advanceLocalCpu(d);
-    const turn = local.currentLocalTurn(d);
-    if (!turn) break;
-    const mon = local
-      .localLeaguePool(d)
-      .find((p) => !d.picks.some((x) => x.pokemonId === p.id))!;
-    const occupied = d.picks
-      .filter((p) => p.teamId === turn.teamId)
-      .map((p) => p.slot);
-    d = local.pickLocalPlayer(
-      d,
-      mon.id,
-      ROSTER_SLOTS.find((s) => !occupied.includes(s))!,
+      ),
+      coachDraftRequired: true,
+    };
+    if (!mastery) delete d.abilityMasteryVersion;
+    for (let turn = localCoachTurn(d); turn; turn = localCoachTurn(d))
+      d = selectLocalCoach(d, turn.teamId, turn.teamId === 1 ? "ash" : "mom");
+    while (local.currentLocalTurn(d)) {
+      d = local.advanceLocalCpu(d);
+      const turn = local.currentLocalTurn(d);
+      if (!turn) break;
+      const mon = local
+        .localLeaguePool(d)
+        .find((p) => !d.picks.some((x) => x.pokemonId === p.id))!;
+      const occupied = d.picks
+        .filter((p) => p.teamId === turn.teamId)
+        .map((p) => p.slot);
+      d = local.pickLocalPlayer(
+        d,
+        mon.id,
+        ROSTER_SLOTS.find((s) => !occupied.includes(s))!,
+      );
+    }
+    const result = simulateLocalSeason(d),
+      playoffs = simulatePlayoffs(result.league!, career.localSeasonSeed(d));
+    d = { ...d, completed: true, playoffGames: playoffGameCount(playoffs) };
+    const next = career.beginLocalOffseason(d, result, playoffs);
+    const loaded = local.parseLocalLeague(JSON.stringify(next));
+    expect(loaded.career!.teams.map((t) => t.coach)).toEqual(
+      result.league!.teams.map((t) => t.coach),
     );
-  }
-  const result = simulateLocalSeason(d),
-    playoffs = simulatePlayoffs(result.league!, career.localSeasonSeed(d));
-  d = { ...d, completed: true, playoffGames: playoffGameCount(playoffs) };
-  const next = career.beginLocalOffseason(d, result, playoffs);
-  const loaded = local.parseLocalLeague(JSON.stringify(next));
-  expect(loaded.career!.teams.map((t) => t.coach)).toEqual(
-    result.league!.teams.map((t) => t.coach),
-  );
-  expect(loaded.career!.history[0].teams.map((t) => t.coach)).toEqual(
-    result.league!.teams.map((t) => t.coach),
-  );
-  const training = loaded.career!.history[0].development;
-  expect(training).toEqual(next.career!.history[0].development);
-  for (const row of training) {
-    const team = result.league!.teams[row.teamId];
-    const player = result.league!.players.find(
-      (p) => p.pokemonId === row.pokemonId,
-    )!;
-    expect(row.training).toEqual(
-      coachTrainingPlans(team, result.league!.players)[row.pokemonId],
+    expect(loaded.career!.history[0].teams.map((t) => t.coach)).toEqual(
+      result.league!.teams.map((t) => t.coach),
     );
-    expect(row.changes).toEqual(
-      developPlayer(
-        player,
-        {},
+    const training = loaded.career!.history[0].development;
+    expect(training).toEqual(next.career!.history[0].development);
+    const trainingTeams = teamsWithMastery(
+      teamsWithMorale(
+        teamsWithChemistry(
+          result.league!.teams,
+          playoffs.chemistryBonds ?? result.league!.chemistryBonds,
+        ),
+        playoffs.morale ?? result.league!.morale,
+      ),
+      playoffs.abilityMastery ?? result.league!.abilityMastery,
+    );
+    for (const row of training) {
+      const team = trainingTeams[row.teamId];
+      const player = result.league!.players.find(
+        (p) => p.pokemonId === row.pokemonId,
+      )!;
+      expect(row.training).toEqual(
+        coachTrainingPlans(team, result.league!.players)[row.pokemonId],
+      );
+      expect(row.changes).toEqual(
+        developPlayer(
+          player,
+          {},
+          1,
+          career.localSeasonSeed(d),
+          row.training!.plan,
+          team.courtVersion === 3,
+        ).changes,
+      );
+    }
+    const malformedTraining = structuredClone(next);
+    malformedTraining.career!.history[0].development[0].training!.coachId =
+      "missing";
+    expect(() =>
+      local.parseLocalLeague(JSON.stringify(malformedTraining)),
+    ).toThrow();
+    const legacyTraining = structuredClone(next);
+    for (const row of legacyTraining.career!.history[0].development)
+      delete row.training;
+    if (mastery) {
+      // Current camp mastery depends on its recorded coach assignments.
+      expect(() =>
+        local.parseLocalLeague(JSON.stringify(legacyTraining)),
+      ).toThrow();
+    } else {
+      // Pre-mastery saves genuinely had optional training attribution.
+      expect(
+        local
+          .parseLocalLeague(JSON.stringify(legacyTraining))
+          .career!.history[0].development.every((row) => !row.training),
+      ).toBe(true);
+    }
+    const historyBefore = JSON.stringify(loaded.career!.history);
+    expect(reviewLocalCoaches(loaded)).toBe(loaded);
+    const fired = appointLocalCoach(loaded, 1, null);
+    const reloaded = local.parseLocalLeague(JSON.stringify(fired));
+    expect(
+      projectedCoaches(
+        reloaded.career!.teams,
+        reloaded.career!.coachOffice,
         1,
-        career.localSeasonSeed(d),
-        row.training!.plan,
-        team.courtVersion === 3,
-      ).changes,
+      )[1].coach,
+    ).toBeUndefined();
+    expect(() => career.startNextLocalSeason(reloaded)).toThrow(/head coach/);
+    expect(() => appointLocalCoach(reloaded, 0, null)).toThrow(/human/);
+    const assigned = projectedCoaches(
+      reloaded.career!.teams,
+      reloaded.career!.coachOffice,
+      1,
     );
-  }
-  const malformedTraining = structuredClone(next);
-  malformedTraining.career!.history[0].development[0].training!.coachId =
-    "missing";
-  expect(() =>
-    local.parseLocalLeague(JSON.stringify(malformedTraining)),
-  ).toThrow();
-  const legacyTraining = structuredClone(next);
-  for (const row of legacyTraining.career!.history[0].development)
-    delete row.training;
-  expect(
-    local
-      .parseLocalLeague(JSON.stringify(legacyTraining))
-      .career!.history[0].development.every((row) => !row.training),
-  ).toBe(true);
-  const historyBefore = JSON.stringify(loaded.career!.history);
-  expect(reviewLocalCoaches(loaded)).toBe(loaded);
-  const fired = appointLocalCoach(loaded, 1, null);
-  const reloaded = local.parseLocalLeague(JSON.stringify(fired));
-  expect(
-    projectedCoaches(reloaded.career!.teams, reloaded.career!.coachOffice, 1)[1]
-      .coach,
-  ).toBeUndefined();
-  expect(() => career.startNextLocalSeason(reloaded)).toThrow(/head coach/);
-  expect(() => appointLocalCoach(reloaded, 0, null)).toThrow(/human/);
-  const assigned = projectedCoaches(
-    reloaded.career!.teams,
-    reloaded.career!.coachOffice,
-    1,
-  );
-  const available = COACHES.find(
-    (c) => c.id !== "ash" && !assigned.some((t) => t.coach?.id === c.id),
-  )!;
-  const hired = appointLocalCoach(reloaded, 1, available.id);
-  // A released trainer can join another human club; their old results stay theirs.
-  const moved = appointLocalCoach(hired, 3, "ash");
-  const yearTwo = local.parseLocalLeague(
-    JSON.stringify(career.startNextLocalSeason(moved)),
-  );
-  const invalidVacancy = structuredClone(yearTwo);
-  invalidVacancy.career!.coachOffice = fired.career!.coachOffice;
-  invalidVacancy.career!.teams = projectedCoaches(
-    yearTwo.career!.teams,
-    fired.career!.coachOffice,
-    1,
-  );
-  expect(() =>
-    local.parseLocalLeague(JSON.stringify(invalidVacancy)),
-  ).toThrow();
-  expect(yearTwo.career!.teams[1].coach?.id).toBe(available.id);
-  expect(yearTwo.career!.teams[3].coach?.id).toBe("ash");
-  expect(JSON.stringify(yearTwo.career!.history)).toBe(historyBefore);
-  expect(() => appointLocalCoach(yearTwo, 1, null)).toThrow(/offseason/);
-  const records = localCoachRecords(yearTwo.career, yearTwo.career!.teams);
-  expect(
-    coachCareers(records).find((c) => c.coach.id === "ash")!.seasons[0].teamId,
-  ).toBe(1);
-  const restored = career.replayLocalHistory(yearTwo, 1);
-  expect(restored.playoffs).toEqual(playoffs);
-  const resultTwo = simulateLocalSeason(yearTwo),
-    playoffsTwo = simulatePlayoffs(
-      resultTwo.league!,
-      career.localSeasonSeed(yearTwo),
+    const available = COACHES.find(
+      (c) => c.id !== "ash" && !assigned.some((t) => t.coach?.id === c.id),
+    )!;
+    const hired = appointLocalCoach(reloaded, 1, available.id);
+    // A released trainer can join another human club; their old results stay theirs.
+    const moved = appointLocalCoach(hired, 3, "ash");
+    const yearTwo = local.parseLocalLeague(
+      JSON.stringify(career.startNextLocalSeason(moved)),
     );
-  const two = career.beginLocalOffseason(
-    {
-      ...yearTwo,
-      completed: true,
-      playoffGames: playoffGameCount(playoffsTwo),
-    },
-    resultTwo,
-    playoffsTwo,
-  );
-  const loadedTwo = local.parseLocalLeague(JSON.stringify(two));
-  const ash = coachCareers(
-    localCoachRecords(loadedTwo.career, loadedTwo.career!.teams),
-  ).find((c) => c.coach.id === "ash")!;
-  expect(ash.seasons.map((s) => s.teamId)).toEqual([1, 3]);
-  expect(ash.wins + ash.losses).toBe(28);
-  expect(
-    coachCareers(
+    const invalidVacancy = structuredClone(yearTwo);
+    invalidVacancy.career!.coachOffice = fired.career!.coachOffice;
+    invalidVacancy.career!.teams = projectedCoaches(
+      yearTwo.career!.teams,
+      fired.career!.coachOffice,
+      1,
+    );
+    expect(() =>
+      local.parseLocalLeague(JSON.stringify(invalidVacancy)),
+    ).toThrow();
+    expect(yearTwo.career!.teams[1].coach?.id).toBe(available.id);
+    expect(yearTwo.career!.teams[3].coach?.id).toBe("ash");
+    expect(JSON.stringify(yearTwo.career!.history)).toBe(historyBefore);
+    expect(() => appointLocalCoach(yearTwo, 1, null)).toThrow(/offseason/);
+    const records = localCoachRecords(yearTwo.career, yearTwo.career!.teams);
+    expect(
+      coachCareers(records).find((c) => c.coach.id === "ash")!.seasons[0]
+        .teamId,
+    ).toBe(1);
+    const restored = career.replayLocalHistory(yearTwo, 1);
+    expect(restored.playoffs).toEqual(playoffs);
+    const resultTwo = simulateLocalSeason(yearTwo),
+      playoffsTwo = simulatePlayoffs(
+        resultTwo.league!,
+        career.localSeasonSeed(yearTwo),
+      );
+    const two = career.beginLocalOffseason(
+      {
+        ...yearTwo,
+        completed: true,
+        playoffGames: playoffGameCount(playoffsTwo),
+      },
+      resultTwo,
+      playoffsTwo,
+    );
+    const loadedTwo = local.parseLocalLeague(JSON.stringify(two));
+    const ash = coachCareers(
       localCoachRecords(loadedTwo.career, loadedTwo.career!.teams),
-    ).reduce((n, c) => n + c.championships, 0),
-  ).toBe(2);
-  const corrupted = structuredClone(yearTwo);
-  corrupted.career!.teams[1].coach = { version: 1, id: "mom" };
-  expect(() => local.parseLocalLeague(JSON.stringify(corrupted))).toThrow();
-  const old = structuredClone(loaded);
-  delete old.career!.history[0].coachRecords;
-  delete old.career!.coachOffice;
-  const oldLoaded = local.parseLocalLeague(JSON.stringify(old));
-  const oldRecords = localCoachRecords(
-    oldLoaded.career,
-    oldLoaded.career!.teams,
-  );
-  expect(oldRecords.every((r) => !r.postseasonKnown)).toBe(true);
-  expect(oldRecords.filter((r) => r.champion)).toHaveLength(1);
-}, 60000);
+    ).find((c) => c.coach.id === "ash")!;
+    expect(ash.seasons.map((s) => s.teamId)).toEqual([1, 3]);
+    expect(ash.wins + ash.losses).toBe(28);
+    expect(
+      coachCareers(
+        localCoachRecords(loadedTwo.career, loadedTwo.career!.teams),
+      ).reduce((n, c) => n + c.championships, 0),
+    ).toBe(2);
+    const corrupted = structuredClone(yearTwo);
+    corrupted.career!.teams[1].coach = { version: 1, id: "mom" };
+    expect(() => local.parseLocalLeague(JSON.stringify(corrupted))).toThrow();
+    const old = structuredClone(loaded);
+    delete old.career!.history[0].coachRecords;
+    delete old.career!.coachOffice;
+    const oldLoaded = local.parseLocalLeague(JSON.stringify(old));
+    const oldRecords = localCoachRecords(
+      oldLoaded.career,
+      oldLoaded.career!.teams,
+    );
+    expect(oldRecords.every((r) => !r.postseasonKnown)).toBe(true);
+    expect(oldRecords.filter((r) => r.champion)).toHaveLength(1);
+  },
+  60000,
+);

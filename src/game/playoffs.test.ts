@@ -241,6 +241,8 @@ describe("best-of-seven postseason", () => {
             scouting: game.scouting,
             chemistry: game.chemistry,
             morale: game.morale,
+            mastery: game.mastery,
+            flow: game.flow,
           },
         );
         expect([match.homeScore, match.awayScore]).toEqual([

@@ -34,7 +34,11 @@ it("enables the same model on all new clubs and CPU regular-season and playoff g
   const regular = resolveSeasonMatch(fixture, teams);
   expect(regular.insights!.court!.length).toBeGreaterThan(100);
   expect(resolvePlayoffMatch(fixture, teams)).toEqual(regular);
-  const old = createLeague({ ...r, courtVersion: undefined });
+  const old = createLeague({
+    ...r,
+    courtVersion: undefined,
+    gameFlowVersion: undefined,
+  });
   expect(old.every((t) => t.courtVersion === undefined)).toBe(true);
   expect(resolveSeasonMatch(fixture, old).insights!.court).toBeUndefined();
   const mixed = structuredClone(teams);
@@ -59,7 +63,11 @@ it("retains current and historical rule flags through solo saves and archive rec
     },
   };
   for (const version of [3, 2, 1, undefined] as const) {
-    const r = { ...run(), courtVersion: version },
+    const r = {
+        ...run(),
+        courtVersion: version,
+        ...(version === undefined ? { gameFlowVersion: undefined } : {}),
+      },
       state = { ...initialState(22), run: r };
     saveGame(storage, state);
     expect(loadGame(storage, 22).state.run.courtVersion).toBe(version);
@@ -90,6 +98,7 @@ it("opts new local leagues in, but never upgrades a saved local career implicitl
     parseLocalLeague(JSON.stringify({ ...d, courtVersion: 1 })).courtVersion,
   ).toBe(1);
   delete d.courtVersion;
+  delete d.gameFlowVersion;
   expect(parseLocalLeague(JSON.stringify(d)).courtVersion).toBeUndefined();
   expect(() =>
     parseLocalLeague(JSON.stringify({ ...d, courtVersion: 4 })),

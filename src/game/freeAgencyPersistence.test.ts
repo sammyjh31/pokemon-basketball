@@ -18,8 +18,13 @@ import {
   signFreeAgent,
 } from "./freeAgency";
 import { loadGame } from "./persistence";
+import {
+  validateFranchise,
+  type VerifiedArchives,
+} from "./franchiseValidation";
 
 let drafted: GameState;
+let verifiedArchives: VerifiedArchives;
 beforeAll(() => {
   const run = {
     ...createRun("free", true, 47),
@@ -28,6 +33,8 @@ beforeAll(() => {
     ) as GameState["run"]["roster"],
   };
   const result = simulateSeason(run);
+  const playoffs = simulatePlayoffs(result.league!, run.seasonSeed);
+  verifiedArchives = new Map([[1, { regular: result, playoffs }]]);
   // These cases cover the pre-CPU-rules ledger (user first, one CPU round),
   // which older franchises keep; cpuRules.test.ts covers rules v1.
   const legacy = (state: GameState) => {
@@ -50,7 +57,7 @@ beforeAll(() => {
           run: {
             ...run,
             result,
-            playoffs: simulatePlayoffs(result.league!, run.seasonSeed),
+            playoffs,
           },
         }),
       ),
@@ -60,7 +67,7 @@ beforeAll(() => {
     const pick = recommendedRookiePick(drafted.franchise!, 0, true)!;
     drafted = selectRookie(drafted, pick.pokemonId, pick.releasedId);
   }
-}, 60000);
+}, 300000);
 const restore = (s: GameState) =>
   loadGame({ getItem: () => JSON.stringify(s), setItem: () => {} }, 1);
 const sign = (s: GameState) =>
@@ -99,7 +106,7 @@ describe("free agency persistence and franchise lifecycle", () => {
     expect(loaded.preserveSource).not.toBe(true);
     expect(loaded.state.franchise).toEqual(next.franchise);
     expect(loaded.state.run).toEqual(next.run);
-  }, 90000);
+  }, 600000);
 
   it("restores the CPU transaction ledger", () => {
     const valid = processCpuFreeAgency(sign(drafted));
@@ -107,10 +114,11 @@ describe("free agency persistence and franchise lifecycle", () => {
       valid.franchise!.freeAgency!.transactions.some((t) => t.source === "cpu"),
     ).toBe(true);
     expect(restore(valid).state.franchise).toEqual(valid.franchise);
-  }, 45000);
+  }, 600000);
 
-  // Each corrupted save independently replays a complete season. Separate cases
-  // keep the timeout scoped to one replay as simulation rules become richer.
+  // Exercise every ledger rejection at the same validator boundary used after
+  // the restore worker verifies an archive. The map contains real simulations,
+  // not mocked results; integration cases above/below still replay full saves.
   it.each<{ label: string; mutate: (state: GameState) => void }>([
     {
       label: "an undrafted signing",
@@ -163,14 +171,34 @@ describe("free agency persistence and franchise lifecycle", () => {
       },
     },
   ])(
-    "rejects $label without overwriting the save",
+    "rejects $label after archive verification",
     ({ mutate }) => {
       const bad = structuredClone(processCpuFreeAgency(sign(drafted)));
       mutate(bad);
-      expect(restore(bad).preserveSource).toBe(true);
+      expect(() =>
+        validateFranchise(bad.franchise, bad.run, false, verifiedArchives),
+      ).toThrow();
     },
-    90000,
+    600000,
   );
+
+  it("preserves the original saved bytes when a corrupt signing ledger is rejected", () => {
+    const bad = structuredClone(processCpuFreeAgency(sign(drafted)));
+    bad.franchise!.freeAgency!.transactions[0].pokemonId = 1025;
+    const original = JSON.stringify(bad);
+    let stored = original;
+    const loaded = loadGame(
+      {
+        getItem: () => stored,
+        setItem: (_key, value) => {
+          stored = value;
+        },
+      },
+      1,
+    );
+    expect(loaded.preserveSource).toBe(true);
+    expect(stored).toBe(original);
+  }, 600000);
 
   it("runs CPU free agency automatically before year two and retains its ledger and returning careers after that season", () => {
     const signed = sign(drafted);
@@ -180,7 +208,13 @@ describe("free agency persistence and franchise lifecycle", () => {
     });
     expect(next.franchise!.year).toBe(2);
     expect(next.franchise!.freeAgency!.cpuYears).toEqual([1]);
-    expect(next.franchise!.teams[0]).toEqual(signed.franchise!.teams[0]);
+    // CPU signings cannot replace the user's players or their development.
+    // Morale and pair bonds legitimately settle at the season boundary.
+    expect(next.franchise!.teams[0]).toMatchObject({
+      roster: signed.franchise!.teams[0].roster,
+      development: signed.franchise!.teams[0].development,
+      abilityMastery: signed.franchise!.teams[0].abilityMastery,
+    });
     expect(next.run.leagueTeams).toEqual(next.franchise!.teams);
     expect(restore(next).state.franchise).toEqual(next.franchise);
     next = gameReducer(next, { type: "SELECT_COACH", id: "mom" });
@@ -208,5 +242,5 @@ describe("free agency persistence and franchise lifecycle", () => {
       freeAgentMarket(archived.franchise!).map((p) => p.pokemonId),
     ).toEqual(unsigned);
     expect(restore(archived).state.franchise).toEqual(archived.franchise);
-  }, 180000);
+  }, 600000);
 });

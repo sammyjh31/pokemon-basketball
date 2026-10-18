@@ -82,13 +82,21 @@ it("values local rookie replacements with developed shared roster value and the 
     club = teams[turn.teamId];
   const choice = career.recommendedLocalRookie(draft)!;
   const slot = ROSTER_SLOTS.find((s) => club.roster[s] === choice.releasedId)!;
-  const development = { ...club.development, [choice.pokemonId]: {} };
-  delete development[choice.releasedId];
-  const comparison = compareTeamEvaluation(club, {
-    ...club,
-    roster: { ...club.roster, [slot]: choice.pokemonId },
-    development,
-  });
+  // Compare the recommendation to its actual roster transaction, including
+  // morale adjustment, retained mastery and the pending coaching appointment.
+  const applied = career.pickLocalRookie(
+    draft,
+    choice.pokemonId,
+    choice.releasedId,
+  );
+  const updated = projectedCoaches(
+    applied.career!.teams,
+    applied.career!.coachOffice,
+    applied.career!.year,
+  )[turn.teamId];
+  expect(updated.roster[slot]).toBe(choice.pokemonId);
+  expect(Object.values(updated.roster)).not.toContain(choice.releasedId);
+  const comparison = compareTeamEvaluation(club, updated);
   const rival = createRivalStrategy(club, teams, f.history, f.year).change(
     [choice.releasedId],
     [choice.pokemonId],

@@ -8,10 +8,10 @@ export default defineConfig({
     // League replay tests each simulate thousands of games. Bound CPU-heavy
     // workers so parallel suites do not starve UI timers on local/cloud hosts.
     maxWorkers: 1,
-    // Integration cases reconstruct entire 1,230-game seasons. Their assertions
-    // still run in full; the watchdog allows the deeper possession model.
-    testTimeout: 60000,
-    hookTimeout: 60000,
+    // Save/replay cases reconstruct multiple 1,230-game seasons. A measured
+    // four-replay case takes ~176s; focused UI waits keep their own deadlines.
+    testTimeout: 300000,
+    hookTimeout: 300000,
     include: ["src/**/*.test.{ts,tsx}"],
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],

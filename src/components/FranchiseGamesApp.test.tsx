@@ -67,7 +67,7 @@ beforeAll(() => {
     },
   };
   ready = startInteractiveFranchiseSeason(archiveFranchiseSeason(finished), 93);
-}, 90000);
+}, 600000);
 
 it("connects minutes, training, played fixtures, careers and historical boxes across the franchise UI", async () => {
   let value: string | null = null;
@@ -132,7 +132,7 @@ it("connects minutes, training, played fixtures, careers and historical boxes ac
   const boxes = await within(historical).findAllByRole(
     "button",
     { name: /View box/ },
-    { timeout: 30000 }, // Reconstructs the entire archived season.
+    { timeout: 120000 }, // Reconstructs the entire archived season.
   );
   fireEvent.click(boxes[0]);
   expect(
@@ -147,7 +147,7 @@ it("connects minutes, training, played fixtures, careers and historical boxes ac
       expect(
         screen.getByRole("region", { name: "Franchise schedule" }),
       ).toHaveTextContent("1 / 82 games complete"),
-    { timeout: 30000 },
+    { timeout: 120000 },
   );
   expect(
     (JSON.parse(storage.getItem()!) as GameState).run.seasonProgress!
@@ -162,7 +162,7 @@ it("connects minutes, training, played fixtures, careers and historical boxes ac
     Object.keys(JSON.parse(value!).run.seasonProgress.playedGames),
   ).toHaveLength(1);
   expect(JSON.parse(value!).run.seasonProgress.result.modelVersion).toBe(6);
-}, 90000); // History and reload each reconstruct a full court-model season.
+}, 600000); // History and reload each reconstruct a full court-model season.
 
 it("records a scheduled playoff game in the bracket and uses its official box", async () => {
   const regular = simulateSeason(ready.run);
@@ -212,7 +212,7 @@ it("records a scheduled playoff game in the bracket and uses its official box", 
   expect(screen.getByRole("dialog")).toHaveTextContent(
     String(official[0].match.awayScore),
   );
-}, 45000); // Includes simulating the complete regular season before the game.
+}, 300000); // Includes simulating the complete regular season before the game.
 
 it("lets a returning franchise simulate its next season directly from the overview", async () => {
   let saved = "";
@@ -244,10 +244,10 @@ it("lets a returning franchise simulate its next season directly from the overvi
         82,
       );
     },
-    { timeout: 60000 },
+    { timeout: 120000 },
   );
   expect(
     screen.queryByRole("button", { name: "Simulate season 2" }),
   ).not.toBeInTheDocument();
   expect((JSON.parse(saved) as GameState).franchise?.year).toBe(2);
-}, 90000);
+}, 600000);

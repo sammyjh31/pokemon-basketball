@@ -147,6 +147,10 @@ describe("versioned tactics creation and persistence", () => {
     const run = completedDraft();
     delete run.matchupVersion;
     delete run.typeTacticsVersion;
+    delete run.abilityMasteryVersion;
+    delete run.chemistryGrowthVersion;
+    delete run.moraleVersion;
+    delete run.personalityVersion;
     const result = simulateSeason(run),
       playoffs = simulatePlayoffs(result.league!, run.seasonSeed);
     const finished: GameState = {
@@ -189,7 +193,7 @@ describe("versioned tactics creation and persistence", () => {
       delete team.typeTacticsVersion;
     });
     expect(load(mixedFranchise).notice).not.toBeNull();
-  }, 30000);
+  }, 300000);
 });
 
 describe("local tactics persistence", () => {

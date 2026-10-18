@@ -27,8 +27,14 @@ const ratings = {
 describe("developed player displays", () => {
   it("updates court and bench ratings and stamina from the supplied season development", () => {
     const run = initialState(1).run;
-    run.roster = { ...run.roster, PG: 1, B1: 1 };
-    const props = { run, ratings, pending: null, swap: null, onSlot: vi.fn() };
+    run.roster = { ...run.roster, PG: 1 };
+    const props = {
+      run,
+      ratings: { ...ratings, filled: 1, complete: false },
+      pending: null,
+      swap: null,
+      onSlot: vi.fn(),
+    };
     const { rerender } = render(<Court {...props} onReset={vi.fn()} />);
     const baseline = screen.getByRole("button", {
       name: "PG slot: Bulbasaur",
@@ -37,6 +43,7 @@ describe("developed player displays", () => {
     expect(
       screen.getByRole("button", { name: "PG slot: Bulbasaur" }).textContent,
     ).not.toBe(baseline);
+    run.roster = { ...run.roster, PG: null, B1: 1 };
     rerender(
       <BenchPanel
         {...props}
