@@ -4,6 +4,12 @@ export interface MasteryLevel {
   start: number;
   next: number | null;
 }
+/** Shared by game awards and archive validation so valid milestones can restore. */
+export function masteryGameXpCap(
+  courtVersion?: import("./courtTypes").CourtVersion,
+): number {
+  return (courtVersion ?? 0) >= 4 ? 6 : 1.5;
+}
 const thresholds = [0, 75, 200, 400, 700] as const;
 const names = [
   "Developing",

@@ -5,7 +5,7 @@ import {
   validateAbilityActivations,
   type AbilityBox,
 } from "./abilities";
-import { masteryLevel } from "./masteryMath";
+import { masteryGameXpCap, masteryLevel } from "./masteryMath";
 import { playerPersonality, personalityReactions } from "./playerPersonality";
 import { getCoach } from "./trainerCoaches";
 import { nextRandom } from "./random";
@@ -199,7 +199,8 @@ export function advanceMastery(
     throw new Error("Invalid ability mastery game minutes.");
   const coach = getCoach(team.coach?.id ?? ""),
     duration = 48 / (48 + 5 * overtimePeriods),
-    pace = (team.courtVersion ?? 0) >= 4 ? 4 : 1;
+    gameCap = masteryGameXpCap(team.courtVersion),
+    pace = gameCap / 1.5;
   return Object.fromEntries(
     all.map((id) => {
       const box = boxes.find((b) => b.pokemonId === id)!,
@@ -237,7 +238,7 @@ export function advanceMastery(
           learning *
           pace,
         0,
-        1.5 * pace,
+        gameCap,
       );
       return [id, round(Math.min(1000, before + gained))];
     }),
