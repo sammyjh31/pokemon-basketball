@@ -175,6 +175,8 @@ it("reloads a coached local career with court-v3 playoff tiebreaks", () => {
         },
       },
     ),
+    // Pin the recorded v3 season behind this head-to-head regression.
+    courtVersion: 3,
     coachDraftRequired: true,
   };
   delete draft.gameFlowVersion;

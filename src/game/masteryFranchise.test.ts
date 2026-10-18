@@ -35,7 +35,9 @@ it("preserves all 240 mastery records through a full season, playoffs, camp, tra
     Object.values,
   );
   expect(regularXp).toHaveLength(240);
-  expect(regularXp.every((xp) => xp > 0 && xp <= 123)).toBe(true);
+  // Fresh players can earn at most 6 XP in each of the 82 official games.
+  expect(regularXp.every((xp) => xp > 0 && xp <= 492)).toBe(true);
+  expect(Math.max(...regularXp)).toBeGreaterThan(123);
   const fixture = league.games[200],
     box = resolveSeasonMatch(fixture, league.teams);
   expect(box.homeScore).toBe(fixture.homeScore);
