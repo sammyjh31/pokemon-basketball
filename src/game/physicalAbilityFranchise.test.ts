@@ -72,10 +72,21 @@ it.each([false, true])(
       822,
     );
     expect(prepared.notice).toBeNull();
+    const progress: [number, number][] = [];
     const loaded = prepared.restore
-      ? await prepared.restore(() => {}, new AbortController().signal)
+      ? await prepared.restore(
+          (completed, total) => progress.push([completed, total]),
+          new AbortController().signal,
+        )
       : prepared;
     expect(loaded.notice).toBeNull();
+    // The completed active season is also the latest archive. Verify each
+    // unique game once rather than replaying that regular season twice.
+    const uniqueGames =
+      1230 +
+      playoffs.series.reduce((sum, series) => sum + series.games.length, 0);
+    expect(progress[0]).toEqual([0, uniqueGames]);
+    expect(progress.at(-1)).toEqual([uniqueGames, uniqueGames]);
     expect(loaded.state.franchise!.history).toEqual(
       archived.franchise!.history,
     );
@@ -83,6 +94,19 @@ it.each([false, true])(
       archived.franchise!.offseasons,
     );
     expect(loaded.state.franchise!.trades).toEqual(archived.franchise!.trades);
+    const independent = structuredClone(loaded.state);
+    const historicalPoints =
+      independent.franchise!.history[0].replay!.regularPlayers[0].points;
+    independent.run.result!.league!.players[0].points++;
+    expect(
+      independent.franchise!.history[0].replay!.regularPlayers[0].points,
+    ).toBe(historicalPoints);
+    const historicalPlayoffPoints =
+      independent.franchise!.history[0].replay!.playoffPlayers[0].points;
+    independent.run.playoffs!.players[0].points++;
+    expect(
+      independent.franchise!.history[0].replay!.playoffPlayers[0].points,
+    ).toBe(historicalPlayoffPoints);
     const next = startFranchiseSeason(loaded.state, 823);
     expect(next.franchise!.year).toBe(2);
     expect(next.franchise!.history).toEqual(archived.franchise!.history);
