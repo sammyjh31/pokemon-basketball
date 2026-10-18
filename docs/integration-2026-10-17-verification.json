@@ -338,5 +338,27 @@
       }
     ],
     "gameContextDesktopAndMobile": "passed"
+  },
+  "publication": {
+    "testedCommit": "ba454daa14db33bdb993f4b4df0977e19edfaaac",
+    "pullRequests": {
+      "2": {
+        "mergeCommit": {
+          "oid": "f49a11945d6bd2553ac843e636012df2889a1c90"
+        },
+        "mergedAt": "2026-10-18T01:33:55Z",
+        "state": "MERGED",
+        "url": "https://github.com/sammyjh31/pokemon-basketball/pull/2"
+      },
+      "6": {
+        "mergeCommit": {
+          "oid": "39f2a242ba999c5ec1bd0cd9950fc4f716b922b6"
+        },
+        "mergedAt": "2026-10-18T01:33:58Z",
+        "state": "MERGED",
+        "url": "https://github.com/sammyjh31/pokemon-basketball/pull/6"
+      }
+    },
+    "publishedTreeMatchesTestedTree": true
   }
 }

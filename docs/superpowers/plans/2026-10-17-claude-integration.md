@@ -22,7 +22,7 @@
 
 - [x] 1. Merge PR #2, reproduce the CPU legacy mismatch, confirm its exact source, resolve it, and verify balance/replay/typecheck/build.
 - [x] 2. Merge PR #6 onto the integrated result, resolve court and lifecycle conflicts, then verify game-flow and old-save tests.
-- [ ] 3. Run the full suite and end-to-end tests, fix confirmed failures, obtain a fresh review, and merge/push both PRs in dependency order.
+- [x] 3. Run the full suite and end-to-end tests, fix confirmed failures, obtain a fresh review, and merge/push both PRs in dependency order.
 
 ## Progress and decisions
 
@@ -72,3 +72,5 @@
 - Correction verification complete: 34/34 selected cases passed across 17 files. The coverage audit maps all 26 failed cases plus two setup-blocked cases to passing runs, including the extra historical/current physical case: 1,300 covered tests passed and one pre-existing largest-local-career stress case remains intentionally skipped. Build/typecheck pass; browser verification and publication remain.
 
 - Browser verification complete: initial 44-case run finished (34 passed, 10 failures in localCareer/saveRecovery test setup). Corrected normal-restore deadlines and seeded returning-player preferences, including new tabs and storage clears. Both complete files passed in fresh contexts: 18/18, covering every original failure. Browser audit confirms 44/44 desktop/mobile cases covered and passed. No application code changed during browser verification. Ready to publish PR heads and merge in dependency order.
+
+- Publication complete: PR #2 merged as f49a11945d6bd2553ac843e636012df2889a1c90; PR #6 merged as 39f2a242ba999c5ec1bd0cd9950fc4f716b922b6. Fetched main and confirmed its tree exactly equals tested release ba454daa14db33bdb993f4b4df0977e19edfaaac. Local integration checkout fast-forwarded to published main. Primary and Claude worktrees remain untouched. Final closeout changes are documentation only.

@@ -2,6 +2,8 @@
 
 This integration combines PR #2 (court rules v3 balance) and PR #6 (game flow and deeper possessions) with the existing mastery, news, morale, chemistry, coaching and CPU-front-office systems.
 
+PR [#2](https://github.com/sammyjh31/pokemon-basketball/pull/2) and [#6](https://github.com/sammyjh31/pokemon-basketball/pull/6) are merged into main. The fetched published tree exactly matches the tested integration; subsequent closeout updates only document that result.
+
 ## Compatibility
 
 - New seasons adopt court rules v3 and game flow. Active seasons and archives retain their saved rules.
