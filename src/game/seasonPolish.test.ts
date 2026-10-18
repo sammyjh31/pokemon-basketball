@@ -7,6 +7,20 @@ import { advanceMastery, retainMastery } from "./abilityMastery";
 import { masteryLevel } from "./masteryMath";
 import { insightTeams } from "./insightAnalysis.testUtils";
 import { timeoutDecision } from "./gameFlow";
+import { isRollAttack, type CourtSequence } from "./courtTypes";
+
+it("counts the screener receiving the ball, not the handler who used the screen", () => {
+  const sequence = {
+    coverage: "drop",
+    outcome: "made",
+    shooterId: "0:5",
+    actions: [{ kind: "screen", playerId: "0:1", targetId: "0:5", clock: 18 }],
+  } as CourtSequence;
+  expect(isRollAttack(sequence)).toBe(true);
+  expect(isRollAttack({ ...sequence, shooterId: "0:1" })).toBe(false);
+  expect(isRollAttack({ ...sequence, outcome: "turnover" })).toBe(false);
+  expect(isRollAttack({ ...sequence, outcome: "violation" })).toBe(false);
+});
 
 const clubs = () =>
   createLeague({
@@ -61,7 +75,7 @@ it("counts screened finisher attacks from real court sequences in the new rules"
           s.outcome !== "turnover" &&
           s.outcome !== "violation" &&
           s.actions.some(
-            (a) => a.kind === "screen" && a.playerId === s.shooterId,
+            (a) => a.kind === "screen" && a.targetId === s.shooterId,
           ),
       ).length;
       expect(match.typeTactics![side].rolls).toBe(expected);

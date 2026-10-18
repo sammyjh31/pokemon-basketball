@@ -55,7 +55,7 @@ export function isRollAttack(sequence: CourtSequence): boolean {
     sequence.outcome !== "violation" &&
     sequence.actions.some(
       (action) =>
-        action.kind === "screen" && action.playerId === sequence.shooterId,
+        action.kind === "screen" && action.targetId === sequence.shooterId,
     )
   );
 }

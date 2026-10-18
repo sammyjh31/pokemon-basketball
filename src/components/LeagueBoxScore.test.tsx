@@ -51,7 +51,7 @@ describe("league box scores", () => {
         s.outcome !== "turnover" &&
         s.outcome !== "violation" &&
         s.actions.some(
-          (a) => a.kind === "screen" && a.playerId === s.shooterId,
+          (a) => a.kind === "screen" && a.targetId === s.shooterId,
         ),
     ).length;
     expect(expected).toBeGreaterThan(0);
