@@ -123,6 +123,8 @@ npm run test:e2e
 
 Playwright uses `/usr/bin/chromium` when available, or the `CHROMIUM_PATH` override. On other machines, install Playwright's browser with `npx playwright install chromium`; the configuration falls back to that browser when no system Chromium exists. Browser checks cover desktop and mobile drafts, complete seasons, refreshing, keyboard input, modal focus, locally served artwork, and readable text contrast. Failure traces and screenshots go into ignored `test-results/`. Run `DESIGN_SHOTS=1 npm run test:e2e -- onboarding` to refresh the chooser and offseason-stepper screenshots in `docs/design/`.
 
+For repeatable season and franchise-load timings with complete-output checks, see [Performance](docs/PERFORMANCE.md) and `npm run performance:audit -- --help`.
+
 ## Structure
 
 - `src/game/`: deterministic draft/simulation rules, rating formulas, state reducer, and save validation.
