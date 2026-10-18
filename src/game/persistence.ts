@@ -12,8 +12,12 @@ import { replaySeasonProgress } from "./interactiveSeason";
 import { validateRotationPlan } from "./rotationPlan";
 import { validateStoredOfficialGame } from "./officialGame";
 import { leagueSchedule } from "./league";
-import { replayPlayoffs, simulatePlayoffsAsync } from "./playoffs";
-import { replayArchivedSeason } from "./archive";
+import {
+  playoffGameCount,
+  replayPlayoffs,
+  simulatePlayoffsAsync,
+} from "./playoffs";
+import { hasMatchingSeasonInputs, replayArchivedSeason } from "./archive";
 import type { VerifiedArchives } from "./franchiseValidation";
 import { validateFranchise, validateLeagueTeams } from "./franchiseValidation";
 import {
@@ -365,6 +369,7 @@ function validateSavedGame(
   value: unknown,
   replay?: SeasonResult,
   verifiedArchives?: VerifiedArchives,
+  verifiedPlayoffs?: NonNullable<Run["playoffs"]>,
 ): LoadedGame {
   // Only a verified regular season can supply teams or seeds for the playoffs.
   const state = validate(value, replay);
@@ -391,13 +396,22 @@ function validateSavedGame(
         return count + series.games.length;
       }, 0);
       integer(gameCount, 0, 105);
-      const expected = replayPlayoffs(
-        state.run.result.league,
-        state.run.seasonSeed,
-        gameCount,
-        candidate.playedGames as
-          NonNullable<Run["seasonProgress"]>["playedGames"] | undefined,
-      );
+      const reusablePlayoffs =
+        verifiedPlayoffs &&
+        gameCount === playoffGameCount(verifiedPlayoffs) &&
+        JSON.stringify(candidate.playedGames ?? {}) ===
+          JSON.stringify(verifiedPlayoffs.playedGames ?? {})
+          ? verifiedPlayoffs
+          : undefined;
+      const expected =
+        reusablePlayoffs ??
+        replayPlayoffs(
+          state.run.result.league,
+          state.run.seasonSeed,
+          gameCount,
+          candidate.playedGames as
+            NonNullable<Run["seasonProgress"]>["playedGames"] | undefined,
+        );
       if (JSON.stringify(candidate) !== JSON.stringify(expected)) return fail();
       state.run.playoffs = expected;
     } catch {
@@ -508,11 +522,27 @@ function readGame(
             signal.throwIfAborted();
             const archives =
               state.franchise?.history.filter((season) => season.replay) ?? [];
-            const currentGames = state.run.seasonProgress
+            const activeGames = state.run.seasonProgress
               ? state.run.seasonProgress.completedRounds * 15
               : raw.result !== null
                 ? 1230
                 : 0;
+            // Offseason saves contain the completed season twice. Reuse only
+            // an archive with exactly matching engine inputs; every archive
+            // still gets replayed and fully validated below.
+            const currentArchive =
+              activeGames === 1230 && state.franchise?.phase === "offseason"
+                ? archives.find(
+                    (season) =>
+                      season.year === state.franchise!.year &&
+                      hasMatchingSeasonInputs(
+                        state.run,
+                        season.seasonSeed,
+                        season.replay!,
+                      ),
+                  )
+                : undefined;
+            const currentGames = currentArchive ? 0 : activeGames;
             const archiveGames = archives.map(
               (season) =>
                 1230 +
@@ -564,7 +594,19 @@ function readGame(
             }
             const activeProgress = (completed: number) =>
               reportProgress(completedGames + completed, totalGames);
-            let replay: SeasonResult | undefined;
+            const verifiedCurrent = currentArchive
+              ? verifiedArchives.get(currentArchive.year)
+              : undefined;
+            // Keep active boxes and history independent, as separate replays did.
+            let replay: SeasonResult | undefined = verifiedCurrent
+              ? structuredClone(verifiedCurrent.regular)
+              : undefined;
+            if (replay?.league) {
+              // Original first-year clubs and reconstructed archive clubs have
+              // different field ordering. Retain the active engine's exact
+              // header so strict saved-result comparison stays byte-identical.
+              replay.league.teams = seasonTeams(state.run);
+            }
             if (state.run.seasonProgress && currentGames > 0) {
               const progress = state.run.seasonProgress;
               const builder = seasonBuilder(
@@ -587,7 +629,14 @@ function readGame(
                 signal,
               );
             signal.throwIfAborted();
-            const loaded = validateSavedGame(parsed, replay, verifiedArchives);
+            const loaded = validateSavedGame(
+              parsed,
+              replay,
+              verifiedArchives,
+              verifiedCurrent
+                ? structuredClone(verifiedCurrent.playoffs)
+                : undefined,
+            );
             onProgress(totalGames, totalGames);
             return loaded;
           } catch (error) {

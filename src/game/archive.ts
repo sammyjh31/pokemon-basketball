@@ -8,8 +8,34 @@ import type {
   Run,
   SeasonResult,
 } from "./types";
-import { simulateSeason, simulateSeasonAsync } from "./season";
+import { seasonBuilder, simulateSeason, simulateSeasonAsync } from "./season";
 import { simulateMatch } from "./match";
+import { validateLeagueTeams } from "./franchiseValidation";
+
+/** Compare actual engine inputs, never the saved scores or totals being checked.
+ * Building an empty projection identifies the rules and clubs without playing games.
+ */
+export function hasMatchingSeasonInputs(
+  run: Run,
+  seasonSeed: number,
+  replay: Pick<SeasonReplayArchive, "teams" | "seasonModel" | "playedGames">,
+): boolean {
+  if (
+    run.seasonSeed !== seasonSeed ||
+    (run.seasonProgress && run.seasonProgress.completedRounds !== 82)
+  )
+    return false;
+  const expected = seasonBuilder({ ...run, result: null }).finish();
+  return (
+    expected.modelVersion === replay.seasonModel &&
+    JSON.stringify(
+      validateLeagueTeams(expected.league!.teams, run.includeLegends),
+    ) ===
+      JSON.stringify(validateLeagueTeams(replay.teams, run.includeLegends)) &&
+    JSON.stringify(run.seasonProgress?.playedGames ?? {}) ===
+      JSON.stringify(replay.playedGames)
+  );
+}
 
 /** Store inputs, player totals and the small bracket; simulated boxes stay derived. */
 export function captureSeasonReplay(run: Run): SeasonReplayArchive {

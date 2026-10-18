@@ -8,9 +8,14 @@ import {
 import type { Player, Team } from "./matchLineups";
 import { teamLeadership, type TeamLeadership } from "./playerPersonality";
 interface Cache {
-  context: string;
+  tactic: Team["config"]["tactic"];
+  defense: Team["config"]["defense"];
+  abilities: boolean;
+  familiarity: number;
+  personality: number;
+  playerBits: Map<Player, number>;
   bonds?: import("./teammateChemistry").PairBonds;
-  lineups: Map<string, LineupChemistry>;
+  lineups: Map<number | string, LineupChemistry>;
   morale?: MoraleRoster;
   leadership?: TeamLeadership;
 }
@@ -33,16 +38,26 @@ export function getMatchChemistry(
     team.config.moraleVersion === 1
       ? (team.config.morale ?? EMPTY_BONDS)
       : undefined;
-  const context = `${team.config.tactic}:${team.config.defense}:${abilities}:${familiarity}:${team.config.personalityVersion ?? 0}`;
+  const { tactic, defense } = team.config;
+  const personality = team.config.personalityVersion ?? 0;
   let stored = cache.get(team);
   if (
     !stored ||
-    stored.context !== context ||
+    stored.tactic !== tactic ||
+    stored.defense !== defense ||
+    stored.abilities !== abilities ||
+    stored.familiarity !== familiarity ||
+    stored.personality !== personality ||
     stored.bonds !== bonds ||
     stored.morale !== morale
   ) {
     stored = {
-      context,
+      tactic,
+      defense,
+      abilities,
+      familiarity,
+      personality,
+      playerBits: new Map(team.players.slice(0, 30).map((p, i) => [p, 1 << i])),
       bonds,
       morale,
       leadership: teamLeadership(team.config),
@@ -50,10 +65,25 @@ export function getMatchChemistry(
     };
     cache.set(team, stored);
   }
-  const key = floor
-    .map((p) => p.box.pokemonId)
-    .sort((a, b) => a - b)
-    .join(",");
+  // Players stay fixed within a match. A bitset identifies an unordered group
+  // without allocating and sorting species IDs for every candidate lineup.
+  let bits = 0;
+  let knownGroup = true;
+  for (const player of floor) {
+    const bit = stored.playerBits.get(player);
+    if (bit === undefined || (bits & bit) !== 0) {
+      knownGroup = false;
+      break;
+    }
+    bits |= bit;
+  }
+  // Preserve duplicate validation and support callers with an external player.
+  const key = knownGroup
+    ? bits
+    : floor
+        .map((p) => p.box.pokemonId)
+        .sort((a, b) => a - b)
+        .join(",");
   let result = stored.lineups.get(key);
   if (!result) {
     result = evaluateLineupChemistry(

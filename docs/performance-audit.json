@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-18",
+  "baselineRevision": "1c533fb72463379683a761dffed1ee56486167f8",
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "method": {
+    "warmupMatches": 8,
+    "moduleLoadingTimed": false,
+    "cpuProfileEnabled": true,
+    "otherCpuHeavyTestsRunning": false,
+    "samplesPerPhase": 1,
+    "scope": "Engine timings through Vite SSR; excludes browser startup and storage I/O. Both measurements used the same profiling and warmup procedure.",
+    "saveFixture": "Unchanged generated two-year offseason franchise with complete retained regular-season and playoff history. The full export is not committed; the input SHA identifies the local fixture."
+  },
+  "measurements": [
+    {
+      "phase": "season",
+      "beforeMs": 63898.513208,
+      "afterMs": 49928.719084000004,
+      "lessTimePercent": 21.862471319991517,
+      "speedup": 1.2797947630200013,
+      "fullOutputSha256": "25611d732e06cd9650af0570a4164bc8bdd4350e20f818678324a8a6e97c9f47",
+      "serializedCharacters": 4272802
+    },
+    {
+      "phase": "save",
+      "beforeMs": 178060.535167,
+      "afterMs": 88636.581083,
+      "lessTimePercent": 50.221096999473104,
+      "speedup": 2.008883160782823,
+      "fullOutputSha256": "f3578b43cc058795c8a25b9abb12cbd12b9fc396896c61365283fd2356dff18f",
+      "serializedCharacters": 7660379,
+      "inputSha256": "b8e21aff511fab31c90848ecdc16dccdac56381630163fccf0d8e534d869a022",
+      "uniqueGamesVerified": 2620
+    }
+  ],
+  "implementationRevision": "379cc5c216f1a51b4f36f6c547a5a0189e46cf36"
+}

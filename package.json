@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:e2e": "playwright test",
+    "performance:audit": "node scripts/performance-audit.mjs",
     "data:import": "python scripts/import-pokemon.py"
   },
   "dependencies": {
