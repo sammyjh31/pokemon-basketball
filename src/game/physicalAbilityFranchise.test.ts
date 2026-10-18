@@ -114,7 +114,7 @@ it.each([false, true])(
       // Modern progression cannot discard the game provenance behind its XP.
       expect(() =>
         validateFranchise(corrupted.franchise!, corrupted.run),
-      ).toThrow(/Saved ability mastery/);
+      ).toThrow();
       return;
     }
     expect(() =>

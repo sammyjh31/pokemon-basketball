@@ -63,6 +63,7 @@ describe("persistent ability mastery lifecycle", () => {
         job.fixtures,
         teams.map((t) => ROSTER_SLOTS.map((slot) => t.roster[slot]!)),
         run.seasonSeed,
+        run.courtVersion,
       ),
     ).toEqual(facts);
     expect(

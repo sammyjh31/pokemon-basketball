@@ -2136,8 +2136,8 @@ export function simulateMatch(
         return;
       }
       // Finish counting only after pressure and illegal-screen turnovers are resolved.
-      if (courtV4 && court && isRollAttack(court.sequence))
-        result.typeTactics![offense.side].rolls++;
+      if (courtV4 && result.typeTactics && court && isRollAttack(court.sequence))
+        result.typeTactics[offense.side].rolls++;
       const intentional =
         isClutch &&
         margin(defense) < -2 &&

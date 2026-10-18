@@ -85,6 +85,19 @@ it("counts screened finisher attacks from real court sequences in the new rules"
   expect(rolls).toBeGreaterThan(0);
 });
 
+it("simulates new court rules when an older configuration omits tactical stats", () => {
+  const teams = clubs().map((team) => {
+    const updated = { ...team, courtVersion: 4 as const };
+    delete updated.matchupVersion;
+    delete updated.typeTacticsVersion;
+    return updated;
+  });
+  const match = simulateMatch(teams[0], teams[1], 19);
+  expect(match.typeTactics).toBeUndefined();
+  expect(match.homeScore + match.awayScore).toBeGreaterThan(0);
+  expect(match.insights!.court!.some(isRollAttack)).toBe(true);
+});
+
 it("earns season milestones for stars and rotation players while preserving legacy XP", () => {
   const original = retainMastery({
     ...insightTeams[0],
