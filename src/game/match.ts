@@ -61,7 +61,7 @@ import {
 } from "./coachPolicy";
 import { getCoach, validateCoach } from "./trainerCoaches";
 import { resolveCourtPossession } from "./courtPossession";
-import { isCourtVersion, type CourtSequence } from "./courtTypes";
+import { isCourtVersion, isRollAttack, type CourtSequence } from "./courtTypes";
 import {
   bodyProfile,
   matchupEdges,
@@ -206,7 +206,7 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
         config.matchupVersion === 1
           ? bodyProfile(
               POKEMON_BY_ID.get(pokemonId)!,
-              config.courtVersion === 3,
+              (config.courtVersion ?? 0) >= 3,
             )
           : undefined,
       typeEdges: new Map(),
@@ -474,9 +474,10 @@ export function simulateMatch(
   const flowNotes: string[] = [];
   const courtEnabled = home.courtVersion !== undefined;
   // Version 2 adds ball pressure, shot-zone intent, catch assists and foul spreading.
-  const courtV2 = home.courtVersion === 2 || home.courtVersion === 3;
+  const courtV2 = (home.courtVersion ?? 0) >= 2;
   // Version 3 keeps v2 rules and adds the size/rebound and blowout balance pass.
-  const courtV3 = home.courtVersion === 3;
+  const courtV3 = (home.courtVersion ?? 0) >= 3;
+  const courtV4 = (home.courtVersion ?? 0) >= 4;
   // Game flow on court v2 and v3 adds zone shells, cuts, post seals and form.
   const playDepth = flow !== undefined && courtV2;
   const bodyEnabled = home.matchupVersion === 1;
@@ -1437,18 +1438,22 @@ export function simulateMatch(
     if (!flow || !coach) return;
     const state = timeoutState.get(team)!;
     const remaining = periodTicks * 7.5 - courtSecondsInPeriod;
-    const reason: TimeoutReason | undefined = timeoutDecision(coach, {
-      period,
-      remaining,
-      untilWindow: 60 - (elapsedSeconds() % 60),
-      margin: margin(team),
-      run: runAgainst.get(team)!,
-      energy: floorEnergy(team),
-      left: state.left,
-      fourthUsed: state.fourth,
-      restUsedThisPeriod: state.restPeriod === period,
-      lateUsedThisPeriod: state.latePeriod === period,
-    });
+    const reason: TimeoutReason | undefined = timeoutDecision(
+      coach,
+      {
+        period,
+        remaining,
+        untilWindow: 60 - (elapsedSeconds() % 60),
+        margin: margin(team),
+        run: runAgainst.get(team)!,
+        energy: floorEnergy(team),
+        left: state.left,
+        fourthUsed: state.fourth,
+        restUsedThisPeriod: state.restPeriod === period,
+        lateUsedThisPeriod: state.latePeriod === period,
+      },
+      courtV4,
+    );
     if (!reason) return;
     state.left--;
     if (period === 3) state.fourth++;
@@ -2130,6 +2135,9 @@ export function simulateMatch(
           );
         return;
       }
+      // Finish counting only after pressure and illegal-screen turnovers are resolved.
+      if (courtV4 && court && isRollAttack(court.sequence))
+        result.typeTactics![offense.side].rolls++;
       const intentional =
         isClutch &&
         margin(defense) < -2 &&

@@ -76,8 +76,8 @@ it("keeps old games free of new evidence and rejects mixed or unsupported court 
   ).toThrow();
   expect(() =>
     simulateMatch(
-      { ...h, courtVersion: 4 as 3 },
-      { ...a, courtVersion: 4 as 3 },
+      { ...h, courtVersion: 5 as 4 },
+      { ...a, courtVersion: 5 as 4 },
       1,
     ),
   ).toThrow();

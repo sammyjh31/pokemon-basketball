@@ -25,6 +25,7 @@ export interface MasteryTeam {
   abilityMastery?: MasteryRoster;
   personalityVersion?: 1;
   engineRules?: { abilities: boolean };
+  courtVersion?: import("./courtTypes").CourtVersion;
 }
 export interface MasteryPlayerReport {
   pokemonId: number;
@@ -197,7 +198,8 @@ export function advanceMastery(
   )
     throw new Error("Invalid ability mastery game minutes.");
   const coach = getCoach(team.coach?.id ?? ""),
-    duration = 48 / (48 + 5 * overtimePeriods);
+    duration = 48 / (48 + 5 * overtimePeriods),
+    pace = (team.courtVersion ?? 0) >= 4 ? 4 : 1;
   return Object.fromEntries(
     all.map((id) => {
       const box = boxes.find((b) => b.pokemonId === id)!,
@@ -232,9 +234,10 @@ export function advanceMastery(
           Math.min(uses, 24) * 0.015 +
           Math.min(contacts, 20) * 0.01 +
           Math.min(motion, 10) * 0.01) *
-          learning,
+          learning *
+          pace,
         0,
-        1.5,
+        1.5 * pace,
       );
       return [id, round(Math.min(1000, before + gained))];
     }),

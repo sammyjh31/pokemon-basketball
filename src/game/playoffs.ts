@@ -88,7 +88,7 @@ export function createPlayoffs(
     )
   )
     throw new Error("Finish the full regular season before starting playoffs.");
-  const balanced = league.teams[0].courtVersion === 3;
+  const balanced = (league.teams[0].courtVersion ?? 0) >= 3;
   // Version 3 ties: head-to-head among the tied clubs, point differential, then a
   // seeded coin flip. Earlier versions fell back to team ID, which favoured club 0.
   const headToHead = new Map<number, number>();
@@ -246,7 +246,7 @@ function advanceWinners(playoffs: Playoffs, teams: LeagueTeam[]) {
   playoffs.finalsMvp = selectFinalsMvp(
     playoffs.finalsPlayers,
     finals.winnerId,
-    teams[0]?.courtVersion === 3,
+    (teams[0]?.courtVersion ?? 0) >= 3,
   );
 }
 

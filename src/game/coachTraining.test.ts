@@ -209,7 +209,7 @@ describe("automatic coach training", () => {
           1,
           state.run.seasonSeed,
           p.training!.plan,
-          teams[0].courtVersion === 3,
+          (teams[0].courtVersion ?? 0) >= 3,
         ).changes,
       );
     }
@@ -224,7 +224,7 @@ describe("automatic coach training", () => {
               1,
               state.run.seasonSeed,
               undefined,
-              teams[0].courtVersion === 3,
+              (teams[0].courtVersion ?? 0) >= 3,
             ).changes,
           ),
       ),
@@ -247,7 +247,7 @@ describe("automatic coach training", () => {
         1,
         state.run.seasonSeed,
         state.franchise.trainingPlans![players[0].pokemonId],
-        teams[0].courtVersion === 3,
+        (teams[0].courtVersion ?? 0) >= 3,
       ).changes,
     );
   });

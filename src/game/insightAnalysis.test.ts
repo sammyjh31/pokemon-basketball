@@ -18,6 +18,75 @@ import { playerProfile } from "./playerProfile";
 import { simulateMatch } from "./match";
 
 describe("recorded insight calculations", () => {
+  it("only replays the selected club's schedule and caches reports for each club independently", async () => {
+    const league = insightLeague(4);
+    league.teams.push({ ...league.teams[1], id: 2, name: "Third club" });
+    league.games[1] = { ...league.games[1], homeTeamId: 1, awayTeamId: 2 };
+    league.games[3] = { ...league.games[3], homeTeamId: 2, awayTeamId: 1 };
+    const seen: string[] = [],
+      progress: number[][] = [];
+    const resolveMatch = (game: (typeof league.games)[number]) => {
+      seen.push(game.id);
+      return insightMatch();
+    };
+    const first = await buildSeasonInsights(league, {
+      teamId: 0,
+      resolveMatch,
+      onProgress: (done, total) => progress.push([done, total]),
+    });
+    expect(seen).toEqual(["g0", "g2"]);
+    expect(first.games).toBe(2);
+    expect(first.players["0:1"].map((g) => g.gameId)).toEqual(["g0", "g2"]);
+    expect(progress.at(-1)).toEqual([2, 2]);
+    const other = await buildSeasonInsights(league, {
+      teamId: 1,
+      resolveMatch,
+    });
+    expect(other.games).toBe(4);
+    const before = seen.length;
+    expect(await buildSeasonInsights(league, { teamId: 0, resolveMatch })).toBe(
+      first,
+    );
+    expect(seen).toHaveLength(before);
+  });
+  it("replays frozen mastery when no external resolver is supplied", async () => {
+    const league = insightLeague();
+    league.teams = league.teams.map((team) => ({
+      ...team,
+      abilityVersion: 1,
+      abilityMasteryVersion: 1,
+      abilityMastery: Object.fromEntries(
+        Object.values(team.roster).map((id) => [id, 0]),
+      ),
+    }));
+    const mastery = { home: Array(8).fill(700), away: Array(8).fill(400) };
+    const match = simulateMatch(league.teams[0], league.teams[1], 712, {
+      mastery,
+    });
+    league.games = [
+      {
+        ...league.games[0],
+        seed: 712,
+        mastery,
+        homeScore: match.homeScore,
+        awayScore: match.awayScore,
+        overtimePeriods: match.overtimePeriods,
+      },
+    ];
+    const data = await buildSeasonInsights(league);
+    expect(data.detailGames).toBe(1);
+    expect(data.unavailableGames).toBe(0);
+    expect(data.players["0:1"][0].points).toBe(
+      match.homeBox.find((p) => p.playerId === "0:1")!.points,
+    );
+    expect(
+      data.defense.map((p) => p.expectedPointsAllowed).sort((a, b) => a - b),
+    ).toEqual(
+      match
+        .insights!.defense.map((p) => p.expectedPointsAllowed)
+        .sort((a, b) => a - b),
+    );
+  });
   it("replays a game with its frozen pregame chemistry instead of the season opening or final bank", async () => {
     const league = insightLeague();
     league.teams = league.teams.map((team) => ({

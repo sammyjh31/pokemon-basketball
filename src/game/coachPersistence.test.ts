@@ -126,7 +126,7 @@ it.each([false, true])(
           1,
           career.localSeasonSeed(d),
           row.training!.plan,
-          team.courtVersion === 3,
+          (team.courtVersion ?? 0) >= 3,
         ).changes,
       );
     }

@@ -118,8 +118,22 @@ export type InsightMatchResolver = (
 ) => LeagueMatch | undefined;
 const seasonCache = new WeakMap<
   LeagueResult,
-  { resolver?: InsightMatchResolver; result: SeasonInsights }
+  {
+    resolver?: InsightMatchResolver;
+    results: Map<number | undefined, SeasonInsights>;
+  }
 >();
+/** Compact reports survive tab switches, but never cross an authoritative resolver. */
+export function cachedSeasonInsights(
+  league: LeagueResult,
+  resolveMatch?: InsightMatchResolver,
+  teamId?: number,
+): SeasonInsights | undefined {
+  const cached = seasonCache.get(league);
+  return cached?.resolver === resolveMatch
+    ? cached?.results.get(teamId)
+    : undefined;
+}
 const yieldToBrowser = () =>
   new Promise<void>((resolve) => setTimeout(resolve, 0));
 
@@ -210,20 +224,30 @@ function averageRecordedChemistry(
 export async function buildSeasonInsights(
   league: LeagueResult,
   options: {
+    /** Omit only when a caller explicitly needs to analyze the entire league. */
+    teamId?: number;
     resolveMatch?: InsightMatchResolver;
     signal?: AbortSignal;
     onProgress?: (done: number, total: number) => void;
   } = {},
 ): Promise<SeasonInsights> {
-  const { signal, onProgress, resolveMatch } = options;
+  const { signal, onProgress, resolveMatch, teamId } = options;
   signal?.throwIfAborted();
-  const cached = seasonCache.get(league);
-  if (cached && cached.resolver === resolveMatch) {
-    onProgress?.(league.games.length, league.games.length);
-    return cached.result;
+  const cached = cachedSeasonInsights(league, resolveMatch, teamId);
+  if (cached) {
+    onProgress?.(cached.games, cached.games);
+    return cached;
   }
+  const games = league.games
+    .filter(
+      (game) =>
+        teamId === undefined ||
+        game.homeTeamId === teamId ||
+        game.awayTeamId === teamId,
+    )
+    .sort((a, b) => a.round - b.round);
   const data: SeasonInsights = {
-    games: league.games.length,
+    games: games.length,
     detailGames: 0,
     missingTelemetryGames: 0,
     unavailableGames: 0,
@@ -234,7 +258,6 @@ export async function buildSeasonInsights(
   const teams = new Map(league.teams.map((team) => [team.id, team]));
   const lineups = new Map<string, SeasonLineup>(),
     defense = new Map<string, SeasonDefense>();
-  const games = [...league.games].sort((a, b) => a.round - b.round);
   onProgress?.(0, games.length);
   for (const [index, game] of games.entries()) {
     signal?.throwIfAborted();
@@ -250,6 +273,7 @@ export async function buildSeasonInsights(
             scouting: game.scouting,
             chemistry: game.chemistry,
             morale: game.morale,
+            mastery: game.mastery,
             flow: game.flow,
           });
       if (
@@ -365,6 +389,14 @@ export async function buildSeasonInsights(
   signal?.throwIfAborted();
   data.lineups = [...lineups.values()].sort((a, b) => b.seconds - a.seconds);
   data.defense = [...defense.values()].sort((a, b) => b.matchups - a.matchups);
-  seasonCache.set(league, { resolver: resolveMatch, result: data });
+  const previous = seasonCache.get(league);
+  const results =
+    previous && previous.resolver === resolveMatch
+      ? previous.results
+      : new Map();
+  results.set(teamId, data);
+  // Bound memory when browsing many teams: cache summaries, never full tracking logs.
+  if (results.size > 8) results.delete(results.keys().next().value);
+  seasonCache.set(league, { resolver: resolveMatch, results });
   return data;
 }

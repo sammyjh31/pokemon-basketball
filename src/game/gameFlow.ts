@@ -122,7 +122,9 @@ export function scheduleFlow(
   for (const fixture of fixtures) {
     const day = gameDay(fixture);
     const rest = (id: number) =>
-      lastDay.has(id) ? Math.max(0, Math.min(3, day - lastDay.get(id)! - 1)) : 3;
+      lastDay.has(id)
+        ? Math.max(0, Math.min(3, day - lastDay.get(id)! - 1))
+        : 3;
     const awayTrip = Math.min(6, (road.get(fixture.awayTeamId) ?? 0) + 1);
     flows.set(fixture.id, {
       stage: "regular",
@@ -144,7 +146,12 @@ export function playoffFlow(
     higherSeedId: number | null;
     higherSeedWins: number;
     lowerSeedWins: number;
-    games: { homeTeamId: number; homeScore: number; awayScore: number; awayTeamId: number }[];
+    games: {
+      homeTeamId: number;
+      homeScore: number;
+      awayScore: number;
+      awayTeamId: number;
+    }[];
   },
   homeTeamId: number,
   bestOf: number,
@@ -207,7 +214,7 @@ export function validateGameFlowFixture(value: unknown): GameFlowFixture {
         (!Number.isInteger(p.previous.winnerId) ||
           !Number.isInteger(p.previous.margin) ||
           p.previous.margin < 1)) ||
-      (p.game > 1) !== (p.previous !== undefined)
+      p.game > 1 !== (p.previous !== undefined)
     )
       throw new Error("Invalid playoff game flow context.");
   }
@@ -238,7 +245,8 @@ const CREWS: RefereeCrew[] = [
 /** 12/20/36/20/12 crew mix; playoff crews let more contact go by half a step. */
 export function refereeCrew(seed: number, stage: GameFlowFixture["stage"]) {
   const roll = flowHash(seed, SALT_CREW);
-  let index = roll < 0.12 ? 0 : roll < 0.32 ? 1 : roll < 0.68 ? 2 : roll < 0.88 ? 3 : 4;
+  let index =
+    roll < 0.12 ? 0 : roll < 0.32 ? 1 : roll < 0.68 ? 2 : roll < 0.88 ? 3 : 4;
   if (stage === "playoff") index = Math.max(0, index - 1);
   return CREWS[index];
 }
@@ -282,7 +290,9 @@ const FIELD_ORDER: FieldCondition[] = [
   "misty",
   "psychic",
 ];
-export function arenaCondition(team: Pick<LeagueTeam, "id" | "roster">): FieldCondition {
+export function arenaCondition(
+  team: Pick<LeagueTeam, "id" | "roster">,
+): FieldCondition {
   if (team.id !== 0) return ARENAS[team.id] ?? "neutral";
   const counts = new Map<FieldCondition, number>();
   for (const slot of ROSTER_SLOTS) {
@@ -422,7 +432,9 @@ export function fieldEffects(
     movement = 1;
   if (types.some((t) => COMFORT[condition].includes(t))) drain *= 0.95;
   else if (types.some((t) => DISCOMFORT[condition].includes(t))) drain *= 1.04;
-  const group = physicalAbilities ? weatherGroup(pokemonId, condition) : undefined;
+  const group = physicalAbilities
+    ? weatherGroup(pokemonId, condition)
+    : undefined;
   // Physical ability multipliers are 1.08 movement and 0.82 drain; matching weather
   // lifts them to 1.12 and 0.75 without changing the base profile.
   if (group === "speed") movement *= 1.12 / 1.08;
@@ -543,8 +555,10 @@ export interface TimeoutState {
 export function timeoutDecision(
   coach: Pick<TrainerCoach, "adaptability" | "rest">,
   s: TimeoutState,
+  protectPeriodBreaks = false,
 ): TimeoutReason | undefined {
   if (s.left <= 0) return undefined;
+  if (protectPeriodBreaks && s.remaining <= 0) return undefined;
   const fourth = s.period === 3;
   if (fourth && s.fourthUsed >= 3) return undefined;
   const finalStretch = s.period >= 3 && s.remaining <= 180;
@@ -556,6 +570,9 @@ export function timeoutDecision(
     !s.lateUsedThisPeriod
   )
     return "late";
+  // A free period break is imminent; keep the budget for a useful stoppage.
+  // A close late-game inbound above is still valuable before the buzzer.
+  if (protectPeriodBreaks && s.remaining <= 24) return undefined;
   // Keep two timeouts for the final three minutes until they arrive.
   if (s.left <= (finalStretch ? 0 : 2)) return undefined;
   if (s.run >= Math.round(10 - 4 * coach.adaptability)) return "run";
@@ -577,7 +594,13 @@ export function alternateTactic(
   const profiles = ROSTER_SLOTS.flatMap((slot) => {
     const mon = POKEMON_BY_ID.get(team.roster[slot]!);
     return mon
-      ? [moraleProfile(playerProfile(mon, team.development?.[mon.id]), team, mon.id)]
+      ? [
+          moraleProfile(
+            playerProfile(mon, team.development?.[mon.id]),
+            team,
+            mon.id,
+          ),
+        ]
       : [];
   });
   if (!profiles.length) return undefined;

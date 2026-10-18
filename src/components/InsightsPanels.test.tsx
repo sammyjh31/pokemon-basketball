@@ -120,6 +120,69 @@ describe("game insights", () => {
   });
 });
 describe("season insights", () => {
+  it("analyzes the displayed club when a new league no longer contains the previous selection", async () => {
+    const league = insightLeague(1);
+    league.teams = [
+      { ...league.teams[0], id: 2, name: "Third club" },
+      league.teams[1],
+    ];
+    const resolveMatch = () => insightMatch();
+    const view = render(
+      <SeasonInsightsPanel league={league} resolveMatch={resolveMatch} />,
+    );
+    view.rerender(
+      <SeasonInsightsPanel
+        league={insightLeague(1)}
+        resolveMatch={resolveMatch}
+      />,
+    );
+    expect(screen.getByLabelText("Insight team")).toHaveValue("0");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Build season insights" }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("1 games checked"),
+    );
+    expect(
+      screen.getByRole("table", { name: "Player game trends" }),
+    ).toHaveTextContent("10");
+  });
+  it("lets players choose a team before building and never replays unrelated games", async () => {
+    const league = insightLeague(3);
+    league.teams.push({ ...league.teams[1], id: 2, name: "Third club" });
+    league.games[1] = { ...league.games[1], homeTeamId: 1, awayTeamId: 2 };
+    const seen: string[] = [];
+    render(
+      <SeasonInsightsPanel
+        league={league}
+        resolveMatch={(game) => {
+          seen.push(game.id);
+          return insightMatch();
+        }}
+      />,
+    );
+    expect(screen.getByLabelText("Insight team")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("2 completed games");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Build season insights" }),
+    );
+    await screen.findByRole("table", { name: "Player game trends" });
+    expect(seen).toEqual(["g0", "g2"]);
+    fireEvent.change(screen.getByLabelText("Insight team"), {
+      target: { value: "2" },
+    });
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("1 completed games"),
+    );
+    expect(
+      screen.queryByRole("table", { name: "Player game trends" }),
+    ).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Insight team"), {
+      target: { value: "0" },
+    });
+    await screen.findByRole("table", { name: "Player game trends" });
+    expect(seen).toEqual(["g0", "g2"]);
+  });
   it("builds on demand, reports samples, and exposes player game trends with DNPs", async () => {
     const league = insightLeague(2);
     render(

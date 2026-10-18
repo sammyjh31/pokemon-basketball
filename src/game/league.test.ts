@@ -95,7 +95,7 @@ describe("one shared league", () => {
       // New runs use court version 3 honors: Game Score and seeded tiebreaks.
       rules = { balanced: true as const, seed: run.seasonSeed },
       honors = leagueHonors(league.players, league.standings, 82, rules);
-    expect(league.teams[0].courtVersion).toBe(3);
+    expect(league.teams[0].courtVersion).toBe(4);
     expect(honors.awards).toEqual(league.awards);
     expect(league.awards).toHaveLength(6);
     for (const award of league.awards) {

@@ -46,7 +46,7 @@ it("enables the same model on all new clubs and CPU regular-season and playoff g
   expect(() => validateLeagueTeams(mixed, true)).toThrow();
   expect(() =>
     validateLeagueTeams(
-      teams.map((t) => ({ ...t, courtVersion: 4 as 3 })),
+      teams.map((t) => ({ ...t, courtVersion: 5 as 4 })),
       true,
     ),
   ).toThrow();
@@ -62,7 +62,7 @@ it("retains current and historical rule flags through solo saves and archive rec
       value = "";
     },
   };
-  for (const version of [3, 2, 1, undefined] as const) {
+  for (const version of [4, 3, 2, 1, undefined] as const) {
     const r = {
         ...run(),
         courtVersion: version,
@@ -101,6 +101,6 @@ it("opts new local leagues in, but never upgrades a saved local career implicitl
   delete d.gameFlowVersion;
   expect(parseLocalLeague(JSON.stringify(d)).courtVersion).toBeUndefined();
   expect(() =>
-    parseLocalLeague(JSON.stringify({ ...d, courtVersion: 4 })),
+    parseLocalLeague(JSON.stringify({ ...d, courtVersion: 5 })),
   ).toThrow();
 });

@@ -1,5 +1,6 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import type { LeagueMatch, LeagueTeam } from "../game/types";
+import { isRollAttack } from "../game/courtTypes";
 export function TypeGameSummary({
   match,
   home,
@@ -82,7 +83,14 @@ export function TypeGameSummary({
                     <td key={side}>
                       {key === "coverage"
                         ? `${match.typeTactics![side].switches} / ${match.typeTactics![side].stays}`
-                        : match.typeTactics![side][key]}
+                        : key === "rolls" && match.insights?.court
+                          ? match.insights.court.filter(
+                              (sequence) =>
+                                sequence.offenseTeamId ===
+                                  (side === "home" ? home.id : away.id) &&
+                                isRollAttack(sequence),
+                            ).length
+                          : match.typeTactics![side][key]}
                     </td>
                   ))}
                 </tr>
@@ -116,7 +124,8 @@ export function TypeGameSummary({
             passes out of help are offensive decisions; switches and help
             rotations are defensive decisions. Scouting uses only completed
             meetings, gives recent games more weight, and carries into each
-            playoff series.
+            playoff series. In recorded court sequences, roller attacks count
+            screen-setter finishes, excluding turnovers.
           </p>
         </div>
       )}

@@ -310,7 +310,7 @@ export function beginLocalOffseason(
       year,
       localSeasonSeed(draft),
       assignments[player.pokemonId]?.plan,
-      draft.courtVersion === 3,
+      (draft.courtVersion ?? 0) >= 3,
     ).changes,
     ...(assignments[player.pokemonId]
       ? { training: assignments[player.pokemonId] }
@@ -1351,7 +1351,7 @@ export function parseLocalCareer(
     // cutoff tie here; court-v3 games and exact seeds are replayed below.
     const cutoffWins = ranked[draft.options.format.playoffTeams - 1].wins;
     const qualified =
-      teams[0].courtVersion === 3
+      (teams[0].courtVersion ?? 0) >= 3
         ? ranked.filter((s) => s.wins >= cutoffWins)
         : ranked.slice(0, draft.options.format.playoffTeams);
     if (
@@ -1439,7 +1439,7 @@ export function parseLocalCareer(
       ...(row.coachRecords !== undefined
         ? {
             coachRecords:
-              teams[0].courtVersion === 3
+              (teams[0].courtVersion ?? 0) >= 3
                 ? undefined
                 : validateCoachRecords(
                     row.coachRecords,
@@ -1468,7 +1468,7 @@ export function parseLocalCareer(
     };
     let finalTeams = teams;
     if (
-      teams[0].courtVersion === 3 ||
+      (teams[0].courtVersion ?? 0) >= 3 ||
       teams[0].chemistryGrowthVersion === 1 ||
       teams[0].abilityMasteryVersion === 1 ||
       row.newsGames !== undefined ||
@@ -1483,7 +1483,7 @@ export function parseLocalCareer(
       const league = season.finish().league!;
       const playoffs = replayPlayoffs(league, row.seasonSeed, playoffGames);
       if (playoffs.championId !== championId) fail();
-      if (teams[0].courtVersion === 3 && row.coachRecords !== undefined)
+      if ((teams[0].courtVersion ?? 0) >= 3 && row.coachRecords !== undefined)
         archived.coachRecords = validateCoachRecords(
           row.coachRecords,
           teams,
