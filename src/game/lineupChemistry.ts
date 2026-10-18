@@ -78,7 +78,7 @@ const topTwo = (xs: number[]) =>
   average([...xs].sort((a, b) => b - a).slice(0, 2));
 interface Candidate {
   link: ChemistryLink;
-  bonuses: { id: number; delta: Partial<ChemistryEffects> }[];
+  bonuses: Record<number, Partial<ChemistryEffects>>;
 }
 
 /** Only the active five contribute. Ability adaptations are basketball mechanics, not Pokémon battle rules. */
@@ -255,10 +255,10 @@ export function evaluateLineupChemistry(
           pokemonIds: [a.pokemonId, b.pokemonId],
           description,
         },
-        bonuses: [
-          { id: a.pokemonId, delta: scale(da) },
-          { id: b.pokemonId, delta: scale(db) },
-        ],
+        bonuses: {
+          [a.pokemonId]: scale(da),
+          [b.pokemonId]: scale(db),
+        },
       });
     };
     const inGroup = (mechanic: AbilityMechanic, group: AbilityMechanic[]) =>
@@ -388,10 +388,7 @@ export function evaluateLineupChemistry(
       let best: Candidate | undefined,
         delta = 0;
       for (const candidate of candidates) {
-        const offered =
-          candidate.bonuses.find((b) => b.id === player.pokemonId)?.delta[
-            key
-          ] ?? 0;
+        const offered = candidate.bonuses[player.pokemonId]?.[key] ?? 0;
         if (Math.abs(offered) > Math.abs(delta)) {
           best = candidate;
           delta = offered;

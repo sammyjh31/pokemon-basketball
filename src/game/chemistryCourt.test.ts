@@ -99,3 +99,46 @@ it("refreshes effects after substitutions, scheme changes, and ability toggles",
   refreshLineupChemistry(team);
   expect(players.every((p) => p.chemistry === undefined)).toBe(true);
 });
+
+it("keeps active groups distinct across role order and roster order without stale shared history", () => {
+  const players = [311, 312, 95, 68, 65, 1, 2, 3].map(actor);
+  const team: Team = {
+    config: {
+      ...insightTeams[0],
+      chemistryVersion: 1,
+      chemistryGrowthVersion: 1,
+      chemistryBonds: {},
+      abilityVersion: 1,
+      tactic: "balanced",
+      defense: "man",
+    },
+    players: [...players],
+    floor: players.slice(0, 5),
+    side: "home",
+    fouls: 0,
+    transition: 0,
+  };
+  const original = getMatchChemistry(team)!;
+  expect(original.links.some((link) => link.label === "Plus / Minus")).toBe(
+    true,
+  );
+  team.floor.reverse();
+  team.players.reverse();
+  expect(getMatchChemistry(team)).toBe(original);
+  const reserveUnit = [players[0], ...players.slice(2, 6)];
+  const reserves = getMatchChemistry(team, reserveUnit)!;
+  expect(reserves.links.some((link) => link.label === "Plus / Minus")).toBe(
+    false,
+  );
+  expect(
+    Object.keys(reserves.effects)
+      .map(Number)
+      .sort((a, b) => a - b),
+  ).toEqual([1, 65, 68, 95, 311]);
+  team.config.chemistryBonds = { "311:312": 1000 };
+  expect(getMatchChemistry(team)!.continuity!.sharedMinutes).toBe(100);
+  expect(getMatchChemistry(team, reserveUnit)!.continuity!.sharedMinutes).toBe(
+    0,
+  );
+  expect(() => getMatchChemistry(team, [players[0], players[0]])).toThrow();
+});
