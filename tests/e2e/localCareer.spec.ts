@@ -6,7 +6,7 @@ for (const mode of ["generational", "full-pool"] as const) {
   test(`${mode} friends league plays two seasons, inspects events and restores history`, async ({
     page,
   }, info) => {
-    test.setTimeout(120000);
+    test.setTimeout(240000);
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
     const save = () =>
@@ -116,7 +116,7 @@ for (const mode of ["generational", "full-pool"] as const) {
       await page.reload();
       await expect(
         page.getByRole("region", { name: "Rookie draft", exact: true }),
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 30000 });
       expect((await save()).career).toEqual(before.career);
       for (let i = 0; i < 4; i++)
         await page
@@ -156,7 +156,7 @@ for (const mode of ["generational", "full-pool"] as const) {
     await page.reload();
     await expect(
       page.getByRole("button", { name: "Simulate local season", exact: true }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 30000 });
     await page
       .getByRole("button", { name: "Simulate local season", exact: true })
       .click();

@@ -252,5 +252,91 @@
     }
   ],
   "exactArchiveAppearanceGuard": "passed",
-  "browserVerification": "pending"
+  "browserVerification": {
+    "method": "Complete desktop/mobile run followed by both affected files in fresh browser contexts. Only test restore deadlines and returning-player setup changed; application code did not change.",
+    "fullRun": {
+      "startTime": "2026-10-18T00:52:58.599Z",
+      "duration": 1908068.273,
+      "expected": 34,
+      "skipped": 0,
+      "unexpected": 10,
+      "flaky": 0
+    },
+    "rerun": {
+      "startTime": "2026-10-18T01:26:12.984Z",
+      "duration": 379451.39999999997,
+      "expected": 18,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "coverage": {
+      "passed": 44,
+      "skipped": 0,
+      "total": 44
+    },
+    "repaired": [
+      {
+        "file": "localCareer.spec.ts",
+        "title": "generational friends league plays two seasons, inspects events and restores history",
+        "project": "desktop",
+        "status": "passed"
+      },
+      {
+        "file": "localCareer.spec.ts",
+        "title": "generational friends league plays two seasons, inspects events and restores history",
+        "project": "mobile",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "sets a corrupt save aside and restores the last verified backup",
+        "project": "desktop",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "keeps an oversized save near the storage quota and continues saving",
+        "project": "desktop",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "loads an old-version save and keeps it as the verified backup",
+        "project": "desktop",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "pauses saving in a tab after another tab changes the save",
+        "project": "desktop",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "sets a corrupt save aside and restores the last verified backup",
+        "project": "mobile",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "keeps an oversized save near the storage quota and continues saving",
+        "project": "mobile",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "loads an old-version save and keeps it as the verified backup",
+        "project": "mobile",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "pauses saving in a tab after another tab changes the save",
+        "project": "mobile",
+        "status": "passed"
+      }
+    ],
+    "gameContextDesktopAndMobile": "passed"
+  }
 }

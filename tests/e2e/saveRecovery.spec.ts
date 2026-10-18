@@ -1,5 +1,18 @@
 import { statSync, writeFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+import { ONBOARDING_KEY } from "./returningPlayer";
+
+// Recovery checks start as an existing player, including pages opened by the
+// cross-tab test. Seeding below also preserves this preference after clearing.
+test.beforeEach(({ context }) =>
+  context.addInitScript((key) => {
+    if (!localStorage.getItem(key))
+      localStorage.setItem(
+        key,
+        JSON.stringify({ style: "skipped", checklistDone: true }),
+      );
+  }, ONBOARDING_KEY),
+);
 
 const KEY = "pokemon-basketball:v3";
 const LOCAL_KEY = "pokemon-basketball:local-league:v1";
@@ -66,7 +79,16 @@ async function seed(
           `{"version":3,"run":"${"x".repeat(oversized.length)}"}`,
         );
     },
-    { entries, oversized },
+    {
+      entries: {
+        [ONBOARDING_KEY]: JSON.stringify({
+          style: "skipped",
+          checklistDone: true,
+        }),
+        ...entries,
+      },
+      oversized,
+    },
   );
   await page.goto(path);
   await page.reload();
