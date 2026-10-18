@@ -55,6 +55,12 @@ for (const [mechanic, effect] of Object.entries(profiles))
   );
 const surge = Object.freeze({ ...NEUTRAL_PHYSICAL_ABILITY, movement: 1.05 });
 const fresh = Object.freeze({ ...table.get("fresh")!, movement: 1.03 });
+// A game repeatedly asks for the same pregame mastery and conditional effect.
+// Bound the continuous XP variants; immutable values are safe across all callers.
+const masteredEffects = new WeakMap<
+  Readonly<PhysicalAbilityEffects>,
+  Map<number, Readonly<PhysicalAbilityEffects>>
+>();
 /** Basketball adaptations. Multipliers are applied once at action resolution, never to stored ratings. */
 export function physicalAbilityEffects(
   pokemonId: number,
@@ -71,12 +77,24 @@ export function physicalAbilityEffects(
   const factor = masteryFactor(xp);
   // Keep the exact legacy numbers (and shared neutral object) at zero mastery.
   if (factor === 1 || effect === NEUTRAL_PHYSICAL_ABILITY) return effect;
-  return Object.fromEntries(
-    Object.entries(effect).map(([key, value]) => [
-      key,
-      1 + (value - 1) * factor,
-    ]),
-  ) as unknown as Readonly<PhysicalAbilityEffects>;
+  let variants = masteredEffects.get(effect);
+  const cached = variants?.get(factor);
+  if (cached) return cached;
+  const result = Object.freeze(
+    Object.fromEntries(
+      Object.entries(effect).map(([key, value]) => [
+        key,
+        1 + (value - 1) * factor,
+      ]),
+    ) as unknown as PhysicalAbilityEffects,
+  );
+  if (!variants) {
+    variants = new Map();
+    masteredEffects.set(effect, variants);
+  }
+  if (variants.size >= 256) variants.clear();
+  variants.set(factor, result);
+  return result;
 }
 export function physicalPlayerEffects(player: {
   physicalAbilities?: true;
