@@ -186,6 +186,11 @@ export function createLeague(run: Run): LeagueTeam[] {
     if (run.courtVersion) team.courtVersion = run.courtVersion;
     if (run.matchupVersion === 1) team.matchupVersion = 1;
     if (run.possessionVersion === 1) team.possessionVersion = 1;
+    if (run.gameFlowVersion === 1) {
+      if (run.courtVersion === undefined)
+        throw new Error("Game flow requires court rules.");
+      team.gameFlowVersion = 1;
+    }
   }
   return run.coach && run.evaluationVersion !== 1
     ? assignLeagueCoaches(teams, run.seasonSeed, new Map([[0, run.coach]]))

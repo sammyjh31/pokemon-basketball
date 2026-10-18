@@ -1,0 +1,342 @@
+{
+  "date": "2026-10-17",
+  "method": "One complete 234-file run, followed by every reported failure and setup-blocked case plus affected regressions. Production simulation/replay code was unchanged between these runs.",
+  "files": 234,
+  "fullRun": {
+    "passed": 1271,
+    "failed": 26,
+    "skipped": 3,
+    "seconds": 2571.28
+  },
+  "rerun": {
+    "files": 17,
+    "passed": 34,
+    "failed": 0
+  },
+  "coverage": {
+    "passed": 1300,
+    "intentionallySkipped": 1,
+    "total": 1301
+  },
+  "skipped": [
+    {
+      "file": "src/game/saveSize.test.ts",
+      "title": "keeps the largest 50-season local career (30 clubs) under the parse limit"
+    }
+  ],
+  "repaired": [
+    {
+      "file": "src/components/App.test.tsx",
+      "original": "asks before importing over a saved run (completed: true)",
+      "final": [
+        "asks before importing over a saved run (completed: true)"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/components/App.test.tsx",
+      "original": "restores a completed season and history on refresh",
+      "final": [
+        "restores a completed season and history on refresh"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/components/App.test.tsx",
+      "original": "persists a shared lineup replacing malformed storage through simulation and refresh",
+      "final": [
+        "persists a shared lineup replacing malformed storage through simulation and refresh"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/components/FranchiseApp.test.tsx",
+      "original": "continues a completed league into the next season and restores its careers without recounting challenge attempts",
+      "final": [
+        "continues a completed league into the next season and restores its careers without recounting challenge attempts"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/components/FranchiseApp.test.tsx",
+      "original": "saves an accepted offseason trade, keeps careers, and restores both rosters",
+      "final": [
+        "saves an accepted offseason trade, keeps careers, and restores both rosters"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/components/FranchiseApp.test.tsx",
+      "original": "preserves the offseason franchise and uses its traded rosters when entering and leaving arcade",
+      "final": [
+        "preserves the offseason franchise and uses its traded rosters when entering and leaving arcade"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/components/FranchiseApp.test.tsx",
+      "original": "preserves the season franchise and uses its traded rosters when entering and leaving arcade",
+      "final": [
+        "preserves the season franchise and uses its traded rosters when entering and leaving arcade"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/components/FranchiseApp.test.tsx",
+      "original": "moves keyboard focus to the offseason hub after continuation",
+      "final": [
+        "moves keyboard focus to the offseason hub after continuation"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/components/FranchiseDetails.test.tsx",
+      "original": "labels unavailable old rows honestly while retaining career totals and keyboard dismissal",
+      "final": [
+        "labels unavailable old rows honestly while retaining career totals and keyboard dismissal"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/components/FranchiseDetails.test.tsx",
+      "original": "does not invent old game boxes",
+      "final": [
+        "does not invent old game boxes"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/components/FranchiseDetails.test.tsx",
+      "original": "replays archived games, filters teams and opens a box from frozen clubs",
+      "final": [
+        "replays archived games, filters teams and opens a box from frozen clubs"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/components/FranchiseGamesApp.test.tsx",
+      "original": "connects minutes, training, played fixtures, careers and historical boxes across the franchise UI",
+      "final": [
+        "connects minutes, training, played fixtures, careers and historical boxes across the franchise UI"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/components/FranchiseGamesApp.test.tsx",
+      "original": "records a scheduled playoff game in the bracket and uses its official box",
+      "final": [
+        "records a scheduled playoff game in the bracket and uses its official box"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/components/LocalLeagueMode.test.tsx",
+      "original": "simulates the season and playoffs, restoring the same bracket and champion without rerolling",
+      "final": [
+        "simulates the season and playoffs, restoring the same bracket and champion without rerolling"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/game/chemistryFranchise.test.ts",
+      "original": "restores chemistry season, playoff and career totals, lineup reports and frozen archives",
+      "final": [
+        "restores chemistry season, playoff and career totals, lineup reports and frozen archives"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/game/developmentPersistence.test.ts",
+      "original": "processes an old model-4 offseason without applying growth to its frozen replay",
+      "final": [
+        "processes an old model-4 offseason without applying growth to its frozen replay"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/game/franchisePersistence.test.ts",
+      "original": "cross-checks archived games played after previous game data is discarded",
+      "final": [
+        "cross-checks archived games played after previous game data is discarded"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/game/league.test.ts",
+      "original": "derives every standing and all player totals from the same shared games",
+      "final": [
+        "derives every standing and all player totals from the same shared games"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/game/league.test.ts",
+      "original": "replays arbitrary opponents exactly and keeps the save under 3 MiB",
+      "final": [
+        "replays arbitrary opponents exactly and bounds one-season snapshot growth to 5 MiB"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/game/localLeague.test.ts",
+      "original": "feeds every drafted roster and coach into the existing 1230-game season",
+      "final": [
+        "feeds every drafted roster and coach into the existing 1230-game season"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/game/migration.test.ts",
+      "original": "detects tampered v3 player totals, minutes and awards",
+      "final": [
+        "detects tampered v3 player totals, minutes and awards"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/game/offseason.test.ts",
+      "original": "makes only mutually beneficial CPU trades without touching the user's roster",
+      "final": [
+        "makes only mutually beneficial CPU trades without touching the user's roster"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/game/offseason.test.ts",
+      "original": "runs through reducer entry and freezes developed rosters for the next season",
+      "final": [
+        "runs through reducer entry and freezes developed rosters for the next season"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/game/offseasonMarketPersistence.test.ts",
+      "original": "executes a two-player offer atomically, preserves training ownership and restores every member",
+      "final": [
+        "executes a two-player offer atomically, preserves training ownership and restores every member"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/game/offseasonMarketPersistence.test.ts",
+      "original": "restores a partial draft, rejects forged picks, then keeps released careers across a rookie season",
+      "final": [
+        "restores a partial draft, rejects forged picks, then keeps released careers across a rookie season"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/game/physicalAbilityFranchise.test.ts",
+      "original": "restores physical season, playoff and career totals and advances without changing the archive",
+      "final": [
+        "restores physical season, playoff and career totals and advances without changing the archive (earned history: false)",
+        "restores physical season, playoff and career totals and advances without changing the archive (earned history: true)"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/game/playoffs.test.ts",
+      "original": "derives playoff and Finals statistics from replayable game boxes and awards Finals-only impact",
+      "final": [
+        "derives playoff and Finals statistics from replayable game boxes and awards Finals-only impact"
+      ],
+      "status": "passed"
+    },
+    {
+      "file": "src/game/typeTacticsPersistence.test.ts",
+      "original": "enables tactics when a legacy franchise starts its next season, preserving its archive",
+      "final": [
+        "enables tactics when a legacy franchise starts its next season, preserving its archive"
+      ],
+      "status": "passed"
+    }
+  ],
+  "exactArchiveAppearanceGuard": "passed",
+  "browserVerification": {
+    "method": "Complete desktop/mobile run followed by both affected files in fresh browser contexts. Only test restore deadlines and returning-player setup changed; application code did not change.",
+    "fullRun": {
+      "startTime": "2026-10-18T00:52:58.599Z",
+      "duration": 1908068.273,
+      "expected": 34,
+      "skipped": 0,
+      "unexpected": 10,
+      "flaky": 0
+    },
+    "rerun": {
+      "startTime": "2026-10-18T01:26:12.984Z",
+      "duration": 379451.39999999997,
+      "expected": 18,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "coverage": {
+      "passed": 44,
+      "skipped": 0,
+      "total": 44
+    },
+    "repaired": [
+      {
+        "file": "localCareer.spec.ts",
+        "title": "generational friends league plays two seasons, inspects events and restores history",
+        "project": "desktop",
+        "status": "passed"
+      },
+      {
+        "file": "localCareer.spec.ts",
+        "title": "generational friends league plays two seasons, inspects events and restores history",
+        "project": "mobile",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "sets a corrupt save aside and restores the last verified backup",
+        "project": "desktop",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "keeps an oversized save near the storage quota and continues saving",
+        "project": "desktop",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "loads an old-version save and keeps it as the verified backup",
+        "project": "desktop",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "pauses saving in a tab after another tab changes the save",
+        "project": "desktop",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "sets a corrupt save aside and restores the last verified backup",
+        "project": "mobile",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "keeps an oversized save near the storage quota and continues saving",
+        "project": "mobile",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "loads an old-version save and keeps it as the verified backup",
+        "project": "mobile",
+        "status": "passed"
+      },
+      {
+        "file": "saveRecovery.spec.ts",
+        "title": "pauses saving in a tab after another tab changes the save",
+        "project": "mobile",
+        "status": "passed"
+      }
+    ],
+    "gameContextDesktopAndMobile": "passed"
+  }
+}

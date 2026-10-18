@@ -31,6 +31,7 @@ const clubs = (
     delete run.moraleVersion;
     delete run.personalityVersion;
     delete run.evaluationVersion;
+    delete run.gameFlowVersion;
   }
   return createLeague(run).map((t) => ({ ...t, courtVersion }));
 };

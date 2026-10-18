@@ -1,5 +1,15 @@
 # Local and cloud handoff — 2026-10-16
 
+## Game flow (October 16)
+
+`gameFlowVersion: 1` requires `courtVersion: 1`. It is enabled for new solo runs, leagues and local leagues. Franchises adopt it at the next season boundary, as do local careers that already have court rules. `gameFlow.ts` holds pure helpers: the schedule calendar and rest, playoff context, referee crews, arena conditions and setters, field ability and energy effects, playoff and back-to-back minute targets, starting energy, the timeout policy and series adjustments.
+
+Fixture context (`LeagueFixture.flow`: stage, rest, trip, playoff series state) is built in `seasonBuilder`, `localSeasonBuilder` and playoff `playOne`. It is stored on summaries like chemistry and morale snapshots, and passed through every replay call site (archive, insights, league and box-score views). The referee crew and arena come from salted hashes of the seed and the home club, so they need no storage and add no draws to the schedules. Played arcade games carry no flow and keep their rules.
+
+The engine report is `LeagueMatch.gameFlow`, shown in box scores by `GameFlowPanel`. Gameplay never reads it. Flagless replay hashes for 41622c9 (`3fed7dc0…`) and all earlier releases are unchanged. The balance audit is `scripts/game-flow-audit.mjs` → `docs/game-flow-audit.json`.
+
+Play depth (`docs/superpowers/specs/2026-10-16-play-depth.md`) is part of game flow whenever it runs on court rules v2. It covers zone principles in `courtPossession.ts` (`zoneShell` areas; defenders sag from their marks toward shifted areas), off-ball cuts and drifts and post seals (new court action kinds `cut`, `drift` and `seal`), plus shooting form tracked in `match.ts`. Every branch is gated on game flow plus court v2, and the extra random draws happen only there.
+
 ## Earned teammate familiarity (October 16)
 
 `chemistryGrowthVersion: 1` independently enables persistent pair history and requires `chemistryVersion: 1`. New drafts opt in; old franchises adopt with empty history at the next season boundary. `teammateChemistry.ts` keys relationships by stable species IDs, records the ten actual on-court pairs, and keeps inactive histories for future reunions. Match clock segments accumulate unrounded minutes, rounded only at game completion. Official arcade pair minutes use the same 12× conversion as player minutes. Bench, paused and dead-clock time earn nothing.

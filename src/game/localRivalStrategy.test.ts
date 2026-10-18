@@ -50,6 +50,7 @@ function drafted(
   );
   // These fixtures preserve the policies before shared team evaluation.
   delete draft.abilityMasteryVersion;
+  delete draft.gameFlowVersion;
   delete draft.evaluationVersion;
   delete draft.physicalAbilityVersion;
   delete draft.chemistryVersion;

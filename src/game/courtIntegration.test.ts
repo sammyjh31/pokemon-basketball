@@ -82,8 +82,8 @@ it("keeps old games free of new evidence and rejects mixed or unsupported court 
     ),
   ).toThrow();
   const legacy = simulateMatch(
-    { ...h, courtVersion: undefined },
-    { ...a, courtVersion: undefined },
+    { ...h, courtVersion: undefined, gameFlowVersion: undefined },
+    { ...a, courtVersion: undefined, gameFlowVersion: undefined },
     1,
   );
   expect(legacy.insights?.court).toBeUndefined();

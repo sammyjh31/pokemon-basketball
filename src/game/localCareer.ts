@@ -771,6 +771,7 @@ function nextYearTeams(
   adoptMorale = true,
   adoptPersonality = true,
   adoptMastery = true,
+  adoptGameFlow = true,
 ): LeagueTeam[] {
   const archived = career.history.at(-1)!;
   const appointed = projectedCoaches(
@@ -802,6 +803,10 @@ function nextYearTeams(
       ...(adoptPhysicalAbilities ? { physicalAbilityVersion: 1 as const } : {}),
       ...(adoptChemistry ? { chemistryVersion: 1 as const } : {}),
       ...(adoptEvaluation ? { evaluationVersion: 1 as const } : {}),
+      // Game flow needs court rules, which older local careers keep frozen.
+      ...(adoptGameFlow && team.courtVersion !== undefined
+        ? { gameFlowVersion: 1 as const }
+        : {}),
       ...(team.engineRules
         ? {
             engineRules: {
@@ -1046,6 +1051,14 @@ function parseTeams(
     array(value, format.teamCount)[0],
   ).evaluationVersion;
   if (evaluationVersion !== undefined && evaluationVersion !== 1) fail();
+  const gameFlowVersion = object(
+    array(value, format.teamCount)[0],
+  ).gameFlowVersion;
+  if (
+    (gameFlowVersion !== undefined && gameFlowVersion !== 1) ||
+    (gameFlowVersion === 1 && draft.courtVersion === undefined)
+  )
+    fail();
   return array(value, format.teamCount).map((value, id) => {
     const row = object(value),
       rawRoster = object(row.roster),
@@ -1071,6 +1084,7 @@ function parseTeams(
       row.courtVersion !== draft.courtVersion ||
       row.matchupVersion !== draft.matchupVersion ||
       row.possessionVersion !== draft.possessionVersion ||
+      row.gameFlowVersion !== gameFlowVersion ||
       !TACTICS.includes(row.tactic) ||
       !ROTATIONS.includes(row.rotation) ||
       !DEFENSE_SCHEMES.includes(row.defense) ||
@@ -1158,6 +1172,7 @@ function parseTeams(
       ...(draft.possessionVersion === 1
         ? { possessionVersion: 1 as const }
         : {}),
+      ...(gameFlowVersion === 1 ? { gameFlowVersion: 1 as const } : {}),
       ...(draft.typeTacticsVersion === 1
         ? { typeTacticsVersion: 1 as const }
         : {}),
@@ -1192,6 +1207,7 @@ function sameRosterState(actual: LeagueTeam[], expected: LeagueTeam[]) {
       JSON.stringify(a.morale) !== JSON.stringify(e.morale) ||
       JSON.stringify(a.chemistryBonds) !== JSON.stringify(e.chemistryBonds) ||
       a.evaluationVersion !== e.evaluationVersion ||
+      a.gameFlowVersion !== e.gameFlowVersion ||
       JSON.stringify(a.engineRules) !== JSON.stringify(e.engineRules) ||
       a.coach?.id !== e.coach?.id
     )
@@ -1325,14 +1341,19 @@ export function parseLocalCareer(
     const standings = parseStandings(row.standings, draft),
       championId = integer(row.championId, 0, teams.length - 1),
       finalsMvp = parseHonor(row.finalsMvp, teams);
-    const qualified = [...standings]
-      .sort(
-        (a, b) =>
-          b.wins - a.wins ||
-          b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst) ||
-          a.teamId - b.teamId,
-      )
-      .slice(0, draft.options.format.playoffTeams);
+    const ranked = [...standings].sort(
+      (a, b) =>
+        b.wins - a.wins ||
+        b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst) ||
+        a.teamId - b.teamId,
+    );
+    // Summary-only checks cannot reconstruct head-to-head results. Allow the
+    // cutoff tie here; court-v3 games and exact seeds are replayed below.
+    const cutoffWins = ranked[draft.options.format.playoffTeams - 1].wins;
+    const qualified =
+      teams[0].courtVersion === 3
+        ? ranked.filter((s) => s.wins >= cutoffWins)
+        : ranked.slice(0, draft.options.format.playoffTeams);
     if (
       finalsMvp.teamId !== championId ||
       !qualified.some((s) => s.teamId === championId)
@@ -1417,16 +1438,19 @@ export function parseLocalCareer(
     const archived: LocalSeasonArchive = {
       ...(row.coachRecords !== undefined
         ? {
-            coachRecords: validateCoachRecords(
-              row.coachRecords,
-              teams,
-              standings,
-              archiveYear,
-              championId,
-              draft.options.format.playoffTeams,
-              draft.options.format.bestOf,
-              playoffGames,
-            ),
+            coachRecords:
+              teams[0].courtVersion === 3
+                ? undefined
+                : validateCoachRecords(
+                    row.coachRecords,
+                    teams,
+                    standings,
+                    archiveYear,
+                    championId,
+                    draft.options.format.playoffTeams,
+                    draft.options.format.bestOf,
+                    playoffGames,
+                  ),
           }
         : {}),
       year: archiveYear,
@@ -1444,6 +1468,7 @@ export function parseLocalCareer(
     };
     let finalTeams = teams;
     if (
+      teams[0].courtVersion === 3 ||
       teams[0].chemistryGrowthVersion === 1 ||
       teams[0].abilityMasteryVersion === 1 ||
       row.newsGames !== undefined ||
@@ -1458,6 +1483,18 @@ export function parseLocalCareer(
       const league = season.finish().league!;
       const playoffs = replayPlayoffs(league, row.seasonSeed, playoffGames);
       if (playoffs.championId !== championId) fail();
+      if (teams[0].courtVersion === 3 && row.coachRecords !== undefined)
+        archived.coachRecords = validateCoachRecords(
+          row.coachRecords,
+          teams,
+          standings,
+          archiveYear,
+          championId,
+          draft.options.format.playoffTeams,
+          draft.options.format.bestOf,
+          playoffGames,
+          playoffs.seeds,
+        );
       if (row.newsGames !== undefined) {
         const facts = captureNewsGames(league.games, playoffs);
         if (JSON.stringify(row.newsGames) !== JSON.stringify(facts)) fail();
@@ -1568,6 +1605,8 @@ export function parseLocalCareer(
           .personalityVersion === 1,
         object(array(nextRawTeams, draft.options.format.teamCount)[0])
           .abilityMasteryVersion === 1,
+        object(array(nextRawTeams, draft.options.format.teamCount)[0])
+          .gameFlowVersion === 1,
       );
     } else expected = replay.career!.teams;
     onProgress?.(i + 1, rawHistory.length);

@@ -1,4 +1,5 @@
 import { GameMasteryReport } from "./MasteryPanel";
+import { GameFlowPanel } from "./GameFlowPanel";
 import { AbilityStats } from "./AbilityStats";
 import { GameMoraleReport } from "./MoralePanel";
 import { useEffect, useId, useMemo, useRef } from "react";
@@ -178,6 +179,7 @@ export function LeagueBoxScore({
         chemistry: game.chemistry,
         morale: game.morale,
         mastery: game.mastery,
+        flow: game.flow,
       }),
     [
       home,
@@ -187,6 +189,7 @@ export function LeagueBoxScore({
       game.chemistry,
       game.morale,
       game.mastery,
+      game.flow,
       providedMatch,
     ],
   );
@@ -327,6 +330,7 @@ export function LeagueBoxScore({
             </tbody>
           </table>
         </div>
+        <GameFlowPanel report={match.gameFlow} home={home} away={away} />
         <GameMoraleReport report={match.moraleReport} home={home} away={away} />
         <GameMasteryReport
           report={match.masteryReport}

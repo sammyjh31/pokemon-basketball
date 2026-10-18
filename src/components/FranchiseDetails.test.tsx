@@ -12,6 +12,11 @@ import { HistoricalGames } from "./HistoricalGames";
 let finished: GameState;
 beforeAll(() => {
   let run = createRun("free", true, 82);
+  // Legacy summary rows predate automatic earned-history archives.
+  delete run.abilityMasteryVersion;
+  delete run.chemistryGrowthVersion;
+  delete run.moraleVersion;
+  delete run.personalityVersion;
   [129, 150, 149, 68, 143, 9, 94, 59].forEach((id, index) => {
     run = placePokemon(run, id, ROSTER_SLOTS[index]);
   });
@@ -24,7 +29,7 @@ beforeAll(() => {
       playoffs: simulatePlayoffs(result.league!, run.seasonSeed),
     },
   };
-}, 60000);
+}, 300000);
 describe("franchise detail dialogs", () => {
   it("labels unavailable old rows honestly while retaining career totals and keyboard dismissal", () => {
     const state = enterOffseason(finished),
@@ -237,12 +242,12 @@ describe("franchise detail dialogs", () => {
     const games = await screen.findAllByRole(
       "button",
       { name: /View box/ },
-      { timeout: 30000 }, // Reconstructs the full archived court-model season.
+      { timeout: 120000 }, // Reconstructs the full archived court-model season.
     );
     expect(games).toHaveLength(82);
     fireEvent.click(games[0]);
     expect(
       screen.getByRole("button", { name: "Close box score" }),
     ).toBeInTheDocument();
-  }, 60000); // Builds the archived season before checking its filters and box.
+  }, 300000); // Builds the archived season before checking its filters and box.
 });

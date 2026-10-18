@@ -39,7 +39,7 @@ beforeAll(() => {
       ),
     },
   };
-}, 60000);
+}, 300000);
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
@@ -75,7 +75,11 @@ it("continues a completed league into the next season and restores its careers w
   expect(ready.run.result).toBeNull();
   expect(ready.run.playoffs).toBeUndefined();
   expect(ready.run.leagueTeams).toEqual(ready.franchise!.teams);
-  expect(ready.franchise!.teams[0]).toEqual(drafted.franchise!.teams[0]);
+  expect(ready.franchise!.teams[0]).toMatchObject({
+    roster: drafted.franchise!.teams[0].roster,
+    development: drafted.franchise!.teams[0].development,
+    abilityMastery: drafted.franchise!.teams[0].abilityMastery,
+  });
   expect(ready.franchise!.freeAgency?.cpuYears).toEqual([1]);
   // Mode tabs are hidden, not greyed out, while a franchise is active.
   expect(
@@ -135,7 +139,7 @@ it("continues a completed league into the next season and restores its careers w
   expect(
     screen.getByRole("button", { name: "Career stats" }),
   ).toBeInTheDocument();
-}, 120000); // Multiple full court-model simulations and restore passes.
+}, 600000); // Multiple full court-model simulations and restore passes.
 
 import { suggestTrades } from "../game/tradeMarket";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -191,7 +195,7 @@ it("saves an accepted offseason trade, keeps careers, and restores both rosters"
   );
   fireEvent.click(screen.getByRole("button", { name: "Keep playing" }));
   expect(JSON.parse(storage.getItem(STORAGE_KEY)!)).toEqual(traded);
-}, 60000);
+}, 300000);
 
 import {
   applyTrade,

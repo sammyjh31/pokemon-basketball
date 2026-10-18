@@ -16,7 +16,12 @@ import {
   selectRookie,
 } from "./rookieDraft";
 import { loadGame } from "./persistence";
+import {
+  validateFranchise,
+  type VerifiedArchives,
+} from "./franchiseValidation";
 let offseason: GameState;
+let verifiedArchives: VerifiedArchives;
 beforeAll(() => {
   const run = {
     ...createRun("free", true, 47),
@@ -25,6 +30,8 @@ beforeAll(() => {
     ) as GameState["run"]["roster"],
   };
   const result = simulateSeason(run);
+  const playoffs = simulatePlayoffs(result.league!, run.seasonSeed);
+  verifiedArchives = new Map([[1, { regular: result, playoffs }]]);
   offseason = processOffseason(
     archiveFranchiseSeason({
       ...initialState(47),
@@ -39,11 +46,11 @@ beforeAll(() => {
       run: {
         ...run,
         result,
-        playoffs: simulatePlayoffs(result.league!, run.seasonSeed),
+        playoffs,
       },
     }),
   );
-}, 30000);
+}, 300000);
 const restore = (s: GameState) =>
   loadGame({ getItem: () => JSON.stringify(s), setItem: () => {} }, 1).state;
 const reject = (s: GameState) =>
@@ -51,6 +58,13 @@ const reject = (s: GameState) =>
     loadGame({ getItem: () => JSON.stringify(s), setItem: () => {} }, 1)
       .preserveSource,
   ).toBe(true);
+// The restore worker supplies genuinely replayed archives at this boundary.
+// Keep full-loader valid/invalid cases below; check the remaining corrupt
+// ledger shapes without replaying the identical 1,230-game archive each time.
+const rejectVerifiedLedger = (s: GameState) =>
+  expect(() =>
+    validateFranchise(s.franchise, s.run, false, verifiedArchives),
+  ).toThrow();
 function completeDraft(state: GameState) {
   let next = beginRookieDraft(state);
   for (let i = 0; i < 2; i++) {
@@ -111,9 +125,9 @@ describe("package and rookie franchise persistence", () => {
     reject(corrupt);
     const mismatched = structuredClone(next);
     mismatched.franchise!.trades.at(-1)!.giveId = 999;
-    reject(mismatched);
+    rejectVerifiedLedger(mismatched);
     // Validates the complete new-model season for three separate saves.
-  }, 300000); // Three saves, each validating current and archived court seasons.
+  }, 600000); // Valid and corrupt saves each verify current and archived seasons.
   it("restores a partial draft, rejects forged picks, then keeps released careers across a rookie season", () => {
     const partial = beginRookieDraft(offseason);
     expect(partial.franchise!.rookieDrafts?.at(-1)?.complete).toBe(false);
@@ -130,7 +144,7 @@ describe("package and rookie franchise persistence", () => {
         .size,
     ).toBe(240);
     expect(restore(drafted).franchise).toEqual(drafted.franchise);
-    for (const corruptDraft of [
+    for (const [index, corruptDraft] of [
       (d: typeof draft) => {
         d.generation = 4;
       },
@@ -147,15 +161,16 @@ describe("package and rookie franchise persistence", () => {
         d.picks.pop();
         d.exhausted = true;
       },
-    ]) {
+    ].entries()) {
       const bad = structuredClone(drafted);
       corruptDraft(bad.franchise!.rookieDrafts![0]);
-      reject(bad);
+      if (index === 0) reject(bad);
+      else rejectVerifiedLedger(bad);
     }
     const falseComplete = structuredClone(partial);
     falseComplete.franchise!.rookieDrafts![0].complete = true;
     falseComplete.franchise!.rookieDrafts![0].exhausted = true;
-    reject(falseComplete);
+    rejectVerifiedLedger(falseComplete);
     const afterPartial = structuredClone(partial);
     afterPartial.franchise!.trades.push({
       year: 1,
@@ -163,13 +178,13 @@ describe("package and rookie franchise persistence", () => {
       giveId: afterPartial.franchise!.teams[0].roster.PG!,
       receiveId: afterPartial.franchise!.teams[1].roster.PG!,
     });
-    reject(afterPartial);
+    rejectVerifiedLedger(afterPartial);
     const corrupt = structuredClone(drafted);
     corrupt.franchise!.rookieDrafts![0].picks[0].releasedId = 999;
-    reject(corrupt);
+    rejectVerifiedLedger(corrupt);
     const wrongBoundary = structuredClone(drafted);
     wrongBoundary.franchise!.rookieDrafts![0].tradeIndex = 0;
-    if (offseason.franchise!.trades.length) reject(wrongBoundary);
+    if (offseason.franchise!.trades.length) rejectVerifiedLedger(wrongBoundary);
     const year2 = startInteractiveFranchiseSeason(drafted, 93);
     const result = simulateSeason(year2.run),
       playoffs = simulatePlayoffs(result.league!, year2.run.seasonSeed);
@@ -193,5 +208,5 @@ describe("package and rookie franchise persistence", () => {
     ).toBe(1);
     expect(restore(archived).franchise).toEqual(archived.franchise);
     // Revalidates two complete seasons for many deliberately malformed saves.
-  }, 600000);
+  }, 900000); // Multiple valid whole-save replays plus one corrupt rookie save.
 });

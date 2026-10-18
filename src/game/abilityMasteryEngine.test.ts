@@ -32,7 +32,12 @@ const roster = {
   B3: 131,
 };
 function legacyTeams() {
-  const run = { ...createRun("free", true, 22), roster };
+  const run = {
+    ...createRun("free", true, 22),
+    roster,
+    courtVersion: 2 as const,
+    gameFlowVersion: undefined,
+  };
   delete (run as { abilityMasteryVersion?: 1 }).abilityMasteryVersion;
   return createLeague(run);
 }

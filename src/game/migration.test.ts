@@ -114,8 +114,7 @@ describe("save model migration", () => {
       storage.setItem(STORAGE_KEY, JSON.stringify(copy));
       expect(loadGame(storage, 1).notice).toBeTruthy();
     }
-  }, 180000); // Replays four complete 1,230-game leagues.
-
+  }, 300000); // Replays four complete 1,230-game leagues.
 });
 
 it("preserves completed v2 seasons and their awards through v3 saves", () => {

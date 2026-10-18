@@ -68,6 +68,8 @@ export interface LocalLeague {
   courtVersion?: CourtVersion;
   matchupVersion?: 1;
   possessionVersion?: 1;
+  /** Playoffs, timeouts, referees, home gyms and rest; requires court rules. */
+  gameFlowVersion?: 1;
   seed: number;
   includeLegends: boolean;
   managers: LocalManager[];
@@ -164,6 +166,7 @@ export function createLocalLeague(
           courtVersion: COURT_VERSION,
           matchupVersion: 1 as const,
           possessionVersion: 1 as const,
+          gameFlowVersion: 1 as const,
         }
       : {}),
     version,
@@ -426,6 +429,7 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
       ...(draft.possessionVersion === 1
         ? { possessionVersion: 1 as const }
         : {}),
+      ...(draft.gameFlowVersion === 1 ? { gameFlowVersion: 1 as const } : {}),
       ...(draft.typeTacticsVersion === 1
         ? { typeTacticsVersion: 1 as const }
         : {}),
@@ -466,6 +470,7 @@ export function localLeagueRun(draft: LocalLeague): Run {
   delete run.courtVersion;
   delete run.matchupVersion;
   delete run.possessionVersion;
+  delete run.gameFlowVersion;
   return {
     ...run,
     ...(draft.typeMatchupsVersion === 1
@@ -494,6 +499,7 @@ export function localLeagueRun(draft: LocalLeague): Run {
     ...(draft.courtVersion ? { courtVersion: draft.courtVersion } : {}),
     ...(draft.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
     ...(draft.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
+    ...(teams[0].gameFlowVersion === 1 ? { gameFlowVersion: 1 as const } : {}),
     ...(draft.typeTacticsVersion === 1
       ? { typeTacticsVersion: 1 as const }
       : {}),
@@ -638,6 +644,8 @@ export function parseLocalLeague(
     (value.courtVersion !== undefined && !isCourtVersion(value.courtVersion)) ||
     (value.matchupVersion !== undefined && value.matchupVersion !== 1) ||
     (value.possessionVersion !== undefined && value.possessionVersion !== 1) ||
+    (value.gameFlowVersion !== undefined && value.gameFlowVersion !== 1) ||
+    (value.gameFlowVersion === 1 && value.courtVersion === undefined) ||
     ![1, 2].includes(value.version) ||
     typeof value.completed !== "boolean" ||
     (value.typeMatchupsVersion !== undefined &&
@@ -673,6 +681,7 @@ export function parseLocalLeague(
   delete draft.courtVersion;
   delete draft.matchupVersion;
   delete draft.possessionVersion;
+  delete draft.gameFlowVersion;
   if (value.abilityVersion === 1) draft.abilityVersion = 1;
   if (value.abilityMasteryVersion === 1) draft.abilityMasteryVersion = 1;
   if (value.physicalAbilityVersion === 1) draft.physicalAbilityVersion = 1;
@@ -685,6 +694,7 @@ export function parseLocalLeague(
     draft.courtVersion = value.courtVersion;
   if (value.matchupVersion === 1) draft.matchupVersion = 1;
   if (value.possessionVersion === 1) draft.possessionVersion = 1;
+  if (value.gameFlowVersion === 1) draft.gameFlowVersion = 1;
   if (value.typeMatchupsVersion === 1) draft.typeMatchupsVersion = 1;
   if (value.typeTacticsVersion === 1) draft.typeTacticsVersion = 1;
   if (

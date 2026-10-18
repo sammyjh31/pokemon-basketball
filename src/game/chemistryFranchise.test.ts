@@ -54,6 +54,8 @@ it("restores chemistry season, playoff and career totals, lineup reports and fro
       scouting: firstFixture.scouting,
       chemistry: firstFixture.chemistry,
       morale: firstFixture.morale,
+      mastery: firstFixture.mastery,
+      flow: firstFixture.flow,
     },
   );
   expect(firstMatch.insights!.lineups.length).toBeGreaterThan(0);

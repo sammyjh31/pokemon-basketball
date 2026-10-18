@@ -241,12 +241,30 @@ describe("local league pass-and-play", () => {
       { timeout: 180000 },
     );
     expect(screen.getByText(/8 playoff games played/)).toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(
+          screen.getByRole("button", { name: "Finish round" }),
+        ).toBeEnabled();
+      },
+      { timeout: 30000 },
+    );
     fireEvent.click(screen.getByRole("button", { name: "Finish round" }));
     await waitFor(
       () =>
         expect(
           screen.getByRole("button", { name: "Finish round" }),
         ).toBeEnabled(),
+      { timeout: 30000 },
+    );
+    // Saving follows the render that re-enables the controls. Wait for the
+    // persisted round, rather than reading the previous eight-game prefix.
+    await waitFor(
+      () => {
+        expect(
+          JSON.parse(storage.data.get(LOCAL_LEAGUE_KEY)!).playoffGames,
+        ).toBeGreaterThanOrEqual(32);
+      },
       { timeout: 30000 },
     );
     const firstRound = JSON.parse(
@@ -284,6 +302,14 @@ describe("local league pass-and-play", () => {
     expect(
       screen.getByRole("article", { name: "Finals MVP" }),
     ).toHaveTextContent(mvp!);
+    await waitFor(
+      () => {
+        expect(
+          screen.getByRole("button", { name: "New local league" }),
+        ).toBeEnabled();
+      },
+      { timeout: 30000 },
+    );
     fireEvent.click(screen.getByRole("button", { name: "New local league" }));
     fireEvent.click(
       screen.getByRole("button", { name: "Replace local league" }),

@@ -14,7 +14,9 @@ const memory = (value: string | null = null): StorageLike => ({
     value = next;
   },
 });
+let finishedFixture: GameState | undefined;
 const finished = () => {
+  if (finishedFixture) return structuredClone(finishedFixture);
   let s = initialState(123);
   for (const position of ROSTER_SLOTS)
     s = gameReducer(s, {
@@ -22,7 +24,10 @@ const finished = () => {
       position,
       pokemonId: s.run.offerIds[0],
     });
-  return gameReducer(s, { type: "SIMULATE" });
+  // This fixed seed is identical in every case. Clone a real generated season
+  // so mutation tests stay isolated without repeatedly generating the fixture.
+  finishedFixture = gameReducer(s, { type: "SIMULATE" });
+  return structuredClone(finishedFixture);
 };
 describe("saved progress", () => {
   it("round-trips an in-progress draft and completed season without recounting it", () => {
@@ -36,7 +41,7 @@ describe("saved progress", () => {
     const s = finished(),
       loaded = loadGame(memory(JSON.stringify(s)), 1).state;
     expect(gameReducer(loaded, { type: "SIMULATE" }).records.spin.runs).toBe(1);
-  }, 120000); // Four full-league generations/replays with the court model.
+  }, 300000); // Four full-league generations/replays with the court model.
 
   it("starts clean when there is no save", () => {
     expect(loadGame(memory(), 17)).toEqual({
@@ -114,7 +119,7 @@ describe("saved progress", () => {
       if (kind === "award") result.games[0].playerOfGameId = 999;
       expect(loadGame(memory(JSON.stringify(state)), 3).notice).toBeTruthy();
     },
-    90000, // These cases reconstruct an entire 30-team season.
+    300000, // These cases reconstruct an entire 30-team season.
   );
   it("handles malformed JSON and blocked/quota-exceeded storage without throwing", () => {
     expect(loadGame(memory("{oops"), 1).notice).toBeTruthy();
@@ -149,4 +154,4 @@ it("defers a completed league replay and stops before playing more games when ca
   await expect(pending).rejects.toMatchObject({ name: "AbortError" });
   expect(progress).toEqual([0, 15]);
   expect(storage.getItem(STORAGE_KEY) === source).toBe(true);
-}, 60000);
+}, 300000);

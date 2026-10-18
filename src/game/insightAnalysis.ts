@@ -250,6 +250,7 @@ export async function buildSeasonInsights(
             scouting: game.scouting,
             chemistry: game.chemistry,
             morale: game.morale,
+            flow: game.flow,
           });
       if (
         match &&
