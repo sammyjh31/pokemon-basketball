@@ -1,4 +1,14 @@
-# Local and cloud handoff — 2026-10-16
+# Local and cloud handoff — 2026-10-18
+
+## Season and franchise performance (October 18)
+
+The performance pass changes no simulation rules, random draws, save formats or history retention. Physical ability effects share immutable values for identical conditional effects and exact mastery multipliers, with bounded caches. Match chemistry uses stable player-group bitsets; synergy bonuses use recipient indexing while preserving candidate order and arithmetic.
+
+Deferred offseason restoration can reuse the latest historical season only after matching its actual engine inputs, model, seed and official games. Every replayable archived year still receives a complete replay and strict validation; legacy summary-only records retain their existing validation. Active results and playoffs are independent clones, with the original active team header retained for byte-identical comparisons. Partial and mismatched seasons retain the existing replay path.
+
+On one profiled sample per workload, the 1,230-game season improved **63.90 → 49.93 seconds**, and the unchanged two-year offseason save improved **178.06 → 88.64 seconds**. Both full serialized outputs match their baseline SHA-256 hashes and lengths. See [Performance](PERFORMANCE.md), the [measurement record](performance-audit.json) and `npm run performance:audit -- --help` for scope and reproduction. Browser and storage time vary.
+
+Verification: **1,328 tests passed across 237 files** in a single full run with three workers; the existing optional maximum-size stress test was skipped. All **44 desktop/mobile Playwright checks passed** in one run. TypeScript and the production build passed. Independent review found no actionable issues. The new regressions cover exact full-season output, replay-input changes, unique-game restoration progress and independent active/history copies. No test deadlines were increased.
 
 ## Game flow (October 16)
 
