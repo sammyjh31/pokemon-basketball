@@ -9,6 +9,7 @@ import { resolvePlayoffMatch } from "./playoffs";
 import { initialState } from "./state";
 import { loadGame, saveGame } from "./persistence";
 import type { FranchiseSeason } from "./franchiseTypes";
+import { COURT_VERSION } from "./courtTypes";
 const run = () => ({
   ...createRun("free", true, 22),
   roster: { PG: 65, SG: 135, SF: 149, PF: 68, C: 143, B1: 121, B2: 6, B3: 131 },
@@ -16,10 +17,12 @@ const run = () => ({
 it("enables the same model on all new clubs and CPU regular-season and playoff games", () => {
   const r = run(),
     teams = createLeague(r);
-  expect(r.courtVersion).toBe(2);
-  expect(teams.every((t) => t.courtVersion === 2)).toBe(true);
+  expect(r.courtVersion).toBe(COURT_VERSION);
+  expect(teams.every((t) => t.courtVersion === COURT_VERSION)).toBe(true);
   expect(
-    validateLeagueTeams(teams, true).every((t) => t.courtVersion === 2),
+    validateLeagueTeams(teams, true).every(
+      (t) => t.courtVersion === COURT_VERSION,
+    ),
   ).toBe(true);
   const fixture = {
     id: "cpu",
@@ -39,7 +42,7 @@ it("enables the same model on all new clubs and CPU regular-season and playoff g
   expect(() => validateLeagueTeams(mixed, true)).toThrow();
   expect(() =>
     validateLeagueTeams(
-      teams.map((t) => ({ ...t, courtVersion: 3 as 2 })),
+      teams.map((t) => ({ ...t, courtVersion: 4 as 3 })),
       true,
     ),
   ).toThrow();
@@ -55,7 +58,7 @@ it("retains current and historical rule flags through solo saves and archive rec
       value = "";
     },
   };
-  for (const version of [2, 1, undefined] as const) {
+  for (const version of [3, 2, 1, undefined] as const) {
     const r = { ...run(), courtVersion: version },
       state = { ...initialState(22), run: r };
     saveGame(storage, state);
@@ -78,14 +81,17 @@ it("opts new local leagues in, but never upgrades a saved local career implicitl
     22,
     2,
   );
-  expect(d.courtVersion).toBe(2);
-  expect(parseLocalLeague(JSON.stringify(d)).courtVersion).toBe(2);
+  expect(d.courtVersion).toBe(COURT_VERSION);
+  expect(parseLocalLeague(JSON.stringify(d)).courtVersion).toBe(COURT_VERSION);
+  expect(
+    parseLocalLeague(JSON.stringify({ ...d, courtVersion: 2 })).courtVersion,
+  ).toBe(2);
   expect(
     parseLocalLeague(JSON.stringify({ ...d, courtVersion: 1 })).courtVersion,
   ).toBe(1);
   delete d.courtVersion;
   expect(parseLocalLeague(JSON.stringify(d)).courtVersion).toBeUndefined();
   expect(() =>
-    parseLocalLeague(JSON.stringify({ ...d, courtVersion: 3 })),
+    parseLocalLeague(JSON.stringify({ ...d, courtVersion: 4 })),
   ).toThrow();
 });

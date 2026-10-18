@@ -117,6 +117,9 @@ const baseShotMix: Record<PlayType, number[]> = {
 };
 /** Share of the carrier-pressure turnover rate applied on top of version-2 court risks. */
 const COURT_PRESSURE_SHARE = 0.4;
+/** Version 3: shot accuracy shifts 0.25 points per point of lead, at most 3.5. */
+const SCORE_STATE_PER_POINT = 0.0025;
+const SCORE_STATE_CAP = 0.035;
 /** Version 2: a pass that leads straight to the shot is usually an assist. */
 function catchAssistChance(
   droveAfterCatch: boolean,
@@ -181,7 +184,10 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
       types: POKEMON_BY_ID.get(pokemonId)!.types,
       body:
         config.matchupVersion === 1
-          ? bodyProfile(POKEMON_BY_ID.get(pokemonId)!)
+          ? bodyProfile(
+              POKEMON_BY_ID.get(pokemonId)!,
+              config.courtVersion === 3,
+            )
           : undefined,
       typeEdges: new Map(),
       profile: moraleProfile(
@@ -427,7 +433,9 @@ export function simulateMatch(
     throw new Error("Both teams must use valid, matching chemistry rules.");
   const courtEnabled = home.courtVersion !== undefined;
   // Version 2 adds ball pressure, shot-zone intent, catch assists and foul spreading.
-  const courtV2 = home.courtVersion === 2;
+  const courtV2 = home.courtVersion === 2 || home.courtVersion === 3;
+  // Version 3 keeps v2 rules and adds the size/rebound and blowout balance pass.
+  const courtV3 = home.courtVersion === 3;
   const bodyEnabled = home.matchupVersion === 1;
   const possessionDepth = home.possessionVersion === 1;
   const advanced = home.typeTacticsVersion === 1;
@@ -1048,6 +1056,7 @@ export function simulateMatch(
           tactic: offense.config.tactic,
           defenseTactic: defense.config.tactic,
           freeThrow: freeThrowMiss,
+          ...(courtV3 ? { balanced: true } : {}),
         },
         random,
       );
@@ -2047,6 +2056,18 @@ export function simulateMatch(
           0.88,
         );
       const physicalChanceDelta = accuracy - beforePhysical;
+      if (courtV3)
+        // Version 3 score state: a comfortable lead relaxes, a deficit raises effort.
+        accuracy = clamp(
+          accuracy -
+            clamp(
+              margin(offense) * SCORE_STATE_PER_POINT,
+              -SCORE_STATE_CAP,
+              SCORE_STATE_CAP,
+            ),
+          0.1,
+          0.88,
+        );
       // Measure type impact against the completed basketball/depth probability.
       let untypedAccuracy = accuracy;
       if (typeEffect)
@@ -2350,10 +2371,16 @@ export function simulateMatch(
           }
           const close =
             minute >= 44 && Math.abs(result.homeScore - result.awayScore) <= 12;
+          const lead = Math.abs(result.homeScore - result.awayScore);
+          // Version 3 garbage time: both coaches empty the bench once a game is decided.
+          const garbage =
+            courtV3 &&
+            period < 4 &&
+            (minute >= 42 ? lead >= 16 : minute >= 36 && lead >= 22);
           const homeFloor = h.floor,
             awayFloor = a.floor;
-          chooseLineup(h, minute, close, awayFloor);
-          chooseLineup(a, minute, close, homeFloor);
+          chooseLineup(h, minute, close, awayFloor, garbage);
+          chooseLineup(a, minute, close, homeFloor, garbage);
           gameMinute = minute;
         }
         const defense = offense === h ? a : h;

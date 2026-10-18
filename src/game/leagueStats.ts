@@ -4,6 +4,7 @@ import {
   mergeAbilityActivations,
 } from "./abilities";
 import { emptyBox } from "./boxscore";
+import { nextRandom } from "./random";
 import {
   ROSTER_SLOTS,
   type LeagueAward,
@@ -91,10 +92,39 @@ export const playerImpact = (p: LeaguePlayer) =>
     0.4 * (p.fga - p.fgm) -
     0.4 * (p.fta - p.ftm)) /
   Math.max(1, p.gamesPlayed);
+/**
+ * Court version 3 awards: Hollinger Game Score per game. Missed shots cost 0.7 per
+ * attempt (offset by 0.4 per make) and rebounds count 0.7/0.3, so volume bigs no
+ * longer outscore efficient creators.
+ */
+export const gameScore = (p: LeaguePlayer) =>
+  (p.points +
+    0.4 * p.fgm -
+    0.7 * p.fga -
+    0.4 * (p.fta - p.ftm) +
+    0.7 * p.offensiveRebounds +
+    0.3 * p.defensiveRebounds +
+    p.steals +
+    0.7 * p.assists +
+    0.7 * p.blocks -
+    0.4 * p.fouls -
+    p.turnovers) /
+  Math.max(1, p.gamesPlayed);
+/** A repeatable coin flip for exact ties, independent of team or roster order. */
+export function seededCoin(seed: number, key: number) {
+  return nextRandom((seed ^ Math.imul(key + 1, 0x9e3779b1)) >>> 0).value;
+}
+const playerKey = (p: LeaguePlayer) => p.teamId * 2048 + p.pokemonId;
+/** Court version 3 honors: Game Score, team-defense context and seeded tiebreaks. */
+export interface HonorRules {
+  balanced: true;
+  seed: number;
+}
 export function leagueHonors(
   players: LeaguePlayer[],
   standings: Standing[],
   gamesPerTeam = 82,
+  rules?: HonorRules,
 ) {
   const minimumGames = Math.ceil((gamesPerTeam * 58) / 82);
   const qualified = players.filter((p) => p.gamesPlayed >= minimumGames);
@@ -104,19 +134,45 @@ export function leagueHonors(
   const availability = (p: LeaguePlayer) =>
     0.9 + (0.1 * p.gamesPlayed) / gamesPerTeam;
   const mvp = (p: LeaguePlayer) =>
-    playerImpact(p) * winFactor(p) * availability(p);
+    (rules ? gameScore(p) : playerImpact(p)) * winFactor(p) * availability(p);
+  // Version 3 weighs defense by the club's recorded points allowed against the league.
+  const allowed = (id: number) => {
+    const s = standings.find((row) => row.teamId === id)!;
+    return s.pointsAgainst / Math.max(1, s.wins + s.losses);
+  };
+  const leagueAllowed =
+    standings.reduce((n, s) => n + allowed(s.teamId), 0) /
+    Math.max(1, standings.length);
+  const teamDefense = (p: LeaguePlayer) =>
+    leagueAllowed > 0
+      ? Math.min(1.15, Math.max(0.85, leagueAllowed / allowed(p.teamId)))
+      : 1;
   const defense = (p: LeaguePlayer) =>
-    ((3 * p.steals +
-      3 * p.blocks +
-      0.65 * p.defensiveRebounds -
-      0.25 * p.fouls) /
-      Math.max(1, p.gamesPlayed)) *
-    winFactor(p) *
-    availability(p);
+    rules
+      ? ((1.5 * p.steals +
+          1.5 * p.blocks +
+          0.3 * p.defensiveRebounds -
+          0.3 * p.fouls) /
+          Math.max(1, p.gamesPlayed)) *
+        teamDefense(p) ** 2 *
+        availability(p)
+      : ((3 * p.steals +
+          3 * p.blocks +
+          0.65 * p.defensiveRebounds -
+          0.25 * p.fouls) /
+          Math.max(1, p.gamesPlayed)) *
+        winFactor(p) *
+        availability(p);
   const rank = (pool: LeaguePlayer[], score: (p: LeaguePlayer) => number) =>
     [...pool].sort(
       (a, b) =>
-        score(b) - score(a) || a.teamId - b.teamId || a.pokemonId - b.pokemonId,
+        score(b) - score(a) ||
+        (rules
+          ? seededCoin(rules.seed, playerKey(a)) -
+            seededCoin(rules.seed, playerKey(b))
+          : 0) ||
+        a.teamId - b.teamId ||
+        a.pokemonId - b.pokemonId,
     );
   const pg = (value: number, p: LeaguePlayer) =>
     (value / Math.max(1, p.gamesPlayed)).toFixed(1);
@@ -141,8 +197,9 @@ export function leagueHonors(
     {
       id: "defense",
       title: "Defensive Player of the Year",
-      description:
-        "Steals, blocks and defensive rebounds, balanced against fouls and team wins.",
+      description: rules
+        ? "Steals, blocks and defensive rebounds, balanced against fouls and team points allowed."
+        : "Steals, blocks and defensive rebounds, balanced against fouls and team wins.",
       pool: qualified,
       score: defense,
       value: (p) => `${pg(p.steals, p)} SPG · ${pg(p.blocks, p)} BPG`,

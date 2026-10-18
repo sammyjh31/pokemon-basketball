@@ -18,7 +18,13 @@ export interface ReboundContext {
   tactic: Tactic;
   defenseTactic: Tactic;
   freeThrow?: boolean;
+  /** Court version 3: flatter pursuit weights and saturating body bonuses. */
+  balanced?: boolean;
 }
+/** Version 3 rebound weight exponent; version 1/2 square the pursuit value. */
+export const BALANCED_REBOUND_EXPONENT = 1.3;
+/** Version 3: loose balls also reach players who did not crash the glass. */
+const BALANCED_NON_CRASHER_SHARE = 0.3;
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
 const weighted = (weights: number[], random: () => number) => {
   let value = random() * weights.reduce((a, b) => a + b, 0);
@@ -48,8 +54,9 @@ export function resolveRebound(
     ((offense ? p.offense : p.defense) * 0.6 +
       p.vertical * 0.15 +
       (long ? p.speed : p.strength) * 0.25 +
-      (p.body ? reboundBody(p.body, long) : 0)) *
+      (p.body ? reboundBody(p.body, long, c.balanced) : 0)) *
     (p.abilityRebound ?? 1);
+  const power = c.balanced ? BALANCED_REBOUND_EXPONENT : 2;
   const candidates = attack
     .map((p, i) => ({ i, value: pursuit(p, true) }))
     .sort((a, b) => b.value - a.value || a.i - b.i)
@@ -72,11 +79,13 @@ export function resolveRebound(
   );
   const attackWeights = attack.map((p, i) =>
     candidates.includes(i)
-      ? pursuit(p, true) ** 2 * (boxOuts[i] ? 0.65 : 1)
-      : 0,
+      ? pursuit(p, true) ** power * (boxOuts[i] ? 0.65 : 1)
+      : c.balanced
+        ? pursuit(p, true) ** power * BALANCED_NON_CRASHER_SHARE
+        : 0,
   );
   const defenseWeights = defense.map(
-    (p, i) => pursuit(p, false) ** 2 * (boxOuts[i] ? 1.12 : 1),
+    (p, i) => pursuit(p, false) ** power * (boxOuts[i] ? 1.12 : 1),
   );
   const offensiveChance = clamp(
     (c.freeThrow ? 0.12 : 0.23) +

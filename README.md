@@ -246,10 +246,9 @@ Open **Inside this result → Matchups that shaped the attacks** for actual atta
 
 New solo seasons and configurable local leagues adopt the rules. Standard franchises upgrade at the next season boundary. Existing local careers keep their frozen rules, including future years; start a new local league for the new engine. Archives retain exact prior seeds/results. See [matchup design](docs/superpowers/specs/2026-10-16-pokemon-matchup-engine.md) and [seeded tuning audit](docs/matchup-balance-audit.json). Reproduce with `node scripts/matchup-audit.mjs --samples=100`.
 
-
 ### Court positioning and chained possessions
 
-New solo/franchise seasons and new local leagues use `courtVersion: 2` in the shared match engine; saved seasons and local careers keep the court rules they started with (version 1 or none). Every simulated fixture—including CPU versus CPU, playoffs, and the simulated schedule around manually played games—uses the same rules. User-controlled arcade basketball keeps its separate real-time physics.
+New solo/franchise seasons and new local leagues use `courtVersion: 3` in the shared match engine; saved seasons and local careers keep the court rules they started with (version 2, 1 or none). Every simulated fixture—including CPU versus CPU, playoffs, and the simulated schedule around manually played games—uses the same rules. User-controlled arcade basketball keeps its separate real-time physics.
 
 Ten players occupy half-court coordinates in feet. Shooting threat determines spacing and defensive shading; current distances influence passing lanes, driving congestion, help, contests and blocks. Recovery speed includes body inertia, speed and energy. Screens lead to drop, switch, hedge, trap or under coverage, selected from the actual matchup and defensive scheme. An offense can pass, drive, kick out or reset before shooting. Actions spend game time and shot-clock time; offensive rebounds reset to 14 seconds. Minutes and fatigue follow time spent on the floor, and substitutions occur between attacks or immediately after foul-outs.
 
@@ -261,6 +260,16 @@ Version 2 fixes four gaps in the original court rules, measured over 600 seeded 
 - **Fouls:** non-shooting fouls spread across the defense by proximity and discipline, and coaches sit players in foul trouble ahead of their minute targets. Foul-outs fall from about 0.65–0.75 to about 0.2–0.3 a game.
 
 Pace stays near 101 possessions and scoring near 112 points per team. These are game-design coefficients, not a fit to real basketball data.
+
+Version 3 is a balance pass on top of version 2 (`node scripts/court-metrics.mjs --court=3 --games=600` and `node scripts/balance-metrics.mjs --court=3 --legends=true --seasons=8`):
+
+- **Size and rebounding:** rebound pursuit weights use exponent 1.3 instead of 2, loose balls also reach players who did not crash the glass, and reach/mass bonuses saturate (size already feeds every species' skills). In a first season without legends the top rebounder falls from 21.9 to 14.1 RPG and the height/rebound correlation from 0.63 to 0.56; with legends from 20.2 to 15.9 RPG, and the top scorer falls from 36.7 to 33.7 PPG.
+- **Development:** the minutes effect averages zero within each club, offsets regress faster, and a capped pull toward the league-average rating keeps the spread stable while breakouts and slumps remain. Over eight simulated seasons the league's rating standard deviation stays at 11.1 (version 2: 11.1 → 21.5), and the top scorer in year eight averages 35.5 PPG instead of 83.1. With legends: 10.3 → 10.8 (version 2: 21.4) and 33.5 PPG instead of 73.6.
+- **Closer games:** leaders relax and trailing clubs press (shot accuracy shifts 0.25 points per point of lead, capped at 3.5), and both coaches empty the bench once a game is decided. Over 600 league games with trainer coaches, abilities, chemistry, morale and personalities on, the average margin falls from 16.4 to 11.4, 20+ point games from 31.0% to 15.8%, and overtime rises from 2.0% to 2.5%. Pace, scoring, shooting, turnover and assist rates are unchanged.
+- **Fair tiebreaks:** equal records seed by head-to-head, then point differential, then a coin flip seeded by the season. Award ties also use the seeded coin flip. Earlier versions broke ties by club ID, which always favoured your club.
+- **Awards:** MVP, Sixth Player, All-League and Finals MVP use Game Score (−0.7 per shot attempt, +0.4 per make, 0.7/0.3 per offensive/defensive rebound), so efficient creators beat volume bigs. Defensive Player of the Year weighs stocks by the club's points allowed rather than wins.
+
+Formulas are in [the league model](docs/LEAGUE_MODEL.md#court-version-3-balance-rules).
 
 Open **Inside this result → Court positioning and possession chains** for coverage counts, multi-action attacks, late-clock shots, turnovers, an action browser and a court diagram. These locations influence the engine; earlier schematic shot charts remain labeled as such. Coverage counts and scoring differences are observations, not proof of causation. The model is fictional game tuning, not empirical tracking data.
 

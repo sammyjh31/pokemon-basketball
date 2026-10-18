@@ -20,7 +20,8 @@ export interface PlayerDevelopmentChange {
 }
 export interface OffseasonReport {
   mastery?: import("./abilityMastery").MasteryTrainingChange[];
-  modelVersion: 1;
+  /** 2: balanced development after a court-version-3 season. */
+  modelVersion: 1 | 2;
   year: number;
   players: PlayerDevelopmentChange[];
   tradeStart: number;

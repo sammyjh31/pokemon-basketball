@@ -158,9 +158,10 @@ export function chooseLineup(
   minute: number,
   close: boolean,
   opponents: readonly Player[] = [],
+  garbage = false,
 ): void {
   if (chemistryEnabled(team.config)) {
-    chooseChemistryLineup(team, minute, close, opponents);
+    chooseChemistryLineup(team, minute, close, opponents, garbage);
     return;
   }
   const coach = getCoach(team.config.coach?.id ?? "");
@@ -187,17 +188,23 @@ export function chooseLineup(
         continue;
       const foulPenalty = foulTroublePenalty(team, p, minute);
       const debt = p.target * phase - Math.min(p.box.minutes, 48);
-      const basketballScore = close
-        ? roleValue(team, p, role) * 0.85 +
-          p.energy * 0.42 +
-          p.profile.attributes.composure * 0.12 -
-          foulPenalty * closingFoulWeight(team)
-        : roleValue(team, p, role) * 0.5 +
-          p.energy * 0.22 +
-          p.target * 0.8 +
-          debt * 5 -
-          foulPenalty -
-          Math.max(0, p.consecutive - 7) * 1.2;
+      const basketballScore = garbage
+        ? // Garbage time: rest the regulars and give the deepest reserves the floor.
+          roleValue(team, p, role) * 0.3 +
+          p.energy * 0.25 -
+          p.target * 1.5 -
+          foulPenalty
+        : close
+          ? roleValue(team, p, role) * 0.85 +
+            p.energy * 0.42 +
+            p.profile.attributes.composure * 0.12 -
+            foulPenalty * closingFoulWeight(team)
+          : roleValue(team, p, role) * 0.5 +
+            p.energy * 0.22 +
+            p.target * 0.8 +
+            debt * 5 -
+            foulPenalty -
+            Math.max(0, p.consecutive - 7) * 1.2;
       const score =
         basketballScore +
         (coach
@@ -225,7 +232,7 @@ export function chooseLineup(
  * five-foul player off the floor until the closing minutes. */
 function foulTroublePenalty(team: Team, p: Player, minute: number) {
   const threshold = minute < 12 ? 2 : minute < 24 ? 3 : minute < 36 ? 4 : 5;
-  if (team.config.courtVersion === 2)
+  if ((team.config.courtVersion ?? 0) >= 2)
     return (
       (minute < 43 && p.box.fouls >= threshold
         ? 60 + (p.box.fouls - threshold) * 30
@@ -236,7 +243,7 @@ function foulTroublePenalty(team: Team, p: Player, minute: number) {
     : 0;
 }
 const closingFoulWeight = (team: Team) =>
-  team.config.courtVersion === 2 ? 0.6 : 0.2;
+  (team.config.courtVersion ?? 0) >= 2 ? 0.6 : 0.2;
 
 /** Score each player/role once, then compare at most C(8, 5) complete units. */
 function chooseChemistryLineup(
@@ -244,6 +251,7 @@ function chooseChemistryLineup(
   minute: number,
   close: boolean,
   opponents: readonly Player[],
+  garbage = false,
 ) {
   const coach = getCoach(team.config.coach?.id ?? "");
   const pool = eligiblePlayers(team),
@@ -262,17 +270,23 @@ function chooseChemistryLineup(
       return [
         p,
         POSITIONS.map((_, role) => {
-          const basketball = close
-            ? roleValue(team, p, role) * 0.85 +
-              p.energy * 0.42 +
-              p.profile.attributes.composure * 0.12 -
-              foulPenalty * closingFoulWeight(team)
-            : roleValue(team, p, role) * 0.5 +
-              p.energy * 0.22 +
-              p.target * 0.8 +
-              debt * 5 -
-              foulPenalty -
-              Math.max(0, p.consecutive - 7) * 1.2;
+          const basketball = garbage
+            ? // Version-3 garbage time: rest the regulars.
+              roleValue(team, p, role) * 0.3 +
+              p.energy * 0.25 -
+              p.target * 1.5 -
+              foulPenalty
+            : close
+              ? roleValue(team, p, role) * 0.85 +
+                p.energy * 0.42 +
+                p.profile.attributes.composure * 0.12 -
+                foulPenalty * closingFoulWeight(team)
+              : roleValue(team, p, role) * 0.5 +
+                p.energy * 0.22 +
+                p.target * 0.8 +
+                debt * 5 -
+                foulPenalty -
+                Math.max(0, p.consecutive - 7) * 1.2;
           return (
             basketball +
             (coach

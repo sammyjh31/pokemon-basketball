@@ -16,6 +16,27 @@ import { POSITIONS, type LeaguePlayer } from "./types";
 import type { PlayerTrainingPlan } from "./franchiseFeatures";
 import { TRAINING_FOCUS_LABELS, trainingSkillAdjustment } from "./training";
 const rounded = (n: number) => Math.round(n * 10) / 10;
+/**
+ * Court version 3 development. Version 1/2 gave every regular a flat minutes bonus and
+ * a weak pull back to the species foundation, so the league's rating spread nearly
+ * doubled over eight seasons. These keep the user's requested volatility per skill
+ * while holding the spread roughly stable.
+ */
+const BALANCED = {
+  /** An eight-player rotation averages 30 minutes, so this term is zero-sum per club. */
+  averageMinutes: 30,
+  minutesScale: 18,
+  opportunity: 1,
+  /** Share of current offsets removed each year (version 1/2: 1/10). */
+  regression: 1 / 4,
+  /** Rating pull toward the league's average best-position rating of 57. */
+  leagueRating: 57,
+  parity: 0.08,
+  parityMin: -1,
+  parityMax: 2,
+  /** Camp form shared by all skills; the per-skill noise is unchanged. */
+  sharedForm: 0.75,
+};
 
 /** A species/year seed makes form repeatable and independent of roster ordering. */
 export function developPlayer(
@@ -24,6 +45,7 @@ export function developPlayer(
   year: number,
   seasonSeed: number,
   plan?: PlayerTrainingPlan,
+  balanced = false,
 ): PlayerDevelopmentChange {
   const mon = POKEMON_BY_ID.get(player.pokemonId)!;
   const a = attributes(mon, previous);
@@ -48,7 +70,20 @@ export function developPlayer(
   );
   // Shrink small samples so a tiny reserve cameo cannot guarantee a breakout.
   const reliability = Math.min(1, player.minutes / 1200);
-  const opportunity = clamp((minutesPerGame - 22) / 14, -1, 1) * 2.4;
+  const opportunity = balanced
+    ? clamp(
+        (minutesPerGame - BALANCED.averageMinutes) / BALANCED.minutesScale,
+        -1,
+        1,
+      ) * BALANCED.opportunity
+    : clamp((minutesPerGame - 22) / 14, -1, 1) * 2.4;
+  const parity = balanced
+    ? clamp(
+        (before - BALANCED.leagueRating) * BALANCED.parity,
+        BALANCED.parityMin,
+        BALANCED.parityMax,
+      )
+    : 0;
   const production =
     clamp((impactPer36 - (before * 0.75 - 12)) / 16, -1, 1) * 3 * reliability;
   const formRoll = roll();
@@ -120,9 +155,10 @@ export function developPlayer(
     let projected =
       opportunity +
       production +
-      form +
+      form * (balanced ? BALANCED.sharedForm : 1) +
       (skillEvidence[skill] ?? touch * 0.25) -
-      current / 10 +
+      (balanced ? current * BALANCED.regression : current / 10) -
+      parity +
       (roll() - 0.5) * 3;
     if (plan && (plan.focus !== "balanced" || plan.intensity !== "standard")) {
       // Reuse the same random draws so plan comparisons hold the player's camp constant.

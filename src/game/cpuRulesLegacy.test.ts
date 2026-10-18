@@ -40,6 +40,8 @@ export function legacyFranchise(): { offseason: GameState; season: GameState } {
     run: {
       ...createRun("free", true, 47),
       abilityMasteryVersion: undefined,
+      // This release capsule predates the court-v3 balance update.
+      courtVersion: 2 as const,
       coach: { version: 1 as const, id: "misty" },
       roster: Object.fromEntries(
         ROSTER_SLOTS.map((s, i) => [s, [65, 150, 149, 68, 143, 9, 94, 59][i]]),
@@ -89,12 +91,16 @@ export function legacyFranchise(): { offseason: GameState; season: GameState } {
   // generator represents the pre-feature release, whose next year had neither
   // the mastery flag nor its initial zero-XP roster maps.
   delete season.run.abilityMasteryVersion;
+  // Production deliberately upgrades a new year; this capsule reconstructs
+  // the old release's next year, whose court rules were still version 2.
+  season.run.courtVersion = 2;
   for (const team of [
     ...season.franchise!.teams,
     ...(season.run.leagueTeams ?? []),
   ]) {
     if (Object.values(team.abilityMastery ?? {}).some((xp) => xp !== 0))
       throw new Error("A historical fixture cannot discard earned mastery.");
+    team.courtVersion = 2;
     delete team.abilityMasteryVersion;
     delete team.abilityMastery;
   }
