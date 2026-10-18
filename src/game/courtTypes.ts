@@ -47,10 +47,25 @@ export interface CourtSequence {
   points: number;
 }
 
+/** A screen setter finishes the ensuing attack; a lost ball never counts. */
+export function isRollAttack(sequence: CourtSequence): boolean {
+  return (
+    sequence.coverage !== undefined &&
+    sequence.outcome !== "turnover" &&
+    sequence.outcome !== "violation" &&
+    sequence.actions.some(
+      (action) =>
+        action.kind === "screen" && action.targetId === sequence.shooterId,
+    )
+  );
+}
+
 /** Court rules for newly created seasons. Older versions stay frozen for saved replays.
  * Version 3 adds the balance pass: softer size/rebound scaling, development that keeps
- * the league's spread stable, closer games, fair tiebreaks and Game Score awards. */
-export const COURT_VERSION = 3 as const;
-export type CourtVersion = 1 | 2 | 3;
+ * the league's spread stable, closer games, fair tiebreaks and Game Score awards.
+ * Version 4 retains that balance and adds season-paced mastery, screened-finisher
+ * tracking, and timeouts that conserve the budget near period breaks. */
+export const COURT_VERSION = 4 as const;
+export type CourtVersion = 1 | 2 | 3 | 4;
 export const isCourtVersion = (value: unknown): value is CourtVersion =>
-  value === 1 || value === 2 || value === 3;
+  value === 1 || value === 2 || value === 3 || value === 4;

@@ -41,7 +41,7 @@ const sumFields = [
 type Totals = Pick<LeagueBox, (typeof sumFields)[number]>;
 const signed = (n: number) => `${n > 0 ? "+" : ""}${n}`;
 const stats = (p: Totals, team = false) => [
-  p.minutes,
+  p.minutes.toFixed(1),
   p.points,
   p.offensiveRebounds + p.defensiveRebounds,
   p.offensiveRebounds,

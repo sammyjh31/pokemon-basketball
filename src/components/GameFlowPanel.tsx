@@ -10,11 +10,15 @@ const REASONS = {
   late: "Set up a late play",
 } as const;
 const restLabel = (days: number) =>
-  days === 0 ? "Back-to-back" : days === 1 ? "1 day of rest" : `${days}+ days of rest`;
+  days === 0
+    ? "Back-to-back"
+    : days === 1
+      ? "1 day of rest"
+      : `${days}+ days of rest`;
 const clock = (period: number, elapsed: number) => {
   const start = Math.min(period - 1, 4) * 720 + Math.max(0, period - 5) * 300;
   const length = period <= 4 ? 720 : 300;
-  const left = Math.max(0, Math.round(length - (elapsed - start)));
+  const left = Math.max(0, Math.ceil(length - (elapsed - start)));
   return `${period <= 4 ? `Q${period}` : `OT${period - 4}`} ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
 };
 
@@ -78,7 +82,8 @@ export function GameFlowPanel({
             <dt>{team.name}</dt>
             <dd>
               {restLabel(report.rest[side])}
-              {report.trip[side] > 1 && ` · road game ${report.trip[side]} of the trip`}
+              {report.trip[side] > 1 &&
+                ` · road game ${report.trip[side]} of the trip`}
               {report.loadManaged[side] && " · coach managed starters’ minutes"}
             </dd>
           </div>
@@ -93,13 +98,16 @@ export function GameFlowPanel({
                 if (h.state === state)
                   counts.set(h.playerId, (counts.get(h.playerId) ?? 0) + 1);
               if (!counts.size) return "";
-              return `${state === "hot" ? "Heated up" : "Went cold"}: ${[...counts]
+              return `${state === "hot" ? "Heated up" : "Went cold"}: ${[
+                ...counts,
+              ]
                 .map(([id, n]) => `${playerName(id)}${n > 1 ? ` ×${n}` : ""}`)
                 .join(", ")}.`;
             })
             .filter(Boolean)
             .join(" ")}
-          {report.hotShots && report.hotShots.some((s) => s.attempts > 0) &&
+          {report.hotShots &&
+            report.hotShots.some((s) => s.attempts > 0) &&
             ` Field goals while hot: ${report.hotShots
               .filter((s) => s.attempts > 0)
               .map((s) => `${playerName(s.playerId)} ${s.made}–${s.attempts}`)
@@ -122,31 +130,31 @@ export function GameFlowPanel({
             tabIndex={0}
             aria-label="Scrollable timeouts"
           >
-          <table className="results-table">
-            <caption className="sr-only">Coach timeouts</caption>
-            <thead>
-              <tr>
-                <th scope="col">TIME</th>
-                <th scope="col">TEAM</th>
-                <th scope="col">REASON</th>
-                <th scope="col">RUN</th>
-                <th scope="col">MARGIN</th>
-                <th scope="col">ENERGY</th>
-              </tr>
-            </thead>
-            <tbody>
-              {report.timeouts.map((t, i) => (
-                <tr key={i}>
-                  <th scope="row">{clock(t.period, t.elapsedSeconds)}</th>
-                  <td>{name(t.teamId)}</td>
-                  <td>{REASONS[t.reason]}</td>
-                  <td>{t.run ? `${t.run}–0` : "—"}</td>
-                  <td>{t.margin > 0 ? `+${t.margin}` : t.margin}</td>
-                  <td>{Math.round(t.energy)}</td>
+            <table className="results-table">
+              <caption className="sr-only">Coach timeouts</caption>
+              <thead>
+                <tr>
+                  <th scope="col">TIME</th>
+                  <th scope="col">TEAM</th>
+                  <th scope="col">REASON</th>
+                  <th scope="col">RUN</th>
+                  <th scope="col">MARGIN</th>
+                  <th scope="col">ENERGY</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {report.timeouts.map((t, i) => (
+                  <tr key={i}>
+                    <th scope="row">{clock(t.period, t.elapsedSeconds)}</th>
+                    <td>{name(t.teamId)}</td>
+                    <td>{REASONS[t.reason]}</td>
+                    <td>{t.run ? `${t.run}–0` : "—"}</td>
+                    <td>{t.margin > 0 ? `+${t.margin}` : t.margin}</td>
+                    <td>{Math.round(t.energy)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </details>
       ) : (

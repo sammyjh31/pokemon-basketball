@@ -224,7 +224,9 @@ export function localSeasonBuilder(
         players,
         standings,
         format.gamesPerTeam,
-        inputs[0].courtVersion === 3 ? { balanced: true, seed } : undefined,
+        (inputs[0].courtVersion ?? 0) >= 3
+          ? { balanced: true, seed }
+          : undefined,
       ),
       mvp = honors.awards.find((a) => a.id === "mvp");
     return {

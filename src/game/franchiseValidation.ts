@@ -666,6 +666,10 @@ function archivedSeason(
       leagueSchedule(season.seasonSeed),
       rosters,
       season.seasonSeed,
+      row.replay === undefined
+        ? undefined
+        : validateLeagueTeams(object(row.replay).teams, includeLegends)[0]
+            .courtVersion,
     );
   }
   if (Object.hasOwn(row, "rivalScouting"))

@@ -1,4 +1,4 @@
-import { masteryLevel } from "./masteryMath";
+import { masteryGameXpCap, masteryLevel } from "./masteryMath";
 import { nextRandom } from "./random";
 import type { FranchiseSeason } from "./franchiseTypes";
 import type { SeasonReplayArchive } from "./franchiseFeatures";
@@ -170,6 +170,7 @@ export function validateNewsGames(
   fixtures: import("./types").LeagueFixture[],
   rosters: number[][],
   seasonSeed: number,
+  courtVersion?: import("./courtTypes").CourtVersion,
 ): LeagueGameSummary[] {
   const fail = (): never => {
     throw new Error("Invalid archived news game facts.");
@@ -283,7 +284,7 @@ export function validateNewsGames(
           !xp(milestone.after) ||
           !xp(milestone.gained) ||
           milestone.gained <= 0 ||
-          milestone.gained > 1.5 ||
+          milestone.gained > masteryGameXpCap(courtVersion) ||
           milestone.after <= milestone.before ||
           Math.abs(milestone.after - milestone.before - milestone.gained) >
             1e-7 ||

@@ -47,6 +47,13 @@ export function MasteryPanel({
         points. Earned XP follows players through trades and seasons. Practice
         games award no XP.
       </p>
+      {(team.courtVersion ?? 0) >= 4 && (
+        <p>
+          Regular rotation minutes build toward Practiced during a season;
+          frequent ability use can reach Skilled. Playing time, ability use and
+          your coach shape each player’s progress.
+        </p>
+      )}
       {!enabled && (
         <p className="notice">
           Abilities are disabled. Saved mastery is retained, with no ability
@@ -79,9 +86,14 @@ export function MasteryPanel({
                 </small>
               </div>
               <progress
-                value={Math.min(1000, value)}
-                max={1000}
+                value={level.next === null ? 1 : value - level.start}
+                max={level.next === null ? 1 : level.next - level.start}
                 aria-label={`${name(id)} ability mastery`}
+                aria-valuetext={
+                  level.next === null
+                    ? `Master tier reached · ${value.toFixed(2)} total XP`
+                    : `${(value - level.start).toFixed(2)} of ${level.next - level.start} XP toward ${next.name}`
+                }
               />
               <small>
                 {level.next === null

@@ -40,7 +40,7 @@ export function processOffseason(state: GameState): GameState {
     ...teams.map((team) => coachTrainingPlans(team, league.players)),
   ) as ReturnType<typeof coachTrainingPlans>;
   // The season that was just played decides the development rules (court version 3: balanced).
-  const balanced = league.teams[0]?.courtVersion === 3,
+  const balanced = (league.teams[0]?.courtVersion ?? 0) >= 3,
     reportVersion = balanced ? (2 as const) : (1 as const);
   const players = league.players.map((player) => ({
     ...developPlayer(

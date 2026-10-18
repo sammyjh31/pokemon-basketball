@@ -21,6 +21,18 @@ const team: LeagueTeam = {
   abilityMastery: { 25: 80 },
 };
 describe("mastery views", () => {
+  it("fills progress toward the next milestone rather than the lifetime cap", () => {
+    render(<MasteryPanel team={{ ...team, abilityMastery: { 25: 50 } }} />);
+    const bar = screen.getByRole("progressbar", {
+      name: "Pikachu ability mastery",
+    });
+    expect(bar).toHaveAttribute("value", "50");
+    expect(bar).toHaveAttribute("max", "75");
+    expect(bar).toHaveAttribute(
+      "aria-valuetext",
+      "50.00 of 75 XP toward Practiced",
+    );
+  });
   it("shows current XP, tier and next tier with the bounded ability explanation", () => {
     render(<MasteryPanel team={team} />);
     expect(screen.getByText("80.00 XP")).toBeInTheDocument();

@@ -7,6 +7,8 @@ import { simulateMatch } from "../game/match";
 import type { LeagueGameSummary } from "../game/types";
 import { LeagueBoxScore } from "./LeagueBoxScore";
 import { POKEMON_BY_ID } from "../data/pokemon";
+import { TypeGameSummary } from "./TypeGameSummary";
+import { GameFlowPanel } from "./GameFlowPanel";
 
 const run = {
   ...createRun("free", false, 11),
@@ -40,6 +42,76 @@ function Harness() {
   );
 }
 describe("league box scores", () => {
+  it("derives historical roller attacks from recorded actions without rewriting old counters", () => {
+    const match = structuredClone(replay);
+    match.typeTactics!.home.rolls = 0;
+    const expected = match.insights!.court!.filter(
+      (s) =>
+        s.offenseTeamId === teams[0].id &&
+        s.outcome !== "turnover" &&
+        s.outcome !== "violation" &&
+        s.actions.some(
+          (a) => a.kind === "screen" && a.targetId === s.shooterId,
+        ),
+    ).length;
+    expect(expected).toBeGreaterThan(0);
+    render(<TypeGameSummary match={match} home={teams[0]} away={teams[1]} />);
+    const row = screen
+      .getByRole("rowheader", { name: "Roller attacks" })
+      .closest("tr")!;
+    expect(within(row).getAllByRole("cell")[1]).toHaveTextContent(
+      String(expected),
+    );
+    expect(match.typeTactics!.home.rolls).toBe(0);
+  });
+  it("shows a positive final fraction of a second as time remaining", () => {
+    render(
+      <GameFlowPanel
+        home={teams[0]}
+        away={teams[1]}
+        report={{
+          ...replay.gameFlow!,
+          timeouts: [
+            {
+              teamId: 0,
+              period: 4,
+              elapsedSeconds: 2879.8,
+              reason: "late",
+              margin: -2,
+              run: 0,
+              energy: 80,
+            },
+          ],
+        }}
+      />,
+    );
+    expect(
+      screen.getByRole("table", { name: "Coach timeouts", hidden: true }),
+    ).toHaveTextContent("Q4 0:01");
+  });
+  it("shows readable minute totals without changing the recorded precision", () => {
+    const match = structuredClone(replay);
+    match.homeBox[0].minutes = 38.294864;
+    const before = JSON.stringify(match);
+    render(
+      <LeagueBoxScore
+        game={game}
+        teams={teams}
+        match={match}
+        onClose={() => {}}
+      />,
+    );
+    const table = screen.getByRole("table", {
+      name: `${teams[0].name} player box score`,
+    });
+    const row = within(table)
+      .getByRole("rowheader", {
+        name: new RegExp(POKEMON_BY_ID.get(match.homeBox[0].pokemonId)!.name),
+      })
+      .closest("tr")!;
+    expect(within(row).getAllByRole("cell")[0]).toHaveTextContent(/^38\.3$/);
+    expect(JSON.stringify(match)).toBe(before);
+  });
   it("replays later fixtures using their pregame familiarity and refreshes when that snapshot changes", () => {
     const chemistry = { home: Array(28).fill(600), away: Array(28).fill(600) };
     const later = simulateMatch(teams[0], teams[1], 91, { chemistry });

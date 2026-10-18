@@ -2,6 +2,7 @@ import { PossessionInsightsPanel } from "./PossessionInsightsPanel";
 import { useEffect, useRef, useState } from "react";
 import {
   buildSeasonInsights,
+  cachedSeasonInsights,
   playerTrendSummary,
   type InsightMatchResolver,
   type PlayerGameTrend,
@@ -193,16 +194,20 @@ export function SeasonInsightsPanel({
     [progress, setProgress] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState(league.teams[0]?.id ?? 0),
     [selectedPlayer, setSelectedPlayer] = useState("");
+  const team =
+    league.teams.find((item) => item.id === selectedTeam) ?? league.teams[0];
+  const analysisTeamId = team?.id;
   const controller = useRef<AbortController | null>(null);
   useEffect(() => {
-    setData(null);
-    setStatus("idle");
-    setProgress(0);
+    const cached = cachedSeasonInsights(league, resolveMatch, analysisTeamId);
+    setData(cached ?? null);
+    setStatus(cached ? "done" : "idle");
+    setProgress(cached?.games ?? 0);
     return () => {
       controller.current?.abort();
       controller.current = null;
     };
-  }, [league, resolveMatch]);
+  }, [league, resolveMatch, analysisTeamId]);
   const build = async () => {
     controller.current?.abort();
     const active = new AbortController();
@@ -211,10 +216,15 @@ export function SeasonInsightsPanel({
     setProgress(0);
     try {
       const result = await buildSeasonInsights(league, {
+        teamId: analysisTeamId,
         resolveMatch,
         signal: active.signal,
-        onProgress: (done) => {
-          if (controller.current === active) setProgress(done);
+        onProgress: (done, total) => {
+          if (
+            controller.current === active &&
+            (done % 4 === 0 || done === total)
+          )
+            setProgress(done);
         },
       });
       if (!active.signal.aborted && controller.current === active) {
@@ -231,21 +241,23 @@ export function SeasonInsightsPanel({
         );
     }
   };
-  const team =
-    league.teams.find((item) => item.id === selectedTeam) ?? league.teams[0];
   const ids = team
     ? Object.values(team.roster)
         .filter((id) => id !== null)
         .map((id) => `${team.id}:${id}`)
     : [];
   const playerId = ids.includes(selectedPlayer) ? selectedPlayer : ids[0];
+  const gameCount = league.games.filter(
+    (game) => game.homeTeamId === team?.id || game.awayTeamId === team?.id,
+  ).length;
   return (
     <section className="season-insights" aria-label="Season insights">
       <h3>Season lab</h3>
       <p>
         Inspect game-by-game player trends, five-player groups and recorded
-        defensive work. Analysis replays frozen season inputs on demand and
-        keeps compact summaries in memory.
+        defensive work. Analyze one team’s schedule at a time for faster
+        results. Completed reports stay ready when you switch teams or return to
+        this view.
       </p>
       {!league.games.length || !team ? (
         <p className="insight-empty">
@@ -253,6 +265,24 @@ export function SeasonInsightsPanel({
         </p>
       ) : (
         <>
+          <div className="insight-controls">
+            <label>
+              Insight team
+              <select
+                value={team.id}
+                onChange={(event) => {
+                  setSelectedTeam(Number(event.target.value));
+                  setSelectedPlayer("");
+                }}
+              >
+                {league.teams.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           <div className="insight-build-row">
             {!data && status !== "loading" && (
               <button
@@ -266,7 +296,7 @@ export function SeasonInsightsPanel({
             {status === "loading" && (
               <>
                 <progress
-                  max={league.games.length}
+                  max={gameCount}
                   value={progress}
                   aria-label="Season insight progress"
                 />
@@ -281,14 +311,14 @@ export function SeasonInsightsPanel({
             )}
             <p role="status">
               {status === "loading"
-                ? `Analyzing ${progress} / ${league.games.length} games…`
+                ? `Analyzing ${progress} / ${gameCount} games…`
                 : status === "cancelled"
                   ? "Analysis cancelled. Build again to restart."
                   : status === "error"
                     ? "Analysis could not be completed. Build again to retry."
                     : status === "done"
                       ? `Analysis ready · ${progress} games checked.`
-                      : `${league.games.length} completed games ready to analyze.`}
+                      : `${gameCount} completed games ready to analyze.`}
             </p>
           </div>
           {data && (
@@ -302,22 +332,6 @@ export function SeasonInsightsPanel({
                 estimated events.
               </p>
               <div className="insight-controls">
-                <label>
-                  Insight team
-                  <select
-                    value={team.id}
-                    onChange={(event) => {
-                      setSelectedTeam(Number(event.target.value));
-                      setSelectedPlayer("");
-                    }}
-                  >
-                    {league.teams.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
                 <label>
                   Trend player
                   <select

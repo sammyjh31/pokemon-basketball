@@ -78,6 +78,33 @@ test("full spin season, saved results, and reset cancellation", async ({
   await page
     .getByRole("button", { name: "Close box score", exact: true })
     .click();
+  await page
+    .getByRole("button", { name: "Season insights", exact: true })
+    .click();
+  const lab = page.getByRole("region", {
+    name: "Season insights",
+    exact: true,
+  });
+  await expect(lab.getByRole("status")).toHaveText(
+    "82 completed games ready to analyze.",
+  );
+  await lab
+    .getByRole("button", { name: "Build season insights", exact: true })
+    .click();
+  await expect(lab.getByRole("status")).toHaveText(
+    "Analysis ready · 82 games checked.",
+    { timeout: 30000 },
+  );
+  await expect(lab).toContainText("82 of 82 games include recorded telemetry.");
+  await page.getByRole("button", { name: "Standings", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Season insights", exact: true })
+    .click();
+  // A completed report returns immediately instead of replaying the league again.
+  await expect(lab.getByRole("status")).toHaveText(
+    "Analysis ready · 82 games checked.",
+    { timeout: 2000 },
+  );
   const before = await page.getByTestId("season-record").textContent();
   await page.reload();
   await checkRecord(page);

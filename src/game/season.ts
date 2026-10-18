@@ -251,7 +251,7 @@ export function seasonBuilder(
               players,
               standings,
               82,
-              teams[0].courtVersion === 3
+              (teams[0].courtVersion ?? 0) >= 3
                 ? { balanced: true, seed: run.seasonSeed }
                 : undefined,
             )
