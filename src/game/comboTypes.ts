@@ -36,7 +36,7 @@ interface ComboPlay {
   name: string;
   description: string;
   setup: "screen" | "pass" | "kickout";
-  play: "pickRoll" | "spotUp";
+  play: "pickRoll" | "spotUp" | "isolation";
   zones: readonly ("rim" | "mid" | "three")[];
   training: [PlayerTrainingPlan["focus"], PlayerTrainingPlan["focus"]];
 }
@@ -66,7 +66,7 @@ export const comboPlays: readonly ComboPlay[] = [
     description:
       "A drive draws help, then a kickout creates a perimeter attempt.",
     setup: "kickout",
-    play: "spotUp",
+    play: "isolation",
     zones: ["mid", "three"],
     training: ["playmaking", "shooting"],
   },

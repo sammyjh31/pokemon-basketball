@@ -117,6 +117,7 @@ export type MoveTeam = Pick<
   };
 };
 export interface MoveStats {
+  combos?: import("./comboTypes").ComboStats;
   uses: Partial<Record<MoveId, number>>;
   energySpent: number;
   energyRecovered: number;
