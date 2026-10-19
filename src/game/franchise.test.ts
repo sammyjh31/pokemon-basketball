@@ -238,7 +238,11 @@ describe("franchise lifecycle", () => {
         .franchise!.teams.map(retainChemistry)
         .map(retainMorale)
         .map(retainMastery)
-        .map((team) => ({ ...team, personalityVersion: 1 as const })),
+        .map((team) => ({
+          ...team,
+          personalityVersion: 1 as const,
+          movesetVersion: 1 as const,
+        })),
     );
     expect(next.run.leagueTeams).not.toBe(offseason.franchise!.teams);
     expect(next.run.leagueTeams![0].roster).not.toBe(

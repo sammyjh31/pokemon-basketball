@@ -330,7 +330,11 @@ describe("the league offseason", () => {
         .franchise!.teams.map(retainChemistry)
         .map(retainMorale)
         .map(retainMastery)
-        .map((team) => ({ ...team, personalityVersion: 1 as const })),
+        .map((team) => ({
+          ...team,
+          personalityVersion: 1 as const,
+          movesetVersion: 1 as const,
+        })),
     );
     expect(next.franchise!.year).toBe(2);
     expect(next.run.result).toBeNull();
