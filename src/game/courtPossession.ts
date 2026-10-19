@@ -1,3 +1,5 @@
+import { activateMove, beginMoveSegment } from "./matchMoves";
+import type { MoveEvent, MoveOpportunity } from "./moveTypes";
 import { physicalPlayerEffects } from "./physicalAbilities";
 import { recordPhysicalAbility } from "./abilities";
 import { getCoach, type CoachAssignment } from "./trainerCoaches";
@@ -14,6 +16,7 @@ import type {
 
 export type Court = Map<Player, CourtPoint>;
 export interface CourtContext {
+  movesNow?: number;
   coach?: CoachAssignment;
   offense: Player[];
   defense: Player[];
@@ -49,7 +52,8 @@ const skill = (p: Player, key: keyof Player["profile"]["attributes"]) =>
     ? (p.chemistry?.passing ?? 1)
     : key === "perimeterDefense" || key === "interiorDefense"
       ? (p.chemistry?.defense ?? 1)
-      : 1);
+      : 1) *
+  (key === "passing" ? (p.moves?.effects.passing ?? 1) : 1);
 const mobility = (p: Player) =>
   clamp(8 + skill(p, "speed") * 0.13 - (p.body?.inertia ?? 0.5) * 5, 5, 21);
 const bounded = (p: CourtPoint): CourtPoint => ({
@@ -66,7 +70,8 @@ export function moveToward(
     speed =
       mobility(player) *
       (player.chemistry?.movement ?? 1) *
-      (player.field?.movement ?? 1),
+      (player.field?.movement ?? 1) *
+      (player.moves?.effects.movement ?? 1),
     boost = physicalPlayerEffects(player).movement,
     fraction = Math.min(1, (speed * boost * seconds) / Math.max(0.001, span));
   const point = bounded({
@@ -158,7 +163,11 @@ function zoneTargets(
       continue;
     }
     const spot = shiftedSpot(index, ballPoint),
-      sag = clamp(0.08 + (distance(court.get(attacker)!, ballPoint) / 30) * 0.12, 0.08, 0.22);
+      sag = clamp(
+        0.08 + (distance(court.get(attacker)!, ballPoint) / 30) * 0.12,
+        0.08,
+        0.22,
+      );
     targets.set(
       d,
       bounded({
@@ -288,8 +297,14 @@ export function chooseScreenCoverage(c: CourtContext): {
     const own = physicalPlayerEffects(player);
     return {
       movement: own.movement * (player.chemistry?.movement ?? 1),
-      screen: own.screen * (player.chemistry?.screen ?? 1),
-      navigation: own.navigation * (player.chemistry?.navigation ?? 1),
+      screen:
+        own.screen *
+        (player.chemistry?.screen ?? 1) *
+        (player.moves?.effects.screen ?? 1),
+      navigation:
+        own.navigation *
+        (player.chemistry?.navigation ?? 1) *
+        (player.moves?.effects.navigation ?? 1),
     };
   };
   const handlerAbility = courtEffects(c.handler),
@@ -346,13 +361,19 @@ export function applyScreenCoverage(
     guard = c.guards.get(c.handler)!,
     big = c.guards.get(c.screener)!;
   const contactAdjustment = (base: number) => {
-    const screen = physicalPlayerEffects(c.screener).screen,
-      navigation = physicalPlayerEffects(guard).navigation;
+    const screen =
+        physicalPlayerEffects(c.screener).screen *
+        (c.screener.moves?.effects.screen ?? 1),
+      navigation =
+        physicalPlayerEffects(guard).navigation *
+        (guard.moves?.effects.navigation ?? 1);
     const gap =
       (((base * screen) / navigation) * (c.screener.chemistry?.screen ?? 1)) /
       (guard.chemistry?.navigation ?? 1);
-    if (screen !== 1) recordPhysicalAbility(c.screener.box, "screens");
-    if (navigation !== 1) recordPhysicalAbility(guard.box, "screens");
+    if (physicalPlayerEffects(c.screener).screen !== 1)
+      recordPhysicalAbility(c.screener.box, "screens");
+    if (physicalPlayerEffects(guard).navigation !== 1)
+      recordPhysicalAbility(guard.box, "screens");
     return gap - base;
   };
   court.set(c.screener, { x: 6, y: 17 });
@@ -414,6 +435,8 @@ export function resolveCourtPossession(
   source: CourtContext,
   random: () => number,
 ) {
+  if (source.movesNow !== undefined)
+    beginMoveSegment([...source.offense, ...source.defense]);
   const c = { ...source, guards: new Map(source.guards) },
     court = createCourt(c);
   const shell =
@@ -435,6 +458,21 @@ export function resolveCourtPossession(
     seconds = 0;
   const initialClock = clock,
     actions: CourtAction[] = [];
+  const moveEvents: MoveEvent[] = [];
+  const useMove = (
+    player: Player,
+    opportunity: MoveOpportunity,
+    receiver?: Player,
+    zone?: string,
+  ) => {
+    if (c.movesNow === undefined) return;
+    const event = activateMove(player, opportunity, c.movesNow + seconds, {
+      clock,
+      receiver,
+      zone,
+    });
+    if (event) moveEvents.push(event);
+  };
   let coverage: ScreenCoverage | undefined, coverageReason: string | undefined;
   let outcome: CourtSequence["outcome"] = "shot",
     kickout = false,
@@ -494,7 +532,13 @@ export function resolveCourtPossession(
       )
     )
       return false;
-    if (random() < risk) {
+    if (c.movesNow !== undefined) useMove(ball, "pass", target);
+    if (
+      random() <
+      (c.movesNow !== undefined
+        ? passRisk(court, ball, target, c.defense)
+        : risk)
+    ) {
       outcome = "turnover";
       if (c.zoneIntent) {
         // Credit the defender in the passing lane, or the one pressuring the passer.
@@ -527,6 +571,7 @@ export function resolveCourtPossession(
         // Version 2 spends extra half-court time moving the ball and relocating.
         (c.zoneIntent && !c.putback && c.play !== "transition" ? 1 : 0);
   const rushedAdvance = !spend("advance", advanceSeconds);
+  if (!rushedAdvance) for (const p of c.offense) useMove(p, "recover");
   if (rushedAdvance && !c.putback) {
     // The half-court formation assumes the offense has arrived. When the
     // period cannot supply that travel time, finish with a distant heave.
@@ -545,8 +590,12 @@ export function resolveCourtPossession(
         false,
       )
     ) {
-      coverage = chosen.coverage;
-      coverageReason = chosen.reason;
+      useMove(c.screener, "screen");
+      useMove(c.guards.get(c.handler)!, "navigate");
+      const selection =
+        c.movesNow !== undefined ? chooseScreenCoverage(c) : chosen;
+      coverage = selection.coverage;
+      coverageReason = selection.reason;
       applyScreenCoverage(court, c, coverage);
     }
   }
@@ -572,7 +621,11 @@ export function resolveCourtPossession(
       court.set(post, spot);
       court.set(guard, guardSpot(spot, post, c.scheme));
       actions.push({ kind: "seal", playerId: post.box.playerId, clock });
-      if (pass(post, "pass") && depth >= 2.5 && post.profile.traits.postGame >= 65) {
+      if (
+        pass(post, "pass") &&
+        depth >= 2.5 &&
+        post.profile.traits.postGame >= 65
+      ) {
         const double = c.defense
           .filter((p) => p !== guard)
           .sort(
@@ -673,8 +726,10 @@ export function resolveCourtPossession(
         ball.body && defender.body
           ? matchupEdges(ball, defender)
           : { quickness: 0, type: 0 };
+      if (clock >= 3.3 + (ball.body?.inertia ?? 0.5)) useMove(ball, "drive");
       const chance = clamp(
         0.48 +
+          (ball.moves?.effects.drive ?? 0) +
           edges.quickness * 0.2 +
           edges.type * 0.035 -
           geometry.laneDefenders * 0.055 +
@@ -715,7 +770,19 @@ export function resolveCourtPossession(
           near,
           moveToward(court.get(near)!, court.get(ball)!, near, 0.65),
         );
-        if (c.depth) reactOffBall(c, court, ball, near, helperFrom, clock, actions, random, shell);
+        if (c.depth)
+          reactOffBall(
+            c,
+            court,
+            ball,
+            near,
+            helperFrom,
+            clock,
+            actions,
+            random,
+            shell,
+            (p) => useMove(p, "cut"),
+          );
       }
       if (
         random() <
@@ -741,6 +808,21 @@ export function resolveCourtPossession(
     !clockLimited
   )
     relocateForIntent(c, court, ball, c.zoneIntent(ball), random, spend);
+  if (outcome === "shot" && c.movesNow !== undefined) {
+    const shot = courtGeometry(court, ball, c.offense, c.defense);
+    useMove(ball, "shoot", undefined, shot.zone);
+    useMove(shot.defender, "defend", undefined, shot.zone);
+    if (shot.defender.moves?.effects.movement !== 1)
+      court.set(
+        shot.defender,
+        moveToward(
+          court.get(shot.defender)!,
+          court.get(ball)!,
+          shot.defender,
+          0.15,
+        ),
+      );
+  }
   if (outcome === "shot") {
     if (
       clockLimited &&
@@ -782,7 +864,12 @@ export function resolveCourtPossession(
     zone: geometry.zone,
     defenderDistance: geometry.defenderDistance,
     paintCrowding: geometry.paintCrowding,
-    shotLogOdds: geometry.shotLogOdds + late,
+    shotLogOdds:
+      geometry.shotLogOdds +
+      late +
+      (ball.moves?.effects.shot ?? 0) -
+      (geometry.defender.moves?.effects.contest ?? 0),
+    ...(moveEvents.length ? { moves: moveEvents } : {}),
     outcome,
     points: 0,
   };
@@ -905,6 +992,7 @@ function reactOffBall(
   actions: CourtAction[],
   random: () => number,
   shell: Map<Player, number> | undefined,
+  onCut?: (player: Player) => void,
 ) {
   const spacer = (p: Player) =>
     zoneAt(court.get(p)!) === "three" && skill(p, "threePoint") >= 57;
@@ -918,10 +1006,12 @@ function reactOffBall(
         )[0]
     : c.offense.find((p) => p !== ball && c.guards.get(p) === helper);
   if (left && !spacer(left)) {
+    onCut?.(left);
     const from = court.get(left)!,
       side = Math.sign(from.x) || 1;
     const chance = clamp(
       0.25 +
+        ((left.moves?.effects.movement ?? 1) - 1) * 0.2 +
         (left.profile.traits.offBall - 55) * 0.012 +
         (distance(court.get(helper)!, from) > 6 ? 0.1 : 0),
       0.1,
@@ -944,13 +1034,15 @@ function reactOffBall(
         distance(court.get(b)!, court.get(ball)!),
     )[0];
   if (!shooter) return;
+  onCut?.(shooter);
   const from = court.get(shooter)!,
     side = Math.sign(from.x) || 1,
     target = from.y > 9 ? { x: side * 22.5, y: 3 } : { x: side * 22.5, y: 16 },
     span = distance(from, target),
     step = Math.min(
       span,
-      clamp(2 + (shooter.profile.traits.offBall - 50) * 0.1, 1, 6),
+      clamp(2 + (shooter.profile.traits.offBall - 50) * 0.1, 1, 6) *
+        (shooter.moves?.effects.movement ?? 1),
     );
   if (span < 0.5) return;
   const next = bounded({

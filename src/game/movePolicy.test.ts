@@ -76,6 +76,6 @@ it("specialization is a real cost/cooldown tradeoff and coaches account for rost
       id!,
     ),
   );
-  expect(aggressive).not.toEqual(patient);
+  expect(aggressive.map(p => [p.specialization, p.moves.map(m => m.id)])).not.toEqual(patient.map(p => [p.specialization, p.moves.map(m => m.id)]));
   expect(aggressive.every((p) => p.reasons.length > 1)).toBe(true);
 });

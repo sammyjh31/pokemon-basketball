@@ -34,9 +34,9 @@ Files: new `basketballMoves.ts`, `movePolicy.ts`, `moveTypes.ts`, tests. Interfa
 
 ### 2. Shared match runtime and telemetry
 Files: new `matchMoves.ts`, `matchLineups.ts`, `match.ts`, `courtPossession.ts`, `courtTypes.ts`, `abilities.ts`; tests. Interface: players optionally carry match-local move state; `activateMove(player, opportunity, actualSeconds, context)` returns bounded effects/events, records actual costs and uses. A segment clears temporary effects; elapsed match time advances cooldown.
-- [ ] Fail real-action/cooldown/energy/expiry/no-flag tests first, then implement shared resolution hooks.
-- [ ] Add strict optional move telemetry merge/validation; actual game report and court events.
-- [ ] Verify real same-seed repeatability, disabled behavior and frozen v4 hash; commit/push.
+- [x] Fail real-action/cooldown/energy/expiry/no-flag tests first, then implement shared resolution hooks.
+- [x] Add strict optional move telemetry merge/validation; actual game report and court events.
+- [x] Verify real same-seed repeatability, disabled behavior and frozen v4 hash; commit/push.
 
 ### 3. Mode propagation, progression, coaching and save integrity
 Files: types/draft/league/localLeague/localCareer/franchise/validation/persistence; coachTraining/teamEvaluation; integration tests.
@@ -63,3 +63,5 @@ Files: new MovesetPanel/report, MasteryPanel, AbilityStats/LeagueBoxScore and te
 - Specialization is a coach assignment from unlocked paths, re-evaluated from frozen pregame inputs. This avoids an extra progress currency or irreversible new player bank while preserving XP through all existing lifecycle paths. These assignments and tradeoffs must be visible.
 
 - Task 1: missing-policy/catalog tests failed first; all four policy tests now pass across the full franchise species pool, with real Ash/Surge/Oak coach policies, deterministic equipped slots and specialization tradeoffs. Typecheck passed. No shared evaluation/coach recursion or new saved XP bank.
+
+- Task 2: runtime tests first failed for missing engine hooks; 17 action/runtime/physical/court checks passed after implementation. The real-match tests cover deterministic repeated CPU results, actual movement, scoring conservation, compact/full parity and abilities-off behavior. The frozen full v4 season fingerprint passed unchanged (71.75 s); the five-file focused sweep passed 15 tests. Move effects expire per court segment, with actual elapsed-time cooldowns, bounded energy and separate telemetry. Off-ball callbacks apply only to actual cuts/drifts.

@@ -10,6 +10,7 @@ import { chemistryEnabled, type ChemistryEffects } from "./lineupChemistry";
 import { getMatchChemistry, refreshLineupChemistry } from "./matchChemistry";
 type Side = "home" | "away";
 export interface Player {
+  moves?: import("./matchMoves").MoveRuntime;
   chemistry?: ChemistryEffects;
   /** Game-flow field condition: movement and energy-drain multipliers. */
   field?: { movement: number; drain: number };
