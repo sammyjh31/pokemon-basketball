@@ -40,9 +40,9 @@ Files: new `matchMoves.ts`, `matchLineups.ts`, `match.ts`, `courtPossession.ts`,
 
 ### 3. Mode propagation, progression, coaching and save integrity
 Files: types/draft/league/localLeague/localCareer/franchise/validation/persistence; coachTraining/teamEvaluation; integration tests.
-- [ ] Fail new-mode flags, next-season adoption, old archives, altered telemetry and trade/XP retention tests.
-- [ ] Propagate optional flag using existing independent flag patterns; local nextYearTeams adoption argument is inferred from recorded next-year rules during validation.
-- [ ] Add move focus/value to automatic coaching/training/shared evaluation, gated by flag. Use existing mastery and camp streams.
+- [x] Fail new-mode flags, next-season adoption, old archives, altered telemetry and trade/XP retention tests.
+- [x] Propagate optional flag using existing independent flag patterns; local nextYearTeams adoption argument is inferred from recorded next-year rules during validation.
+- [x] Add move focus/value to automatic coaching/training/shared evaluation, gated by flag. Use existing mastery and camp streams.
 - [ ] Verify real solo/local/playoff lifecycle and warm restored output parity; commit/push.
 
 ### 4. Clear automatic reports
@@ -65,3 +65,5 @@ Files: new MovesetPanel/report, MasteryPanel, AbilityStats/LeagueBoxScore and te
 - Task 1: missing-policy/catalog tests failed first; all four policy tests now pass across the full franchise species pool, with real Ash/Surge/Oak coach policies, deterministic equipped slots and specialization tradeoffs. Typecheck passed. No shared evaluation/coach recursion or new saved XP bank.
 
 - Task 2: runtime tests first failed for missing engine hooks; 17 action/runtime/physical/court checks passed after implementation. The real-match tests cover deterministic repeated CPU results, actual movement, scoring conservation, compact/full parity and abilities-off behavior. The frozen full v4 season fingerprint passed unchanged (71.75 s); the five-file focused sweep passed 15 tests. Move effects expire per court segment, with actual elapsed-time cooldowns, bounded energy and separate telemetry. Off-ball callbacks apply only to actual cuts/drifts.
+
+- Task 3 progress: initial rule/coach/official tests failed as expected. New mode/header/CPU flags and invalid combinations now pass; automatic training/shared valuation and rejecting invented arcade moves pass. Two real new-rule local seasons round-trip byte-identically cold/warm with no warm historical replay; trades retain XP and slots; a legacy local archive remains byte-identical after next-year adoption. Combined lifecycle/coaching group: four passed (27.21 s), typecheck passed. Report-size regression found and fixed by combining existing skill/need explanations, retaining the eight-reason bound. Legacy rookie fixture explicitly omits moves alongside its existing omitted mastery flags. Full solo integration and broad checks still pending.

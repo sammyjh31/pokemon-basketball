@@ -1,6 +1,6 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { movePool, movesEnabled } from "./basketballMoves";
-import { playerProfile } from "./playerProfile";
+import { playerProfile, type PlayerProfile } from "./playerProfile";
 import { getCoach } from "./trainerCoaches";
 import type {
   BasketballMove,
@@ -40,23 +40,29 @@ export const specializationRules = {
       "Smaller effects; 35% lower energy cost and 25% faster recharge.",
   },
 } as const;
-export function coachMoves(team: MoveTeam, id: number): MoveAssignment {
+export function coachMoves(
+  team: MoveTeam,
+  id: number,
+  projection?: { profile?: PlayerProfile; xp?: number },
+): MoveAssignment {
   const xp =
-    team.abilityMasteryVersion === 1 ? (team.abilityMastery?.[id] ?? 0) : 0;
+    projection?.xp ??
+    (team.abilityMasteryVersion === 1 ? (team.abilityMastery?.[id] ?? 0) : 0);
   const empty: MoveAssignment = {
     moves: [],
     specialization: "fundamentals",
     focus: "balanced",
     xp,
+    projectedFit: 0,
     nextSlot: null,
     reasons: [],
   };
   const mon = POKEMON_BY_ID.get(id);
   if (!mon || !movesEnabled(team)) return empty;
-  const p = playerProfile(mon, team.development?.[id]),
+  const p = projection?.profile ?? playerProfile(mon, team.development?.[id]),
     a = p.attributes;
   const coach = getCoach(team.coach?.id ?? ""),
-    tactic = coach?.tactic ?? team.tactic;
+    tactic = team.tactic;
   const teammates = Object.values(team.roster).flatMap((member) => {
     const species = POKEMON_BY_ID.get(member!);
     return species
@@ -121,6 +127,10 @@ export function coachMoves(team: MoveTeam, id: number): MoveAssignment {
     specialization,
     focus: moves[0].focus,
     xp,
+    projectedFit: Math.min(
+      100,
+      moves.reduce((n, move) => n + value(move), 0) / moves.length,
+    ),
     nextSlot: xp < 200 ? 200 : xp < 400 ? 400 : null,
     reasons: [
       `${coach?.name ?? "Team staff"} selects moves for ${p.bestPosition}, ${tactic} offense, stamina and roster needs.`,
@@ -130,13 +140,19 @@ export function coachMoves(team: MoveTeam, id: number): MoveAssignment {
   };
 }
 /** Small, shared valuation; never calls coachPolicy or shared evaluation recursively. */
-export function moveValue(team: MoveTeam, id: number): number {
-  const plan = coachMoves(team, id);
+export function moveValue(
+  team: MoveTeam,
+  id: number,
+  profile?: PlayerProfile,
+  xp?: number,
+): number {
+  const plan = coachMoves(team, id, { profile, xp });
   return plan.moves.length
     ? Math.min(
         3,
-        plan.moves.length * 0.3 +
-          Math.min(1, plan.xp / 400) +
+        plan.moves.length * 0.2 +
+          plan.projectedFit / 100 +
+          Math.min(0.6, plan.xp / 1000) +
           (plan.specialization === "fundamentals" ? 0 : 0.4),
       )
     : 0;

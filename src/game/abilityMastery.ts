@@ -1,3 +1,5 @@
+import { coachMoves } from "./movePolicy";
+import { movesEnabled } from "./basketballMoves";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
   abilitiesEnabled,
@@ -22,6 +24,9 @@ export interface MasteryTeam {
   coach?: LeagueTeam["coach"];
   abilityVersion?: 1;
   abilityMasteryVersion?: 1;
+  movesetVersion?: 1;
+  tactic?: import("./types").Tactic;
+  development?: LeagueTeam["development"];
   abilityMastery?: MasteryRoster;
   personalityVersion?: 1;
   engineRules?: { abilities: boolean };
@@ -234,7 +239,16 @@ export function advanceMastery(
         ((Math.min(box.minutes * duration, 48) / 30) * 0.35 +
           Math.min(uses, 24) * 0.015 +
           Math.min(contacts, 20) * 0.01 +
-          Math.min(motion, 10) * 0.01) *
+          Math.min(motion, 10) * 0.01 +
+          (team.movesetVersion === 1
+            ? Math.min(
+                8,
+                Object.values(stats?.moves?.uses ?? {}).reduce(
+                  (n, v) => n + v!,
+                  0,
+                ),
+              ) * 0.025
+            : 0)) *
           learning *
           pace,
         0,
@@ -347,6 +361,10 @@ export function trainMastery(
       team.personalityVersion === 1
         ? personalityReactions(team, id).coachCompatibility
         : 50;
+    const movePlan = team.tactic
+      ? coachMoves({ ...team, tactic: team.tactic }, id)
+      : undefined;
+    const movePractice = !!movePlan?.moves.length && focus === movePlan.focus;
     const aligned = focus === speciesAbility(id).training;
     const seed =
       (seasonSeed ^
@@ -369,7 +387,8 @@ export function trainMastery(
           : 1;
     const gained = enabled
       ? clamp(
-          (practice + (aligned ? 8 : 0)) * workload + (breakthrough ? 15 : 0),
+          (practice + (aligned ? 8 : 0) + (movePractice ? 8 : 0)) * workload +
+            (breakthrough ? 15 : 0),
           0,
           65,
         )
@@ -385,6 +404,11 @@ export function trainMastery(
           ? `${coach?.name ?? "Team staff"} directs ${focus} practice${aligned ? ", matching this ability's training focus" : ""}.`
           : "Abilities are disabled; stored mastery is retained without earning XP.",
         `Coachability ${coachability}/100 and trainer compatibility ${compatibility.toFixed(0)}/100 shape learning; ${plan?.intensity ?? "standard"} workload respects the assigned training plan.`,
+        ...(movePlan?.moves.length
+          ? [
+              `Automatic move practice: ${movePlan.moves.map((m) => m.name).join(", ")}; ${movePractice ? "aligned practice earns eight additional XP before workload and caps" : "team-focused practice retains existing learning"}. Specialization follows the coach’s pregame assignment; stored XP stays with the player.`,
+            ]
+          : []),
         breakthrough
           ? "A recorded training breakthrough adds extra mastery experience."
           : before >= 1000

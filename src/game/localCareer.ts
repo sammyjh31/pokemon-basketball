@@ -776,6 +776,7 @@ function nextYearTeams(
   adoptPersonality = true,
   adoptMastery = true,
   adoptGameFlow = true,
+  adoptMoves = true,
 ): LeagueTeam[] {
   const archived = career.history.at(-1)!;
   const appointed = projectedCoaches(
@@ -807,6 +808,9 @@ function nextYearTeams(
       ...(adoptPhysicalAbilities ? { physicalAbilityVersion: 1 as const } : {}),
       ...(adoptChemistry ? { chemistryVersion: 1 as const } : {}),
       ...(adoptEvaluation ? { evaluationVersion: 1 as const } : {}),
+      ...(adoptMoves && team.courtVersion !== undefined
+        ? { movesetVersion: 1 as const }
+        : {}),
       // Game flow needs court rules, which older local careers keep frozen.
       ...(adoptGameFlow && team.courtVersion !== undefined
         ? { gameFlowVersion: 1 as const }
@@ -1017,6 +1021,17 @@ function parseTeams(
     (abilityMasteryVersion === 1 && abilityVersion !== 1)
   )
     fail();
+  const movesetVersion = object(
+    array(value, format.teamCount)[0],
+  ).movesetVersion;
+  if (
+    (movesetVersion !== undefined && movesetVersion !== 1) ||
+    (movesetVersion === 1 &&
+      (abilityVersion !== 1 ||
+        abilityMasteryVersion !== 1 ||
+        draft.courtVersion === undefined))
+  )
+    fail();
   const physicalAbilityVersion = object(
     array(value, format.teamCount)[0],
   ).physicalAbilityVersion;
@@ -1089,6 +1104,7 @@ function parseTeams(
       row.matchupVersion !== draft.matchupVersion ||
       row.possessionVersion !== draft.possessionVersion ||
       row.gameFlowVersion !== gameFlowVersion ||
+      row.movesetVersion !== movesetVersion ||
       !TACTICS.includes(row.tactic) ||
       !ROTATIONS.includes(row.rotation) ||
       !DEFENSE_SCHEMES.includes(row.defense) ||
@@ -1145,6 +1161,7 @@ function parseTeams(
         ? { typeMatchupsVersion: 1 as const }
         : {}),
       ...(abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+      ...(movesetVersion === 1 ? { movesetVersion: 1 as const } : {}),
       ...(abilityMasteryVersion === 1
         ? {
             abilityMasteryVersion: 1 as const,
@@ -1201,6 +1218,7 @@ function sameRosterState(actual: LeagueTeam[], expected: LeagueTeam[]) {
       e = expected[i];
     if (
       a.abilityVersion !== e.abilityVersion ||
+      a.movesetVersion !== e.movesetVersion ||
       a.abilityMasteryVersion !== e.abilityMasteryVersion ||
       JSON.stringify(a.abilityMastery) !== JSON.stringify(e.abilityMastery) ||
       a.physicalAbilityVersion !== e.physicalAbilityVersion ||
@@ -1642,6 +1660,8 @@ export function parseLocalCareer(
           .abilityMasteryVersion === 1,
         object(array(nextRawTeams, draft.options.format.teamCount)[0])
           .gameFlowVersion === 1,
+        object(array(nextRawTeams, draft.options.format.teamCount)[0])
+          .movesetVersion === 1,
       );
     } else expected = replay.career!.teams;
     onProgress?.(i + 1, rawHistory.length);

@@ -36,6 +36,7 @@ export interface MoveAssignment {
   specialization: Specialization;
   focus: PlayerTrainingPlan["focus"];
   xp: number;
+  projectedFit: number;
   nextSlot: number | null;
   reasons: string[];
 }
@@ -45,12 +46,19 @@ export type MoveTeam = Pick<
   | "tactic"
   | "coach"
   | "development"
-  | "engineRules"
   | "abilityVersion"
   | "abilityMasteryVersion"
   | "abilityMastery"
   | "courtVersion"
-> & { movesetVersion?: 1 };
+> & {
+  movesetVersion?: 1;
+  engineRules?: {
+    abilities: boolean;
+    version?: 1;
+    adaptiveCoaching?: boolean;
+    familiarity?: number;
+  };
+};
 export interface MoveStats {
   uses: Partial<Record<MoveId, number>>;
   energySpent: number;
