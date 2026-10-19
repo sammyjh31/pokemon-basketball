@@ -1,10 +1,16 @@
 # Local and cloud handoff — 2026-10-18
 
+## Verified franchise reopening (October 18)
+
+Solo and local careers now retain signed, source-revision-bound replay evidence in a separate optional IndexedDB database. Warm opens reuse unchanged archived years and exact current-season results while all source parsing and career/roster/coach/trade/development consistency checks remain active. Source saves, backups, exports and history are unchanged. Newly imported saves and invalidated/missing evidence receive ordinary replay. Small archive certificates survive preferential eviction of larger snapshots; storage is capped at approximately 32 MiB.
+
+Workers perform historical restoration as before. Local current-season caching owns the complete game inputs before asynchronous lookup, so unrelated completion flags do not invalidate it and mid-lookup caller changes cannot mislabel results. Zero-game progress reads **Opening saved league…**. Details and reproducible measurements: [Performance](PERFORMANCE.md). Final regression results are recorded in the implementation plan.
+
 ## Season and franchise performance (October 18)
 
 The performance pass changes no simulation rules, random draws, save formats or history retention. Physical ability effects share immutable values for identical conditional effects and exact mastery multipliers, with bounded caches. Match chemistry uses stable player-group bitsets; synergy bonuses use recipient indexing while preserving candidate order and arithmetic.
 
-Deferred offseason restoration can reuse the latest historical season only after matching its actual engine inputs, model, seed and official games. Every replayable archived year still receives a complete replay and strict validation; legacy summary-only records retain their existing validation. Active results and playoffs are independent clones, with the original active team header retained for byte-identical comparisons. Partial and mismatched seasons retain the existing replay path.
+Deferred offseason restoration can reuse the latest historical season only after matching its actual engine inputs, model, seed and official games. Every replayable archived year still receives a complete replay and strict validation on a cold load; legacy summary-only records retain their existing validation. Active results and playoffs are independent clones, with the original active team header retained for byte-identical comparisons. Partial and mismatched seasons retain the existing replay path.
 
 On one profiled sample per workload, the 1,230-game season improved **63.90 → 49.93 seconds**, and the unchanged two-year offseason save improved **178.06 → 88.64 seconds**. Both full serialized outputs match their baseline SHA-256 hashes and lengths. See [Performance](PERFORMANCE.md), the [measurement record](performance-audit.json) and `npm run performance:audit -- --help` for scope and reproduction. Browser and storage time vary.
 

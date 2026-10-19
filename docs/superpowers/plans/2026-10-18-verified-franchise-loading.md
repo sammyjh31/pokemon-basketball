@@ -60,9 +60,9 @@ Interface: optional local replay context maps years to compact replay evidence a
 
 Files: `App.tsx`, restoration/UI tests, `tests/e2e/saveRecovery.spec.ts` or a focused cache spec, `scripts/performance-audit.mjs`, performance/handoff docs.
 
-- [ ] Add failing warm-progress and real browser persistence/refresh/cache corruption/cancellation cases; render opening wording for zero replay games.
-- [ ] Add cold/warm benchmark support using the real cache and unchanged save; compare complete hashes and progress, record measured results without extrapolating browser timing.
-- [ ] Verify UI/build and focused browser checks; commit/push.
+- [x] Add failing warm-progress and real browser persistence/refresh/cache corruption/cancellation cases; render opening wording for zero replay games.
+- [x] Add cold/warm benchmark support using the real cache and unchanged save; compare complete hashes and progress, record measured results without extrapolating browser timing.
+- [x] Verify UI/build and focused browser checks; commit/push.
 
 ## Task 5: Complete verification and GitHub handoff
 
@@ -78,3 +78,7 @@ Files: `App.tsx`, restoration/UI tests, `tests/e2e/saveRecovery.spec.ts` or a fo
 - Task 2: initial warm reopen still replayed 1,307 games (red). Integration then caught original-versus-normalized serialization misses and player-row key ordering; authenticate both original and successfully normalized forms, retaining the engine's authenticated row order. Final targeted group: 22 tests passed, including a second modern completed season, exact cold/warm hashes, year-three advancement replaying only 15 new games, cache failures, evicted active snapshots, failed/canceled verification, and unchanged replay-input guards. Blocked browser API getters have separate red/green tests. No source writes or gameplay changes.
 
 - Task 3: real ten-year local career cold/warm output hashes match, normalized autosaves and year-eleven advancement replay zero archived games. Targeted local/coach/chemistry group: 14 tests passed. A separate red/green regression caught mutation of game inputs during cache I/O; the simulator now owns its complete input snapshot before awaiting the lookup (one regression passed, typecheck passed). Compact evidence excludes duplicated news facts, which remain authenticated in the source. Native browser eviction red/green checks preserve small certificates while removing large snapshots (two passed). Production build initially caught missing virtual-revision support inside worker bundles; the worker plugin factory fixes this and build passed.
+
+- Task 4: two focused progress checks passed after observing the missing-component failure. The real Chromium worker test passed: cold verification, browser refresh with zero replay, corrupted active payload falling back to only the 1,230 current-season games, unchanged complete output hashes, intact source history and no quarantine/errors. Build/typecheck passed including both production workers. Two-year engine benchmark: 92,659.960 ms cold / 446.220 ms warm, 2,620 / zero games; complete SHA and 7,660,379-character output match the prior baseline. Ten-year modern local benchmark is recorded in performance-audit.json, all years retained and zero warm replay. Measurements use real WebCrypto/durable memory records; native IDB tested separately. No browser timing extrapolation.
+- Independent whole-branch review: one P2 measurement-tool finding (new cached report shape could not be reused as a baseline). Reproduced with the real ten-year CLI run (red), accepted nested warm hashes while preserving legacy baselines, then repeated the identical CLI run successfully with baselineHashMatches=true (green). No proven gameplay/history/global-validation findings. Final full suite started with three workers on the reviewed production code; browser sweep follows it to avoid CPU contention.
+- Ruling: initial UI progress can already know a cold replay total; a dedicated zero-total progress component regression verifies warm wording without incorrectly requiring cold startup to display zero work. Existing Strict Mode source-preservation/cancellation tests remain unchanged.

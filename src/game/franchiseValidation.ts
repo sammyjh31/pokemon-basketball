@@ -1211,7 +1211,7 @@ function verifyCurrentArchive(franchise: Franchise, run: Run): void {
   check(playoffs.players, "playoffs");
 }
 
-/** Archived years are bounded summaries; only the active season is replayed. */
+/** Validate complete career chronology; verified replay evidence avoids repeating games. */
 export function validateFranchise(
   value: unknown,
   run: Run,

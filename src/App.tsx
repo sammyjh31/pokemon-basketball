@@ -1,3 +1,4 @@
+import { RestoreProgress } from "./components/RestoreProgress";
 import { MasteryPanel } from "./components/MasteryPanel";
 import { teamsWithMastery } from "./game/abilityMastery";
 import { currentMasteryBanks } from "./game/currentMastery";
@@ -571,18 +572,11 @@ export default function App({
                 Your saved season is being verified. Your original save stays in
                 place until it is ready.
               </p>
-              <div className="league-simulation-progress" role="status">
-                <span>
-                  {restorationProgress.completed.toLocaleString("en-US")} /{" "}
-                  {restorationProgress.total.toLocaleString("en-US")} games
-                  restored
-                </span>
-                <progress
-                  aria-label="Saved league restoration progress"
-                  value={restorationProgress.completed}
-                  max={restorationProgress.total}
-                />
-              </div>
+              <RestoreProgress
+                completed={restorationProgress.completed}
+                total={restorationProgress.total}
+                label="Saved league restoration progress"
+              />
             </section>
           ) : (
             <>

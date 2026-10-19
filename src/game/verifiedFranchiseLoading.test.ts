@@ -1,16 +1,17 @@
+import { verifiedFranchiseFixture } from "./verifiedFranchise.testUtils";
+import { processOffseason } from "./offseason";
+import { archiveFranchiseSeason } from "./franchise";
+import { simulateSeason } from "./season";
 import { createHash, webcrypto } from "node:crypto";
 import { beforeAll, expect, it } from "vitest";
 import { ReplayCache } from "./replayCache";
 import { memoryReplayRecords } from "./replayCache.testUtils";
-import { performanceRun } from "./seasonPerformance.testUtils";
-import { initialState, gameReducer } from "./state";
-import { simulateSeason } from "./season";
+import { gameReducer } from "./state";
 import { simulatePlayoffs } from "./playoffs";
-import { archiveFranchiseSeason, startFranchiseSeason } from "./franchise";
-import { processOffseason } from "./offseason";
+import { startFranchiseSeason } from "./franchise";
 import { advanceFranchiseSeasonAsync } from "./interactiveSeason";
 import { prepareGameLoad, type LoadedGame } from "./persistence";
-import type { GameState, Run } from "./types";
+import type { GameState } from "./types";
 
 const durable = memoryReplayRecords();
 const connect = () =>
@@ -47,39 +48,7 @@ async function restore(
   return { loaded, progress };
 }
 beforeAll(async () => {
-  // A real older season, followed by modern season-boundary adoption below.
-  const current = performanceRun();
-  const run: Run = {
-    id: current.id,
-    mode: current.mode,
-    includeLegends: true,
-    roster: current.roster,
-    tactic: current.tactic,
-    rotation: current.rotation,
-    defense: current.defense,
-    offerIds: [],
-    rerollsLeft: 2,
-    draftSeed: current.draftSeed,
-    seasonSeed: current.seasonSeed,
-    coach: current.coach,
-    result: null,
-  };
-  const initial = { ...initialState(822), run };
-  const result = simulateSeason(run);
-  const applied = gameReducer(initial, {
-    type: "APPLY_SEASON",
-    source: run,
-    result,
-  });
-  archived = processOffseason(
-    archiveFranchiseSeason({
-      ...applied,
-      run: {
-        ...applied.run,
-        playoffs: simulatePlayoffs(result.league!, run.seasonSeed),
-      },
-    }),
-  );
+  archived = verifiedFranchiseFixture();
   expect(archived.franchise!.history[0].replay).toBeDefined();
   const first = await restore(archived);
   expect(first.loaded.notice).toBeNull();
