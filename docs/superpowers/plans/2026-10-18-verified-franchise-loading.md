@@ -66,9 +66,9 @@ Files: `App.tsx`, restoration/UI tests, `tests/e2e/saveRecovery.spec.ts` or a fo
 
 ## Task 5: Complete verification and GitHub handoff
 
-- [ ] Run full regressions and desktop/mobile browser checks on stable production code; resolve findings with regressions.
-- [ ] Request one independent whole-branch review; address actionable findings.
-- [ ] Record exact results and limitations, push final commits, create/attach PR and update GitHub using the existing authorized workflow. Keep the active preview worktree and primary dirty checkout intact.
+- [x] Run full regressions and desktop/mobile browser checks on stable production code; resolve findings with regressions.
+- [x] Request one independent whole-branch review; address actionable findings.
+- [x] Record exact results and limitations, push final commits, create/attach PR and update GitHub using the existing authorized workflow. Keep the active preview worktree and primary dirty checkout intact.
 
 ## Execution ledger
 
@@ -82,3 +82,6 @@ Files: `App.tsx`, restoration/UI tests, `tests/e2e/saveRecovery.spec.ts` or a fo
 - Task 4: two focused progress checks passed after observing the missing-component failure. The real Chromium worker test passed: cold verification, browser refresh with zero replay, corrupted active payload falling back to only the 1,230 current-season games, unchanged complete output hashes, intact source history and no quarantine/errors. Build/typecheck passed including both production workers. Two-year engine benchmark: 92,659.960 ms cold / 446.220 ms warm, 2,620 / zero games; complete SHA and 7,660,379-character output match the prior baseline. Ten-year modern local benchmark is recorded in performance-audit.json, all years retained and zero warm replay. Measurements use real WebCrypto/durable memory records; native IDB tested separately. No browser timing extrapolation.
 - Independent whole-branch review: one P2 measurement-tool finding (new cached report shape could not be reused as a baseline). Reproduced with the real ten-year CLI run (red), accepted nested warm hashes while preserving legacy baselines, then repeated the identical CLI run successfully with baselineHashMatches=true (green). No proven gameplay/history/global-validation findings. Final full suite started with three workers on the reviewed production code; browser sweep follows it to avoid CPU contention.
 - Ruling: initial UI progress can already know a cold replay total; a dedicated zero-total progress component regression verifies warm wording without incorrectly requiring cold startup to display zero work. Existing Strict Mode source-preservation/cancellation tests remain unchanged.
+
+- Task 5 final verification (October 19): all **245 test files passed; 1,364 tests passed, one existing optional maximum-size stress case skipped**, in 3,335.81 seconds with three workers. This includes the unchanged complete 1,230-game season fingerprint and every new solo/local cache regression. Fresh TypeScript/production build passed, including both workers; the existing large-chunk advisory remains. All **50 desktop/mobile Playwright checks passed in one run (24.2 minutes)** with no retries or increased deadlines, including native key/eviction persistence, cached refresh and corrupted-cache fallback. The independent review finding was resolved as recorded above.
+- Release ruling: use the existing authorized GitHub PR/merge workflow rather than request another integration choice. PR **#9** is attached to this chat. Keep the managed preview checkout and dependency symlink; do not alter the unrelated dirty primary checkout. The prior local preview process had stopped; restarted the same worktree on port 5174 and confirmed HTTP 200. No tool changed user save contents. Original/imported saves still need one initial verification; engine changes or missing/disposable cache records retain ordinary replay, with all source history preserved.

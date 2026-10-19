@@ -1,10 +1,12 @@
-# Local and cloud handoff — 2026-10-18
+# Local and cloud handoff — 2026-10-19
 
 ## Verified franchise reopening (October 18)
 
 Solo and local careers now retain signed, source-revision-bound replay evidence in a separate optional IndexedDB database. Warm opens reuse unchanged archived years and exact current-season results while all source parsing and career/roster/coach/trade/development consistency checks remain active. Source saves, backups, exports and history are unchanged. Newly imported saves and invalidated/missing evidence receive ordinary replay. Small archive certificates survive preferential eviction of larger snapshots; storage is capped at approximately 32 MiB.
 
 Workers perform historical restoration as before. Local current-season caching owns the complete game inputs before asynchronous lookup, so unrelated completion flags do not invalidate it and mid-lookup caller changes cannot mislabel results. Zero-game progress reads **Opening saved league…**. Details and reproducible measurements: [Performance](PERFORMANCE.md). Final regression results are recorded in the implementation plan.
+
+Final verification (October 19): **1,364 tests passed / 245 files**, with one existing optional maximum-size stress case skipped; **50 desktop/mobile browser checks passed** in one run. TypeScript and production build passed. Complete season and cold/warm restored-output fingerprints are unchanged. Independent review's benchmark-report compatibility finding was fixed and verified. PR #9 contains the update; the preview is available on port 5174. The primary dirty checkout and user save data were not modified by tools.
 
 ## Season and franchise performance (October 18)
 
