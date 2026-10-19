@@ -1,4 +1,5 @@
 import { expect, it } from "vitest";
+import { createHash } from "node:crypto";
 import { performanceRun } from "./seasonPerformance.testUtils";
 import { createLeague } from "./league";
 import { simulateMatch } from "./match";
@@ -20,6 +21,23 @@ function clubs() {
     ),
   }));
 }
+it("freezes moveset-v1 game results and telemetry for future saved replays", () => {
+  const teams = clubs();
+  const outputs = [5, 42, 81].map((seed) => {
+    const m = simulateMatch(teams[0], teams[1], seed);
+    return {
+      homeScore: m.homeScore,
+      awayScore: m.awayScore,
+      homeBox: m.homeBox,
+      awayBox: m.awayBox,
+      court: m.insights!.court,
+      mastery: m.masteryReport,
+    };
+  });
+  expect(
+    createHash("sha256").update(JSON.stringify(outputs)).digest("hex"),
+  ).toBe("c6589932730d159e4a0386c114a7ebb39abbba75b7b2a97359f87882578db93a");
+});
 it("does not spend a shooting or contest move on a shot-clock violation", () => {
   const teams = createLeague({ ...performanceRun(), movesetVersion: 1 });
   const match = simulateMatch(teams[0], teams[1], 5);

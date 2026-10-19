@@ -43,7 +43,7 @@ Files: types/draft/league/localLeague/localCareer/franchise/validation/persisten
 - [x] Fail new-mode flags, next-season adoption, old archives, altered telemetry and trade/XP retention tests.
 - [x] Propagate optional flag using existing independent flag patterns; local nextYearTeams adoption argument is inferred from recorded next-year rules during validation.
 - [x] Add move focus/value to automatic coaching/training/shared evaluation, gated by flag. Use existing mastery and camp streams.
-- [ ] Verify real solo/local/playoff lifecycle and warm restored output parity; commit/push.
+- [x] Verify real solo/local/playoff lifecycle and warm restored output parity; commit/push.
 
 ### 4. Clear automatic reports
 Files: new MovesetPanel/report, MasteryPanel, AbilityStats/LeagueBoxScore and tests; rules/help copy.
@@ -73,3 +73,5 @@ Files: new MovesetPanel/report, MasteryPanel, AbilityStats/LeagueBoxScore and te
 - Review: one fresh independent reviewer found two P2 issues. The real seed-5 violation regression failed, then passed after moving shoot/defend activation into the committed-shot branch. Career move uses and both energy totals now reconcile exactly even with old summary-only years; a red/green telemetry boundary test and actual mixed-history mutation checks cover it. Reviewer rechecked fixes and reported no remaining findings.
 
 - Solo lifecycle investigation: the real 1,230-game/playoff/camp franchise exposed an optional-key ordering mismatch in the strict career comparison. Canonicalizing the counted side through the same strict validator preserves every numeric check; the exact generated source failed before and passed after in a preliminary validator check. The full cold/warm lifecycle and complete suite are now running on final production code.
+
+- Full solo lifecycle passed on the final engine (316.36 s under the three-worker full run): all 1,230 regular games, playoffs, camp, career telemetry, strict preliminary validation, cold/warm output identity, zero warm historical replay and next-season carryover. In the deterministic test league, all eight move types activated; 234/240 players reached 75 XP and 174 reached 200 during the season; after camp, 14 reached 400. These are one seeded sample, not guaranteed balance targets.
