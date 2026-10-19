@@ -1,3 +1,9 @@
+import {
+  emptyMoveStats,
+  mergeMoveStats,
+  validateMoveStats,
+} from "./moveTelemetry";
+import type { MoveStats } from "./moveTypes";
 import { masteryFactor } from "./masteryMath";
 import catalog from "../data/species-abilities.json";
 import type { PlayType, Tactic } from "./types";
@@ -5,6 +11,7 @@ import type { PlayerTrainingPlan } from "./franchiseFeatures";
 
 export type AbilityRole = "shooter" | "passer" | "defender";
 export interface AbilityActivations {
+  moves?: MoveStats;
   offense: number;
   support: number;
   defense: number;
@@ -332,6 +339,11 @@ export function mergeAbilityActivations(
   const stats = (target.abilityActivations ??= emptyAbilityActivations());
   for (const key of ["offense", "support", "defense"] as const)
     stats[key] += source.abilityActivations[key];
+  if (source.abilityActivations.moves)
+    mergeMoveStats(
+      (stats.moves ??= emptyMoveStats()),
+      source.abilityActivations.moves,
+    );
   if (source.abilityActivations.physical) {
     const physical = (stats.physical ??= {
       movement: 0,
@@ -357,7 +369,9 @@ export function validateAbilityActivations(raw: unknown): AbilityActivations {
   const value = raw as Record<string, unknown>;
   const keys = ["offense", "support", "defense"] as const;
   if (
-    Object.keys(value).some((k) => ![...keys, "physical"].includes(k)) ||
+    Object.keys(value).some(
+      (k) => ![...keys, "physical", "moves"].includes(k),
+    ) ||
     keys.some(
       (k) =>
         !Number.isSafeInteger(value[k]) ||
@@ -398,5 +412,8 @@ export function validateAbilityActivations(raw: unknown): AbilityActivations {
     support: value.support as number,
     defense: value.defense as number,
     ...(physical ? { physical } : {}),
+    ...(value.moves !== undefined
+      ? { moves: validateMoveStats(value.moves) }
+      : {}),
   };
 }

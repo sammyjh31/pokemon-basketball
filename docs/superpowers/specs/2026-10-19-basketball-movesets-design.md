@@ -1,0 +1,27 @@
+# Basketball movesets and mastery specializations
+
+The user chose basketball movesets and mastery specializations, with coaches automatically managing move selection, training and timing in every simulated mode. Build on shared match/season/playoff engines and existing persistent mastery. No manual configuration is required, no second XP currency, no external data or dependencies, and no historical result changes.
+
+## Rules and player progression
+
+An independent optional `movesetVersion: 1` flag enables both features. New solo challenge/free and local generational/full-pool leagues use it; existing simulated seasons keep their flags. Solo and local franchises adopt it at the next supported season boundary, preserving earlier archives and official played fixtures. Abilities-off disables moves while retaining earned XP. The existing mastery XP bank is authoritative and already survives trades, free agency, rookie replacement, camps and seasons.
+
+Provide eight basketball adaptations (not a claim about canonical Pokémon learnsets): Quick Attack (driving separation), Agility (court movement), Helping Hand (teammate creation), Protect (defensive closeout/contest), Iron Defense (physical screening/interior defense), Double Team (off-ball movement/screen navigation), Focus Energy (set-shot preparation), Recover (bounded recovery). Species types, size/physical profile and basketball attributes define eligibility and usefulness; every species gets a usable pool. Coaches equip two moves initially, three at 200 XP, four at 400 XP, considering their style, the player and roster needs. Selection is deterministic, bounded and frozen per game from its pregame inputs.
+
+At 75 XP, coaches select one of three unlocked mastery specializations: Power (larger effects, higher cost and longer cooldown), Control (support/defensive opportunity preference), Efficiency (smaller effects, lower cost and faster recharge). Before that use Fundamentals. Specialization is a coach-selected game assignment, not irreversible extra saved XP. A new coach or team may reassign the path; learned slots/XP stay with the Pokémon. The UI explains this explicitly. Coaches' automatic training ranks useful move focuses and practice opportunities alongside existing team needs; plans/camp explanations identify the selected path and moves. Camp uses the existing independent mastery stream; legacy gains stay identical.
+
+## Simulation
+
+Create a match-local runtime for each equipped player. Moves activate only for a relevant action (handler drive, off-ball cut, screen, actual help pass, defensive closeout, set shot, low-energy recovery), subject to energy and per-player game-clock cooldown. At most one move per player per possession segment, one support effect per receiver, and bounded modifiers. Timing uses observed court positions, role, clock, energy and coach adaptability/risk, never future random outcomes. No extra random draws are needed. Effects expire at segment end; cooldown advances with actual game time, bench time included. No move-generated points/rebounds/assists are invented.
+
+Integrate with court movement, passing risk, screens/navigation, contest geometry and energy costs/recovery. Moves are separate from passive ability activations. Regular seasons, partial-season advance, CPU fixtures, simulated playoff games, local seasons, historical boxes and insights all use the same match engine and frozen flags/pregame mastery. Existing arcade played boxes retain their actual recorded rules and receive no invented move uses or XP.
+
+## Evidence and saves
+
+Optional move usage/energy counters live under ability telemetry, aggregate through the existing season/playoff/career helper, and validate strictly with bounded numeric fields and known move IDs. Historical rows without telemetry remain unchanged. Court sequences record actual activated move events; box-score reports show selected moves, specialization, uses and energy, without claiming causal extra points. Mastery profiles show automatic assignments, pool eligibility, next slot/path unlock and training focus. All records are derived from frozen inputs and exact replay, so verification-cache revision invalidation handles new engine rules automatically.
+
+The authoritative save remains unchanged apart from the independent flag and optional telemetry. Existing structural/chronology/game replay checks remain active. New flags are propagated through team snapshots, roster markets, next-season adoption and both validators; mixed invalid flags or forged telemetry are rejected. Neither cached restoration nor archive replay can infer moves for earlier seasons.
+
+## Verification
+
+Use TDD for catalog/coach selection, mastery paths, eligibility, costs/cooldowns/expiry, real movement/action effects, telemetry aggregation/validation, rule propagation and lifecycle. Pin the full v4 season hash to ensure flagless historical behavior stays byte-identical. Run real new-rule matches, partial seasons, local multi-season/playoff restore and solo season/restore with warm-cache parity; verify trades retain XP/unlocks. Add focused UI and desktop/mobile browser coverage for reports and automatic behavior. Run required build and broad regressions once production code is stable, then one independent whole-branch review, commit/push regularly and use the existing authorized PR/merge workflow. Keep the managed preview checkout, dependency symlink and unrelated dirty primary checkout intact.

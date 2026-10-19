@@ -1,3 +1,4 @@
+import { MovesetPanel } from "./MovesetPanel";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { masteryFactor, masteryLevel } from "../game/masteryMath";
 import { abilitiesEnabled, speciesAbility } from "../game/abilities";
@@ -104,6 +105,7 @@ export function MasteryPanel({
           ];
         })}
       </ul>
+      <MovesetPanel team={team} pokemonId={pokemonId} historical={historical} />
     </section>
   );
 }

@@ -111,6 +111,8 @@ export default function App({
           chemistryGrowthVersion: run.chemistryGrowthVersion,
           abilityVersion: run.abilityVersion,
           abilityMasteryVersion: run.abilityMasteryVersion,
+          movesetVersion: run.movesetVersion,
+          courtVersion: run.courtVersion,
           physicalAbilityVersion: run.physicalAbilityVersion,
           evaluationVersion: run.evaluationVersion,
         }

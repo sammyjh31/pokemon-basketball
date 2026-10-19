@@ -190,6 +190,14 @@ function validate(
     (raw.possessionVersion !== 1 || raw.typeTacticsVersion !== 1)
   )
     return fail();
+  if (
+    (raw.movesetVersion !== undefined && raw.movesetVersion !== 1) ||
+    (raw.movesetVersion === 1 &&
+      (raw.abilityVersion !== 1 ||
+        raw.abilityMasteryVersion !== 1 ||
+        raw.courtVersion === undefined))
+  )
+    return fail();
   const coach = raw.coach === undefined ? undefined : validateCoach(raw.coach);
   if (raw.coach !== undefined && !coach) return fail();
   if (
@@ -232,6 +240,7 @@ function validate(
     ...(raw.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
     ...(raw.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
     ...(raw.gameFlowVersion === 1 ? { gameFlowVersion: 1 as const } : {}),
+    ...(raw.movesetVersion === 1 ? { movesetVersion: 1 as const } : {}),
     ...(raw.typeMatchupsVersion === 1
       ? { typeMatchupsVersion: 1 as const }
       : {}),
@@ -272,6 +281,7 @@ function validate(
           team.typeTacticsVersion !== run.typeTacticsVersion ||
           team.abilityVersion !== run.abilityVersion ||
           team.abilityMasteryVersion !== run.abilityMasteryVersion ||
+          team.movesetVersion !== run.movesetVersion ||
           team.physicalAbilityVersion !== run.physicalAbilityVersion ||
           team.chemistryVersion !== run.chemistryVersion ||
           team.chemistryGrowthVersion !== run.chemistryGrowthVersion ||

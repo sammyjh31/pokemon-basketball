@@ -28,6 +28,7 @@ let finished: GameState;
 beforeAll(() => {
   let run = createRun("free", true, 82);
   // Preserve the explicitly historical model-1/2 helper contract.
+  delete run.movesetVersion;
   delete run.abilityMasteryVersion;
   delete run.chemistryGrowthVersion;
   delete run.moraleVersion;
@@ -237,7 +238,11 @@ describe("franchise lifecycle", () => {
         .franchise!.teams.map(retainChemistry)
         .map(retainMorale)
         .map(retainMastery)
-        .map((team) => ({ ...team, personalityVersion: 1 as const })),
+        .map((team) => ({
+          ...team,
+          personalityVersion: 1 as const,
+          movesetVersion: 1 as const,
+        })),
     );
     expect(next.run.leagueTeams).not.toBe(offseason.franchise!.teams);
     expect(next.run.leagueTeams![0].roster).not.toBe(

@@ -1,3 +1,4 @@
+import { coachMoves, specializationRules } from "./movePolicy";
 import { masteryXp } from "./abilityMastery";
 import {
   playerPersonality,
@@ -61,6 +62,7 @@ export function coachTrainingPlans(
   return Object.fromEntries(
     roster.map(({ mon, profile, role }) => {
       const a = profile.attributes;
+      const moves = coachMoves(team, mon.id);
       const species = abilitiesEnabled(team)
         ? speciesAbility(mon.id)
         : undefined;
@@ -134,7 +136,13 @@ export function coachTrainingPlans(
             skills,
             ability,
             need,
-            score: shared ? shared.find((p) => p.focus === focus)!.gain : score,
+            score:
+              (shared ? shared.find((p) => p.focus === focus)!.gain : score) +
+              (moves.moves.length && moves.focus === focus
+                ? shared
+                  ? 0.2
+                  : 5
+                : 0),
           };
         })
         .sort((x, y) => y.score - x.score);
@@ -208,6 +216,13 @@ export function coachTrainingPlans(
               ? `Stamina ${Math.round(a.stamina)}: steady work limits volatility.`
               : `${intensity === "aggressive" ? "Aggressive work accepts larger gains or setbacks" : intensity === "steady" ? "Steady work reduces volatility" : "Standard work balances growth and volatility"}, following the coach's risk and rest preferences.`,
       ];
+      if (moves.moves.length) {
+        reasons[1] += ` ${reasons[2]}`;
+        reasons.splice(2, 1);
+        reasons.push(
+          `Basketball moves and ${specializationRules[moves.specialization].name} specialization: ${moves.moves.map((m) => m.name).join(", ")}. ${chosen.focus === moves.focus ? "Aligned practice develops the selected moves" : "Team needs and recovery take priority over move-focused practice"}; the coach manages this automatically.`,
+        );
+      }
       if (personality)
         reasons.push(
           personalityCare

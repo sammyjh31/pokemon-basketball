@@ -19,6 +19,7 @@ it("preserves the pre-morale release 02b6586", () => {
       B3: 131,
     },
   };
+  delete run.movesetVersion;
   delete run.abilityMasteryVersion;
   delete (run as { moraleVersion?: 1 }).moraleVersion;
   delete run.personalityVersion;

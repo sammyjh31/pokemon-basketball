@@ -1,3 +1,6 @@
+import { createMoveRuntime } from "./matchMoves";
+import { emptyMoveStats } from "./moveTelemetry";
+import { movesEnabled } from "./basketballMoves";
 import {
   applyMasterySnapshot,
   masteryGameReport,
@@ -221,12 +224,20 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
       depth: config.engineRules
         ? engineProfile(POKEMON_BY_ID.get(pokemonId)!)
         : undefined,
+      ...(movesEnabled(config)
+        ? { moves: createMoveRuntime(config, pokemonId) }
+        : {}),
       target: targets![slot],
       energy: 100,
       consecutive: 0,
       box: {
         ...(abilitiesEnabled(config)
-          ? { abilityActivations: emptyAbilityActivations() }
+          ? {
+              abilityActivations: {
+                ...emptyAbilityActivations(),
+                ...(movesEnabled(config) ? { moves: emptyMoveStats() } : {}),
+              },
+            }
           : {}),
         pokemonId,
         slot,
@@ -472,6 +483,15 @@ export function simulateMatch(
   const crew = flow ? refereeCrew(seed, flow.stage) : undefined;
   const arena: FieldCondition = flow ? arenaCondition(home) : "neutral";
   const flowNotes: string[] = [];
+  if (
+    home.movesetVersion !== away.movesetVersion ||
+    (home.movesetVersion !== undefined && home.movesetVersion !== 1) ||
+    (home.movesetVersion === 1 &&
+      (home.courtVersion === undefined ||
+        home.abilityVersion !== 1 ||
+        home.abilityMasteryVersion !== 1))
+  )
+    throw Error("Both teams must use matching valid basketball moveset rules.");
   const courtEnabled = home.courtVersion !== undefined;
   // Version 2 adds ball pressure, shot-zone intent, catch assists and foul spreading.
   const courtV2 = (home.courtVersion ?? 0) >= 2;
@@ -1730,6 +1750,9 @@ export function simulateMatch(
           {
             offense: offense.floor,
             defense: defense.floor,
+            ...(movesEnabled(offense.config)
+              ? { movesNow: elapsedSeconds() }
+              : {}),
             guards:
               guards ??
               new Map(offense.floor.map((p, i) => [p, defense.floor[i]])),
@@ -2136,7 +2159,12 @@ export function simulateMatch(
         return;
       }
       // Finish counting only after pressure and illegal-screen turnovers are resolved.
-      if (courtV4 && result.typeTactics && court && isRollAttack(court.sequence))
+      if (
+        courtV4 &&
+        result.typeTactics &&
+        court &&
+        isRollAttack(court.sequence)
+      )
         result.typeTactics[offense.side].rolls++;
       const intentional =
         isClutch &&
@@ -2869,6 +2897,10 @@ export function simulateMatch(
     return value(p) > value(best) ? p : best;
   });
   result.playerOfGameId = best.playerId;
+  if (movesEnabled(home))
+    result.moveAssignments = Object.fromEntries(
+      [...h.players, ...a.players].map((p) => [p.box.playerId, p.moves!.plan]),
+    );
   // Quarter evidence is retained internally for coaching even when callers only need a compact result.
   if (possessionDepth)
     for (const p of [...h.players, ...a.players])

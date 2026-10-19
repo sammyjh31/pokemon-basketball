@@ -1,3 +1,5 @@
+import { MOVE_IDS } from "./moveTypes";
+import { sameMoveStats } from "./moveTelemetry";
 import { captureNewsGames, validateNewsGames } from "./archive";
 import { verifyMasteryChronology } from "./masteryChronology";
 import { validateMasteryRoster } from "./abilityMastery";
@@ -369,6 +371,15 @@ export function validateLeagueTeams(
   const matchupVersion = object(rows[0]).matchupVersion;
   const possessionVersion = object(rows[0]).possessionVersion;
   const gameFlowVersion = object(rows[0]).gameFlowVersion;
+  const movesetVersion = object(rows[0]).movesetVersion;
+  if (
+    (movesetVersion !== undefined && movesetVersion !== 1) ||
+    (movesetVersion === 1 &&
+      (abilityVersion !== 1 ||
+        abilityMasteryVersion !== 1 ||
+        courtVersion === undefined))
+  )
+    return fail();
   if (abilityVersion !== undefined && abilityVersion !== 1) return fail();
   if (
     (physicalAbilityVersion !== undefined && physicalAbilityVersion !== 1) ||
@@ -423,6 +434,7 @@ export function validateLeagueTeams(
       row.matchupVersion !== matchupVersion ||
       row.possessionVersion !== possessionVersion ||
       row.gameFlowVersion !== gameFlowVersion ||
+      row.movesetVersion !== movesetVersion ||
       row.typeTacticsVersion !== tacticsVersion
     )
       return fail();
@@ -462,6 +474,7 @@ export function validateLeagueTeams(
       ...(typeVersion === 1 ? { typeMatchupsVersion: 1 as const } : {}),
       ...(tacticsVersion === 1 ? { typeTacticsVersion: 1 as const } : {}),
       ...(abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
+      ...(movesetVersion === 1 ? { movesetVersion: 1 as const } : {}),
       ...(abilityMasteryVersion === 1
         ? {
             abilityMasteryVersion: 1 as const,
@@ -1001,8 +1014,20 @@ function careers(
       players.forEach((p) => mergeAbilityActivations(counted, p));
       if (
         appearances.every((year) => year.replay) &&
-        JSON.stringify(counted.abilityActivations) !==
-          JSON.stringify(total.abilityActivations)
+        JSON.stringify(
+          counted.abilityActivations
+            ? validateAbilityActivations(counted.abilityActivations)
+            : undefined,
+        ) !== JSON.stringify(total.abilityActivations)
+      )
+        return fail();
+      // Old summary-only years cannot hide move uses or energy: they predate
+      // moves, and every moves-enabled year retains exact replay evidence.
+      if (
+        !sameMoveStats(
+          total.abilityActivations?.moves,
+          counted.abilityActivations?.moves,
+        )
       )
         return fail();
       for (const key of CAREER_KEYS) {
@@ -1197,6 +1222,22 @@ function verifyCurrentArchive(franchise: Franchise, run: Run): void {
         if (franchise.year === 1 ? actual !== expected : actual < expected)
           return fail();
       }
+      for (const key of MOVE_IDS) {
+        const actual = total.abilityActivations?.moves?.uses[key] ?? 0;
+        const expected = player.abilityActivations?.moves?.uses[key] ?? 0;
+        if (franchise.year === 1 ? actual !== expected : actual < expected)
+          return fail();
+      }
+      for (const key of ["energySpent", "energyRecovered"] as const) {
+        const actual = total.abilityActivations?.moves?.[key] ?? 0;
+        const expected = player.abilityActivations?.moves?.[key] ?? 0;
+        if (
+          franchise.year === 1
+            ? Math.abs(actual - expected) > 1e-6
+            : actual + 1e-6 < expected
+        )
+          return fail();
+      }
       for (const key of CAREER_KEYS) {
         if (
           franchise.year === 1
@@ -1235,6 +1276,7 @@ export function validateFranchise(
         team.typeTacticsVersion !== run.typeTacticsVersion ||
         team.abilityVersion !== run.abilityVersion ||
         team.abilityMasteryVersion !== run.abilityMasteryVersion ||
+        team.movesetVersion !== run.movesetVersion ||
         team.physicalAbilityVersion !== run.physicalAbilityVersion ||
         team.chemistryVersion !== run.chemistryVersion ||
         team.chemistryGrowthVersion !== run.chemistryGrowthVersion ||

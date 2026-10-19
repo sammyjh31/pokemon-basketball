@@ -23,6 +23,7 @@ const clubs = (
   const run = { ...createRun("free", true, seed), roster };
   if (!current) {
     // Reproduce seasons saved before species abilities and shared evaluation.
+    delete run.movesetVersion;
     delete run.abilityMasteryVersion;
     delete run.abilityVersion;
     delete run.physicalAbilityVersion;

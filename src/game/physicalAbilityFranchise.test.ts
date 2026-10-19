@@ -13,6 +13,7 @@ it.each([false, true])(
   async (earnedHistory) => {
     const run = createRun("free", true, 822);
     if (!earnedHistory) {
+      delete run.movesetVersion;
       delete run.abilityMasteryVersion;
       delete run.chemistryGrowthVersion;
       delete run.moraleVersion;

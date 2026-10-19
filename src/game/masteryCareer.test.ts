@@ -168,6 +168,7 @@ it("returns released players to free agency with recorded mastery while new rook
 
 it("leaves legacy active seasons unchanged and adopts zero mastery at the next local season", () => {
   let draft = drafted();
+  delete draft.movesetVersion;
   delete draft.abilityMasteryVersion;
   expect(
     local

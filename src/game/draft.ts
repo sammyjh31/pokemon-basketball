@@ -47,6 +47,7 @@ export function createRun(
     matchupVersion: 1,
     possessionVersion: 1,
     gameFlowVersion: 1,
+    movesetVersion: 1,
     mode,
     includeLegends,
     roster: emptyRoster(),

@@ -25,6 +25,7 @@ it("counts the screener receiving the ball, not the handler who used the screen"
 const clubs = () =>
   createLeague({
     ...createRun("free", true, 22),
+    movesetVersion: undefined,
     courtVersion: 3,
     coach: { version: 1, id: "clair" },
     roster: {

@@ -424,6 +424,8 @@ export function officialGameFromArcade(
       donor.units--;
       remaining++;
     }
+    if (units.some(({ p }) => p.stats.abilityActivations?.moves !== undefined))
+      fail();
     if (
       state.physicalAbilityVersion !== 1 &&
       units.some(({ p }) => p.stats.abilityActivations?.physical !== undefined)
@@ -662,6 +664,7 @@ export function validateOfficialGame(
           fail();
       if (game.abilityVersion === 1) {
         const activations = validateAbilityActivations(box.abilityActivations);
+        if (activations.moves !== undefined) fail();
         if (
           (activations.physical !== undefined &&
             game.physicalAbilityVersion !== 1) ||

@@ -39,6 +39,7 @@ export function legacyFranchise(): { offseason: GameState; season: GameState } {
     ...initialState(47),
     run: {
       ...createRun("free", true, 47),
+      movesetVersion: undefined,
       abilityMasteryVersion: undefined,
       gameFlowVersion: undefined,
       // This release capsule predates the court-v3 balance update.
@@ -91,6 +92,7 @@ export function legacyFranchise(): { offseason: GameState; season: GameState } {
   // Starting a season deliberately adopts current features in production. This
   // generator represents the pre-feature release, whose next year had neither
   // the mastery flag nor its initial zero-XP roster maps.
+  delete season.run.movesetVersion;
   delete season.run.abilityMasteryVersion;
   delete season.run.gameFlowVersion;
   // Production deliberately upgrades a new year; this capsule reconstructs
@@ -104,6 +106,7 @@ export function legacyFranchise(): { offseason: GameState; season: GameState } {
       throw new Error("A historical fixture cannot discard earned mastery.");
     team.courtVersion = 2;
     delete team.gameFlowVersion;
+    delete team.movesetVersion;
     delete team.abilityMasteryVersion;
     delete team.abilityMastery;
   }

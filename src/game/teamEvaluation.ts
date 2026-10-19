@@ -1,3 +1,6 @@
+import { movesEnabled } from "./basketballMoves";
+import { moveValue } from "./movePolicy";
+import type { MoveTeam } from "./moveTypes";
 import { masteryXp } from "./abilityMastery";
 import { teamLeadership } from "./playerPersonality";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -47,6 +50,8 @@ export interface EvaluationTeam {
   development?: PlayerDevelopment;
   abilityVersion?: 1;
   abilityMasteryVersion?: 1;
+  movesetVersion?: 1;
+  courtVersion?: import("./courtTypes").CourtVersion;
   abilityMastery?: Record<number, number>;
   physicalAbilityVersion?: 1;
   evaluationVersion?: 1;
@@ -69,6 +74,7 @@ const NEED_SKILLS = [
 ] as const;
 type NeedSkill = (typeof NEED_SKILLS)[number];
 export interface EvaluationContext {
+  moves?: MoveTeam;
   tactic: Tactic;
   defense: DefenseScheme;
   abilities: boolean;
@@ -221,6 +227,7 @@ function projectedUnit(
           tactic,
           defense,
           abilities: abilitiesEnabled(team),
+
           ...(team.abilityMasteryVersion === 1
             ? {
                 mastery: Object.fromEntries(
@@ -283,6 +290,7 @@ export function evaluationGamePlan(team: EvaluationTeam) {
         players.map(
           ({ mon, p }) =>
             offenseFit(p, tactic) +
+            (movesEnabled(team) ? moveValue({ ...team, tactic }, mon.id) : 0) +
             (enabled
               ? abilityUsefulness(mon.id, p, masteryXp(team, mon.id)) *
                 (speciesAbility(mon.id).tactics.includes(tactic) ? 4 : 1)
@@ -343,6 +351,7 @@ export function createEvaluationContext(
     tactic: plan.tactic,
     defense: plan.defense,
     abilities: abilitiesEnabled(team),
+    ...(movesEnabled(team) ? { moves: structuredClone(team) } : {}),
     ...(team.abilityMasteryVersion === 1
       ? {
           mastery: Object.fromEntries(
@@ -452,6 +461,23 @@ function scoreProfile(
         context.mastery?.[pokemonId],
       )
     : 0;
+  if (context.moves)
+    factors.push({
+      key: "moves",
+      label: "Coached basketball moves",
+      value: moveValue(
+        context.moves,
+        pokemonId,
+        p,
+        context.mastery?.[pokemonId],
+      ),
+      contribution: moveValue(
+        context.moves,
+        pokemonId,
+        p,
+        context.mastery?.[pokemonId],
+      ),
+    });
   if (context.physicalAbilities)
     factors.push({
       key: "physical",
@@ -534,6 +560,7 @@ export function evaluateTeam(team: EvaluationTeam) {
     "needs",
     "ability",
     ...(context.physicalAbilities ? ["physical"] : []),
+    ...(context.moves ? ["moves"] : []),
     ...(context.morale ? ["morale"] : []),
   ];
   const factors: EvaluationFactor[] = keys.map((key) => ({

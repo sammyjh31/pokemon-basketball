@@ -159,6 +159,7 @@ export function createLeague(run: Run): LeagueTeam[] {
     if (run.typeMatchupsVersion === 1) team.typeMatchupsVersion = 1;
     if (run.typeTacticsVersion === 1) team.typeTacticsVersion = 1;
     if (run.abilityVersion === 1) team.abilityVersion = 1;
+    if (run.movesetVersion === 1) team.movesetVersion = 1;
     if (run.abilityMasteryVersion === 1) {
       if (run.abilityVersion !== 1)
         throw new Error("Ability mastery requires abilities.");

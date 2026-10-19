@@ -38,6 +38,7 @@ function legacyTeams() {
     courtVersion: 2 as const,
     gameFlowVersion: undefined,
   };
+  delete run.movesetVersion;
   delete (run as { abilityMasteryVersion?: 1 }).abilityMasteryVersion;
   return createLeague(run);
 }

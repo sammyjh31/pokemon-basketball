@@ -147,6 +147,7 @@ describe("versioned tactics creation and persistence", () => {
     const run = completedDraft();
     delete run.matchupVersion;
     delete run.typeTacticsVersion;
+    delete run.movesetVersion;
     delete run.abilityMasteryVersion;
     delete run.chemistryGrowthVersion;
     delete run.moraleVersion;
