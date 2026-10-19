@@ -29,8 +29,8 @@
 
 ### 1. Catalog and automatic mastery policy
 Files: new `basketballMoves.ts`, `movePolicy.ts`, `moveTypes.ts`, tests. Interfaces: pure `coachMoves(team,id)` returns equipped moves/path/reasons; `movePool(id)`; `moveTrainingFocus(team,id)` and bounded move valuation. Inputs include roster/style/development/XP but no match future state. No coachPolicy/teamEvaluation import cycle.
-- [ ] Write/run failing selection, species eligibility, unlock, style/need and efficiency/power tradeoff tests.
-- [ ] Implement catalog/policy and version predicate; run focused tests; commit/push.
+- [x] Write/run failing selection, species eligibility, unlock, style/need and efficiency/power tradeoff tests.
+- [x] Implement catalog/policy and version predicate; run focused tests; commit/push.
 
 ### 2. Shared match runtime and telemetry
 Files: new `matchMoves.ts`, `matchLineups.ts`, `match.ts`, `courtPossession.ts`, `courtTypes.ts`, `abilities.ts`; tests. Interface: players optionally carry match-local move state; `activateMove(player, opportunity, actualSeconds, context)` returns bounded effects/events, records actual costs and uses. A segment clears temporary effects; elapsed match time advances cooldown.
@@ -61,3 +61,5 @@ Files: new MovesetPanel/report, MasteryPanel, AbilityStats/LeagueBoxScore and te
 - Baseline c5987ec: immediately preceding task passed 1,364 tests/245 files, 50 desktop/mobile checks and production build; frozen v4 season and restored-output hashes recorded in performance docs. Existing checkout is the managed isolated preview worktree; reuse it on codex/basketball-movesets. Primary checkout contains unrelated work and remains untouched.
 - User intent is explicit: implement the previously proposed two features with automatic coaching in all simulated modes and push updates. Ruling: proceed inline under that authorization; concrete spec/plan document the design without adding approval round trips for routine choices. Independent movesetVersion preserves prior court rules and avoids retroactive simulation changes.
 - Specialization is a coach assignment from unlocked paths, re-evaluated from frozen pregame inputs. This avoids an extra progress currency or irreversible new player bank while preserving XP through all existing lifecycle paths. These assignments and tradeoffs must be visible.
+
+- Task 1: missing-policy/catalog tests failed first; all four policy tests now pass across the full franchise species pool, with real Ash/Surge/Oak coach policies, deterministic equipped slots and specialization tradeoffs. Typecheck passed. No shared evaluation/coach recursion or new saved XP bank.
