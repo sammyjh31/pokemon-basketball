@@ -217,17 +217,19 @@ test("portraits render without external image requests", async ({ page }) => {
   await chooseCoach(page);
   const images = page.locator(".candidate-grid img");
   await expect(images).toHaveCount(4);
-  await expect
-    .poll(async () =>
-      images.evaluateAll((nodes) =>
-        nodes.every(
+  // Candidate cards below the mobile fold intentionally load portraits lazily.
+  for (const image of await images.all()) {
+    await image.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() =>
+        image.evaluate(
           (node) =>
             (node as HTMLImageElement).complete &&
             (node as HTMLImageElement).naturalWidth > 0,
         ),
-      ),
-    )
-    .toBe(true);
+      )
+      .toBe(true);
+  }
 });
 
 test("informative text and type labels meet normal-text contrast", async ({

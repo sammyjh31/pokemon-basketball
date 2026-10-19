@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import type { ReplayCacheRecord } from "../../src/game/replayCache";
 import { asReturningPlayer } from "./returningPlayer";
 test.beforeEach(({ page }) => asReturningPlayer(page));
 
@@ -61,8 +62,16 @@ test("evicts cache snapshots by count and storage budget without touching source
     const { ReplayCache, REPLAY_CACHE_LIMIT } = await import(cachePath);
     const { indexedReplayRecords } = await import(storagePath);
     const name = "pokebb-bounded-replay-e2e";
+    const records = indexedReplayRecords(indexedDB, name);
+    let writtenAt = 0;
     const cache = new ReplayCache(
-      indexedReplayRecords(indexedDB, name),
+      {
+        ...records,
+        // Browser clock precision can give consecutive writes equal ages.
+        // Model a known chronological order for the oldest-entry assertion.
+        write: (id: string, record: ReplayCacheRecord) =>
+          records.write(id, { ...record, updated: ++writtenAt }),
+      },
       crypto,
       "engine",
     );

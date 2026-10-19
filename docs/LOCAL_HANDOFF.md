@@ -8,7 +8,9 @@ Independent `movesetVersion: 1` enables eight basketball adaptations, match-loca
 
 `matchMoves.ts` owns elapsed-time cooldowns, energy costs and segment-local effects. Shared court resolution chooses moves at actual actions, without extra random draws; regular season, playoffs, partial advances, CPU games and historical replays use that path. Officially played arcade boxes explicitly reject invented simulated-move counters. `abilityActivations.moves` stores known-ID usage and energy independently of passive activations. Mastery panels and game boxes expose current/frozen assignments and actual usage. Optional absent fields preserve earlier rule outputs and the existing automatic source fingerprint invalidates stale replay evidence.
 
-Design and verification ledger: [movesets plan](superpowers/plans/2026-10-19-basketball-movesets.md). Final regression results will be recorded there before release.
+Design and exact verification ledger: [movesets plan](superpowers/plans/2026-10-19-basketball-movesets.md). PR #10 carries this update; the local preview remains on port 5174.
+
+Verification coverage: **1,392 active tests / 255 files**, with the existing optional maximum-size stress case skipped. The complete sweep passed 1,390; two stale next-season flag expectations were corrected and passed focused rechecks. **All 52 desktop/mobile browser flows are covered**: the full run passed 50, then corrected lazy-image visibility and deterministic cache-age tests passed on both devices in three repetitions each (12 checks). These are complete sweeps plus focused corrections, not claims of second all-green complete runs. Both test-only changes received independent review; no production rules changed during verification. TypeScript, production build, formatting and whitespace checks passed. The full legacy v4 season fingerprint is unchanged; real new-rule solo/local seasons, playoffs, mastery, trades and cold/warm history restoration passed. No user save data or primary-checkout changes were made by tools.
 
 ## Verified franchise reopening (October 18)
 
