@@ -1,8 +1,9 @@
 import { realpathSync } from "node:fs";
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import { replayCacheRevision } from "./scripts/replay-cache-revision.ts";
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), replayCacheRevision()],
   server: { fs: { allow: [process.cwd(), realpathSync("node_modules")] } },
   test: {
     // League replay tests each simulate thousands of games. Bound CPU-heavy

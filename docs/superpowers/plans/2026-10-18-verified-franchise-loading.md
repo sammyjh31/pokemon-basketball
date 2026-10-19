@@ -32,9 +32,9 @@ Files: new `src/game/replayCache.ts`, `src/game/replayCacheStorage.ts`, `scripts
 
 Interface: `ReplayCache.get<T>(scope, input): Promise<T | undefined>` and `put(scope, input, value): Promise<void>`; injected record store and Crypto allow real integrity tests. Browser factory opens only the separate cache database. Virtual revision module contains a source digest and participates in relevant dev updates.
 
-- [ ] Write failing tests for durable real-HMAC reopening, invalid records/input/revision, unavailable store, size limits, and production-source revision changes.
-- [ ] Observe failures; implement authenticated best-effort storage, bounded metadata eviction, atomic key creation and source fingerprint plugin.
-- [ ] Run focused tests/typecheck, then commit/push.
+- [x] Write failing tests for durable real-HMAC reopening, invalid records/input/revision, unavailable store, size limits, and production-source revision changes.
+- [x] Observe failures; implement authenticated best-effort storage, bounded metadata eviction, atomic key creation and source fingerprint plugin.
+- [x] Run focused tests/typecheck, then commit/push.
 
 ## Task 2: Incremental solo franchise restoration
 
@@ -74,3 +74,4 @@ Files: `App.tsx`, restoration/UI tests, `tests/e2e/saveRecovery.spec.ts` or a fo
 
 - Baseline: `d26f3c2`; previous task verified the identical production tree with 1,328 tests, 44 browser checks, build and complete-output fingerprints. Existing dependency symlink retained. Reuse the managed preview worktree; no new checkout/dependency installation.
 - Ruling: proceed inline under the user's explicit implementation and GitHub authorization; the persistence design is documented for review without adding approval round trips for routine implementation choices.
+- Task 1: eight initial integrity tests failed for the missing API, then passed; revision/blocked-open regressions failed before their implementation/fix. Final foundation checks: 13 tests passed, including real Vite watched-edit invalidation; two real Chromium checks passed for concurrent key adoption/reopening and count/32 MiB eviction. Typecheck passed. No new dependencies. Blocked IDB requests have no readable `error` while pending; the fallback avoids that accessor and cannot stall each historical year.
