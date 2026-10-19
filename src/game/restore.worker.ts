@@ -1,6 +1,7 @@
 import { prepareGameLoad, STORAGE_KEY, type LoadedGame } from "./persistence";
 import { simulateLocalSeasonAsync } from "./localSeason";
 import type { LocalLeague } from "./localLeague";
+import { browserReplayCache } from "./browserReplayCache";
 
 export type RestoreJob =
   | { kind: "game"; source: string; seed: number }
@@ -28,7 +29,11 @@ self.onmessage = async ({ data }: MessageEvent<RestoreJob>) => {
       setItem: () => {},
     };
     const { restore, ...prepared } = prepareGameLoad(storage, data.seed);
-    post({ loaded: restore ? await restore(progress, signal) : prepared });
+    post({
+      loaded: restore
+        ? await restore(progress, signal, browserReplayCache())
+        : prepared,
+    });
   } catch (error) {
     post({ error: error instanceof Error ? error.message : String(error) });
   }

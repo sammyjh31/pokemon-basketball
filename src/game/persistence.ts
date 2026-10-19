@@ -32,6 +32,7 @@ import {
   type SeasonResult,
 } from "./types";
 import type { StorageLike } from "./saveStorage";
+import type { ReplayCache } from "./replayCache";
 export type { StorageLike } from "./saveStorage";
 export const STORAGE_KEY = "pokemon-basketball:v3";
 /** The saved game text, including saves written by earlier key versions. */
@@ -363,6 +364,7 @@ export interface PreparedGameLoad extends LoadedGame {
   restore?: (
     onProgress: (completed: number, total: number) => void,
     signal: AbortSignal,
+    cache?: ReplayCache,
   ) => Promise<LoadedGame>;
 }
 function validateSavedGame(
@@ -370,6 +372,7 @@ function validateSavedGame(
   replay?: SeasonResult,
   verifiedArchives?: VerifiedArchives,
   verifiedPlayoffs?: NonNullable<Run["playoffs"]>,
+  certifiedYears?: ReadonlySet<number>,
 ): LoadedGame {
   // Only a verified regular season can supply teams or seeds for the playoffs.
   const state = validate(value, replay);
@@ -429,6 +432,7 @@ function validateSavedGame(
         state.run,
         false,
         verifiedArchives,
+        certifiedYears,
       );
     } catch {
       // A fixed-roster season cannot become a standalone challenge save: doing
@@ -517,7 +521,7 @@ function readGame(
       return {
         state,
         notice: null,
-        restore: async (onProgress, signal) => {
+        restore: async (onProgress, signal, cache) => {
           try {
             signal.throwIfAborted();
             const archives =
@@ -527,14 +531,41 @@ function readGame(
               : raw.result !== null
                 ? 1230
                 : 0;
+            const archiveInputs = new Map<number, string>();
+            const certifiedYears = new Set<number>();
+            if (cache && archives.length) {
+              const savedYears = object(root.franchise).history as unknown[];
+              for (const season of archives) {
+                signal.throwIfAborted();
+                const input = JSON.stringify({
+                  includeLegends: state.run.includeLegends,
+                  archive: savedYears[season.year - 1],
+                });
+                archiveInputs.set(season.year, input);
+                if ((await cache.get<boolean>("solo-archive", input)) === true)
+                  certifiedYears.add(season.year);
+              }
+            }
+            const activeInput = cache ? JSON.stringify(raw) : "";
+            const active =
+              cache && activeGames > 0
+                ? await cache.get<{
+                    regular: SeasonResult;
+                    playoffs?: NonNullable<Run["playoffs"]>;
+                  }>("solo-active", activeInput)
+                : undefined;
+            signal.throwIfAborted();
             // Offseason saves contain the completed season twice. Reuse only
-            // an archive with exactly matching engine inputs; every archive
-            // still gets replayed and fully validated below.
+            // an uncertified archive with matching engine inputs. Other old
+            // years are either replayed or authenticated before final checks.
             const currentArchive =
-              activeGames === 1230 && state.franchise?.phase === "offseason"
+              !active?.regular &&
+              activeGames === 1230 &&
+              state.franchise?.phase === "offseason"
                 ? archives.find(
                     (season) =>
                       season.year === state.franchise!.year &&
+                      !certifiedYears.has(season.year) &&
                       hasMatchingSeasonInputs(
                         state.run,
                         season.seasonSeed,
@@ -542,14 +573,16 @@ function readGame(
                       ),
                   )
                 : undefined;
-            const currentGames = currentArchive ? 0 : activeGames;
-            const archiveGames = archives.map(
-              (season) =>
-                1230 +
-                season.replay!.playoffs.series.reduce(
-                  (sum, series) => sum + series.games.length,
-                  0,
-                ),
+            const currentGames =
+              active?.regular || currentArchive ? 0 : activeGames;
+            const archiveGames = archives.map((season) =>
+              certifiedYears.has(season.year)
+                ? 0
+                : 1230 +
+                  season.replay!.playoffs.series.reduce(
+                    (sum, series) => sum + series.games.length,
+                    0,
+                  ),
             );
             const totalGames =
               currentGames +
@@ -567,6 +600,7 @@ function readGame(
             };
             reportProgress(0, totalGames);
             for (const [index, season] of archives.entries()) {
+              if (certifiedYears.has(season.year)) continue;
               const regular = await replayArchivedSeason(
                 season,
                 (completed) =>
@@ -598,9 +632,11 @@ function readGame(
               ? verifiedArchives.get(currentArchive.year)
               : undefined;
             // Keep active boxes and history independent, as separate replays did.
-            let replay: SeasonResult | undefined = verifiedCurrent
-              ? structuredClone(verifiedCurrent.regular)
-              : undefined;
+            let replay: SeasonResult | undefined = active?.regular
+              ? structuredClone(active.regular)
+              : verifiedCurrent
+                ? structuredClone(verifiedCurrent.regular)
+                : undefined;
             if (replay?.league) {
               // Original first-year clubs and reconstructed archive clubs have
               // different field ordering. Retain the active engine's exact
@@ -633,10 +669,44 @@ function readGame(
               parsed,
               replay,
               verifiedArchives,
-              verifiedCurrent
-                ? structuredClone(verifiedCurrent.playoffs)
-                : undefined,
+              active?.playoffs ??
+                (verifiedCurrent
+                  ? structuredClone(verifiedCurrent.playoffs)
+                  : undefined),
+              certifiedYears,
             );
+            if (cache && loaded.notice === null && !loaded.preserveSource) {
+              signal.throwIfAborted();
+              const regular =
+                loaded.state.run.result ??
+                loaded.state.run.seasonProgress?.result;
+              if (regular && !active?.regular) {
+                const snapshot = {
+                  regular,
+                  playoffs: loaded.state.run.playoffs,
+                };
+                // A successful loader normalizes field ordering. Its next
+                // autosave must remain warm as well as the original source.
+                for (const input of new Set([
+                  activeInput,
+                  JSON.stringify(loaded.state.run),
+                ]))
+                  await cache.put("solo-active", input, snapshot);
+              }
+              for (const [year, input] of archiveInputs) {
+                signal.throwIfAborted();
+                if (!certifiedYears.has(year)) {
+                  await cache.put("solo-archive", input, true);
+                  const normalized = JSON.stringify({
+                    includeLegends: loaded.state.run.includeLegends,
+                    archive: loaded.state.franchise!.history[year - 1],
+                  });
+                  if (normalized !== input)
+                    await cache.put("solo-archive", normalized, true);
+                }
+              }
+            }
+            signal.throwIfAborted();
             onProgress(totalGames, totalGames);
             return loaded;
           } catch (error) {

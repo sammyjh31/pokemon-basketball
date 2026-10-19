@@ -592,6 +592,7 @@ function archivedSeason(
   leagueIds: number[] | undefined,
   preliminary = false,
   verified?: VerifiedArchives extends ReadonlyMap<number, infer T> ? T : never,
+  certified = false,
 ): FranchiseSeason {
   const row = object(value);
   if (row.year !== index + 1) return fail();
@@ -681,6 +682,7 @@ function archivedSeason(
       includeLegends,
       preliminary,
       verified,
+      certified,
     );
   return season;
 }
@@ -690,6 +692,7 @@ function archivedReplay(
   includeLegends: boolean,
   preliminary = false,
   verified?: VerifiedArchives extends ReadonlyMap<number, infer T> ? T : never,
+  certified = false,
 ): SeasonReplayArchive {
   const row = object(value);
   if (
@@ -785,7 +788,17 @@ function archivedReplay(
     playedGames,
     playoffs: structuredClone(row.playoffs) as SeasonReplayArchive["playoffs"],
   };
+  // A certificate is supplied only by authenticated, exact-year cache evidence.
+  // Structural parsing and all franchise-wide chronology checks still run.
   if (preliminary) return inputs;
+  if (certified)
+    return {
+      ...inputs,
+      // Cold replay required byte-identical engine rows, including their order.
+      // Keep those authenticated rows rather than the structural parser's order.
+      regularPlayers: structuredClone(row.regularPlayers) as LeaguePlayer[],
+      playoffPlayers: structuredClone(row.playoffPlayers) as LeaguePlayer[],
+    };
   const expected =
       verified?.regular ??
       replayArchivedSeasonSync({ ...season, replay: inputs }),
@@ -1204,6 +1217,7 @@ export function validateFranchise(
   run: Run,
   preliminary = false,
   verifiedArchives?: VerifiedArchives,
+  certifiedYears?: ReadonlySet<number>,
 ): Franchise {
   const row = object(value),
     year = integer(row.year, 1, FRANCHISE_MAX_YEARS);
@@ -1258,6 +1272,7 @@ export function validateFranchise(
       Object.hasOwn(row, "rookieDrafts") ? undefined : leagueIds,
       preliminary,
       verifiedArchives?.get(index + 1),
+      certifiedYears?.has(index + 1) ?? false,
     ),
   );
   const coachOffice =

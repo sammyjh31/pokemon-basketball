@@ -42,9 +42,9 @@ Files: `persistence.ts`, `franchiseValidation.ts`, `restore.worker.ts`, `restore
 
 Interfaces: optional `ReplayCache` on deferred preparation; internal certified-year set supplied only by authenticated cache lookups. Existing `VerifiedArchives` replay material remains supported. Worker/page fallback create optional browser cache. Cache keys bind complete raw years/includeLegends and exact raw runs.
 
-- [ ] Write a real multi-year cold/warm regression: identical complete loaded output, zero warm replay work, unchanged years reused after active progression/offseason edits, corrupted global careers/history rejected, active/history independent.
-- [ ] Observe expected replay-count failure; add proof lookup, count only misses, retain all cross-history validation, and publish after success.
-- [ ] Run solo replay/persistence/worker regressions and exact-output audit; commit/push.
+- [x] Write a real multi-year cold/warm regression: identical complete loaded output, zero warm replay work, unchanged years reused after active progression/offseason edits, corrupted global careers/history rejected, active/history independent.
+- [x] Observe expected replay-count failure; add proof lookup, count only misses, retain all cross-history validation, and publish after success.
+- [x] Run focused solo replay-input/cache regressions; commit/push. Full legacy/replay audit remains in task 5.
 
 ## Task 3: Local careers and current-season evidence
 
@@ -75,3 +75,4 @@ Files: `App.tsx`, restoration/UI tests, `tests/e2e/saveRecovery.spec.ts` or a fo
 - Baseline: `d26f3c2`; previous task verified the identical production tree with 1,328 tests, 44 browser checks, build and complete-output fingerprints. Existing dependency symlink retained. Reuse the managed preview worktree; no new checkout/dependency installation.
 - Ruling: proceed inline under the user's explicit implementation and GitHub authorization; the persistence design is documented for review without adding approval round trips for routine implementation choices.
 - Task 1: eight initial integrity tests failed for the missing API, then passed; revision/blocked-open regressions failed before their implementation/fix. Final foundation checks: 13 tests passed, including real Vite watched-edit invalidation; two real Chromium checks passed for concurrent key adoption/reopening and count/32 MiB eviction. Typecheck passed. No new dependencies. Blocked IDB requests have no readable `error` while pending; the fallback avoids that accessor and cannot stall each historical year.
+- Task 2: initial warm reopen still replayed 1,307 games (red). Integration then caught original-versus-normalized serialization misses and player-row key ordering; authenticate both original and successfully normalized forms, retaining the engine's authenticated row order. Final targeted group: 22 tests passed, including a second modern completed season, exact cold/warm hashes, year-three advancement replaying only 15 new games, cache failures, evicted active snapshots, failed/canceled verification, and unchanged replay-input guards. Blocked browser API getters have separate red/green tests. No source writes or gameplay changes.
