@@ -36,7 +36,28 @@ it("freezes moveset-v1 game results and telemetry for future saved replays", () 
   });
   expect(
     createHash("sha256").update(JSON.stringify(outputs)).digest("hex"),
-  ).toBe("c6589932730d159e4a0386c114a7ebb39abbba75b7b2a97359f87882578db93a");
+  ).toBe("5826b62eda0454cbf862789c162bf9ae133434a691973858264588a8b169c143");
+});
+it("records off-ball moves only when the player actually cuts or drifts", () => {
+  const teams = clubs();
+  let checked = 0;
+  for (const seed of [5, 42, 81]) {
+    const match = simulateMatch(teams[0], teams[1], seed);
+    for (const sequence of match.insights!.court!)
+      for (const event of sequence.moves ?? []) {
+        if (event.opportunity !== "cut") continue;
+        checked++;
+        expect(
+          sequence.actions.some(
+            (action) =>
+              action.playerId === event.playerId &&
+              ["cut", "drift"].includes(action.kind),
+          ),
+          `seed ${seed}, possession ${sequence.possession}, ${event.playerId}`,
+        ).toBe(true);
+      }
+  }
+  expect(checked).toBeGreaterThan(0);
 });
 it("does not spend a shooting or contest move on a shot-clock violation", () => {
   const teams = createLeague({ ...performanceRun(), movesetVersion: 1 });

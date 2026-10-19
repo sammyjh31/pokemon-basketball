@@ -1036,7 +1036,6 @@ function reactOffBall(
         distance(court.get(b)!, court.get(ball)!),
     )[0];
   if (!shooter) return;
-  onCut?.(shooter);
   const from = court.get(shooter)!,
     side = Math.sign(from.x) || 1,
     target = from.y > 9 ? { x: side * 22.5, y: 3 } : { x: side * 22.5, y: 16 },
@@ -1047,11 +1046,27 @@ function reactOffBall(
         (shooter.moves?.effects.movement ?? 1),
     );
   if (span < 0.5) return;
-  const next = bounded({
+  let next = bounded({
     x: from.x + ((target.x - from.x) * step) / span,
     y: from.y + ((target.y - from.y) * step) / span,
   });
   if (zoneAt(next) !== "three") return;
+  // Commit a legal relocation before paying for its move. A rejected drift
+  // must not consume energy/cooldown or award move experience.
+  onCut?.(shooter);
+  const boostedStep = Math.min(
+    span,
+    clamp(2 + (shooter.profile.traits.offBall - 50) * 0.1, 1, 6) *
+      (shooter.moves?.effects.movement ?? 1),
+  );
+  if (boostedStep > step) {
+    const boosted = bounded({
+      x: from.x + ((target.x - from.x) * boostedStep) / span,
+      y: from.y + ((target.y - from.y) * boostedStep) / span,
+    });
+    // Keep the spacer behind the arc when an acceleration would cross it.
+    if (zoneAt(boosted) === "three") next = boosted;
+  }
   court.set(shooter, next);
   actions.push({ kind: "drift", playerId: shooter.box.playerId, clock });
 }
