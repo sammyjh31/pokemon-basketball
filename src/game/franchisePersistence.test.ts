@@ -28,6 +28,7 @@ let completedTwo: GameState;
 beforeAll(() => {
   let state = initialState(47);
   // These hand-built model-1 capsules predate earned teammate history.
+  delete state.run.movesetVersion;
   delete state.run.abilityMasteryVersion;
   delete state.run.chemistryGrowthVersion;
   delete state.run.moraleVersion;
@@ -123,6 +124,7 @@ beforeAll(() => {
     ...traded,
     run: {
       ...createRun("spin", traded.run.includeLegends, 919),
+      movesetVersion: undefined,
       abilityMasteryVersion: undefined,
       chemistryGrowthVersion: undefined,
       moraleVersion: undefined,

@@ -47,12 +47,12 @@ Files: types/draft/league/localLeague/localCareer/franchise/validation/persisten
 
 ### 4. Clear automatic reports
 Files: new MovesetPanel/report, MasteryPanel, AbilityStats/LeagueBoxScore and tests; rules/help copy.
-- [ ] Fail UI tests for equipped moves, specialization tradeoffs, automatic training, unlocks and actual usage.
-- [ ] Implement informative profiles and box reports without manual controls; optional fields remain absent from historical reports.
-- [ ] Run focused UI, desktop/mobile browser checks and build; commit/push.
+- [x] Fail UI tests for equipped moves, specialization tradeoffs, automatic training, unlocks and actual usage.
+- [x] Implement informative profiles and box reports without manual controls; optional fields remain absent from historical reports.
+- [x] Run focused UI, desktop/mobile browser checks and build; commit/push.
 
 ### 5. Review, complete verification and release
-- [ ] One fresh independent read-only whole-branch review; address proven findings with regressions.
+- [x] One fresh independent read-only whole-branch review; address proven findings with regressions.
 - [ ] Full required regressions, frozen season fingerprint, native warm-cache/lifecycle and browser checks on final code; build/typecheck.
 - [ ] Update README/handoff and exact verification record, commit/push and create/attach/merge PR under existing authorization. Keep local preview available.
 
@@ -67,3 +67,9 @@ Files: new MovesetPanel/report, MasteryPanel, AbilityStats/LeagueBoxScore and te
 - Task 2: runtime tests first failed for missing engine hooks; 17 action/runtime/physical/court checks passed after implementation. The real-match tests cover deterministic repeated CPU results, actual movement, scoring conservation, compact/full parity and abilities-off behavior. The frozen full v4 season fingerprint passed unchanged (71.75 s); the five-file focused sweep passed 15 tests. Move effects expire per court segment, with actual elapsed-time cooldowns, bounded energy and separate telemetry. Off-ball callbacks apply only to actual cuts/drifts.
 
 - Task 3 progress: initial rule/coach/official tests failed as expected. New mode/header/CPU flags and invalid combinations now pass; automatic training/shared valuation and rejecting invented arcade moves pass. Two real new-rule local seasons round-trip byte-identically cold/warm with no warm historical replay; trades retain XP and slots; a legacy local archive remains byte-identical after next-year adoption. Combined lifecycle/coaching group: four passed (27.21 s), typecheck passed. Report-size regression found and fixed by combining existing skill/need explanations, retaining the eight-reason bound. Legacy rookie fixture explicitly omits moves alongside its existing omitted mastery flags. Full solo integration and broad checks still pending.
+
+- Task 4: missing-report UI tests failed first; nine component checks passed, and the real App draft regression caught/fixed omitted move/court flags before a league exists. The focused desktop/mobile browser checks both passed with actual match events equal to usage counters, no horizontal overflow and no page errors; mobile screenshot inspected. Typecheck and production build passed. Legacy capsule helpers now explicitly omit moves when omitting prerequisite mastery/court flags; no old golden hashes changed. Fast sweep: 203/207 files passed initially; all four fixture-related failures were fixed by pinning omitted moves in their historical inputs, and the seven-file follow-up passed 19 tests.
+
+- Review: one fresh independent reviewer found two P2 issues. The real seed-5 violation regression failed, then passed after moving shoot/defend activation into the committed-shot branch. Career move uses and both energy totals now reconcile exactly even with old summary-only years; a red/green telemetry boundary test and actual mixed-history mutation checks cover it. Reviewer rechecked fixes and reported no remaining findings.
+
+- Solo lifecycle investigation: the real 1,230-game/playoff/camp franchise exposed an optional-key ordering mismatch in the strict career comparison. Canonicalizing the counted side through the same strict validator preserves every numeric check; the exact generated source failed before and passed after in a preliminary validator check. The full cold/warm lifecycle and complete suite are now running on final production code.

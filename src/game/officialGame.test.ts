@@ -68,6 +68,7 @@ describe("official arcade boxes", () => {
     const { teams, fixture } = officialFixture();
     for (const team of teams) {
       delete team.abilityVersion;
+      delete team.movesetVersion;
       delete team.abilityMasteryVersion;
       delete team.abilityMastery;
       delete team.physicalAbilityVersion;
@@ -135,6 +136,7 @@ describe("official arcade boxes", () => {
       else
         for (const team of teams) {
           delete team.abilityVersion;
+          delete team.movesetVersion;
           delete team.abilityMasteryVersion;
           delete team.abilityMastery;
           delete team.physicalAbilityVersion;

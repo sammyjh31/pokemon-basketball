@@ -69,7 +69,10 @@ it.each([false, true])(
       ),
       coachDraftRequired: true,
     };
-    if (!mastery) delete d.abilityMasteryVersion;
+    if (!mastery) {
+      delete d.movesetVersion;
+      delete d.abilityMasteryVersion;
+    }
     for (let turn = localCoachTurn(d); turn; turn = localCoachTurn(d))
       d = selectLocalCoach(d, turn.teamId, turn.teamId === 1 ? "ash" : "mom");
     while (local.currentLocalTurn(d)) {

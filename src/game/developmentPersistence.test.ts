@@ -37,6 +37,7 @@ let legacyTwo: GameState;
 beforeAll(() => {
   let state = initialState(51);
   // These hand-built model-2 capsules predate earned teammate history.
+  delete state.run.movesetVersion;
   delete state.run.abilityMasteryVersion;
   delete state.run.chemistryGrowthVersion;
   delete state.run.moraleVersion;
@@ -69,6 +70,7 @@ beforeAll(() => {
   // Reconstruct a genuinely historical model-4 save. New season boundaries
   // otherwise adopt earned history that requires a rich model-3 archive.
   for (const key of [
+    "movesetVersion",
     "abilityMasteryVersion",
     "chemistryGrowthVersion",
     "moraleVersion",
@@ -79,6 +81,7 @@ beforeAll(() => {
     ...legacyTwo.franchise!.teams,
     ...(legacyTwo.run.leagueTeams ?? []),
   ]) {
+    delete team.movesetVersion;
     delete team.abilityMasteryVersion;
     delete team.abilityMastery;
     delete team.chemistryGrowthVersion;
@@ -156,6 +159,7 @@ beforeAll(() => {
     ...processed,
     run: {
       ...createRun("spin", true, 67),
+      movesetVersion: undefined,
       abilityMasteryVersion: undefined,
       chemistryGrowthVersion: undefined,
       moraleVersion: undefined,

@@ -17,6 +17,7 @@ const finishers = [67, 68, 217, 277, 307, 308, 533, 534];
 const base = createLeague({
   ...createRun("free", true, 88),
   // These fixtures lock the original species-ability policy before shared valuation.
+  movesetVersion: undefined,
   abilityMasteryVersion: undefined,
   evaluationVersion: undefined,
   chemistryVersion: undefined,

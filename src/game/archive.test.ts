@@ -29,6 +29,7 @@ let finished: GameState;
 beforeAll(() => {
   let run = createRun("free", true, 82);
   // Preserve the explicitly historical model-1/2 helper contract.
+  delete run.movesetVersion;
   delete run.abilityMasteryVersion;
   delete run.chemistryGrowthVersion;
   delete run.moraleVersion;
@@ -261,6 +262,24 @@ describe("mixed official season persistence", () => {
       notice: null,
       state: archived,
     });
+    expect(last.replay!.teams.every((t) => t.movesetVersion === 1)).toBe(true);
+    expect(() =>
+      validateFranchise(archived.franchise, archived.run, true),
+    ).not.toThrow();
+    for (const field of ["uses", "energySpent", "energyRecovered"] as const) {
+      const corrupted = structuredClone(archived);
+      const row = corrupted.franchise!.careers.find((p) =>
+        Object.values(p.regular.abilityActivations?.moves?.uses ?? {}).some(
+          (v) => v! > 0,
+        ),
+      )!;
+      const stats = row.regular.abilityActivations!.moves!;
+      if (field === "uses") stats.uses.protect = (stats.uses.protect ?? 0) + 1;
+      else stats[field]++;
+      expect(() =>
+        validateFranchise(corrupted.franchise, corrupted.run, true),
+      ).toThrow();
+    }
     // Even without year one's details, known starts remain a hard lower bound
     // and the unknown year can contribute at most 82. Preserve aggregate starts
     // so these checks cannot pass merely because league-wide totals changed.

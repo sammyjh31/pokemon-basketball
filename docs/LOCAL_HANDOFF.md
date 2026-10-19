@@ -1,5 +1,15 @@
 # Local and cloud handoff — 2026-10-19
 
+## Coach-managed basketball moves (October 19)
+
+Independent `movesetVersion: 1` enables eight basketball adaptations, match-local costs/cooldowns, automatic loadouts and mastery specializations. It requires ability/mastery rules and court positioning; abilities-off disables moves. New solo and local v2 drafts opt in. Solo franchises and court-enabled local careers adopt at their next season boundary. Old archived teams retain omitted flags. Future changes to these deterministic rules need a new moveset version, rather than changing v1 behavior.
+
+`basketballMoves.ts` defines eligibility from species attributes and types; `movePolicy.ts` is a pure coach policy and bounded shared valuation without importing the coach/evaluation consumers. Existing XP unlocks two/three/four slots at 0/200/400 and specialization at 75. Power, Control and Efficiency are reassigned per game by coaches; there is no second persistent XP bank. Actual move use and aligned camp practice add bounded existing mastery XP. Existing roster transfers retain that bank and rookies start at zero.
+
+`matchMoves.ts` owns elapsed-time cooldowns, energy costs and segment-local effects. Shared court resolution chooses moves at actual actions, without extra random draws; regular season, playoffs, partial advances, CPU games and historical replays use that path. Officially played arcade boxes explicitly reject invented simulated-move counters. `abilityActivations.moves` stores known-ID usage and energy independently of passive activations. Mastery panels and game boxes expose current/frozen assignments and actual usage. Optional absent fields preserve earlier rule outputs and the existing automatic source fingerprint invalidates stale replay evidence.
+
+Design and verification ledger: [movesets plan](superpowers/plans/2026-10-19-basketball-movesets.md). Final regression results will be recorded there before release.
+
 ## Verified franchise reopening (October 18)
 
 Solo and local careers now retain signed, source-revision-bound replay evidence in a separate optional IndexedDB database. Warm opens reuse unchanged archived years and exact current-season results while all source parsing and career/roster/coach/trade/development consistency checks remain active. Source saves, backups, exports and history are unchanged. Newly imported saves and invalidated/missing evidence receive ordinary replay. Small archive certificates survive preferential eviction of larger snapshots; storage is capped at approximately 32 MiB.

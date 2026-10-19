@@ -808,21 +808,6 @@ export function resolveCourtPossession(
     !clockLimited
   )
     relocateForIntent(c, court, ball, c.zoneIntent(ball), random, spend);
-  if (outcome === "shot" && c.movesNow !== undefined) {
-    const shot = courtGeometry(court, ball, c.offense, c.defense);
-    useMove(ball, "shoot", undefined, shot.zone);
-    useMove(shot.defender, "defend", undefined, shot.zone);
-    if (shot.defender.moves?.effects.movement !== 1)
-      court.set(
-        shot.defender,
-        moveToward(
-          court.get(shot.defender)!,
-          court.get(ball)!,
-          shot.defender,
-          0.15,
-        ),
-      );
-  }
   if (outcome === "shot") {
     if (
       clockLimited &&
@@ -832,7 +817,24 @@ export function resolveCourtPossession(
     ) {
       outcome = "violation";
       spend("violation", clock, undefined, false);
-    } else spend("shoot", rushedAdvance ? clock : Math.min(clock, 0.6));
+    } else {
+      if (c.movesNow !== undefined) {
+        const shot = courtGeometry(court, ball, c.offense, c.defense);
+        useMove(ball, "shoot", undefined, shot.zone);
+        useMove(shot.defender, "defend", undefined, shot.zone);
+        if (shot.defender.moves?.effects.movement !== 1)
+          court.set(
+            shot.defender,
+            moveToward(
+              court.get(shot.defender)!,
+              court.get(ball)!,
+              shot.defender,
+              0.15,
+            ),
+          );
+      }
+      spend("shoot", rushedAdvance ? clock : Math.min(clock, 0.6));
+    }
   }
   if (outcome !== "shot" && actions.at(-1)?.kind !== "violation")
     actions.push({

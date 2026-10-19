@@ -19,6 +19,7 @@ it("preserves morale-enabled release e8681b9", () => {
       B3: 131,
     },
   };
+  delete run.movesetVersion;
   delete run.abilityMasteryVersion;
   delete (run as { personalityVersion?: 1 }).personalityVersion;
   delete (run as { gameFlowVersion?: 1 }).gameFlowVersion;

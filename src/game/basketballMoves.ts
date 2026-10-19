@@ -76,7 +76,7 @@ export const basketballMoves: readonly BasketballMove[] = [
     id: "recover",
     name: "Recover",
     description:
-      "Restores up to nine energy when tired; uses this sequence's move opportunity.",
+      "Restores energy when tired, scaled by mastery and specialization; uses this sequence's move opportunity.",
     focus: "conditioning",
     opportunities: ["recover"],
     cost: 0,

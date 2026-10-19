@@ -1,4 +1,5 @@
 import { MOVE_IDS } from "./moveTypes";
+import { sameMoveStats } from "./moveTelemetry";
 import { captureNewsGames, validateNewsGames } from "./archive";
 import { verifyMasteryChronology } from "./masteryChronology";
 import { validateMasteryRoster } from "./abilityMastery";
@@ -1013,17 +1014,22 @@ function careers(
       players.forEach((p) => mergeAbilityActivations(counted, p));
       if (
         appearances.every((year) => year.replay) &&
-        JSON.stringify(counted.abilityActivations) !==
-          JSON.stringify(total.abilityActivations)
+        JSON.stringify(
+          counted.abilityActivations
+            ? validateAbilityActivations(counted.abilityActivations)
+            : undefined,
+        ) !== JSON.stringify(total.abilityActivations)
       )
         return fail();
-      for (const key of MOVE_IDS) {
-        if (
-          (total.abilityActivations?.moves?.uses[key] ?? 0) <
-          (counted.abilityActivations?.moves?.uses[key] ?? 0)
+      // Old summary-only years cannot hide move uses or energy: they predate
+      // moves, and every moves-enabled year retains exact replay evidence.
+      if (
+        !sameMoveStats(
+          total.abilityActivations?.moves,
+          counted.abilityActivations?.moves,
         )
-          return fail();
-      }
+      )
+        return fail();
       for (const key of CAREER_KEYS) {
         const sum =
           key === "highPoints"

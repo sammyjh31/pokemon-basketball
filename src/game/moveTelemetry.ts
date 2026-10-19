@@ -15,6 +15,14 @@ export function mergeMoveStats(target: MoveStats, source: MoveStats) {
     target.energyRecovered + source.energyRecovered,
   );
 }
+/** Summary-only seasons predate moves; only recorded years can contribute. */
+export function sameMoveStats(a?: MoveStats, b?: MoveStats): boolean {
+  return (
+    MOVE_IDS.every((id) => (a?.uses[id] ?? 0) === (b?.uses[id] ?? 0)) &&
+    (a?.energySpent ?? 0) === (b?.energySpent ?? 0) &&
+    (a?.energyRecovered ?? 0) === (b?.energyRecovered ?? 0)
+  );
+}
 export function validateMoveStats(raw: unknown): MoveStats {
   if (!raw || typeof raw !== "object" || Array.isArray(raw))
     throw Error("Invalid move statistics.");

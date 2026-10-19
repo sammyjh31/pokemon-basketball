@@ -36,6 +36,7 @@ it("enables the same model on all new clubs and CPU regular-season and playoff g
   expect(resolvePlayoffMatch(fixture, teams)).toEqual(regular);
   const old = createLeague({
     ...r,
+    movesetVersion: undefined,
     courtVersion: undefined,
     gameFlowVersion: undefined,
   });
@@ -66,7 +67,9 @@ it("retains current and historical rule flags through solo saves and archive rec
     const r = {
         ...run(),
         courtVersion: version,
-        ...(version === undefined ? { gameFlowVersion: undefined } : {}),
+        ...(version === undefined
+          ? { gameFlowVersion: undefined, movesetVersion: undefined }
+          : {}),
       },
       state = { ...initialState(22), run: r };
     saveGame(storage, state);
@@ -98,6 +101,7 @@ it("opts new local leagues in, but never upgrades a saved local career implicitl
     parseLocalLeague(JSON.stringify({ ...d, courtVersion: 1 })).courtVersion,
   ).toBe(1);
   delete d.courtVersion;
+  delete d.movesetVersion;
   delete d.gameFlowVersion;
   expect(parseLocalLeague(JSON.stringify(d)).courtVersion).toBeUndefined();
   expect(() =>

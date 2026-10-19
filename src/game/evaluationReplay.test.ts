@@ -19,6 +19,7 @@ it("preserves the pre-evaluation coached ability draft and matches", () => {
       B3: 131,
     },
   };
+  delete run.movesetVersion;
   delete run.abilityMasteryVersion;
   delete (run as { evaluationVersion?: 1 }).evaluationVersion;
   delete run.physicalAbilityVersion;

@@ -7,6 +7,7 @@ it("preserves the pre-game-flow release 41622c9", () => {
   const run = {
     ...createRun("free", true, 22),
     courtVersion: 2 as const,
+    movesetVersion: undefined,
     abilityMasteryVersion: undefined,
     coach: { version: 1 as const, id: "misty" },
     roster: {

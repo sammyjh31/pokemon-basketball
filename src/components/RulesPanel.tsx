@@ -151,6 +151,21 @@ export function RulesPanel({ onClose }: { onClose: () => void }) {
             </span>
           </div>
         </div>
+        <h3>Automatic basketball moves</h3>
+        <p>
+          Coaches choose, train and time moves automatically using a Pokémon’s
+          types, physical tools, skills and team needs. These are basketball
+          adaptations, separate from battle learnsets. They improve actual
+          actions and use energy and cooldowns; they do not guarantee baskets.
+          Mastery unlocks a specialization at 75 XP, a third move at 200 XP and
+          a fourth at 400 XP. Power trades energy and recharge for strength;
+          Control favors support and defense; Efficiency lowers cost and
+          recharge with smaller effects. Earned XP follows players through
+          trades and seasons. View mastery reports and simulated box scores for
+          coach assignments and recorded usage. Older seasons keep their rules;
+          moves begin in new seasons. Played arcade games keep their existing
+          abilities and controls.
+        </p>
         <h3>Find the right role</h3>
         <div className="formula-grid">
           {POSITION_GUIDE.map(([title, description]) => (

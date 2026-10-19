@@ -1,3 +1,4 @@
+import { GameMovesReport } from "./MovesetPanel";
 import { GameMasteryReport } from "./MasteryPanel";
 import { GameFlowPanel } from "./GameFlowPanel";
 import { AbilityStats } from "./AbilityStats";
@@ -330,6 +331,7 @@ export function LeagueBoxScore({
             </tbody>
           </table>
         </div>
+        <GameMovesReport assignments={match.moveAssignments} />
         <GameFlowPanel report={match.gameFlow} home={home} away={away} />
         <GameMoraleReport report={match.moraleReport} home={home} away={away} />
         <GameMasteryReport

@@ -12,6 +12,7 @@ import { loadGame, saveGame } from "./persistence";
 import type { FranchiseSeason } from "./franchiseTypes";
 const run = () => ({
   ...createRun("free", true, 22),
+  movesetVersion: undefined,
   abilityMasteryVersion: undefined,
   physicalAbilityVersion: undefined,
   chemistryVersion: undefined,
@@ -98,6 +99,7 @@ it("opts new local leagues in, but never upgrades a saved local career implicitl
   delete d.chemistryGrowthVersion;
   delete d.moraleVersion;
   delete d.personalityVersion;
+  delete d.movesetVersion;
   delete d.abilityMasteryVersion;
   delete d.abilityVersion;
   expect(parseLocalLeague(JSON.stringify(d)).abilityVersion).toBeUndefined();
@@ -116,9 +118,11 @@ import { rookieFixture } from "./rookieDraft.testUtils";
 
 it("adopts abilities at the next solo franchise boundary without rewriting the previous run", () => {
   const state = rookieFixture();
+  delete state.run.movesetVersion;
   delete state.run.abilityMasteryVersion;
   delete state.run.abilityVersion;
   state.franchise!.teams.forEach((team) => {
+    delete team.movesetVersion;
     delete team.abilityMasteryVersion;
     delete team.abilityMastery;
     delete team.abilityVersion;
@@ -157,6 +161,7 @@ it("restores old local seasons and adopts abilities only at the next season boun
   delete draft.chemistryGrowthVersion;
   delete draft.moraleVersion;
   delete draft.personalityVersion;
+  delete draft.movesetVersion;
   delete draft.abilityMasteryVersion;
   delete draft.abilityVersion;
   while (local.currentLocalTurn(draft)) {
@@ -200,6 +205,7 @@ it("restores old local seasons and adopts abilities only at the next season boun
   // An older already-started year two can still be restored without upgrading it.
   const oldYearTwo = structuredClone(next);
   oldYearTwo.career!.teams.forEach((t) => {
+    delete t.movesetVersion;
     delete t.abilityMasteryVersion;
     delete t.abilityMastery;
     delete t.abilityVersion;

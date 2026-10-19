@@ -32,6 +32,7 @@ const clubs = (
   const run = { ...createRun("free", true, seed), roster };
   if (!current) {
     delete run.gameFlowVersion;
+    delete run.movesetVersion;
     delete run.abilityMasteryVersion;
     delete run.abilityVersion;
     delete run.physicalAbilityVersion;

@@ -20,6 +20,22 @@ function clubs() {
     ),
   }));
 }
+it("does not spend a shooting or contest move on a shot-clock violation", () => {
+  const teams = createLeague({ ...performanceRun(), movesetVersion: 1 });
+  const match = simulateMatch(teams[0], teams[1], 5);
+  const violations = match.insights!.court!.filter(
+    (s) => s.outcome === "violation",
+  );
+  expect(violations.length).toBeGreaterThan(0);
+  for (const sequence of violations) {
+    expect(sequence.actions.some((a) => a.kind === "shoot")).toBe(false);
+    expect(
+      (sequence.moves ?? []).filter((e) =>
+        ["shoot", "defend"].includes(e.opportunity),
+      ),
+    ).toEqual([]);
+  }
+});
 it("changes actual court travel only while a move is active", () => {
   const t = clubs()[0],
     p = {
@@ -67,6 +83,15 @@ it("uses coached moves in CPU match resolution with exact repeatability, account
   expect(
     m.insights!.court!.flatMap((s) => s.moves ?? []).length,
   ).toBeGreaterThan(20);
+  for (const sequence of m.insights!.court!) {
+    const events = sequence.moves ?? [];
+    expect(new Set(events.map((e) => e.playerId)).size).toBe(events.length);
+    expect(
+      events.every((e) =>
+        sequence.positions.some((p) => p.playerId === e.playerId),
+      ),
+    ).toBe(true);
+  }
   expect({ ...m, insights: undefined }).toEqual(
     simulateMatch(h, a, 81, { collectInsights: false }),
   );

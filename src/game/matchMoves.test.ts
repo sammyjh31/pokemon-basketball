@@ -53,6 +53,28 @@ it("declines irrelevant, rushed or unaffordable actions without minting usage", 
   expect(activateMove(p, "drive", 0, { clock: 15 })).toBeUndefined();
   expect(p.box.abilityActivations).not.toHaveProperty("moves");
 });
+it("applies the power and efficiency energy, strength and real-time recharge tradeoffs", () => {
+  const power = player(),
+    efficiency = player();
+  power.moves.plan.specialization = "power";
+  efficiency.moves.plan.specialization = "efficiency";
+  power.moves.plan.xp = efficiency.moves.plan.xp = 400;
+  activateMove(power, "drive", 10, { clock: 15 });
+  activateMove(efficiency, "drive", 10, { clock: 15 });
+  expect(power.energy).toBeCloseTo(100 - 5 * 1.35);
+  expect(efficiency.energy).toBeCloseTo(100 - 5 * 0.65);
+  expect(power.moves.effects.movement).toBeGreaterThan(
+    efficiency.moves.effects.movement,
+  );
+  beginMoveSegment([power, efficiency]);
+  expect(activateMove(power, "drive", 60, { clock: 15 })).toBeUndefined();
+  expect(activateMove(efficiency, "drive", 60, { clock: 15 })?.move).toBe(
+    "quick-attack",
+  );
+  expect(activateMove(power, "drive", 88, { clock: 15 })?.move).toBe(
+    "quick-attack",
+  );
+});
 it("supports a receiver only for the current segment and caps actual recovery", () => {
   const p = player("helping-hand"),
     receiver = player();

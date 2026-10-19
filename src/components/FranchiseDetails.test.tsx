@@ -13,6 +13,7 @@ let finished: GameState;
 beforeAll(() => {
   let run = createRun("free", true, 82);
   // Legacy summary rows predate automatic earned-history archives.
+  delete run.movesetVersion;
   delete run.abilityMasteryVersion;
   delete run.chemistryGrowthVersion;
   delete run.moraleVersion;

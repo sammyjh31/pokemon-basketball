@@ -1,3 +1,4 @@
+import { MoveUsage } from "./MovesetPanel";
 import {
   abilityTotal,
   speciesAbility,
@@ -150,6 +151,7 @@ export function AbilityStats({
           </tbody>
         </table>
       </div>
+      <MoveUsage rows={rows} />
     </section>
   );
 }

@@ -53,6 +53,14 @@ Court rules v4 pace game XP for seasonal milestones: game gains are four times t
 
 **League news** covers every club with recorded results, weekly recaps, scoring highs, player development, mastery milestones, trades, rookie picks, signings, coaching changes, awards and championships. Filter by season, category or your teams, then open recorded details or available player/game links. Stories are derived from saved facts, so revisiting the feed does not simulate games or award progress. Older saves show the records they contain; missing historical game facts are not invented.
 
+## Basketball moves and specializations
+
+Coaches automatically equip and time basketball adaptations of **Quick Attack, Agility, Helping Hand, Protect, Iron Defense, Double Team, Focus Energy and Recover**. Species' types and physical tools shape eligibility; player skills, roster needs and coaching style shape selection. These are fictional basketball moves, separate from canonical battle learnsets. They affect actual driving and off-ball movement, passing, screens, navigation, contests, shot preparation and fatigue, using energy and real game-time cooldowns. They never grant automatic baskets.
+
+The existing mastery bank unlocks **two move slots initially, three at 200 XP and four at 400 XP**. At **75 XP**, coaches assign **Power** (stronger effects, higher cost and longer recharge), **Control** (passing, screens and defense), or **Efficiency** (smaller effects, lower cost and faster recharge). The path is a coach assignment for each game, not a second experience currency or an irreversible choice. Coaches also select training automatically; aligned move practice and actual game use contribute bounded mastery XP. Experience and unlocked slots follow players through trades, free agency and seasons; rookies start at zero.
+
+Player mastery reports explain current selections and tradeoffs. Simulated box scores show frozen pregame assignments and actual move uses, energy spent and energy recovered; the same counters aggregate into season, playoff and career reports. New solo and local leagues use moves in every simulated regular-season and playoff game, including CPU games. Existing franchises adopt them at the next season boundary when court rules are present. Earlier seasons retain their exact rules and history. Abilities-off games disable moves, and officially played arcade games retain their existing controls and abilities without simulated move counters.
+
 ## Game flow: playoffs, timeouts, officials, arenas and rest
 
 New games give every simulated fixture its context. The regular season has a calendar: each round spans two days, so teams play some back-to-backs (about 14 a season) and long road trips. Tired players start below full energy, and coaches who prefer rest shift starters' minutes to the bench on the second night.
