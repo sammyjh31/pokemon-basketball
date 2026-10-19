@@ -471,13 +471,13 @@ export function LocalLeagueMode({
                 {busy ? (
                   <div className="local-progress" role="status">
                     <span>
-                      {draft.completed ? "Restoring" : "Simulating"} season ·{" "}
-                      {progress.completed.toLocaleString()} /{" "}
-                      {progress.total.toLocaleString()} games
+                      {progress.total > 0
+                        ? `${draft.completed ? "Restoring" : "Simulating"} season · ${progress.completed.toLocaleString()} / ${progress.total.toLocaleString()} games`
+                        : "Opening saved season…"}
                     </span>
                     <progress
                       value={progress.completed}
-                      max={progress.total}
+                      max={Math.max(1, progress.total)}
                       aria-label="Local season progress"
                     />
                   </div>

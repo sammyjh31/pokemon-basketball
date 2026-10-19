@@ -37,5 +37,102 @@
       "uniqueGamesVerified": 2620
     }
   ],
-  "implementationRevision": "379cc5c216f1a51b4f36f6c547a5a0189e46cf36"
+  "implementationRevision": "379cc5c216f1a51b4f36f6c547a5a0189e46cf36",
+  "verifiedReopening": {
+    "date": "2026-10-18",
+    "method": {
+      "samplesPerPhase": 1,
+      "crypto": "Real WebCrypto with durable memory record adapter; new cache instance per opening",
+      "browserStorageExcluded": true,
+      "otherCpuHeavyTestsRunning": false,
+      "coldWarmCompleteOutputMatches": true,
+      "soloPreviousBaselineMatches": true,
+      "localFixture": "10 actual seasons; four teams; 14 regular-season games per team; best-of-one playoffs; automatic coaches, offseason camps, two-round rookie drafts; generation excluded from timer"
+    },
+    "measurements": [
+      {
+        "phase": "cached-save",
+        "cold": {
+          "ms": 92659.959958,
+          "hash": "f3578b43cc058795c8a25b9abb12cbd12b9fc396896c61365283fd2356dff18f",
+          "serializedCharacters": 7660379,
+          "reportedGames": 2620
+        },
+        "warm": {
+          "ms": 446.2203339999978,
+          "hash": "f3578b43cc058795c8a25b9abb12cbd12b9fc396896c61365283fd2356dff18f",
+          "serializedCharacters": 7660379,
+          "reportedGames": 0
+        },
+        "sourceHash": "b8e21aff511fab31c90848ecdc16dccdac56381630163fccf0d8e534d869a022",
+        "engineRevision": "51eb0cf3a36bf93c191f0ec58dc2e03fd051597db9d436aa097c89163ec87cc4",
+        "speedup": 207.65517144272602,
+        "node": "v24.19.0",
+        "platform": "darwin",
+        "arch": "arm64",
+        "scope": "Vite SSR, real WebCrypto, durable memory record adapter; browser startup and IndexedDB I/O excluded"
+      },
+      {
+        "phase": "local-save",
+        "cold": {
+          "ms": 13554.940416999998,
+          "hash": "a11bbffa4d80678d846e6773e3894837659e53f2b01e70cf06b8be6b15793177",
+          "serializedCharacters": 949646,
+          "replayedYears": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "cachedYears": []
+        },
+        "warm": {
+          "ms": 31.41662499999802,
+          "hash": "a11bbffa4d80678d846e6773e3894837659e53f2b01e70cf06b8be6b15793177",
+          "serializedCharacters": 949646,
+          "replayedYears": [],
+          "cachedYears": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        },
+        "sourceHash": "27ca78b1f94a5ce25d3c7946a80cc0a6a71b3284c91c3f4d49dd38befa4a82f2",
+        "engineRevision": "240a78d8f92eefb6a37b994d8c1cf0fc8b26938f65d5b9e27f2a64efb40c7254",
+        "speedup": 431.4575616254404,
+        "node": "v24.19.0",
+        "platform": "darwin",
+        "arch": "arm64",
+        "scope": "Vite SSR, real WebCrypto, durable memory record adapter; browser startup and IndexedDB I/O excluded",
+        "baselineHashMatches": true
+      }
+    ],
+    "verification": {
+      "date": "2026-10-19",
+      "testedCodeRevision": "638f0addc754f8f9822371f3d58fe6d7f8dcbc23",
+      "testFilesPassed": 245,
+      "testsPassed": 1364,
+      "existingOptionalTestsSkipped": 1,
+      "unitDurationSeconds": 3335.81,
+      "unitWorkers": 3,
+      "desktopMobileChecksPassed": 50,
+      "browserDurationMinutes": 24.2,
+      "browserRetries": 0,
+      "typecheckAndProductionBuild": "passed",
+      "independentReview": "One benchmark baseline-report compatibility finding fixed with real CLI red/green reproduction; no proven save/gameplay/history findings"
+    }
+  }
 }

@@ -258,18 +258,25 @@ export function localSeasonBuilder(
   }
   return { fixtures, play, finish };
 }
-function currentBuilder(draft: LocalLeague) {
+/** The complete inputs used for this season, independent of UI/playoff state. */
+export function currentLocalSeasonInputs(draft: LocalLeague) {
   if (draft.picks.length !== localDraftSize(draft))
     throw new Error("Finish drafting every club first.");
   const archived =
     draft.career?.phase === "offseason"
       ? draft.career.history.at(-1)
       : undefined;
-  return localSeasonBuilder(
-    archived ? restoreLocalTeams(archived.teams) : localLeagueTeams(draft),
-    draft.options!.format,
-    localSeasonSeed(draft),
-  );
+  return {
+    teams: archived
+      ? restoreLocalTeams(archived.teams)
+      : localLeagueTeams(draft),
+    format: draft.options!.format,
+    seed: localSeasonSeed(draft),
+  };
+}
+function currentBuilder(draft: LocalLeague) {
+  const { teams, format, seed } = currentLocalSeasonInputs(draft);
+  return localSeasonBuilder(teams, format, seed);
 }
 export function simulateLocalSeason(draft: LocalLeague): SeasonResult {
   if (!draft.options) return simulateSeason(localLeagueRun(draft));
@@ -285,8 +292,22 @@ export async function simulateLocalSeasonAsync(
   if (!draft.options)
     return simulateSeasonAsync(localLeagueRun(draft), onProgress, signal);
   signal?.throwIfAborted();
-  const job = currentBuilder(draft),
-    batch = draft.options.format.teamCount / 2;
+  return simulateLocalSeasonInputsAsync(
+    currentLocalSeasonInputs(draft),
+    onProgress,
+    signal,
+  );
+}
+
+/** Runs an owned input snapshot, including across asynchronous cache lookup. */
+export async function simulateLocalSeasonInputsAsync(
+  { teams, format, seed }: ReturnType<typeof currentLocalSeasonInputs>,
+  onProgress: (completed: number, total: number) => void = () => {},
+  signal?: AbortSignal,
+): Promise<SeasonResult> {
+  signal?.throwIfAborted();
+  const job = localSeasonBuilder(teams, format, seed),
+    batch = format.teamCount / 2;
   onProgress(0, job.fixtures.length);
   for (let i = 0; i < job.fixtures.length; i += batch) {
     await new Promise<void>((resolve) => setTimeout(resolve, 0));

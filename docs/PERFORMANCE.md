@@ -4,7 +4,7 @@ The performance pass preserves seeded outcomes and save formats. A frozen court-
 
 Physical ability modifiers reuse immutable values for the same conditional effect and exact mastery multiplier. Each effect keeps at most 256 continuous-mastery variants. In-game chemistry identifies player groups with a match-local bitset and invalidates the cache when its inputs change. Recipient-indexed synergy bonuses retain the existing candidate order and strongest-source rules.
 
-An offseason save contains the just-completed season both as the active result and as its latest historical archive. Loading verifies that archive once and reuses its computed result only when the active season has the same seed, model, actual team inputs and official played games. Playoff reuse also requires the same game count and official overrides. Each replayable archived season still receives its full replay and validation; legacy summary-only records retain their existing validation. Active results and historical records remain independent copies, and the active engine's original team header is preserved for strict serialized-result comparison. Partial seasons and different inputs follow their usual replay path.
+An offseason save contains the just-completed season both as the active result and as its latest historical archive. Loading verifies that archive once and reuses its computed result only when the active season has the same seed, model, actual team inputs and official played games. Playoff reuse also requires the same game count and official overrides. On a cold load each replayable archived season receives its full replay and validation; legacy summary-only records retain their existing validation. Later opens can reuse the verified evidence described below. Active results and historical records remain independent copies, and the active engine's original team header is preserved for strict serialized-result comparison. Partial seasons and different inputs follow their usual replay path.
 
 ## Repeatable measurements
 
@@ -37,3 +37,29 @@ One profiled before/after sample on the same Apple Silicon machine (Node 24.19.0
 | Two-year offseason franchise restoration | 178.06 s | 88.64 s | 50.2% |
 
 Both complete serialized outputs retained their original SHA-256 hashes and lengths. The restored franchise verifies 2,620 unique regular-season and playoff games; all retained years remain present. These are single-run engine measurements, not a promise about browser loading times. Inputs, environment, exact timings and output fingerprints are recorded in [performance-audit.json](performance-audit.json).
+
+## Verified franchise reopening
+
+Solo franchises and local leagues retain optional verified replay evidence in a separate browser database. Unchanged archived years no longer replay their games on every opening. Offseason training choices and starting another season reuse those years; new games and new archived years still receive normal verification. Current-season snapshots remain independent of historical records.
+
+The original save, backups and exports still contain the full history and remain authoritative. No simulation rules, seeds, save formats, statistics, mastery gains, chemistry or history limits change. Career ownership, trades, coaches, development and cross-year consistency checks still run. Cache evidence is bound to the complete input and the current engine/validator source revision and authenticated before use. Damaged, unavailable, evicted or obsolete evidence falls back to normal replay. First loads of existing/imported saves, another browser, cleared storage or a changed engine can therefore require a cold verification.
+
+Cache storage is bounded at approximately 32 MiB, with 8 MiB per payload and two active snapshots per mode. Eviction prefers large old snapshots over small historical certificates. The cache never writes the source, backup or quarantine slots. Local career evidence contains only postgame team state and playoff seeds; saved news and statistics stay in their authenticated historical source.
+
+Measure cold and warm openings of the same untouched franchise:
+
+```sh
+npm run performance:audit -- --phase=cached-save --save=/path/to/export.json --output=/tmp/cached-save.json
+npm run performance:audit -- --phase=cached-save --save=/path/to/export.json --baseline=/tmp/cached-save.json
+```
+
+The `cached-save` phase also accepts an earlier ordinary `save` report as its baseline. `--phase=local-save` builds a deterministic ten-year, four-team, 14-game local career using the real simulation, coaches, offseason camps and rookie drafts. It measures restoration after fixture construction. Both phases open new cache instances over shared records, use real WebCrypto, compare complete cold/warm output hashes and fail if the warm opening replays games/years. Timings exclude browser startup and IndexedDB I/O; native browser reload/corruption checks cover those paths separately. CPU profiles remain available on the single `season` and `save` phases.
+
+One cold/warm sample on the same Apple Silicon machine (Node 24.19.0, unprofiled):
+
+| Workload | Cold verification | Warm reopening | Games/years replayed warm |
+| --- | ---: | ---: | ---: |
+| Same two-year 30-team offseason franchise | 92.66 s | 0.446 s | 0 games |
+| Ten-year four-team local career described above | 13.55 s | 0.031 s | 0 years |
+
+Both complete restored outputs matched between cold and warm openings. The two-year output also retains the exact hash and length recorded before this cache existed. All ten local years remain present. These are single-run engine measurements, not projected browser timings or extrapolations to other league sizes. Exact values, hashes and scope are in [performance-audit.json](performance-audit.json).

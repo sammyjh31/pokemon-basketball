@@ -28,6 +28,7 @@ import {
 
 import { validateLocalOptions, type LocalLeagueOptions } from "./localFormat";
 import { parseLocalCareer, type LocalCareer } from "./localCareer";
+import type { LocalReplayContext } from "./localReplayEvidence";
 
 export const LOCAL_LEAGUE_KEY = "pokemon-basketball:local-league:v1";
 export const LOCAL_TEAMS = [
@@ -619,6 +620,7 @@ export const LOCAL_SAVE_MAX_LENGTH = 16_000_000;
 export function parseLocalLeague(
   raw: string,
   onProgress?: (completed: number, total: number) => void,
+  replayContext?: LocalReplayContext,
 ): LocalLeague {
   if (raw.length > LOCAL_SAVE_MAX_LENGTH) error();
   const value = JSON.parse(raw);
@@ -802,6 +804,7 @@ export function parseLocalLeague(
           value.completed,
           value.playoffGames,
           onProgress,
+          replayContext,
         );
   return {
     ...draft,

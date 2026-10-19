@@ -4,10 +4,11 @@ import {
   type LoadedGame,
   type PreparedGameLoad,
 } from "./persistence";
-import { simulateLocalSeasonAsync } from "./localSeason";
 import type { LocalLeague } from "./localLeague";
 import type { SeasonResult } from "./types";
 import type { RestoreJob, RestoreMessage } from "./restore.worker";
+import { browserReplayCache } from "./browserReplayCache";
+import { simulateCachedLocalSeason } from "./localCareerCache";
 
 type Progress = (completed: number, total: number) => void;
 
@@ -71,7 +72,7 @@ export function restoreSavedGame(
 ): Promise<LoadedGame> {
   const fallback = () =>
     prepared.restore
-      ? prepared.restore(onProgress, signal)
+      ? prepared.restore(onProgress, signal, browserReplayCache())
       : Promise.resolve(prepared);
   if (!prepared.restore) return fallback();
   return inWorker(
@@ -112,7 +113,13 @@ export function simulateLocalSeasonInWorker(
   return inWorker(
     { kind: "local-season", draft },
     (data) => ("season" in data ? data.season : undefined),
-    () => simulateLocalSeasonAsync(draft, onProgress, signal),
+    () =>
+      simulateCachedLocalSeason(
+        draft,
+        onProgress,
+        signal,
+        browserReplayCache(),
+      ),
     onProgress,
     signal,
   );
