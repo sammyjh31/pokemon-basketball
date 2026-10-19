@@ -23,9 +23,9 @@
 ### Task 1: Signature and pair catalogs/policies
 Files: modify moveTypes/basketballMoves/movePolicy; create signatureMoves.ts, comboTypes.ts, comboPolicy.ts; signaturePolicy.test.ts.
 Interfaces: movePool(id, version=1), signatureMovesForSpecies(id); coachCombos(team, includeLocked=false): ComboAssignment[] (max 8); comboValue(team,id,profile?,xp?) and comboTrainingFocus(team,id) pure/bounded. MoveTeam gains optional chemistry fields; known move/combination IDs are fixed catalogs.
-- [ ] Write/run failing tests for all-type coverage, exact species/family restrictions, 25/100 unlocks, v1 unchanged, coach/style/chemistry/mastery-sensitive pair ranking and incoming XP/fit bounds.
-- [ ] Implement catalogs and pure selection, retain v1 score arithmetic and output keys. Typecheck and focused old/new policy checks.
-- [ ] Record evidence, commit/push independently testable catalog/policy deliverable.
+- [x] Write/run failing tests for all-type coverage, exact species/family restrictions, 25/100 unlocks, v1 unchanged, coach/style/chemistry/mastery-sensitive pair ranking and incoming XP/fit bounds.
+- [x] Implement catalogs and pure selection, retain v1 score arithmetic and output keys. Typecheck and focused old/new policy checks.
+- [x] Record evidence, commit/push independently testable catalog/policy deliverable.
 
 ### Task 2: Combo runtime and exact counters
 Files: new matchCombos.ts/comboTelemetry.ts, modify matchMoves/moveTelemetry; signatureRuntime.test.ts, comboRuntime.test.ts, comboTelemetry.test.ts.
@@ -60,3 +60,4 @@ Files: MovesetPanel.tsx/LeagueBoxScore.tsx/RulesPanel.tsx plus report component 
 - Reused existing linked managed worktree; clean except existing dependency symlink. New branch codex/signature-combo-plays. No new worktree or primary-checkout changes.
 - Execution: same authorized inline implementation/Git workflow as prior feature. Version 2 is an extension of the existing move subsystem; no separate cascading signature flags. Compatibility work explicitly includes old v1 archives and recorded local transitions.
 - Pre-flight shared interfaces: catalog IDs/effects feed runtime; ComboAssignment feeds court and reports; optional stats feed strict aggregation/validation; rules version feeds all modes. Policies import no shared evaluation/coachPolicy consumers, preventing a cycle. All task interfaces align with the spec.
+- Task 1: missing-module test failed first; the behavioral run then failed specifically on unlocked signature selection and training a player outside the current top-eight pair plans. Implemented 18 type/14 family catalogs and exact 25/100 thresholds. Pair practice considers a player's best prospective partnership even if it is not in the current game playbook, so reserves can learn their role. TypeScript passed. Five-file group passed 22 tests (4.06 s), including released moveset-v1 SHA unchanged. Incoming projected XP remains independent of roster slots; valuation stays capped and policies do not import consumer evaluation/coach modules. No runtime or new-run defaults changed yet.

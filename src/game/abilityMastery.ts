@@ -24,7 +24,7 @@ export interface MasteryTeam {
   coach?: LeagueTeam["coach"];
   abilityVersion?: 1;
   abilityMasteryVersion?: 1;
-  movesetVersion?: 1;
+  movesetVersion?: import("./moveTypes").MovesetVersion;
   tactic?: import("./types").Tactic;
   development?: LeagueTeam["development"];
   abilityMastery?: MasteryRoster;

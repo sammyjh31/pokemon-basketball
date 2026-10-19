@@ -1,6 +1,6 @@
 import type { PlayerTrainingPlan } from "./franchiseFeatures";
 import type { LeagueTeam } from "./types";
-export const MOVE_IDS = [
+export const BASE_MOVE_IDS = [
   "quick-attack",
   "agility",
   "helping-hand",
@@ -10,6 +10,52 @@ export const MOVE_IDS = [
   "focus-energy",
   "recover",
 ] as const;
+export const SIGNATURE_MOVE_IDS = [
+  "type-normal",
+  "type-fire",
+  "type-water",
+  "type-electric",
+  "type-grass",
+  "type-ice",
+  "type-fighting",
+  "type-poison",
+  "type-ground",
+  "type-flying",
+  "type-psychic",
+  "type-bug",
+  "type-rock",
+  "type-ghost",
+  "type-dragon",
+  "type-dark",
+  "type-steel",
+  "type-fairy",
+  "pikachu-volt-tackle",
+  "charizard-skyhook",
+  "blastoise-hydro-cannon",
+  "venusaur-vine-screen",
+  "alakazam-psychic-relay",
+  "gengar-phantom-cut",
+  "snorlax-body-wall",
+  "dragonite-dragon-flight",
+  "mewtwo-psystrike",
+  "scizor-bullet-cut",
+  "tyranitar-sandstorm-seal",
+  "suicune-aurora-step",
+  "greninja-water-shuriken",
+  "lucario-aura-sphere",
+] as const;
+export const MOVE_IDS = [...BASE_MOVE_IDS, ...SIGNATURE_MOVE_IDS] as const;
+export type MovesetVersion = 1 | 2;
+export interface SignatureEffects {
+  movement?: number;
+  passing?: number;
+  screen?: number;
+  navigation?: number;
+  shot?: number;
+  contest?: number;
+  drive?: number;
+  receiverShot?: number;
+}
 export type MoveId = (typeof MOVE_IDS)[number];
 export type MoveOpportunity =
   | "drive"
@@ -30,6 +76,14 @@ export interface BasketballMove {
   opportunities: readonly MoveOpportunity[];
   cost: number;
   cooldown: number;
+  signature?: {
+    kind: "type" | "species";
+    type?: string;
+    speciesIds?: readonly number[];
+    minimumMastery: number;
+  };
+  effects?: SignatureEffects;
+  zones?: readonly ("rim" | "mid" | "three")[];
 }
 export interface MoveAssignment {
   moves: BasketballMove[];
@@ -51,7 +105,10 @@ export type MoveTeam = Pick<
   | "abilityMastery"
   | "courtVersion"
 > & {
-  movesetVersion?: 1;
+  movesetVersion?: MovesetVersion;
+  chemistryVersion?: 1;
+  chemistryGrowthVersion?: 1;
+  chemistryBonds?: import("./teammateChemistry").PairBonds;
   engineRules?: {
     abilities: boolean;
     version?: 1;

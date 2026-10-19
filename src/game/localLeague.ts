@@ -57,7 +57,7 @@ export interface LocalLeague {
   typeTacticsVersion?: 1;
   abilityVersion?: 1;
   abilityMasteryVersion?: 1;
-  movesetVersion?: 1;
+  movesetVersion?: import("./moveTypes").MovesetVersion;
   /** Physical species abilities; absent on historical seasons for exact replay. */
   physicalAbilityVersion?: 1;
   /** Active-five basketball chemistry; independent of the ability switch. */
