@@ -50,11 +50,11 @@ Interfaces: optional `ReplayCache` on deferred preparation; internal certified-y
 
 Files: `localCareer.ts`, `localLeague.ts`, `localLeagueRestore.worker.ts`, `restore.worker.ts`, new local-cache coordinator/tests.
 
-Interface: optional local replay context maps years to compact replay evidence and captures misses. Async worker coordinator authenticates evidence before calling the existing synchronous parser and publishes only after successful parse. Current-season simulation uses exact-draft signed snapshots.
+Interface: optional local replay context maps years to compact replay evidence and captures misses. Async worker coordinator authenticates evidence before calling the existing synchronous parser and publishes only after successful parse. Current-season simulation uses signed snapshots of the complete game inputs, owned before asynchronous lookup; unrelated completion/UI flags do not invalidate them.
 
-- [ ] Write failing multi-year real local-career cold/warm parity/progress tests, altered history/coach/trade rejection, and next-year cache reuse.
-- [ ] Implement evidence extraction/reuse without bypassing roster, development, draft, trade or coach chronology; keep old parser calls unchanged by default.
-- [ ] Run local parsing/career/mastery/morale/chemistry/worker tests; commit/push.
+- [x] Write failing multi-year real local-career cold/warm parity/progress tests, altered history/coach/trade rejection, and next-year cache reuse.
+- [x] Implement evidence extraction/reuse without bypassing roster, development, draft, trade or coach chronology; keep old parser calls unchanged by default.
+- [x] Run local parsing/career/mastery/morale/chemistry/worker tests; commit/push.
 
 ## Task 4: Warm loading UX, browser proof and measurements
 
@@ -76,3 +76,5 @@ Files: `App.tsx`, restoration/UI tests, `tests/e2e/saveRecovery.spec.ts` or a fo
 - Ruling: proceed inline under the user's explicit implementation and GitHub authorization; the persistence design is documented for review without adding approval round trips for routine implementation choices.
 - Task 1: eight initial integrity tests failed for the missing API, then passed; revision/blocked-open regressions failed before their implementation/fix. Final foundation checks: 13 tests passed, including real Vite watched-edit invalidation; two real Chromium checks passed for concurrent key adoption/reopening and count/32 MiB eviction. Typecheck passed. No new dependencies. Blocked IDB requests have no readable `error` while pending; the fallback avoids that accessor and cannot stall each historical year.
 - Task 2: initial warm reopen still replayed 1,307 games (red). Integration then caught original-versus-normalized serialization misses and player-row key ordering; authenticate both original and successfully normalized forms, retaining the engine's authenticated row order. Final targeted group: 22 tests passed, including a second modern completed season, exact cold/warm hashes, year-three advancement replaying only 15 new games, cache failures, evicted active snapshots, failed/canceled verification, and unchanged replay-input guards. Blocked browser API getters have separate red/green tests. No source writes or gameplay changes.
+
+- Task 3: real ten-year local career cold/warm output hashes match, normalized autosaves and year-eleven advancement replay zero archived games. Targeted local/coach/chemistry group: 14 tests passed. A separate red/green regression caught mutation of game inputs during cache I/O; the simulator now owns its complete input snapshot before awaiting the lookup (one regression passed, typecheck passed). Compact evidence excludes duplicated news facts, which remain authenticated in the source. Native browser eviction red/green checks preserve small certificates while removing large snapshots (two passed). Production build initially caught missing virtual-revision support inside worker bundles; the worker plugin factory fixes this and build passed.

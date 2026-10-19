@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 import { replayCacheRevision } from "./scripts/replay-cache-revision.ts";
 export default defineConfig({
   plugins: [react(), replayCacheRevision()],
+  worker: { plugins: () => [replayCacheRevision()] },
   server: { fs: { allow: [process.cwd(), realpathSync("node_modules")] } },
   test: {
     // League replay tests each simulate thousands of games. Bound CPU-heavy

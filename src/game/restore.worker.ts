@@ -1,5 +1,6 @@
 import { prepareGameLoad, STORAGE_KEY, type LoadedGame } from "./persistence";
 import { simulateLocalSeasonAsync } from "./localSeason";
+import { simulateCachedLocalSeason } from "./localCareerCache";
 import type { LocalLeague } from "./localLeague";
 import { browserReplayCache } from "./browserReplayCache";
 
@@ -21,7 +22,14 @@ self.onmessage = async ({ data }: MessageEvent<RestoreJob>) => {
   const signal = new AbortController().signal;
   try {
     if (data.kind === "local-season") {
-      post({ season: await simulateLocalSeasonAsync(data.draft, progress) });
+      post({
+        season: await simulateCachedLocalSeason(
+          data.draft,
+          progress,
+          signal,
+          browserReplayCache(),
+        ),
+      });
       return;
     }
     const storage = {

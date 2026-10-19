@@ -52,6 +52,10 @@ import {
   type LocalLeague,
 } from "./localLeague";
 import { localSeasonBuilder } from "./localSeason";
+import type {
+  LocalReplayContext,
+  LocalArchiveEvidence,
+} from "./localReplayEvidence";
 import { teamRatings, positionRating } from "./ratings";
 import { nextRandom } from "./random";
 import { exchangePlayers } from "./rosterTrades";
@@ -1297,6 +1301,7 @@ export function parseLocalCareer(
   completed: boolean,
   playoffGames: number | undefined,
   onProgress?: (completed: number, total: number) => void,
+  replayContext?: LocalReplayContext,
 ): LocalCareer {
   if (!draft.options || draft.picks.length !== localDraftSize(draft)) fail();
   const raw = object(value),
@@ -1325,6 +1330,7 @@ export function parseLocalCareer(
   const history: LocalSeasonArchive[] = [];
   onProgress?.(0, rawHistory.length);
   for (let i = 0; i < rawHistory.length; i++) {
+    replayContext?.signal?.throwIfAborted();
     const row = object(rawHistory[i]),
       archiveYear = i + 1,
       teams = parseTeams(row.teams, draft, archiveYear);
@@ -1474,15 +1480,39 @@ export function parseLocalCareer(
       row.newsGames !== undefined ||
       row.newsPlayers !== undefined
     ) {
-      const season = localSeasonBuilder(
-        teams,
-        draft.options.format,
-        row.seasonSeed,
-      );
-      season.fixtures.forEach(season.play);
-      const league = season.finish().league!;
-      const playoffs = replayPlayoffs(league, row.seasonSeed, playoffGames);
-      if (playoffs.championId !== championId) fail();
+      const remembered = replayContext?.verified.get(archiveYear);
+      let evidence: LocalArchiveEvidence;
+      let league: import("./types").LeagueResult | undefined;
+      let playoffs: Playoffs | undefined;
+      if (remembered) {
+        evidence = remembered;
+        replayContext!.used.add(archiveYear);
+      } else {
+        const season = localSeasonBuilder(
+          teams,
+          draft.options.format,
+          row.seasonSeed,
+        );
+        season.fixtures.forEach(season.play);
+        league = season.finish().league!;
+        playoffs = replayPlayoffs(league, row.seasonSeed, playoffGames);
+        evidence = {
+          championId: playoffs.championId,
+          seeds: playoffs.seeds,
+          finalTeams: teamsWithMastery(
+            teamsWithMorale(
+              teamsWithChemistry(
+                teams,
+                playoffs.chemistryBonds ?? league.chemistryBonds,
+              ),
+              playoffs.morale ?? league.morale,
+            ),
+            playoffs.abilityMastery ?? league.abilityMastery,
+          ),
+        };
+        replayContext?.captured.set(archiveYear, structuredClone(evidence));
+      }
+      if (evidence.championId !== championId) fail();
       if ((teams[0].courtVersion ?? 0) >= 3 && row.coachRecords !== undefined)
         archived.coachRecords = validateCoachRecords(
           row.coachRecords,
@@ -1493,28 +1523,33 @@ export function parseLocalCareer(
           draft.options.format.playoffTeams,
           draft.options.format.bestOf,
           playoffGames,
-          playoffs.seeds,
+          evidence.seeds,
         );
       if (row.newsGames !== undefined) {
-        const facts = captureNewsGames(league.games, playoffs);
-        if (JSON.stringify(row.newsGames) !== JSON.stringify(facts)) fail();
-        archived.newsGames = facts;
+        if (remembered) {
+          // The certificate binds the entire raw year, including these facts.
+          archived.newsGames = structuredClone(
+            row.newsGames,
+          ) as LocalSeasonArchive["newsGames"];
+        } else {
+          const facts = captureNewsGames(league!.games, playoffs!);
+          if (JSON.stringify(row.newsGames) !== JSON.stringify(facts)) fail();
+          archived.newsGames = facts;
+        }
       }
       if (row.newsPlayers !== undefined) {
-        const players = captureNewsPlayers(league.players);
-        if (JSON.stringify(row.newsPlayers) !== JSON.stringify(players)) fail();
-        archived.newsPlayers = players;
+        if (remembered) {
+          archived.newsPlayers = structuredClone(
+            row.newsPlayers,
+          ) as LocalSeasonArchive["newsPlayers"];
+        } else {
+          const players = captureNewsPlayers(league!.players);
+          if (JSON.stringify(row.newsPlayers) !== JSON.stringify(players))
+            fail();
+          archived.newsPlayers = players;
+        }
       }
-      finalTeams = teamsWithMastery(
-        teamsWithMorale(
-          teamsWithChemistry(
-            teams,
-            playoffs.chemistryBonds ?? league.chemistryBonds,
-          ),
-          playoffs.morale ?? league.morale,
-        ),
-        playoffs.abilityMastery ?? league.abilityMastery,
-      );
+      finalTeams = structuredClone(evidence.finalTeams);
     }
     if (finalTeams[0].abilityMasteryVersion === 1) {
       const assignments = Object.fromEntries(

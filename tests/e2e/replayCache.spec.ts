@@ -71,6 +71,7 @@ test("evicts cache snapshots by count and storage budget without touching source
       await cache.put("solo-active", `run-${i}`, { points: i });
     const oldest = await cache.get("solo-active", "run-0");
     const newest = await cache.get("solo-active", "run-2");
+    await cache.put("solo-archive", "retained-year", true);
     const large = "x".repeat(6 * 1024 * 1024);
     for (let i = 0; i < 6; i++)
       await cache.put("local-archive", `year-${i}`, large);
@@ -93,10 +94,12 @@ test("evicts cache snapshots by count and storage budget without touching source
       bytes,
       limit: REPLAY_CACHE_LIMIT,
       source: localStorage.getItem("cache-e2e-source"),
+      historicalProof: await cache.get("solo-archive", "retained-year"),
     };
   });
   expect(result.oldest).toBeNull();
   expect(result.newest).toEqual({ points: 2 });
   expect(result.bytes).toBeLessThanOrEqual(result.limit);
   expect(result.source).toBe("full history");
+  expect(result.historicalProof).toBe(true);
 });

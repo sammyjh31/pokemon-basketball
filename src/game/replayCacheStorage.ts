@@ -129,14 +129,26 @@ export function indexedReplayRecords(
               return;
             }
             if (bytes <= REPLAY_CACHE_LIMIT) return;
-            const oldest = store.index("ageBytes").openKeyCursor();
-            oldest.onsuccess = () => {
-              const cursor = oldest.result;
-              if (!cursor || bytes <= REPLAY_CACHE_LIMIT) return;
-              bytes -= Number((cursor.key as IDBValidKey[])[1]);
-              store.delete(cursor.primaryKey);
-              cursor.continue();
+            // Prefer reclaiming large derived snapshots over tiny certificates
+            // that spare decades of historical replay. Retain the new record.
+            const reclaim = (minimumBytes: number) => {
+              const oldest = store.index("ageBytes").openKeyCursor();
+              oldest.onsuccess = () => {
+                const cursor = oldest.result;
+                if (bytes <= REPLAY_CACHE_LIMIT) return;
+                if (!cursor) {
+                  if (minimumBytes > 0) reclaim(minimumBytes > 4096 ? 4096 : 0);
+                  return;
+                }
+                const size = Number((cursor.key as IDBValidKey[])[1]);
+                if (cursor.primaryKey !== id && size >= minimumBytes) {
+                  bytes -= size;
+                  store.delete(cursor.primaryKey);
+                }
+                cursor.continue();
+              };
             };
+            reclaim(512 * 1024);
           };
         };
         const count = store.index("scope").count(record.scope);
