@@ -1,4 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
+import { webcrypto } from "node:crypto";
+import { ReplayCache } from "./replayCache";
+import { memoryReplayRecords } from "./replayCache.testUtils";
 import { createRun, placePokemon } from "./draft";
 import * as franchise from "./franchise";
 import { simulateSeason } from "./season";
@@ -165,6 +168,24 @@ describe("connected franchise archives", () => {
 
 describe("mixed official season persistence", () => {
   it("restores partial careers, DNPs and official boxes then archives complete regular and playoff overrides", async () => {
+    const records = memoryReplayRecords();
+    const cache = () =>
+      new ReplayCache(
+        records.connect(),
+        webcrypto as unknown as Crypto,
+        "mixed-official",
+      );
+    const restoreWork: number[] = [];
+    const restoreCached = async (state: GameState) => {
+      restoreWork.length = 0;
+      const prepared = prepareGameLoad(storage(state), 99);
+      expect(prepared.restore).toBeTypeOf("function");
+      return prepared.restore!(
+        (_done, total) => restoreWork.push(total),
+        new AbortController().signal,
+        cache(),
+      );
+    };
     const initial = franchise.startInteractiveFranchiseSeason(
       franchise.archiveFranchiseSeason(finished),
       93,
@@ -203,6 +224,7 @@ describe("mixed official season persistence", () => {
     const hydrated = await prepared.restore!(
       () => {},
       new AbortController().signal,
+      cache(),
     );
     expect(hydrated.notice).toBeNull();
     expect(hydrated.state).toEqual(live);
@@ -252,16 +274,20 @@ describe("mixed official season persistence", () => {
     expect(resolveArchivedMatch(last, postseason, "playoffs")).toEqual(
       playoffOfficial.match,
     );
-    expect(loadGame(storage(archived), 99)).toMatchObject({
+    // Verify the new year cold, retaining the genuine evidence earned for
+    // year one by the deferred restore above. Official overrides stay exact.
+    expect(await restoreCached(archived)).toMatchObject({
       notice: null,
       state: archived,
     });
+    expect(restoreWork.some((total) => total > 0)).toBe(true);
     // An earlier discarded year keeps its legacy baseline without inventing rows.
     delete archived.franchise!.history[0].replay;
-    expect(loadGame(storage(archived), 99)).toMatchObject({
+    expect(await restoreCached(archived)).toMatchObject({
       notice: null,
       state: archived,
     });
+    expect(restoreWork.at(-1)).toBe(0);
     expect(last.replay!.teams.every((t) => t.movesetVersion === 1)).toBe(true);
     expect(() =>
       validateFranchise(archived.franchise, archived.run, true),

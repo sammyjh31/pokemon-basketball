@@ -1,4 +1,7 @@
 import { beforeAll, describe, it, expect } from "vitest";
+import { webcrypto } from "node:crypto";
+import { ReplayCache } from "./replayCache";
+import { memoryReplayRecords } from "./replayCache.testUtils";
 import { createRun } from "./draft";
 import { ROSTER_SLOTS, type GameState } from "./types";
 import { initialState, gameReducer } from "./state";
@@ -15,7 +18,7 @@ import {
   recommendedRookiePick,
   selectRookie,
 } from "./rookieDraft";
-import { loadGame } from "./persistence";
+import { loadGame, prepareGameLoad } from "./persistence";
 import {
   validateFranchise,
   type VerifiedArchives,
@@ -128,10 +131,32 @@ describe("package and rookie franchise persistence", () => {
     rejectVerifiedLedger(mismatched);
     // Validates the complete new-model season for three separate saves.
   }, 600000); // Valid and corrupt saves each verify current and archived seasons.
-  it("restores a partial draft, rejects forged picks, then keeps released careers across a rookie season", () => {
+  it("restores a partial draft, rejects forged picks, then keeps released careers across a rookie season", async () => {
+    const records = memoryReplayRecords();
+    const restoreWork: number[] = [];
+    const restoreCached = async (state: GameState) => {
+      restoreWork.length = 0;
+      const prepared = prepareGameLoad(
+        { getItem: () => JSON.stringify(state), setItem: () => {} },
+        1,
+      );
+      expect(prepared.restore).toBeTypeOf("function");
+      const restored = await prepared.restore!(
+        (_done, total) => restoreWork.push(total),
+        new AbortController().signal,
+        new ReplayCache(
+          records.connect(),
+          webcrypto as unknown as Crypto,
+          "rookie-market",
+        ),
+      );
+      expect(restored.notice).toBeNull();
+      return restored.state;
+    };
     const partial = beginRookieDraft(offseason);
     expect(partial.franchise!.rookieDrafts?.at(-1)?.complete).toBe(false);
-    expect(restore(partial).franchise).toEqual(partial.franchise);
+    expect((await restoreCached(partial)).franchise).toEqual(partial.franchise);
+    expect(restoreWork.some((total) => total > 0)).toBe(true);
     expect(
       gameReducer(partial, { type: "START_FRANCHISE_SEASON", seed: 2 }),
     ).toBe(partial);
@@ -143,7 +168,10 @@ describe("package and rookie franchise persistence", () => {
       new Set(drafted.franchise!.teams.flatMap((t) => Object.values(t.roster)))
         .size,
     ).toBe(240);
-    expect(restore(drafted).franchise).toEqual(drafted.franchise);
+    // The draft ledger is validated afresh while unchanged history uses only
+    // evidence earned by the cold restore above. The other case covers sync load.
+    expect((await restoreCached(drafted)).franchise).toEqual(drafted.franchise);
+    expect(restoreWork.at(-1)).toBe(0);
     for (const [index, corruptDraft] of [
       (d: typeof draft) => {
         d.generation = 4;
@@ -185,6 +213,7 @@ describe("package and rookie franchise persistence", () => {
     const wrongBoundary = structuredClone(drafted);
     wrongBoundary.franchise!.rookieDrafts![0].tradeIndex = 0;
     if (offseason.franchise!.trades.length) rejectVerifiedLedger(wrongBoundary);
+    const firstYear = structuredClone(drafted.franchise!.history[0]);
     const year2 = startInteractiveFranchiseSeason(drafted, 93);
     const result = simulateSeason(year2.run),
       playoffs = simulatePlayoffs(result.league!, year2.run.seasonSeed);
@@ -202,11 +231,24 @@ describe("package and rookie franchise persistence", () => {
     );
     expect(archived.franchise!.careers.length).toBeGreaterThan(240);
     const departed = draft.picks[0].releasedId;
-    expect(
-      archived.franchise!.careers.find((c) => c.pokemonId === departed)
-        ?.seasons,
-    ).toBe(1);
-    expect(restore(archived).franchise).toEqual(archived.franchise);
-    // Revalidates two complete seasons for many deliberately malformed saves.
-  }, 900000); // Multiple valid whole-save replays plus one corrupt rookie save.
+    const career = archived.franchise!.careers.find(
+      (c) => c.pokemonId === departed,
+    )!;
+    // A released player can legitimately return through CPU free agency.
+    // Count recorded roster years while retaining the complete earlier season.
+    expect(career.seasons).toBe(
+      archived.franchise!.history.filter((h) =>
+        h.rosters.some((roster) => roster.includes(departed)),
+      ).length,
+    );
+    expect(archived.franchise!.history[0]).toEqual(firstYear);
+    expect(career.regular.points).toBeGreaterThanOrEqual(
+      firstYear.replay!.regularPlayers.find((p) => p.pokemonId === departed)!
+        .points,
+    );
+    expect((await restoreCached(archived)).franchise).toEqual(archived.franchise);
+    expect(restoreWork.some((total) => total > 0)).toBe(true);
+    expect((await restoreCached(archived)).franchise).toEqual(archived.franchise);
+    expect(restoreWork.at(-1)).toBe(0);
+  }, 900000); // Cold old/new seasons, verified warm opens and a cold corrupt save.
 });
