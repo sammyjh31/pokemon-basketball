@@ -270,6 +270,7 @@ export const DEFENSE_LABELS: Record<DefenseScheme, string> = {
 export type PlayType =
   "transition" | "pickRoll" | "isolation" | "post" | "spotUp";
 export interface LeagueTeam {
+  scoutingSeed?: import("./scoutingContinuityTypes").CoachScoutingSeed;
   chemistryBonds?: PairBonds;
   morale?: MoraleRoster;
   abilityMastery?: import("./abilityMastery").MasteryRoster;

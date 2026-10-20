@@ -1,3 +1,10 @@
+import { captureCoachBook } from "./coachScoutingArchive";
+import {
+  parseCoachBook,
+  parseScoutingSeed,
+  validateScoutingSeeds,
+  sameScoutingData,
+} from "./scoutingContinuity";
 import { isMovesetVersion } from "./basketballMoves";
 import { isDraftPool } from "./draftPool";
 import { MOVE_IDS } from "./moveTypes";
@@ -463,6 +470,15 @@ export function validateLeagueTeams(
       : undefined;
     return {
       ...(coach ? { coach } : {}),
+      ...(row.scoutingSeed !== undefined
+        ? {
+            scoutingSeed: parseScoutingSeed(
+              row.scoutingSeed,
+              index,
+              rows.length,
+            ),
+          }
+        : {}),
       id: index,
       name,
       roster,
@@ -690,6 +706,8 @@ function archivedSeason(
             .courtVersion,
     );
   }
+  if (Object.hasOwn(row, "coachBook"))
+    season.coachBook = parseCoachBook(row.coachBook, index + 1, rosters);
   if (Object.hasOwn(row, "rivalScouting"))
     season.rivalScouting = parseRivalScouting(row.rivalScouting, rosters);
   if (Object.hasOwn(row, "replay"))
@@ -854,6 +872,14 @@ function archivedReplay(
   if (
     JSON.stringify(bracket) !== JSON.stringify(playoffs) ||
     JSON.stringify(row.playoffPlayers) !== JSON.stringify(playoffs.players)
+  )
+    return fail();
+  if (
+    season.coachBook &&
+    !sameScoutingData(
+      season.coachBook,
+      captureCoachBook(league, playoffs, season.year),
+    )
   )
     return fail();
   if (
@@ -1578,6 +1604,20 @@ export function validateFranchise(
     }
     if (!sameMembers(Object.values(run.roster) as number[], fixed[0]))
       return fail();
+  }
+  for (const archived of history)
+    if (archived.replay)
+      validateScoutingSeeds(history, archived.replay.teams, archived.year);
+  if (run.leagueTeams) {
+    validateScoutingSeeds(history, run.leagueTeams, year);
+    for (let i = 0; i < teams.length; i++)
+      if (
+        !sameScoutingData(
+          teams[i].scoutingSeed,
+          run.leagueTeams[i].scoutingSeed,
+        )
+      )
+        return fail();
   }
   const franchise: Franchise = {
     ...(initialDraftPool !== undefined ? { initialDraftPool } : {}),

@@ -1,3 +1,5 @@
+import { captureCoachBook } from "./coachScoutingArchive";
+import { seedCoachScouting } from "./scoutingContinuity";
 import { captureNewsGames } from "./archive";
 import { retainMastery, teamsWithMastery } from "./abilityMastery";
 import { retainMorale, teamsWithMorale } from "./playerMorale";
@@ -220,8 +222,10 @@ function seasonArchive(run: Run, year: number): FranchiseSeason | null {
   )
     return null;
   const rivalScouting = captureRivalScouting(league, playoffs);
+  const coachBook = captureCoachBook(league, playoffs, year);
   return {
     ...(rivalScouting ? { rivalScouting } : {}),
+    ...(coachBook ? { coachBook } : {}),
     newsGames: captureNewsGames(league.games, playoffs),
     year,
     seasonSeed: run.seasonSeed,
@@ -387,6 +391,27 @@ export function startFranchiseSeason(
       seed,
       new Map([[0, franchise.pendingCoach]]),
     );
+  const latest = franchise.history.at(-1);
+  if (
+    latest &&
+    !latest.coachBook &&
+    state.run.result?.league &&
+    state.run.playoffs
+  ) {
+    const coachBook = captureCoachBook(
+      state.run.result.league,
+      state.run.playoffs,
+      latest.year,
+    );
+    if (coachBook)
+      franchise = {
+        ...franchise,
+        history: franchise.history.map((h) =>
+          h === latest ? { ...h, coachBook } : h,
+        ),
+      };
+  }
+  teams = seedCoachScouting(franchise.history, teams, franchise.year + 1);
   const user = teams[0];
   const run: Run = {
     ...createRun(state.run.mode, state.run.includeLegends, seed),
