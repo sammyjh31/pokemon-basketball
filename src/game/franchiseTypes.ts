@@ -51,6 +51,7 @@ export interface HistoricalHonor {
   teamId: number;
 }
 export interface FranchiseSeason {
+  coachBook?: import("./scoutingContinuityTypes").CoachBook;
   newsGames?: import("./types").LeagueGameSummary[];
   year: number;
   seasonSeed: number;

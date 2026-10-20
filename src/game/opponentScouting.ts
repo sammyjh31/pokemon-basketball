@@ -71,6 +71,7 @@ function updateOpponent(
           ),
         }
       : {}),
+    ...(prior.carried === 1 ? { carried: 1 as const } : {}),
     games: prior.games + 1,
     possessions: prior.possessions * RECENCY + match.possessions,
     pickRolls: prior.pickRolls * RECENCY + match.plays.pickRoll[opponentSide],
@@ -156,17 +157,26 @@ function count(value: unknown, max = 1_000_000): number {
   return value;
 }
 
-function validateOpponent(
+export function validateOpponentScouting(
   value: unknown,
-  opponent: LeagueTeam,
+  opponent: Pick<LeagueTeam, "roster" | "movesetVersion">,
 ): OpponentScouting {
   const hasReads =
     !!value && typeof value === "object" && Object.hasOwn(value, "moveReads");
+  const carried =
+    !!value && typeof value === "object" && Object.hasOwn(value, "carried");
+  if (
+    carried &&
+    ((value as Record<string, unknown>).carried !== 1 ||
+      opponent.movesetVersion !== 3)
+  )
+    return invalid();
   if (hasReads && opponent.movesetVersion !== 3) return invalid();
-  const input = record(
-      value,
-      hasReads ? [...HISTORY_KEYS, "moveReads"] : HISTORY_KEYS,
-    ),
+  const input = record(value, [
+      ...HISTORY_KEYS,
+      ...(hasReads ? ["moveReads"] : []),
+      ...(carried ? ["carried"] : []),
+    ]),
     games = count(input.games, 1000),
     possessions = count(input.possessions),
     pickRolls = count(input.pickRolls),
@@ -178,7 +188,11 @@ function validateOpponent(
   if (!Number.isInteger(games) || playerIds.length > 8) return invalid();
   if (
     games === 0 &&
-    (possessions || pickRolls || switches || helpRotations || playerIds.length)
+    (possessions ||
+      pickRolls ||
+      switches ||
+      helpRotations ||
+      (!carried && playerIds.length))
   )
     return invalid();
   const players: Record<number, ScoutedPlayer> = {};
@@ -207,12 +221,14 @@ function validateOpponent(
   const moveReads = hasReads ? validateMoveReads(input.moveReads) : undefined;
   if (
     games === 0 &&
+    !carried &&
     moveReads &&
     (Object.keys(moveReads.moves).length ||
       Object.keys(moveReads.combos).length)
   )
     return invalid();
   return {
+    ...(carried ? { carried: 1 as const } : {}),
     games,
     possessions,
     pickRolls,
@@ -231,7 +247,7 @@ export function validateMatchScouting(
 ): MatchScouting {
   const input = record(value, ["home", "away"]);
   return {
-    home: validateOpponent(input.home, away),
-    away: validateOpponent(input.away, home),
+    home: validateOpponentScouting(input.home, away),
+    away: validateOpponentScouting(input.away, home),
   };
 }

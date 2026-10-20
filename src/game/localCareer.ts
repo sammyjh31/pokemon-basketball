@@ -1,3 +1,11 @@
+import { captureCoachBook } from "./coachScoutingArchive";
+import {
+  seedCoachScouting,
+  parseCoachBook,
+  parseScoutingSeed,
+  sameScoutingData,
+  validateScoutingSeeds,
+} from "./scoutingContinuity";
 import { isMovesetVersion } from "./basketballMoves";
 import { captureNewsGames } from "./archive";
 import {
@@ -112,6 +120,7 @@ const captureNewsPlayers = (players: import("./types").LeaguePlayer[]) =>
       gamesPlayed,
     }));
 export interface LocalSeasonArchive {
+  coachBook?: import("./scoutingContinuityTypes").CoachBook;
   newsPlayers?: Pick<
     import("./types").LeaguePlayer,
     "pokemonId" | "teamId" | "highPoints" | "gamesPlayed"
@@ -342,6 +351,7 @@ export function beginLocalOffseason(
       : team,
   );
   const rivalScouting = captureRivalScouting(league, verified);
+  const coachBook = captureCoachBook(league, verified, year);
   const archived: LocalSeasonArchive = {
     newsGames: captureNewsGames(league.games, verified),
     newsPlayers: captureNewsPlayers(league.players),
@@ -359,6 +369,7 @@ export function beginLocalOffseason(
     rookiePicks: [],
     trades: [],
     ...(rivalScouting ? { rivalScouting } : {}),
+    ...(coachBook ? { coachBook } : {}),
   };
   const next: LocalLeague = {
     ...draft,
@@ -787,7 +798,7 @@ function nextYearTeams(
   );
   if (career.teams.some((t) => t.coach) && appointed.some((t) => !t.coach))
     fail("Hire a head coach for every club before starting the next season.");
-  return syncTeamBonds(appointed).map((team) => {
+  const ready = syncTeamBonds(appointed).map((team) => {
     const retained =
       Object.values(team.roster).filter((id) =>
         Object.values(archived.teams[team.id].roster).includes(id),
@@ -829,6 +840,7 @@ function nextYearTeams(
         : {}),
     };
   });
+  return seedCoachScouting(career.history, ready, career.year + 1);
 }
 export function startNextLocalSeason(draft: LocalLeague): LocalLeague {
   if (
@@ -840,6 +852,25 @@ export function startNextLocalSeason(draft: LocalLeague): LocalLeague {
   if (draft.career.year >= LOCAL_MAX_YEARS)
     fail("This local career has reached its season limit.");
   draft = reviewLocalCoaches(draft);
+  const latest = draft.career!.history.at(-1)!;
+  if (!latest.coachBook && latest.teams.every((t) => t.movesetVersion === 3)) {
+    const replay = replayLocalHistory(draft, latest.year),
+      coachBook = captureCoachBook(
+        replay.result.league!,
+        replay.playoffs,
+        latest.year,
+      );
+    if (coachBook)
+      draft = {
+        ...draft,
+        career: {
+          ...draft.career!,
+          history: draft.career!.history.map((h) =>
+            h === latest ? { ...h, coachBook } : h,
+          ),
+        },
+      };
+  }
   const nextTeams = nextYearTeams(draft.career!);
   const { playoffGames: _, ...base } = draft;
   return {
@@ -961,6 +992,14 @@ function verifyArchivedResult(
       )
   )
     fail("This archived coaching record does not match its frozen inputs.");
+  if (
+    archived.coachBook &&
+    !sameScoutingData(
+      archived.coachBook,
+      captureCoachBook(result.league!, playoffs, archived.year),
+    )
+  )
+    fail("Archived coach scouting does not match completed observations.");
   if (
     archived.rivalScouting !== undefined &&
     JSON.stringify(archived.rivalScouting) !==
@@ -1154,6 +1193,15 @@ function parseTeams(
     )
       fail();
     const team: LocalTeamSnapshot = {
+      ...(row.scoutingSeed !== undefined
+        ? {
+            scoutingSeed: parseScoutingSeed(
+              row.scoutingSeed,
+              id,
+              draft.options!.format.teamCount,
+            ),
+          }
+        : {}),
       ...(row.coach ? { coach: validateCoach(row.coach)! } : {}),
       id,
       name: row.name,
@@ -1220,6 +1268,7 @@ function sameRosterState(actual: LeagueTeam[], expected: LeagueTeam[]) {
     const a = actual[i],
       e = expected[i];
     if (
+      !sameScoutingData(a.scoutingSeed, e.scoutingSeed) ||
       a.abilityVersion !== e.abilityVersion ||
       a.movesetVersion !== e.movesetVersion ||
       a.abilityMasteryVersion !== e.abilityMasteryVersion ||
@@ -1462,6 +1511,7 @@ export function parseLocalCareer(
           row.rivalScouting,
           teams.map((team) => ROSTER_SLOTS.map((slot) => team.roster[slot]!)),
         );
+    validateScoutingSeeds(history, teams, archiveYear);
     const archived: LocalSeasonArchive = {
       ...(row.coachRecords !== undefined
         ? {
@@ -1492,6 +1542,15 @@ export function parseLocalCareer(
       rookiePicks: [],
       trades: [],
       ...(rivalScouting ? { rivalScouting } : {}),
+      ...(row.coachBook !== undefined
+        ? {
+            coachBook: parseCoachBook(
+              row.coachBook,
+              archiveYear,
+              teams.map((t) => Object.values(t.roster) as number[]),
+            ),
+          }
+        : {}),
     };
     let finalTeams = teams;
     if (
@@ -1534,6 +1593,15 @@ export function parseLocalCareer(
         replayContext?.captured.set(archiveYear, structuredClone(evidence));
       }
       if (evidence.championId !== championId) fail();
+      if (
+        archived.coachBook &&
+        !remembered &&
+        !sameScoutingData(
+          archived.coachBook,
+          captureCoachBook(league!, playoffs!, archiveYear),
+        )
+      )
+        fail();
       if ((teams[0].courtVersion ?? 0) >= 3 && row.coachRecords !== undefined)
         archived.coachRecords = validateCoachRecords(
           row.coachRecords,

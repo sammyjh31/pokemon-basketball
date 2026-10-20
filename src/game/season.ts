@@ -1,3 +1,4 @@
+import { initialSeasonScouting } from "./scoutingContinuity";
 import {
   initialMasteryBanks,
   teamsWithMastery,
@@ -136,7 +137,9 @@ export function seasonBuilder(
     games: GameResult[] = [],
     summaries: LeagueGameSummary[] = [];
   const scouting: ScoutingMemory | undefined =
-    teams[0].typeTacticsVersion === 1 ? {} : undefined;
+    teams[0].typeTacticsVersion === 1
+      ? initialSeasonScouting(teams)
+      : undefined;
   const play = (fixture: LeagueFixture) => {
     const { homeTeamId: h, awayTeamId: a } = fixture;
     if (

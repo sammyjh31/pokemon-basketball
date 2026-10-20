@@ -5,6 +5,7 @@ import {
 } from "../game/counterTypes";
 import type { CourtSequence } from "../game/courtTypes";
 import type { LeagueTeam } from "../game/types";
+import { ScoutingContinuityNote } from "./CoachScoutingSummary";
 import { POKEMON_BY_ID } from "../data/pokemon";
 export function GameCounterReport({
   plans,
@@ -29,6 +30,12 @@ export function GameCounterReport({
       {(["home", "away"] as const).map((side, i) => (
         <div key={side}>
           <h4>{teams[i]?.name ?? side} · pregame reads</h4>
+          {teams[i]?.scoutingSeed?.opponents[teams[1 - i]?.id] && (
+            <ScoutingContinuityNote
+              entry={teams[i].scoutingSeed!.opponents[teams[1 - i].id]}
+              coachId={teams[i].coach?.id}
+            />
+          )}
           {plans[side].length ? (
             <ul>
               {plans[side].map((plan) => (

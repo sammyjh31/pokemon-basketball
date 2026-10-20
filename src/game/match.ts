@@ -1,3 +1,4 @@
+import { openingScouting } from "./scoutingContinuity";
 import { createCounterRuntime } from "./moveCounters";
 import { createComboRuntime, comboPlayWeights } from "./matchCombos";
 import { createMoveRuntime } from "./matchMoves";
@@ -512,7 +513,7 @@ export function simulateMatch(
     throw new Error("Opponent scouting requires type tactics rules.");
   const scouting = advanced
     ? validateMatchScouting(
-        options.scouting ?? scoutingForMatch({}, home.id, away.id),
+        options.scouting ?? openingScouting(home, away),
         home,
         away,
       )
