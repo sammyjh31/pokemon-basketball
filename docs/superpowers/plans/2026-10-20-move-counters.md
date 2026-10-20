@@ -24,7 +24,7 @@
 ## Tasks
 - [x] 1. Pin a v2 full-match fingerprint; write failing unit tests for observed-only learning, bounded counters, energy/cooldowns, paired readiness and offensive counter-combos. Implement counterTypes.ts and moveCounters.ts.
 - [x] 2. Write failing integration tests for real full/compact matches, completed-game scouting, snapshots, all-fixture propagation and telemetry validation. Introduce v3 adoption, integrate court/match/scouting and telemetry, preserve older fingerprints. Commit/push.
-- [ ] 3. Write failing UI checks; expose automatic reads and counter usage in move/box views. Verify lifecycle, cold/warm saves, regular/playoff/CPU games, legacy rules and desktop/mobile flows. One independent branch review, resolve findings, typecheck/build, document evidence, commit/push, merge and verify Pages.
+- [x] 3. Write failing UI checks; expose automatic reads and counter usage in move/box views. Verify lifecycle, cold/warm saves, regular/playoff/CPU games, legacy rules and desktop/mobile flows. One independent branch review, resolve findings, typecheck/build, document evidence, commit/push, merge and verify Pages.
 
 ## Execution ledger
 - Baseline c983d67; existing managed worktree reused. Primary checkout untouched.
@@ -36,3 +36,6 @@
 
 - Final regression group: 103 checks/19 files passed (23.49 s). Full all-seven solo/cold-warm + mixed local lifecycle group: 4 checks/3 files passed (243.10 s). Browser move/signature/counter flows: 6/6 (15.2 s); final counter screenshots: 2/2 (5.7 s). Independent review no findings.
 - Follow-up: manual official records must reject simulated moveObservations/counterPlans. Confirmed RED, added two-field guard, official/new-match regression group 17/4files passed (21.39 s). Reviewer checked the follow-up with no findings.
+
+- Production evidence: final hosted-subpath Gen VII season 19–63; all 1230 games/240 unique players, 125007 defensive participant responses, exact full save reload through IndexedDB and compiled restore worker, historical box counter report, portraits/credits/mobile onboarding and zero browser/HTTP/path errors passed. First smoke selector clicked the result row rather than its box-score button; corrected only the scratch script and reran the complete production flow successfully.
+- Implementation and required validation complete; final documentation commit, exact-head merge and Pages verification follow.
