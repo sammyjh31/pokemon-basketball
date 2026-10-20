@@ -53,6 +53,14 @@ Court rules v4 pace game XP for seasonal milestones: game gains are four times t
 
 **League news** covers every club with recorded results, weekly recaps, scoring highs, player development, mastery milestones, trades, rookie picks, signings, coaching changes, awards and championships. Filter by season, category or your teams, then open recorded details or available player/game links. Stories are derived from saved facts, so revisiting the feed does not simulate games or award progress. Older saves show the records they contain; missing historical game facts are not invented.
 
+## Signature moves and combo plays
+
+New seasons add **18 type techniques** (25 mastery XP) and **14 species or family signatures** (100 XP), including Volt Tackle, Charizard’s Skyhook and Blastoise’s Hydro Cannon. Your coach chooses moves within existing slots and handles practice and timing automatically.
+
+Coaches also plan **pick-and-roll, pick-and-pop, drive-and-kick and complementary-type elemental relays**. Both partners need 25 XP. Earned familiarity, active-lineup chemistry, coaching style, mastery, available energy and the game clock shape selection and execution. Each partner spends energy and a move opportunity, with a 100-second player cooldown. An actual successful pass and appropriate shot must follow the setup; a cancelled attack cannot count as a created shot. Completed combo shots earn a small, capped mastery reward. Automatic partnership practice uses the existing mastery bank, which remains attached to the player through trades and free agency.
+
+Moveset reports show eligible, locked and equipped signatures and coach pair plans. Game reports freeze pregame assignments and show actual timing. Player, season, playoff and career counters distinguish signature uses, combo setups and shots created; these do not claim extra made baskets. Every shared simulated game uses these rules, including CPU games and playoffs. Existing seasons retain their saved rules; new drafts and the next franchise season adopt the update. Combos require enabled abilities and chemistry. Played arcade controls remain unchanged.
+
 ## Basketball moves and specializations
 
 Coaches automatically equip and time basketball adaptations of **Quick Attack, Agility, Helping Hand, Protect, Iron Defense, Double Team, Focus Energy and Recover**. Species' types and physical tools shape eligibility; player skills, roster needs and coaching style shape selection. These are fictional basketball moves, separate from canonical battle learnsets. They affect actual driving and off-ball movement, passing, screens, navigation, contests, shot preparation and fatigue, using energy and real game-time cooldowns. They never grant automatic baskets.

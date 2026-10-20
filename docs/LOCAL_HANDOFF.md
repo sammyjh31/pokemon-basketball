@@ -1,3 +1,7 @@
+## Signature moves and combos — 2026-10-19
+
+Moves rules version 2 extends the eight-move system with 18 type techniques, 14 family signatures and four paired plays. Keep absent/v1 match results unchanged. New solo/local defaults and next franchise seasons use 2; local history replay adopts the actual recorded version, not a boolean opt-in. Court rules remain 4. Pair plans are derived per match rather than copied into every saved schedule entry. Optional exact combo counters aggregate into existing move statistics; energy includes both participants’ setup costs. Paid setups interrupted before an actual shot remain attempts. V2 shooting activations defer past pressure and non-shooting-foul cancellation. XP, familiarity and trade/rookie ownership use existing banks.
+
 # Local and cloud handoff — 2026-10-19
 
 ## Coach-managed basketball moves (October 19)
