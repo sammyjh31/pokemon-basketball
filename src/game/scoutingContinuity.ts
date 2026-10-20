@@ -1,4 +1,7 @@
-import { updateCounterResults } from "./counterLearning";
+import {
+  updateCounterResults,
+  strongestCounterResults,
+} from "./counterLearning";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { getCoach } from "./trainerCoaches";
 import {
@@ -401,7 +404,16 @@ export function seedCoachScouting<T extends LeagueTeam>(
       const scouting = chosen
         ? compactScouting(chosen.data, chosen.factor)
         : emptyScouting();
-      if (team.movesetVersion !== 4) delete scouting.counterResults;
+      if (team.movesetVersion === 4) {
+        const results = strongestCounterResults(
+          candidates.map((c) => ({
+            results: c.data.counterResults,
+            factor: c.factor,
+          })),
+        );
+        if (results) scouting.counterResults = results;
+        else delete scouting.counterResults;
+      } else delete scouting.counterResults;
       scouting.carried = 1;
       scouting.players = players;
       if (chosen?.data.moveReads) {

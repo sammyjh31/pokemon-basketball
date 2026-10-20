@@ -197,3 +197,32 @@ export function addCounterOutcome(
   row.attacks++;
   for (const key of FIELDS) if (key !== "attacks") row[key] += outcome[key];
 }
+/** Keep strongest discounted evidence per response; never add overlapping coach/club reports. */
+export function strongestCounterResults(
+  sources: readonly { results?: CounterResults; factor: number }[],
+): CounterResults | undefined {
+  if (!sources.some((s) => s.results)) return;
+  const result = emptyCounterResults();
+  for (const id of COUNTER_KEYS) {
+    let best: { results: CounterResults; factor: number } | undefined,
+      weight = 0;
+    for (const source of sources) {
+      const row = source.results?.counters[id];
+      if (!row) continue;
+      const n = (row.used.attacks + row.without.attacks) * source.factor;
+      if (n > weight) {
+        weight = n;
+        best = {
+          results: { version: 1, counters: { [id]: row } },
+          factor: source.factor,
+        };
+      }
+    }
+    if (best) {
+      const row = updateCounterResults(best.results, undefined, best.factor)
+        .counters[id];
+      if (row) result.counters[id] = row;
+    }
+  }
+  return result;
+}

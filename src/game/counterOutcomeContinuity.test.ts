@@ -72,3 +72,56 @@ it("attenuates outcome evidence after roster/coach changes and follows the obser
     true,
   );
 });
+it("keeps recent outcome learning when a larger legacy report wins general system scouting", () => {
+  const teams = createLeague({ ...performanceRun(), movesetVersion: 4 });
+  const coach = teams[0].coach!.id,
+    metadata = teams.map((t) => ({
+      id: t.id,
+      roster: Object.values(t.roster) as number[],
+      coachId: t.coach!.id,
+    }));
+  const results = emptyCounterResults();
+  results.counters["top-lock"] = {
+    used: { ...emptyCounterSample(), attacks: 10, points: 10 },
+    without: { ...emptyCounterSample(), attacks: 10, points: 20 },
+  };
+  const older: CoachBook = {
+    version: 1,
+    year: 1,
+    teams: metadata,
+    coaches: {
+      [coach]: {
+        teamId: 0,
+        opponents: { 1: { ...emptyScouting(), games: 6, possessions: 300 } },
+      },
+    },
+  };
+  const recent: CoachBook = {
+    version: 1,
+    year: 2,
+    teams: metadata,
+    coaches: {
+      [coach]: {
+        teamId: 0,
+        opponents: {
+          1: {
+            ...emptyScouting(),
+            games: 1,
+            possessions: 60,
+            counterResults: results,
+          },
+        },
+      },
+    },
+  };
+  const next = seedCoachScouting(
+    [
+      { year: 1, coachBook: older },
+      { year: 2, coachBook: recent },
+    ],
+    teams,
+    3,
+  )[0].scoutingSeed!.opponents[1].scouting;
+  expect(next.possessions).toBeCloseTo(300 * 0.72 * 0.72, 3);
+  expect(next.counterResults!.counters["top-lock"]!.used.attacks).toBe(7.2);
+});
