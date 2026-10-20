@@ -1,3 +1,4 @@
+import { positionRating } from "./ratings";
 import { retainMorale } from "./playerMorale";
 import { describe, expect, it } from "vitest";
 import { FRANCHISE_POKEMON } from "../data/pokemon";
@@ -27,7 +28,10 @@ const managers = [
   { name: "Sam", teamId: 1 },
   { name: "Alex", teamId: 3 },
 ];
-function drafted(mode: LocalLeagueOptions["mode"] = "generational") {
+function drafted(
+  mode: LocalLeagueOptions["mode"] = "generational",
+  competitive = false,
+) {
   let draft = local.createLocalLeague(managers, true, 42, 2, {
     ...options,
     mode,
@@ -37,20 +41,31 @@ function drafted(mode: LocalLeagueOptions["mode"] = "generational") {
     const turn = local.currentLocalTurn(draft);
     if (!turn) break;
     const taken = new Set(draft.picks.map((p) => p.pokemonId));
-    const mon = local.localLeaguePool(draft).find((p) => !taken.has(p.id))!;
     const occupied = draft.picks
       .filter((p) => p.teamId === turn.teamId)
       .map((p) => p.slot);
-    draft = local.pickLocalPlayer(
-      draft,
-      mon.id,
-      ROSTER_SLOTS.find((s) => !occupied.includes(s))!,
-    );
+    const slot = ROSTER_SLOTS.find((s) => !occupied.includes(s))!;
+    const position =
+      slot === "B1" ? "PG" : slot === "B2" ? "SF" : slot === "B3" ? "C" : slot;
+    const available = local
+      .localLeaguePool(draft)
+      .filter((p) => !taken.has(p.id));
+    const mon = competitive
+      ? available.sort(
+          (a, b) =>
+            positionRating(b, position) - positionRating(a, position) ||
+            a.id - b.id,
+        )[0]
+      : available[0];
+    draft = local.pickLocalPlayer(draft, mon.id, slot);
   }
   return draft;
 }
-function finish(mode: LocalLeagueOptions["mode"] = "generational") {
-  const draft = drafted(mode),
+function finish(
+  mode: LocalLeagueOptions["mode"] = "generational",
+  competitive = false,
+) {
+  const draft = drafted(mode, competitive),
     result = simulateLocalSeason(draft);
   const playoffs = simulatePlayoffs(
     result.league!,
@@ -419,7 +434,7 @@ it("rejects an archived playoff prefix that never completed a championship when 
 });
 
 it("round trips accepted CPU trades after lineup edits and declines unfavorable offers", () => {
-  const { draft, result, playoffs } = finish("full-pool");
+  const { draft, result, playoffs } = finish("full-pool", true);
   const source = career.beginLocalOffseason(draft, result, playoffs);
   const changed = local.updateLocalCoaching(
     local.swapLocalSlots(source, 1, "PG", "C"),
@@ -427,24 +442,52 @@ it("round trips accepted CPU trades after lineup edits and declines unfavorable 
     { tactic: "pace", rotation: "bench", defense: "zone" },
   );
   const teams = local.localLeagueTeams(changed);
-  const offers = Object.values(teams[1].roster).flatMap((give) =>
-    Object.values(teams[0].roster).map((receive) => ({
-      give: give!,
-      receive: receive!,
-      evaluation: career.evaluateLocalTrade(changed, 1, 0, give!, receive!),
-    })),
-  );
+  // A particular CPU club can fairly decline every swap under its current chemistry.
+  // Find real offers across the available CPU clubs instead of forcing club zero to deal.
+  const offers = teams
+    .filter((team) => !changed.managers.some((m) => m.teamId === team.id))
+    .flatMap((team) =>
+      Object.values(teams[1].roster).flatMap((give) =>
+        Object.values(team.roster).map((receive) => ({
+          teamId: team.id,
+          give: give!,
+          receive: receive!,
+          evaluation: career.evaluateLocalTrade(
+            changed,
+            1,
+            team.id,
+            give!,
+            receive!,
+          ),
+        })),
+      ),
+    );
   const acceptable = offers.find((o) => o.evaluation.accepted)!;
   const declined = offers.find((o) => !o.evaluation.accepted)!;
-  expect(acceptable).toBeDefined();
+  expect(
+    acceptable,
+    JSON.stringify(
+      offers
+        .map((o) => ({ teamId: o.teamId, gain: o.evaluation.toGain }))
+        .sort((a, b) => b.gain - a.gain)
+        .slice(0, 4),
+    ),
+  ).toBeDefined();
   expect(declined).toBeDefined();
   expect(() =>
-    career.applyLocalTrade(changed, 1, 0, declined.give, declined.receive, [1]),
+    career.applyLocalTrade(
+      changed,
+      1,
+      declined.teamId,
+      declined.give,
+      declined.receive,
+      [1],
+    ),
   ).toThrow();
   const traded = career.applyLocalTrade(
     changed,
     1,
-    0,
+    acceptable.teamId,
     acceptable.give,
     acceptable.receive,
     [1],
