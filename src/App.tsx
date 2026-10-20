@@ -1,3 +1,4 @@
+import { publicAsset } from "./assets";
 import { RestoreProgress } from "./components/RestoreProgress";
 import { MasteryPanel } from "./components/MasteryPanel";
 import { teamsWithMastery } from "./game/abilityMastery";
@@ -855,7 +856,11 @@ export default function App({
               Pokémon All-22
             </a>
             .{" "}
-            <a href="/coaches/credits.html" target="_blank" rel="noreferrer">
+            <a
+              href={publicAsset("/coaches/credits.html")}
+              target="_blank"
+              rel="noreferrer"
+            >
               Coach portrait credits
             </a>
             .

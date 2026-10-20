@@ -1,3 +1,4 @@
+import { publicAsset } from "../assets";
 import { useState } from "react";
 import type { TrainerCoach } from "../game/trainerCoaches";
 import "../coaches.css";
@@ -11,7 +12,7 @@ export function CoachPortrait({
   coach: TrainerCoach;
   size?: "standard" | "large" | "small";
 }) {
-  const src = `/coaches/${coach.id}.png`;
+  const src = publicAsset(`/coaches/${coach.id}.png`);
   const [failed, setFailed] = useState<string | null>(null);
   return (
     <span className={`coach-portrait coach-portrait-${size}`}>

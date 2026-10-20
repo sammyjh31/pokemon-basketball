@@ -1,3 +1,4 @@
+import { publicAsset } from "../assets";
 import { teamsWithMastery } from "../game/abilityMastery";
 import { currentMasteryBanks } from "../game/currentMastery";
 import { currentChemistryBanks } from "../game/currentChemistry";
@@ -105,7 +106,7 @@ export function ArcadePortrait({
   ) : (
     <img
       className={`arcade-sprite ${className}`}
-      src={`/pokemon-pixel/${id}.png`}
+      src={publicAsset(`/pokemon-pixel/${id}.png`)}
       alt=""
       draggable={false}
       onError={() => setFailed(true)}

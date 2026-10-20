@@ -13,6 +13,14 @@ npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
 
 Open [the local game](http://127.0.0.1:5173/). In a cloud workspace, bind the server to `0.0.0.0` instead and use the environment's forwarded preview URL. Restart the server when entering a new environment.
 
+## Publish with GitHub Pages
+
+The workflow in `.github/workflows/pages.yml` builds and publishes the game after every push to `main`, with a manual **Run workflow** option in GitHub Actions. It installs the locked dependencies using the Node version in `.nvmrc`, checks hosted asset paths, typechecks/builds the game and uploads only `dist/`. Failed builds do not replace the published game.
+
+Enable **Settings → Pages → Source → GitHub Actions**. The expected project address is `https://sammyjh31.github.io/pokemon-basketball/`. GitHub Pages requires an eligible paid GitHub plan for a private repository, or a public repository. Publishing the game does not require making the source repository public when the plan supports private-repository Pages.
+
+The build uses the base path reported by Pages, so portraits, pixel sprites, coach credits, fonts, scripts and restore workers remain inside the project address. Local development still uses `/`. Saved catalog URLs and simulation inputs stay unchanged. Hosted saves belong to that website/browser; use **Save options → Export/Import** to transfer a career from local play. Sharing the website lets friends play their own games; local league remains pass-and-play rather than network multiplayer.
+
 ## Play
 
 - **Trainer coaches:** choose one of three seeded trainer offers in the 82–0 Challenge; freely choose an available trainer in the lineup builder, local friend drafts and initial franchise hiring. All 32 trainers have their own styles and tradeoffs. Human friends choose before CPUs fill the remaining jobs. Your coach stays until an offseason appointment and automatically handles starters, minutes, closers, offense, defense, screen coverage and live adjustments. Your trainer also automatically selects individual training; you manage roster moves. Game insights show the actual opening plan and adjustments. Existing played seasons retain their original inputs; hire your first trainer in the offseason or before an unplayed franchise season.
@@ -198,7 +206,7 @@ After completing the Finals, choose **Continue as franchise**. The completed sea
 - **History:** open **View Year N games** for any newly archived season. Filter by club and regular season/playoffs, then open both-team box scores. Historical games use frozen rosters, ratings, rotations and played results. Older years whose original saves discarded detailed stats are clearly marked unavailable; their existing career totals and honors remain.
 - **Saving:** the existing v3 browser key supports franchise model 3, interactive season model 6 and played playoff model 2. Prior model paths retain their original outcomes. Completed game prefixes and frozen archives validate against simulation inputs and stored official results. Save failures remain visible with **Retry saving**; play can continue in memory. Saves stay in this browser and are not synchronized through GitHub; use **Export save** to move one. See [Saving](#saving) for backups and recovery.
 
-Injuries, aging, contracts, free agency, generations beyond IX, multiplayer accounts and public hosting are not included.
+Injuries, aging, contracts, free agency, generations beyond IX and multiplayer accounts are not included.
 
 ## Local league with friends
 
