@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import App from "../App";
@@ -100,4 +101,9 @@ it("confirms generation changes after picks, preserves cancellation and keeps th
   expect(stored!.run.coach).toEqual(state.run.coach);
   expect(stored!.run.roster.PG).toBeNull();
   expect(stored!.run.offerIds.every((id) => id >= 252 && id <= 386)).toBe(true);
+  expect(
+    within(
+      screen.getByRole("region", { name: "Your starting lineup" }),
+    ).getByText(/Generation III · Hoenn/),
+  ).toBeVisible();
 });

@@ -1,4 +1,5 @@
 import { isMovesetVersion } from "./basketballMoves";
+import { isDraftPool } from "./draftPool";
 import { MOVE_IDS } from "./moveTypes";
 import { sameMoveStats } from "./moveTelemetry";
 import { captureNewsGames, validateNewsGames } from "./archive";
@@ -1265,6 +1266,13 @@ export function validateFranchise(
 ): Franchise {
   const row = object(value),
     year = integer(row.year, 1, FRANCHISE_MAX_YEARS);
+  if (row.initialDraftPool !== undefined && !isDraftPool(row.initialDraftPool))
+    return fail();
+  const initialDraftPool = isDraftPool(row.initialDraftPool)
+    ? row.initialDraftPool
+    : undefined;
+  if (run.draftPool !== undefined && run.draftPool !== initialDraftPool)
+    return fail();
   if (
     ![1, 2, 3].includes(row.modelVersion as number) ||
     (row.phase !== "season" && row.phase !== "offseason") ||
@@ -1477,6 +1485,7 @@ export function validateFranchise(
     developmentHistory?.reports,
     freeAgency,
     cpuRules?.since,
+    initialDraftPool,
   );
   verifyMasteryChronology(
     run,
@@ -1571,6 +1580,7 @@ export function validateFranchise(
       return fail();
   }
   const franchise: Franchise = {
+    ...(initialDraftPool !== undefined ? { initialDraftPool } : {}),
     ...(pendingCoach ? { pendingCoach } : {}),
     ...(coachOffice ? { coachOffice } : {}),
     modelVersion: row.modelVersion as Franchise["modelVersion"],

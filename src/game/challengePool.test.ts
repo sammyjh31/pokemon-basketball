@@ -7,6 +7,8 @@ import { createLeague } from "./league";
 import { loadGame, saveGame } from "./persistence";
 import { lineupLink, parseLineup } from "./lineup";
 import { prepareArcadeTeams } from "../components/ArcadeSetup";
+import { validateRosterTransactions } from "./franchiseTransactions";
+import { rookieFixture } from "./rookieDraft.testUtils";
 
 const cases = [
   [1, 1, 151],
@@ -20,6 +22,71 @@ const cases = [
 ] as const;
 
 describe("generation-specific 82–0 drafts", () => {
+  it("allows expanded opening membership only with its recorded pool and still enforces the human generation", () => {
+    let run = createRun("spin", false, 53, 7);
+    for (const slot of ROSTER_SLOTS)
+      run = placePokemon(run, run.offerIds[0], slot);
+    const rosters = createLeague(run).map((t) =>
+      ROSTER_SLOTS.map((slot) => t.roster[slot]!),
+    );
+    const history = [{ ...rookieFixture().franchise!.history[0], rosters }];
+    const validate = (pool?: import("./draftPool").DraftPool) =>
+      validateRosterTransactions(
+        undefined,
+        history,
+        [],
+        rosters,
+        false,
+        1,
+        "offseason",
+        undefined,
+        undefined,
+        undefined,
+        pool,
+      );
+    expect(() => validate()).toThrow();
+    expect(validate(7).expected).toEqual(rosters);
+    expect(() => validate(1)).toThrow();
+    expect(validate("all").expected).toEqual(rosters);
+    const otherSlot = rosters[1].findIndex((id) => id < 722);
+    expect(otherSlot).toBeGreaterThanOrEqual(0);
+    const changed = rosters.map((roster) => [...roster]);
+    const giveId = changed[0][0],
+      receiveId = changed[1][otherSlot];
+    [changed[0][0], changed[1][otherSlot]] = [receiveId, giveId];
+    expect(
+      validateRosterTransactions(
+        undefined,
+        history,
+        [{ year: 1, teamId: 1, giveId, receiveId }],
+        changed,
+        false,
+        1,
+        "offseason",
+        undefined,
+        undefined,
+        undefined,
+        7,
+      ).expected,
+    ).toEqual(changed);
+    const tooNew = rosters.map((roster) => [...roster]);
+    tooNew[1][0] = 810;
+    expect(() =>
+      validateRosterTransactions(
+        undefined,
+        [{ ...history[0], rosters: tooNew }],
+        [],
+        tooNew,
+        false,
+        1,
+        "offseason",
+        undefined,
+        undefined,
+        undefined,
+        "all",
+      ),
+    ).toThrow();
+  });
   it.each(cases)(
     "keeps generation %s offers, rerolls and eight picks inside %i–%i",
     (pool, first, last) => {

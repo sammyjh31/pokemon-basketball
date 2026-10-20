@@ -40,6 +40,7 @@ it("retains a Gen VII challenge, full mixed league, playoffs and franchise histo
     },
   };
   const archived = processOffseason(archiveFranchiseSeason(state));
+  expect(archived.franchise!.initialDraftPool).toBe(7);
   const used = new Set(
     archived.franchise!.history.flatMap((h) => h.rosters.flat()),
   );
@@ -82,6 +83,7 @@ it("retains a Gen VII challenge, full mixed league, playoffs and franchise histo
   expect(warm.value.state).toEqual(cold.value.state);
   expect(warm.work.at(-1)).toBe(0);
   const next = startFranchiseSeason(warm.value.state, 54);
+  expect(next.franchise!.initialDraftPool).toBe(7);
   expect(next.run.roster).toEqual(next.franchise!.teams[0].roster);
   expect(next.franchise!.history).toEqual(warm.value.state.franchise!.history);
   const nextLoaded = await restore(JSON.stringify(next));

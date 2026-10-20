@@ -1,4 +1,5 @@
 import type { PlayerDevelopment } from "../game/developmentTypes";
+import { draftPokemon, draftPoolLabel } from "../game/draftPool";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { positionRating } from "../game/ratings";
 import {
@@ -34,7 +35,9 @@ export function Court({
           <span className="eyebrow">
             {run.leagueTeams
               ? "YOUR FRANCHISE · EIGHT-PLAYER ROSTER"
-              : "KANTO + JOHTO · 251 POKÉMON"}
+              : run.draftPool !== undefined
+                ? `${draftPoolLabel(run.draftPool)} · ${draftPokemon(run.draftPool).length} Pokémon`
+                : "KANTO + JOHTO · 251 POKÉMON"}
           </span>
           <h2>
             The starting five

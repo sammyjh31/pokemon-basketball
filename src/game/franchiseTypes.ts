@@ -88,6 +88,8 @@ export interface CpuRules {
   since: number;
 }
 export interface Franchise {
+  /** Opening draft eligibility; omitted for original Gen I–II leagues. */
+  initialDraftPool?: import("./draftPool").DraftPool;
   coachOffice?: import("./coachOffice").CoachOffice;
   pendingCoach?: import("./trainerCoaches").CoachAssignment;
   modelVersion: 1 | 2 | 3;
