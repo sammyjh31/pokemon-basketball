@@ -2,6 +2,8 @@
 
 Build an eight-player Pokémon rotation — five starters and three reserves — then chase an undefeated 82-game season. An [All-22](https://all22pokemon.com/)-inspired lineup builder and draft challenge with an initial 251 Pokémon from Gen I–II, 20 basketball skills plus advanced player traits, a complete 30-team league, league awards, multi-season franchises, and browser-local records. Franchise rookie drafts introduce 774 additional species from Generations III–IX.
 
+**[Play in your browser](https://sammyjh31.github.io/pokemon-basketball/)** — no installation or GitHub login required. Each browser keeps its own saved progress.
+
 ## Run
 
 Requires Node 24.15 or newer and npm; `.nvmrc` pins the tested Node 24.19.0. From the repository root:
