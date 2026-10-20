@@ -27,6 +27,7 @@ export interface ComboEvent {
   playerIds: [string, string];
   elapsedSeconds: number;
   chemistry: number;
+  lineupChemistry: number;
   mastery: number;
   strength: number;
   energySpent: [number, number];

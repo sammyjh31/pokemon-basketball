@@ -7,6 +7,7 @@ import {
   noteComboPass,
   completeCombo,
   comboPlayWeights,
+  reserveComboDrive,
 } from "./matchCombos";
 import { signaturePlayer, signatureTeam } from "./signatureTestUtils";
 import { pairKey } from "./teammateChemistry";
@@ -156,4 +157,25 @@ it("does not promote an unexecutable plan or spend non-finite participant energy
     expect(startCombo(runtime, "screen", a, b, 10, context)).toBeUndefined();
     expect(a.energy).toBe(100);
   }
+});
+it("uses the active five's chemistry for execution as well as the pair's earned familiarity", () => {
+  const cold = setup(),
+    warm = setup();
+  const a = startCombo(cold.runtime, "screen", cold.a, cold.b, 10, {
+    ...cold.context,
+    chemistry: 20,
+  })!;
+  const b = startCombo(warm.runtime, "screen", warm.a, warm.b, 10, {
+    ...warm.context,
+    chemistry: 90,
+  })!;
+  expect(b.strength).toBeGreaterThan(a.strength);
+});
+it("reserves a drive-and-kick opportunity only for a ready partner and sufficient attack time", () => {
+  const { runtime, a, b } = setup("drive-kick");
+  expect(reserveComboDrive(runtime, a, [a, b], 0, 12)).toBe(true);
+  expect(reserveComboDrive(runtime, a, [a], 0, 12)).toBe(false);
+  expect(reserveComboDrive(runtime, a, [a, b], 0, 4)).toBe(false);
+  b.energy = 35;
+  expect(reserveComboDrive(runtime, a, [a, b], 0, 12)).toBe(false);
 });

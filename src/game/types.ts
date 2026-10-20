@@ -343,6 +343,7 @@ export interface LeagueGameSummary extends LeagueFixture {
   overtimePeriods: number;
 }
 export interface LeagueMatch {
+  comboAssignments?: Record<number, import("./comboTypes").ComboAssignment[]>;
   moveAssignments?: Record<string, import("./moveTypes").MoveAssignment>;
   moraleReport?: MoraleGameReport;
   masteryReport?: import("./abilityMastery").MasteryGameReport;

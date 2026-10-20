@@ -23,6 +23,7 @@ export interface CourtAction {
   clock: number;
 }
 export interface CourtSequence {
+  combos?: import("./comboTypes").ComboEvent[];
   moves?: import("./moveTypes").MoveEvent[];
   possession: number;
   offenseTeamId: number;

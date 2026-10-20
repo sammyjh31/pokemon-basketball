@@ -30,6 +30,7 @@ export interface ComboRuntime {
     received: boolean;
     now: number;
     strength: number;
+    lineupChemistry: number;
   };
 }
 const COST = 3.5,
@@ -106,6 +107,37 @@ export function comboPlayWeights(
   }
   return weights;
 }
+/** Hold the individual drive move only for an executable kickout pair. */
+export function reserveComboDrive(
+  runtime: ComboRuntime | undefined,
+  driver: ComboPlayer,
+  active: readonly ComboPlayer[],
+  now: number,
+  clock: number,
+): boolean {
+  return (
+    !!runtime &&
+    !runtime.pending &&
+    clock >= 6 &&
+    runtime.plans.some(
+      (plan) =>
+        plan.id === "drive-kick" &&
+        plan.initiatorId === driver.box.pokemonId &&
+        plan.unlocked &&
+        plan.fit >= 58 + (1 - runtime.risk) * 5 &&
+        pairReady(runtime, plan, active, now),
+    )
+  );
+}
+/** A modest read preference; lanes, time and interception rolls still decide. */
+export function comboReceiverPreference(
+  runtime: ComboRuntime | undefined,
+  from: ComboPlayer,
+  to: ComboPlayer,
+): number {
+  const pending = runtime?.pending;
+  return pending?.a === from && pending.b === to ? 1.4 * pending.strength : 0;
+}
 function record(
   p: ComboPlayer,
   id: ComboId,
@@ -134,6 +166,7 @@ export function startCombo(
     clock: number;
     active: readonly ComboPlayer[];
     hadDrive?: boolean;
+    chemistry?: number;
   },
 ): ComboEvent | undefined {
   if (
@@ -149,13 +182,16 @@ export function startCombo(
     !ready(runtime, b, now)
   )
     return;
+  const lineupChemistry = Number.isFinite(context.chemistry)
+    ? Math.max(0, Math.min(100, context.chemistry!))
+    : 50;
   const plan = runtime.plans.find(
     (p) =>
       p.initiatorId === a.box.pokemonId &&
       p.partnerId === b.box.pokemonId &&
       p.unlocked &&
       p.mastery >= 25 &&
-      p.fit >= 58 + (1 - runtime.risk) * 5 &&
+      p.fit + (lineupChemistry - 50) * 0.04 >= 58 + (1 - runtime.risk) * 5 &&
       comboPlays.find((c) => c.id === p.id)!.setup === kind &&
       (p.id !== "drive-kick" || context.hadDrive),
   );
@@ -172,7 +208,9 @@ export function startCombo(
     2;
   const strength = Math.min(
     1.25,
-    (0.5 + plan.familiarity * 0.3 + mastery / 5000) * specialization,
+    (0.5 + plan.familiarity * 0.3 + mastery / 5000) *
+      specialization *
+      (0.85 + lineupChemistry * 0.0015),
   );
   const spent = [a, b].map((p) => {
     const before = p.energy;
@@ -191,13 +229,22 @@ export function startCombo(
   }
   capMoveEffects(a);
   capMoveEffects(b);
-  runtime.pending = { plan, a, b, received: false, now, strength };
+  runtime.pending = {
+    plan,
+    a,
+    b,
+    received: false,
+    now,
+    strength,
+    lineupChemistry,
+  };
   return {
     id: plan.id,
     stage: "setup",
     playerIds: [a.box.playerId, b.box.playerId],
     elapsedSeconds: now,
     chemistry: plan.chemistry,
+    lineupChemistry,
     mastery,
     strength,
     energySpent: spent,
@@ -239,6 +286,7 @@ export function completeCombo(
     playerIds: [pending.a.box.playerId, pending.b.box.playerId],
     elapsedSeconds: now,
     chemistry: pending.plan.chemistry,
+    lineupChemistry: pending.lineupChemistry,
     mastery: Math.min(pending.a.moves!.plan.xp, pending.b.moves!.plan.xp),
     strength: pending.strength,
     energySpent: [0, 0],
