@@ -19,7 +19,7 @@
 ## Tasks
 - [x] 1. Write failing policy/validation tests; implement scoutingContinuityTypes.ts, scoutingContinuity.ts and coachScoutingArchive.ts with aging, roster/pair/coach attenuation, trade-aware personal tendencies and strict parsing.
 - [x] 2. Integrate annual capture, seeding, solo/local archives/boundaries, game/season initialization, seed chronology and cached restoration. Pin old match fingerprint; test real repeated/CPU/partial/playoff/new-year saves and trades/hiring. Commit and push.
-- [ ] 3. Expose coach/box continuity explanations; verify UI/browser, full lifecycle, cold/warm loads and production build. Independent final review; fix findings, commit/push, merge exact verified head and verify automatic Pages release.
+- [x] 3. Expose coach/box continuity explanations; verify UI/browser, full lifecycle, cold/warm loads and production build. Independent final review; fix findings, commit/push, merge exact verified head and verify automatic Pages release.
 
 ## Ledger
 - Baseline48a11d4, existing managed worktree reused; primary checkout untouched.
@@ -35,3 +35,7 @@
 - Indexed lookup preserves facts and improves49book30club benchmark from287ms to29.9ms per boundary and9.85s to819ms across50 boundaries (reviewer measurement).
 - Focused134 checks/16files passed38.4s; review-fix16checks/5files passed11.7s; typecheck passes clean checkout.
 - Browser4 desktop/mobile checks passed21.4s. Production local year2 compiled worker cold5860ms/warm947ms, exact frozen history and seeds preserved; no page errors/HTTP failures.
+
+- Final release verification on6ce4fbb:141 focused checks/18files passed38.64s;3 full lifecycle checks passed268.78s, including actual reducer SWAP before partial second-year cold/warm restoration. Typecheck and Pages-base production build pass.
+- Post-review desktop/mobile browser4 checks passed7.3s; compiled production local year2 cold5367ms/warm898ms preserves exact history/seeds through worker restoration. No page errors or HTTP failures; mobile chooser and report layout checked.
+- Independent read-only review cleared both fixes; no remaining actionable findings. PR16 attached. Final documentation-only commit records these results before exact-head merge and automatic Pages publication.
