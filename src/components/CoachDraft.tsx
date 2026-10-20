@@ -1,3 +1,4 @@
+import { publicAsset } from "../assets";
 import { useState } from "react";
 import { COACHES, coachOffers } from "../game/trainerCoaches";
 import { TACTIC_LABELS, DEFENSE_LABELS } from "../game/types";
@@ -109,7 +110,11 @@ export function CoachDraft({
         Coaches stay with their club until an offseason coaching change. Trainer
         identities come from Pokémon; basketball styles are original to this
         game.{" "}
-        <a href="/coaches/credits.html" target="_blank" rel="noreferrer">
+        <a
+          href={publicAsset("/coaches/credits.html")}
+          target="_blank"
+          rel="noreferrer"
+        >
           Portrait credits
         </a>
         .{" "}

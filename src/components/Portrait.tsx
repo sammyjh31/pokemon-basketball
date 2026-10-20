@@ -1,3 +1,4 @@
+import { publicAsset } from "../assets";
 import { useContext, useState } from "react";
 import { SpriteContext } from "./SpriteControls";
 import type { Pokemon } from "../game/types";
@@ -9,8 +10,9 @@ export function Portrait({
   className?: string;
 }) {
   const style = useContext(SpriteContext);
-  const src =
-    style === "pixel" ? `/pokemon-pixel/${mon.id}.png` : mon.spriteUrl;
+  const src = publicAsset(
+    style === "pixel" ? `/pokemon-pixel/${mon.id}.png` : mon.spriteUrl,
+  );
   const [failed, setFailed] = useState<string | null>(null);
   return failed === src ? (
     <span

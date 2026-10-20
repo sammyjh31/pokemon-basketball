@@ -1,5 +1,15 @@
 # Local and cloud handoff — 2026-10-19
 
+## GitHub Pages publishing — October 19
+
+`.github/workflows/pages.yml` publishes production `dist/` after pushes to `main`, with manual dispatch available. It uses SHA-pinned official actions, locked dependencies, `.nvmrc`, the Pages-reported base path and a focused asset-path regression before the typecheck/build. Build/deploy permissions are separated; deployment targets the `github-pages` environment. Local development remains rooted at `/`.
+
+`src/assets.ts` resolves public paths only at presentation/loading boundaries. Catalog and serialized `spriteUrl` values remain unchanged, preserving simulation/history inputs. Pokémon artwork/pixels, coach portraits/credits and arcade sprite preloading use the hosted path; the credits return link is relative. Bundled scripts/fonts/workers use Vite's existing build rewriting.
+
+Verification: the new hosted-path regression first failed for portraits, coaches and arcade preloading; the four-file affected group then passed **23/23 tests (3.73 s)**. The broader affected group, including the complete App tests, passed **50/50 tests in five files (750.72 s)**. The actual production build under `/pokemon-basketball/` passed TypeScript and Vite. An isolated Chrome session rendered portraits in both styles, followed credits, completed an 82-game season (35–47), reloaded the identical saved record through the production restore worker at the correct subpath, reported no page errors/HTTP failures/misplaced requests, and showed the mobile first-visit chooser. No user browser saves were accessed.
+
+The user explicitly authorized making the repository public, including its source and commit history. Visibility is now public and Pages is enabled with `build_type=workflow` and HTTPS enforced. Release through PR #12; after its exact-head merge, verify the resulting Actions deployment and visit the game anonymously at `https://sammyjh31.github.io/pokemon-basketball/`. Future pushes to `main` use the same workflow.
+
 ## Signature moves and combos — 2026-10-19
 
 Moves rules version 2 extends the eight-move system with 18 type techniques, 14 family signatures and four paired plays. Keep absent/v1 match results unchanged. New solo/local defaults and next franchise seasons use 2; local history replay adopts the actual recorded version, not a boolean opt-in. Court rules remain 4. Pair plans are derived per match rather than copied into every saved schedule entry. Optional exact combo counters aggregate into existing move statistics; energy includes both participants’ setup costs. Paid setups interrupted before an actual shot remain attempts. V2 shooting activations defer past pressure and non-shooting-foul cancellation. XP, familiarity and trade/rookie ownership use existing banks.

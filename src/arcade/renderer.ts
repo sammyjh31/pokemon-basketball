@@ -1,3 +1,4 @@
+import { publicAsset } from "../assets";
 import type {
   ArcadeEvent,
   ArcadePlayer,
@@ -120,7 +121,7 @@ export async function loadArcadeAssets(
             image.onload = () => finish(true);
             image.onerror = () => finish(false);
             try {
-              image.src = `/pokemon-pixel/${id}.png`;
+              image.src = publicAsset(`/pokemon-pixel/${id}.png`);
             } catch {
               finish(false);
             }
