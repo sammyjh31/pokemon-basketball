@@ -1,3 +1,4 @@
+import { createCounterRuntime } from "./moveCounters";
 import { createComboRuntime, comboPlayWeights } from "./matchCombos";
 import { createMoveRuntime } from "./matchMoves";
 import { emptyMoveStats } from "./moveTelemetry";
@@ -548,6 +549,8 @@ export function simulateMatch(
   };
   const h = buildTeam(prepared(home, away), "home"),
     a = buildTeam(prepared(away, home), "away");
+  h.counters = createCounterRuntime(h.config, scouting?.home.moveReads);
+  a.counters = createCounterRuntime(a.config, scouting?.away.moveReads);
   const loadManaged = { home: false, away: false };
   if (flow)
     for (const team of [h, a]) {
@@ -1759,6 +1762,13 @@ export function simulateMatch(
           {
             offense: offense.floor,
             defense: defense.floor,
+            ...(defense.counters
+              ? {
+                  defensiveCounters: defense.counters,
+                  offensiveCounters: offense.counters,
+                  counterChemistry: getMatchChemistry(defense)?.score ?? 50,
+                }
+              : {}),
             ...(offense.combos
               ? {
                   combos: offense.combos,
@@ -2917,6 +2927,16 @@ export function simulateMatch(
     result.moveAssignments = Object.fromEntries(
       [...h.players, ...a.players].map((p) => [p.box.playerId, p.moves!.plan]),
     );
+  if (h.counters || a.counters) {
+    result.counterPlans = {
+      home: h.counters?.prior ?? [],
+      away: a.counters?.prior ?? [],
+    };
+    result.moveObservations = {
+      ...(a.counters ? { home: a.counters.observed } : {}),
+      ...(h.counters ? { away: h.counters.observed } : {}),
+    };
+  }
   if (h.combos || a.combos)
     result.comboAssignments = {
       [home.id]: h.combos?.plans ?? [],

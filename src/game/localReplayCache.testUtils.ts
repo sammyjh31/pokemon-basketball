@@ -20,7 +20,11 @@ import { simulatePlayoffs, playoffGameCount } from "./playoffs";
 import { ROSTER_SLOTS } from "./types";
 
 /** Real modern games, trainers, camps, two-round rookie drafts and transitions. */
-export function localCareerFixture(years = 10, moves: boolean | 1 | 2 = true) {
+export function localCareerFixture(
+  years = 10,
+  moves: boolean | 1 | 2 | 3 = true,
+  laterMoves?: 1 | 2 | 3,
+) {
   let draft = createLocalLeague(
     [
       { name: "Sam", teamId: 0 },
@@ -80,7 +84,15 @@ export function localCareerFixture(years = 10, moves: boolean | 1 | 2 = true) {
         localLeagueTeams(draft)[turn.teamId].roster.PG!,
       );
     }
-    if (year < years) draft = startNextLocalSeason(draft);
+    if (year < years) {
+      draft = startNextLocalSeason(draft);
+      // Explicit historical fixtures keep the recorded boundary version.
+      if (laterMoves)
+        draft.career!.teams = draft.career!.teams.map((t) => ({
+          ...t,
+          movesetVersion: laterMoves,
+        }));
+    }
   }
   return draft;
 }

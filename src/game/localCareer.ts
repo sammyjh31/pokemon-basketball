@@ -777,7 +777,7 @@ function nextYearTeams(
   adoptPersonality = true,
   adoptMastery = true,
   adoptGameFlow = true,
-  adoptMoves: false | import("./moveTypes").MovesetVersion = 2,
+  adoptMoves: false | import("./moveTypes").MovesetVersion = 3,
 ): LeagueTeam[] {
   const archived = career.history.at(-1)!;
   const appointed = projectedCoaches(

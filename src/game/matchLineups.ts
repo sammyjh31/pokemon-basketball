@@ -27,6 +27,7 @@ export interface Player {
   consecutive: number;
 }
 export interface Team {
+  counters?: import("./moveCounters").CounterRuntime;
   combos?: import("./matchCombos").ComboRuntime;
   config: LeagueTeam;
   players: Player[];

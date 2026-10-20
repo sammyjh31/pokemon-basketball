@@ -10,7 +10,7 @@ import { exchangePlayers } from "./rosterTrades";
 const sha = (v: unknown) =>
   createHash("sha256").update(JSON.stringify(v)).digest("hex");
 it("replays mixed v1/v2 local seasons exactly, retains mastery through trades and skips verified warm history", async () => {
-  const draft = localCareerFixture(2, 1);
+  const draft = localCareerFixture(2, 1, 2);
   expect(draft.career!.history.map((h) => h.teams[0].movesetVersion)).toEqual([
     1, 2,
   ]);

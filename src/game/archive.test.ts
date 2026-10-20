@@ -288,7 +288,7 @@ describe("mixed official season persistence", () => {
       state: archived,
     });
     expect(restoreWork.at(-1)).toBe(0);
-    expect(last.replay!.teams.every((t) => t.movesetVersion === 2)).toBe(true);
+    expect(last.replay!.teams.every((t) => t.movesetVersion === 3)).toBe(true);
     expect(() =>
       validateFranchise(archived.franchise, archived.run, true),
     ).not.toThrow();

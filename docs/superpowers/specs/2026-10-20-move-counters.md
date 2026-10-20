@@ -1,0 +1,11 @@
+# Automatic move counters and counter-combos
+
+User request: coaches learn and adapt to opposing moves automatically across every simulated game; commit, push and publish updates.
+
+Use moveset rules version 3. Omitted/v1/v2 behavior and historical replay inputs stay frozen. New solo/local drafts and future franchise seasons adopt v3; active seasons keep their version. Reuse opponent scouting snapshots for completed-game observations, including CPU fixtures, partial seasons, postseason and replay. Within games, observe only actually activated moves and paid combo setups. Discount prior observations between meetings. Never inspect a future action, shot roll or result. Official arcade games do not invent move observations.
+
+Four automatic defensive reads cover burst movement, shooting preparation, screens and passing relays. Confidence grows with actual repeated observations; coach adaptability, defender ability/mastery, energy and chemistry shape execution. Defensive responses reduce the activated move's bounded bonuses rather than granting an unconditional team rating bonus. Responses pay energy, have a cooldown, require active eligible defenders and occur at most once per possession segment. Combo counters require two different active defenders. Offenses with mastery and chemistry can answer an actual paired counter with a slip-and-seal or reverse-relay counter-combo, paying their own energy/cooldowns; never recurse beyond one response. These actions alter the actual court resolver before movement, screening, passing or shot resolution.
+
+Store compact optional per-move/per-combo read counts in existing scouting. Strictly validate known IDs and bounded finite counts. Keep pregame snapshots independently owned. Add optional player counter telemetry, aggregate through the existing move statistics pipeline into season/playoff/career views, and expose readable coaching evidence in boxes. Existing no-abilities/no-adaptive-coaching options disable the corresponding mechanics. Save/replay verification must include counter stats without changing old save shapes.
+
+No manual management is required. No dependencies or changes to factual Pokémon data, arcade physics, roster rules or older simulation versions.
