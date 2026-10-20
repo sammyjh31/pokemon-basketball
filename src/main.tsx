@@ -21,3 +21,6 @@ void openBrowserSaves().then(() =>
 import "./roster.css";
 import "./scouting.css";
 import "./results.css";
+
+import "@fontsource/jersey-10/latin-400.css";
+import "./kanto.css";

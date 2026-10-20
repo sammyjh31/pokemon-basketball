@@ -13,6 +13,7 @@ import {
 import { Portrait } from "./Portrait";
 import { SeasonStats } from "./SeasonStats";
 import { TeamArtwork } from "./ResultsVisuals";
+import { KantoSeasonHub } from "./KantoSeasonHub";
 import { BoxScore } from "./BoxScore";
 import { LeaguePanel } from "./lazyPanels";
 import { LeagueBoxScore } from "./LeagueBoxScore";
@@ -150,10 +151,31 @@ export function SeasonPanel({
   };
   return (
     <section
-      className="season-panel"
+      className={`season-panel${done && league ? " has-kanto-hub" : ""}`}
       id="season"
       aria-labelledby="season-title"
     >
+      {done && league?.teams.find((team) => team.id === 0) && (
+        <KantoSeasonHub
+          team={league.teams.find((team) => team.id === 0)!}
+          players={league.players}
+          wins={result!.wins}
+          losses={result!.losses}
+          rank={
+            [...league.standings]
+              .sort(
+                (a, b) =>
+                  b.wins - a.wins ||
+                  b.pointsFor -
+                    b.pointsAgainst -
+                    (a.pointsFor - a.pointsAgainst) ||
+                  a.teamId - b.teamId,
+              )
+              .findIndex((standing) => standing.teamId === 0) + 1
+          }
+          playoffsAvailable={!!onPlayoffs}
+        />
+      )}
       {franchiseYear && (
         <p className="eyebrow">
           FRANCHISE YEAR {franchiseYear} ·{" "}

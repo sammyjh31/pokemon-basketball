@@ -51,6 +51,7 @@ export function LocalLeagueSetup({
   );
   return (
     <section
+      id="draft"
       className="local-panel local-setup"
       aria-labelledby="local-setup-title"
     >

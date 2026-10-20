@@ -8,6 +8,7 @@ import {
   type TeamRatings,
 } from "../game/types";
 import { SeasonPanel } from "./SeasonPanel";
+import { seasonTeams } from "../game/season";
 import "../test/preloadPanels";
 
 const ratings: TeamRatings = {
@@ -143,6 +144,66 @@ afterEach(() => {
 });
 
 describe("season player results", () => {
+  it("ranks the season hub by wins and point differential rather than saved array order", () => {
+    const run = makeRun();
+    run.result!.modelVersion = 3;
+    run.result!.league = {
+      teams: seasonTeams(run),
+      games: [],
+      players: [],
+      awards: [],
+      allLeague: [],
+      allDefense: [],
+      standings: [
+        {
+          teamId: 0,
+          wins: 40,
+          losses: 42,
+          pointsFor: 8000,
+          pointsAgainst: 8200,
+          homeWins: 20,
+          awayWins: 20,
+          lastTen: 4,
+          streak: -1,
+        },
+        {
+          teamId: 1,
+          wins: 50,
+          losses: 32,
+          pointsFor: 8500,
+          pointsAgainst: 8200,
+          homeWins: 25,
+          awayWins: 25,
+          lastTen: 5,
+          streak: 1,
+        },
+        {
+          teamId: 2,
+          wins: 40,
+          losses: 42,
+          pointsFor: 8300,
+          pointsAgainst: 8200,
+          homeWins: 20,
+          awayWins: 20,
+          lastTen: 4,
+          streak: -1,
+        },
+      ],
+    };
+    render(
+      <SeasonPanel
+        run={run}
+        ratings={ratings}
+        animate={false}
+        onSimulate={() => {}}
+      />,
+    );
+    expect(
+      within(screen.getByLabelText("Season record")).getByText("#3"),
+    ).toBeInTheDocument();
+    expect(run.result!.league.standings[0].teamId).toBe(0);
+  });
+
   it("shows the same player and value in the visual spotlight as the selected statistic", () => {
     render(
       <SeasonPanel

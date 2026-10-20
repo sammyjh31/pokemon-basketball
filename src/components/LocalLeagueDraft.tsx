@@ -358,7 +358,11 @@ export function LocalLeagueDraft({
   const selectedTools = mon ? prospectTools(mon) : [];
   return (
     <>
-      <section className="local-clock" aria-labelledby="local-clock-title">
+      <section
+        id="draft"
+        className="local-clock"
+        aria-labelledby="local-clock-title"
+      >
         <div>
           <span className="eyebrow">
             ROUND {turn.round} OF 8 · PICK {turn.pick} OF{" "}

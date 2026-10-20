@@ -29,7 +29,11 @@ export function Court({
   onReset: () => void;
 }) {
   return (
-    <section className="lineup-panel" aria-label="Your starting lineup">
+    <section
+      id="team"
+      className="lineup-panel"
+      aria-label="Your starting lineup"
+    >
       <div className="panel-heading">
         <div>
           <span className="eyebrow">

@@ -133,7 +133,7 @@ export function PlayoffPanel({
   };
 
   return (
-    <section className="playoff-panel" aria-labelledby={`${id}-title`}>
+    <section id="playoffs" className="playoff-panel" aria-labelledby={`${id}-title`}>
       <div className="results-section-heading playoff-heading">
         <div>
           <span className="eyebrow">THE ROAD TO A CHAMPIONSHIP</span>

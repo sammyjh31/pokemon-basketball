@@ -29,7 +29,11 @@ export function CoachDraft({
       .includes(search.toLowerCase().trim()),
   );
   return (
-    <section className="coach-draft" aria-labelledby="coach-draft-title">
+    <section
+      id="draft"
+      className="coach-draft"
+      aria-labelledby="coach-draft-title"
+    >
       <div className="coach-draft-heading">
         <div>
           <span className="eyebrow">

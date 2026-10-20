@@ -1,3 +1,4 @@
+import { GameBrand } from "./KantoShell";
 import type { Mode } from "../game/types";
 export function Scoreboard({
   mode,
@@ -21,10 +22,7 @@ export function Scoreboard({
 }) {
   return (
     <header className="masthead" id="top">
-      <a className="brand" href="#draft" aria-label="82–0 Pokémon Basketball">
-        POKÉMON <span>82–0</span>
-        <small>BASKETBALL</small>
-      </a>
+      <GameBrand />
       {franchiseActive ? (
         <p className="mode-lock" id="mode-lock">
           <strong>Franchise in progress.</strong> To switch modes, use “End

@@ -1,3 +1,5 @@
+import { KantoNavigation, LocalMasthead } from "./KantoShell";
+import { KantoSeasonHub } from "./KantoSeasonHub";
 import { MasteryPanel } from "./MasteryPanel";
 import { LocalNewsPanel } from "./LocalNewsPanel";
 import { teamsWithMastery, type MasteryBanks } from "../game/abilityMastery";
@@ -94,7 +96,11 @@ function ReviewTeams({
   );
   const team = teams[teamId];
   return (
-    <section className="local-panel" aria-label="Review friends' teams">
+    <section
+      className="local-panel"
+      id="team"
+      aria-label="Review friends' teams"
+    >
       <div className="local-review-heading">
         <div>
           <span className="eyebrow">
@@ -296,7 +302,7 @@ export function LocalLeagueMode({
     saveControls,
   } = useLocalLeague(storage);
   const [confirm, setConfirm] = useState(false);
-  const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("artwork");
+  const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("pixel");
   const league = result?.league;
   const rankings = draft && league ? rankLocalManagers(draft, league) : [];
   const ready = draft ? draft.picks.length === localDraftSize(draft) : false;
@@ -312,79 +318,100 @@ export function LocalLeagueMode({
         .filter((p) => p.teamId === leader)
         .map((p) => p.pokemonId) ?? []);
   const stage = league ? 2 : ready ? 1 : 0;
+  const leagueControls = (
+    <>
+      <header className="local-header league-hero">
+        <div className="league-hero-copy">
+          <span className="eyebrow">
+            POKÉMON BASKETBALL{" "}
+            <span className="league-local-badge">PLAY WITH FRIENDS</span>
+          </span>
+          <h1>
+            Local league
+            {draft?.options && <span className="league-year">Year {year}</span>}
+          </h1>
+          <p>Your team. Your rivals. One championship.</p>
+          {draft && (
+            <div className="league-hero-facts" aria-label="League format">
+              <span>
+                <b>
+                  {draft?.options?.format.teamCount ?? draft?.order.length ?? 8}
+                </b>{" "}
+                TEAMS
+              </span>
+              <span>
+                <b>
+                  {draft?.options?.format.gamesPerTeam ?? (draft ? 82 : 28)}
+                </b>{" "}
+                GAMES
+              </span>
+              <span>
+                <b>8</b> ROSTER SPOTS
+              </span>
+            </div>
+          )}
+        </div>
+        <LeagueHeroArt ids={featuredIds.length ? featuredIds : [6, 9, 3]} />
+        <div className="local-header-actions">
+          {draft && (
+            <button
+              className="text-button"
+              disabled={busy}
+              onClick={() => setConfirm(true)}
+            >
+              New local league
+            </button>
+          )}
+        </div>
+      </header>
+      <div className="league-status-strip">
+        <ol aria-label="League journey">
+          {["The draft", "Regular season", "Playoffs"].map((label, index) => (
+            <li key={label} aria-current={index === stage ? "step" : undefined}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              {label}
+            </li>
+          ))}
+        </ol>
+        <SpriteControls value={spriteStyle} onChange={setSpriteStyle} />
+      </div>
+    </>
+  );
   return (
     <SpriteContext.Provider value={spriteStyle}>
-      <div className="app-shell local-league">
-        <header className="local-header league-hero">
-          <div className="league-hero-copy">
-            <span className="eyebrow">
-              POKÉMON BASKETBALL{" "}
-              <span className="league-local-badge">PLAY WITH FRIENDS</span>
-            </span>
-            <h1>
-              Local league
-              {draft?.options && (
-                <span className="league-year">Year {year}</span>
-              )}
-            </h1>
-            <p>Your team. Your rivals. One championship.</p>
-            {draft && (
-              <div className="league-hero-facts" aria-label="League format">
-                <span>
-                  <b>
-                    {draft?.options?.format.teamCount ??
-                      draft?.order.length ??
-                      8}
-                  </b>{" "}
-                  TEAMS
-                </span>
-                <span>
-                  <b>
-                    {draft?.options?.format.gamesPerTeam ?? (draft ? 82 : 28)}
-                  </b>{" "}
-                  GAMES
-                </span>
-                <span>
-                  <b>8</b> ROSTER SPOTS
-                </span>
-              </div>
-            )}
-          </div>
-          <LeagueHeroArt ids={featuredIds.length ? featuredIds : [6, 9, 3]} />
-          <div className="local-header-actions">
-            <button
-              className="button secondary"
-              disabled={busy && !restoration}
-              onClick={onExit}
-            >
-              Back to game
-            </button>
-            {draft && (
-              <button
-                className="text-button"
-                disabled={busy}
-                onClick={() => setConfirm(true)}
-              >
-                New local league
-              </button>
-            )}
-          </div>
-        </header>
-        <div className="league-status-strip">
-          <ol aria-label="League journey">
-            {["The draft", "Regular season", "Playoffs"].map((label, index) => (
-              <li
-                key={label}
-                aria-current={index === stage ? "step" : undefined}
-              >
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                {label}
-              </li>
-            ))}
-          </ol>
-          <SpriteControls value={spriteStyle} onChange={setSpriteStyle} />
-        </div>
+      <div
+        className={`app-shell local-league kanto-game${league ? " has-season" : ""}`}
+      >
+        <LocalMasthead onExit={onExit} disabled={busy && !restoration} />
+        <KantoNavigation
+          team={ready}
+          draft={!league && !ready}
+          season={ready}
+          playoffs={!!league}
+          initial={league ? "season" : ready ? "team" : "draft"}
+        />
+        {!league && leagueControls}
         <main>
+          {league && rankings.length > 0 && (
+            <KantoSeasonHub
+              id="season"
+              team={league.teams.find(
+                (team) => team.id === rankings[0].manager.teamId,
+              )!}
+              players={league.players}
+              wins={rankings[0].standing.wins}
+              losses={rankings[0].standing.losses}
+              rank={rankings[0].leagueRank}
+              playoffsAvailable
+            />
+          )}
+          {league && (
+            <details className="kanto-league-options">
+              <summary>League options & save controls</summary>
+              {leagueControls}
+              <SaveMenu {...saveControls} />
+            </details>
+          )}
           {notice && (
             <p className="notice" role="status">
               {notice}
@@ -396,7 +423,7 @@ export function LocalLeagueMode({
             </p>
           )}
           <div className="league-utilities">
-            <SaveMenu {...saveControls} />
+            {!league && <SaveMenu {...saveControls} />}
             {!restoration && (!draft || draft.version === 2) && <MatchupLab />}
           </div>
           {draft &&
@@ -519,7 +546,7 @@ export function LocalLeagueMode({
                 change={change}
                 disabled={busy || draft.completed}
               />
-              <section className="local-simulate local-panel">
+              <section className="local-simulate local-panel" id="season">
                 <div>
                   <h3>
                     {draft.completed

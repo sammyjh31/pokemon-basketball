@@ -42,6 +42,7 @@ import { ConfirmDialog } from "./components/ConfirmDialog";
 import { LineupTools } from "./components/LineupTools";
 import { SpriteContext, type SpriteStyle } from "./components/SpriteControls";
 import "./gameVisual.css";
+import { KantoNavigation } from "./components/KantoShell";
 import { BenchPanel } from "./components/BenchPanel";
 import { emptyRoster } from "./game/types";
 import { randomLineup } from "./game/lineup";
@@ -206,7 +207,7 @@ export default function App({
       window.clearTimeout(timer);
     };
   }, []);
-  const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("artwork");
+  const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("pixel");
   const start = (
     mode: Mode,
     includeLegends: boolean,
@@ -510,7 +511,7 @@ export default function App({
     return (
       <Suspense
         fallback={
-          <main className="app-shell">
+          <main className="app-shell kanto-game">
             <p role="status">Opening the arcade…</p>
           </main>
         }
@@ -588,7 +589,7 @@ export default function App({
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
-      <div className="app-shell">
+      <div className="app-shell kanto-game">
         <Scoreboard
           mode={run.mode}
           localLeagueDisabled={
@@ -603,6 +604,15 @@ export default function App({
           }}
           onGuide={() => setGuideOpen(true)}
           onHowToPlay={() => setChooserOpen(true)}
+        />
+        <KantoNavigation
+          team={!choosingCoach && state.franchise?.phase !== "offseason"}
+          draft={
+            state.franchise?.phase !== "offseason" || canSelectTrainer(state)
+          }
+          season={!choosingCoach && ratings.complete}
+          playoffs={!!run.result?.league}
+          initial={run.result ? "season" : "draft"}
         />
         <main aria-busy={restoring} id="main-content" tabIndex={-1}>
           {storageNotice && (

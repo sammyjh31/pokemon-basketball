@@ -1,0 +1,1662 @@
+/* Scope the theme above lazily loaded legacy feature styles. */
+:root {
+  background: #123e7c;
+}
+#root .app-shell.kanto-game {
+  --ink: #102c52;
+  --cream: #fffbed;
+  --paper: #f7f1dc;
+  --panel: #fffbed;
+  --bg: #f7f1dc;
+  --line: #a1b2c8;
+  --muted: #4b617c;
+  --gold: #ad252f;
+  --blue: #164e99;
+  --display: "Jersey 10", "Arial Narrow", sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  max-width: none;
+  min-height: 100vh;
+  padding-left: 188px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+#root .app-shell.kanto-game h1,
+#root .app-shell.kanto-game h2,
+#root .app-shell.kanto-game h3,
+#root .app-shell.kanto-game h4 {
+  color: var(--ink);
+  font-weight: 400;
+}
+#root .app-shell.kanto-game h1 {
+  font-size: 42px;
+}
+#root .app-shell.kanto-game h2 {
+  font-size: 36px;
+}
+#root .app-shell.kanto-game h3 {
+  font-size: 28px;
+}
+#root .app-shell.kanto-game h4 {
+  font-family: var(--display);
+  font-size: 24px;
+}
+#root .app-shell.kanto-game .eyebrow {
+  color: #4b617c;
+  font-family: Inter, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+#root .app-shell.kanto-game p {
+  color: #415a77;
+}
+#root .app-shell.kanto-game button,
+#root .app-shell.kanto-game .button {
+  font-weight: 400;
+}
+#root
+  .app-shell.kanto-game
+  :is(button, a, input, select, summary):focus-visible {
+  outline: 3px solid #bf3038;
+  outline-offset: 3px;
+}
+#root .app-shell.kanto-game > main {
+  padding: 22px 26px;
+  min-width: 0;
+}
+#root .app-shell.kanto-game .masthead,
+#root .app-shell.kanto-game .kanto-masthead {
+  margin-left: -188px;
+  min-height: 108px;
+  height: auto;
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  background: #103f80;
+  border-bottom: 6px double #73a4cf;
+  color: #fffbed;
+}
+#root .app-shell.kanto-game .brand {
+  color: #f7d654;
+  font-family: var(--display);
+  font-size: 44px;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  line-height: 0.95;
+  text-shadow: 2px 3px #09264d;
+  white-space: nowrap;
+}
+#root .app-shell.kanto-game .brand span {
+  color: #fffbed;
+}
+#root .app-shell.kanto-game .brand small {
+  color: #e4edf9;
+  font:
+    700 10px Inter,
+    sans-serif;
+  letter-spacing: 8px;
+  margin-top: 9px;
+}
+#root .app-shell.kanto-game .kanto-masthead > span {
+  margin-left: auto;
+  color: #d2e1f1;
+  font: 400 19px var(--display);
+  letter-spacing: 2px;
+}
+#root .app-shell.kanto-game .mode-tabs {
+  padding: 2px;
+  border: 2px solid #6694c6;
+  border-radius: 0;
+  background: #123369;
+  margin-left: auto;
+}
+#root .app-shell.kanto-game .mode-tabs button {
+  border-radius: 0;
+  color: #fffbed;
+  font: 400 19px var(--display);
+  padding: 9px 12px;
+  min-height: 40px;
+}
+#root .app-shell.kanto-game .mode-tabs button[aria-pressed="true"] {
+  background: #fffbed;
+  color: #14366a;
+  border-bottom: 4px solid #c43137;
+}
+#root .app-shell.kanto-game .mode-tabs .challenge-tab span {
+  color: inherit;
+}
+#root .app-shell.kanto-game .page-links {
+  gap: 16px;
+}
+#root .app-shell.kanto-game .page-links a,
+#root .app-shell.kanto-game .page-links button {
+  color: #e5edf4;
+  font: 400 18px var(--display);
+}
+#root .app-shell.kanto-game .header-play {
+  color: #fffbed;
+  background: #bc2a32;
+  border: 2px solid #fffbed;
+  border-radius: 0;
+  padding: 11px 14px;
+  font-size: 19px;
+}
+#root .app-shell.kanto-game .mode-lock {
+  color: #d4e2f1;
+  font-size: 11px;
+  max-width: 280px;
+}
+#root .app-shell.kanto-game .kanto-sidebar {
+  position: fixed;
+  inset: 108px auto 0 0;
+  width: 188px;
+  padding: 20px 10px;
+  z-index: 20;
+  border-right: 5px double #7ea5ce;
+  background: #103c7d url("/visual/kanto-town.png") center bottom / 188px auto
+    no-repeat;
+}
+.kanto-sidebar nav {
+  display: grid;
+  gap: 8px;
+}
+#root .app-shell.kanto-game .kanto-sidebar button {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 66px;
+  padding: 14px;
+  background: #103c7d;
+  color: #fffbed;
+  border-top: 1px solid #4f7eb4;
+  border-bottom: 1px solid #4f7eb4;
+  text-align: left;
+  font: 400 25px var(--display);
+}
+#root .app-shell.kanto-game .kanto-sidebar button svg {
+  width: 25px;
+  height: 25px;
+  flex-shrink: 0;
+}
+#root .app-shell.kanto-game .kanto-sidebar button[aria-current] {
+  background: #d4e9fa;
+  color: #123263;
+  border: 3px solid #fffbed;
+  border-left: 6px solid #cf3038;
+}
+#root .app-shell.kanto-game .kanto-sidebar button:disabled {
+  opacity: 0.55;
+}
+#root .app-shell.kanto-game .kanto-sidebar p {
+  position: absolute;
+  bottom: 25px;
+  left: 20px;
+  color: #dbe8f6;
+  font: 400 17px/1.6 var(--display);
+  letter-spacing: 2px;
+  text-shadow: 2px 2px #0b2e64;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .season-panel,
+    .league-panel,
+    .playoff-panel,
+    .draft-panel,
+    .bench-panel,
+    .local-panel,
+    .local-clock,
+    .coach-draft,
+    .franchise-panel,
+    .arcade-entry
+  ) {
+  border: 4px double #1b3c65;
+  border-radius: 2px;
+  background: #fffbed;
+  color: var(--ink);
+  box-shadow: none;
+}
+#root .app-shell.kanto-game :is(.season-panel, .league-panel, .playoff-panel) {
+  padding: 22px;
+}
+#root .app-shell.kanto-game .button {
+  border-radius: 1px;
+  min-height: 44px;
+  font: 400 22px var(--display);
+  padding: 10px 18px;
+}
+#root .app-shell.kanto-game .button.primary {
+  color: #fffbed;
+  background: #c52b32;
+  border: 3px solid #7b1622;
+  box-shadow:
+    inset 0 0 0 2px #ef7778,
+    2px 2px #173c6d;
+}
+#root .app-shell.kanto-game .button.primary:hover:not(:disabled) {
+  background: #a51f2c;
+}
+#root .app-shell.kanto-game .button.secondary {
+  color: #143a70;
+  background: #e4edf4;
+  border: 2px solid #1e477e;
+}
+#root .app-shell.kanto-game .text-button {
+  color: #164f97;
+  font-size: 18px;
+}
+#root .app-shell.kanto-game :is(input, select, textarea) {
+  color: #17385f;
+  border: 2px solid #718cad;
+  background: #fffdf5;
+  border-radius: 2px;
+}
+#root .app-shell.kanto-game input::placeholder {
+  color: #5b6c82;
+}
+#root .app-shell.kanto-game .notice {
+  background: #fff2bf;
+  color: #553d17;
+  border-color: #ab882d;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .coach-card,
+    .placement-preview,
+    .team-award-card,
+    .league-team-profile,
+    .franchise-roster li,
+    .training-panel,
+    .mastery-panel,
+    .morale-panel,
+    .coach-summary,
+    .chemistry-summary,
+    .coach-office,
+    .moveset-panel
+  ) {
+  color: #15375f;
+  background: #f5f2df;
+  border: 2px solid #7e94ad;
+  border-radius: 2px;
+  box-shadow: none;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .coach-card,
+    .coach-summary,
+    .mastery-panel,
+    .morale-panel,
+    .moveset-panel
+  )
+  :is(p, small) {
+  color: #445d78;
+}
+#root .app-shell.kanto-game .coach-card h3 {
+  font-size: 30px;
+}
+#root .app-shell.kanto-game .coach-card .coach-portrait {
+  background: #dae8ed;
+  border: 2px solid #6b88a9;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .coach-tags span {
+  background: #e3eaf0;
+  color: #183b66;
+  border-color: #9bacc0;
+}
+#root .app-shell.kanto-game .coach-tradeoff {
+  color: #713721;
+  background: #f4e6c9;
+  border-color: #c7a67d;
+}
+#root .app-shell.kanto-game .coach-draft-count {
+  color: #194579;
+  background: #e7edf0;
+  border-color: #2a5688;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .mastery-roster > li,
+#root .app-shell.kanto-game .morale-player {
+  background: #edf0e6;
+  border-color: #a1b1bb;
+  color: #1c3d61;
+}
+#root .app-shell.kanto-game .mastery-tier {
+  background: #193d6f;
+  color: #ffed9e;
+}
+#root .app-shell.kanto-game .types span {
+  background: #193c69;
+  border-radius: 1px;
+  padding: 3px 7px;
+}
+#root .app-shell.kanto-game .save-menu {
+  color: #24486e;
+  background: #e8edf0;
+  border: 1px solid #7992ac;
+  border-radius: 0;
+  margin-bottom: 18px;
+}
+#root .app-shell.kanto-game .save-menu summary {
+  color: #24486e;
+}
+#root .app-shell.kanto-game .draft-panel {
+  padding: 22px;
+}
+#root .app-shell.kanto-game :is(.pokemon-card, .offer-card, .bench-slot) {
+  background: #f0f0e5;
+  border: 2px solid #8198b3;
+  border-radius: 1px;
+  color: #153b65;
+}
+#root .app-shell.kanto-game .bench-slot small {
+  color: #516780;
+}
+#root .app-shell.kanto-game .court {
+  border: 4px double #1a4070;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .slot-name {
+  color: #173e6c;
+  background: #fffbed;
+}
+#root .app-shell.kanto-game .personal-records {
+  background: #e8ede7;
+  color: #17385f;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .season-heading h2 {
+  color: #14325a;
+  font-size: 36px;
+}
+#root .app-shell.kanto-game .season-overview {
+  background: #e2eaf0;
+  border: 3px double #214974;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .season-record > strong {
+  color: #17478c;
+  font-weight: 400;
+  font-size: 70px;
+  text-shadow: none;
+}
+#root .app-shell.kanto-game .season-meta > strong,
+#root .app-shell.kanto-game .mvp strong {
+  color: #173b67;
+  font-weight: 400;
+}
+#root .app-shell.kanto-game .has-kanto-hub > .season-overview {
+  display: none;
+}
+#root .app-shell.kanto-game .has-kanto-hub > .season-heading {
+  margin-top: 28px;
+}
+#root .app-shell.kanto-game .results-section-heading h3 {
+  color: #102e58;
+  font-size: 32px;
+  font-weight: 400;
+}
+#root .app-shell.kanto-game .results-section-heading h4 {
+  color: #123866;
+}
+#root .app-shell.kanto-game :is(.league-navigation, .stat-mode) {
+  border: 2px solid #315b8a;
+  border-radius: 0;
+  background: #e5edf0;
+  padding: 3px;
+}
+#root .app-shell.kanto-game :is(.league-navigation, .stat-mode) button {
+  color: #173d6c;
+  border-radius: 0;
+  font: 400 20px var(--display);
+}
+#root
+  .app-shell.kanto-game
+  :is(.league-navigation, .stat-mode)
+  button[aria-pressed="true"] {
+  background: #164d94;
+  color: #fffbed;
+  border-bottom: 3px solid #c72a35;
+}
+#root .app-shell.kanto-game .league-field input,
+#root .app-shell.kanto-game .league-field select {
+  background: #fffdf4;
+  color: #193e6c;
+  border-color: #738eaa;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .league-field,
+#root .app-shell.kanto-game .league-checkbox {
+  color: #315072;
+}
+#root .app-shell.kanto-game .results-table-wrap {
+  border-radius: 0;
+  border: 2px solid #597798;
+  scrollbar-color: #3f6999 #dbe5eb;
+}
+#root .app-shell.kanto-game .results-table {
+  background: #fffbed;
+  color: #203d60;
+}
+#root .app-shell.kanto-game .results-table thead th,
+#root .app-shell.kanto-game .results-table thead th:first-child {
+  background: #173e75;
+  color: #fffbed;
+  border-color: #6887ab;
+}
+#root .app-shell.kanto-game .results-table th:first-child {
+  background: #f3f0df;
+  color: #173b67;
+}
+#root .app-shell.kanto-game .results-table tbody tr:nth-child(even) td {
+  background: #e9eee9;
+}
+#root .app-shell.kanto-game .results-table tbody tr:hover > * {
+  background: #dce7ee;
+}
+#root .app-shell.kanto-game .results-table th,
+#root .app-shell.kanto-game .results-table td {
+  border-color: #b7c3c8;
+}
+#root .app-shell.kanto-game .results-table thead button {
+  color: inherit;
+}
+#root .app-shell.kanto-game .results-table td.sorted-stat {
+  color: #9e2834;
+  font-weight: 700;
+}
+#root .app-shell.kanto-game .stat-player small,
+#root .app-shell.kanto-game .stat-legend {
+  color: #4b647c;
+}
+#root .app-shell.kanto-game .league-rank {
+  color: #a12b33;
+}
+#root .app-shell.kanto-game .player-spotlight-grid {
+  gap: 0;
+  border: 4px double #204973;
+  background: #fffbed;
+}
+#root .app-shell.kanto-game .player-spotlight {
+  background: #fffbed;
+  border: 0;
+  border-right: 1px solid #9eb0bd;
+  border-radius: 0;
+  padding: 18px;
+}
+#root .app-shell.kanto-game .player-spotlight:last-child {
+  border-right: 0;
+}
+#root .app-shell.kanto-game .spotlight-player h4 {
+  color: #163768;
+  font-size: 30px;
+  font-weight: 400;
+}
+#root .app-shell.kanto-game .spotlight-player p,
+#root .app-shell.kanto-game .spotlight-value > span,
+#root .app-shell.kanto-game .spotlight-heading > span:last-child {
+  color: #465e78;
+}
+#root .app-shell.kanto-game .spotlight-rank {
+  color: #c5d2d8;
+  font-weight: 400;
+}
+#root .app-shell.kanto-game .spotlight-value strong {
+  color: #173d72;
+  font-size: 54px;
+  font-weight: 400;
+}
+#root .app-shell.kanto-game .spotlight-portrait::before {
+  display: none;
+}
+#root .app-shell.kanto-game .player-spotlight .portrait {
+  filter: none;
+  image-rendering: pixelated;
+}
+#root
+  .app-shell.kanto-game
+  .player-spotlight
+  meter::-webkit-meter-optimum-value {
+  background: #235da0;
+}
+#root .app-shell.kanto-game .player-spotlight meter::-webkit-meter-bar {
+  background: #d1dce1;
+}
+#root .app-shell.kanto-game .results-deep-dive {
+  background: #e8eee9;
+  border: 1px solid #718ba2;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .results-deep-dive > summary {
+  color: #183c69;
+  font-size: 20px;
+}
+#root .app-shell.kanto-game .award-title {
+  color: #9b2730;
+}
+#root .app-shell.kanto-game .team-award-card .award-title,
+#root .app-shell.kanto-game .award-player strong {
+  color: #123b6a;
+}
+#root .app-shell.kanto-game .team-award-card:first-child {
+  background: #fff0c2;
+  border-color: #987a2e;
+}
+#root .app-shell.kanto-game .schedule-table th {
+  background: #1c4378;
+  color: #fffbed;
+}
+#root
+  .app-shell.kanto-game
+  .schedule-table
+  :is(.opponent-name, .game-number, .odds) {
+  color: #204366;
+}
+#root .app-shell.kanto-game .schedule-table tr.game-win {
+  background: #e2ede1;
+}
+#root .app-shell.kanto-game .schedule-table tr.game-loss {
+  background: #f4e1db;
+}
+#root .app-shell.kanto-game .game-score-button {
+  background: #dde8ed;
+  color: #173f6d;
+}
+#root .app-shell.kanto-game .opponent-mark {
+  background: #1f5188;
+  color: #fffbed;
+  border-radius: 0;
+}
+/* The source design's season feature: cream dialogue UI + a real pixel arena. */
+#root .app-shell.kanto-game .kanto-season-hub {
+  margin: 0 0 24px;
+  scroll-margin-top: 18px;
+}
+.kanto-season-feature {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  min-height: 325px;
+  border: 5px double #143b6d;
+  background: #fffbed;
+  overflow: hidden;
+}
+.kanto-season-copy {
+  padding: 22px 24px;
+  position: relative;
+  z-index: 1;
+}
+#root .app-shell.kanto-game .kanto-season-copy h2 {
+  font: 400 clamp(36px, 3.7vw, 58px)/0.95 var(--display);
+  text-transform: uppercase;
+  margin: 8px 0 20px;
+  color: #102e5a;
+}
+.kanto-coach-record {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin: 10px 0 24px;
+}
+.kanto-coach {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  padding-right: 20px;
+  border-right: 1px solid #8ca0b8;
+}
+#root .app-shell.kanto-game .kanto-coach .coach-portrait {
+  width: 70px;
+  height: 85px;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.kanto-coach > span {
+  font: 400 15px/1.3 var(--display);
+  color: #426180;
+}
+.kanto-coach strong {
+  display: block;
+  max-width: 125px;
+  font: 400 26px/1 var(--display);
+  text-transform: uppercase;
+  color: #17396a;
+}
+.kanto-record {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.kanto-record > div {
+  display: grid;
+  text-align: center;
+}
+.kanto-record span {
+  font: 400 17px var(--display);
+  color: #294b70;
+  white-space: nowrap;
+}
+.kanto-record strong {
+  font: 400 clamp(52px, 5vw, 78px)/1 var(--display);
+  color: #164e9b;
+}
+.kanto-record > div:nth-child(2) strong {
+  color: #c72b38;
+}
+.kanto-record > div:nth-child(3) strong {
+  color: #122f58;
+}
+#root .app-shell.kanto-game .kanto-playoffs-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 25px;
+  font-size: 28px;
+  border: 4px double #173864;
+  box-shadow: 2px 3px #8b9bad;
+}
+.kanto-playoffs-link svg {
+  width: 25px;
+  height: 25px;
+}
+.kanto-season-art {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+}
+.kanto-season-art .kanto-arena {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 65% center;
+  image-rendering: pixelated;
+}
+#root .app-shell.kanto-game .kanto-season-art .kanto-star {
+  position: absolute;
+  width: 68%;
+  height: 88%;
+  object-fit: contain;
+  right: 9%;
+  bottom: 4%;
+  max-width: none;
+  filter: drop-shadow(6px 7px #102d5566);
+  image-rendering: pixelated;
+}
+#root .app-shell.kanto-game .kanto-dialogue {
+  color: #2a527e;
+  font: 400 22px var(--display);
+}
+.kanto-leaders,
+.kanto-roster-strip {
+  border: 5px double #204978;
+  background: #fffbed;
+  margin-top: 10px;
+}
+#root .app-shell.kanto-game .kanto-leaders h3,
+#root .app-shell.kanto-game .kanto-roster-strip h3 {
+  font: 400 30px/1 var(--display);
+  text-transform: uppercase;
+  margin: 0;
+  color: #16365f;
+}
+.kanto-leaders > h3 {
+  padding: 10px 17px 6px;
+}
+.kanto-leader-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 0 16px 12px;
+}
+.kanto-leader-grid article {
+  padding: 0 16px;
+  border-right: 1px solid #99adc0;
+  min-width: 0;
+}
+.kanto-leader-grid article:first-child {
+  padding-left: 0;
+}
+.kanto-leader-grid article:last-child {
+  border-right: 0;
+}
+.kanto-leader-heading {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.kanto-leader-heading > span {
+  min-width: 40px;
+  text-align: center;
+  color: #fffbed;
+  background: #184d94;
+  padding: 0 7px;
+  font: 400 20px var(--display);
+}
+.kanto-leader-grid article:first-child .kanto-leader-heading > span {
+  background: #c52e35;
+}
+#root .app-shell.kanto-game .kanto-leader-heading h4 {
+  font: 400 29px/1 var(--display);
+  text-transform: uppercase;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.kanto-leader-body {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+#root .app-shell.kanto-game .kanto-leader-body .portrait {
+  width: 47%;
+  height: 140px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.kanto-leader-body > div {
+  min-width: 0;
+  display: grid;
+  text-align: center;
+}
+.kanto-leader-body strong {
+  font: 400 64px/1 var(--display);
+  color: #102e58;
+}
+.kanto-leader-body span {
+  font: 400 22px var(--display);
+  color: #496581;
+}
+.kanto-leader-body small {
+  color: #496581;
+  font-size: 10px;
+  text-transform: uppercase;
+  border-top: 1px solid #91a6b8;
+  margin-top: 8px;
+  padding-top: 6px;
+}
+.kanto-roster-strip > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid #99adc0;
+}
+.kanto-roster-strip > div > span {
+  color: #35577d;
+  font: 400 19px var(--display);
+  text-transform: uppercase;
+}
+.kanto-roster-strip ol {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 5px;
+  margin: 0;
+  padding: 12px 16px;
+  list-style: none;
+}
+.kanto-roster-strip li {
+  min-width: 0;
+  display: grid;
+  text-align: center;
+  justify-items: center;
+}
+#root .app-shell.kanto-game .kanto-roster-strip .portrait {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.kanto-roster-strip strong {
+  font: 400 16px/1.1 var(--display);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  margin-top: 4px;
+}
+.kanto-roster-strip li > span {
+  color: #3d6188;
+  font: 400 16px var(--display);
+}
+/* Local league remains the same complete flow, now inside the same game shell. */
+#root .app-shell.kanto-game.local-league {
+  padding-bottom: 24px;
+}
+#root .app-shell.kanto-game.local-league .local-header {
+  margin: 22px 26px 0;
+  border: 4px double #254e7d;
+  border-radius: 0;
+  background: #fffbed;
+  color: #14335f;
+}
+#root .app-shell.kanto-game.local-league .local-header h1 {
+  color: #163963;
+  font-weight: 400;
+}
+#root .app-shell.kanto-game.local-league .league-hero-copy > p {
+  color: #345a7e;
+}
+#root .app-shell.kanto-game.local-league .league-hero-art {
+  background: url("/visual/kanto-arena.png") center / cover;
+}
+#root .app-shell.kanto-game.local-league .league-hero-facts b {
+  color: #194e94;
+  font-weight: 400;
+}
+#root .app-shell.kanto-game.local-league .league-hero-facts span {
+  color: #3b5a7b;
+}
+#root .app-shell.kanto-game.local-league .league-year {
+  background: #174c94;
+  color: #fffbed;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game.local-league.has-season .local-header {
+  min-height: 0;
+  padding: 12px 18px;
+}
+#root .app-shell.kanto-game.local-league.has-season .local-header h1 {
+  font-size: 28px;
+}
+#root .app-shell.kanto-game.local-league.has-season .league-hero-art,
+#root
+  .app-shell.kanto-game.local-league.has-season
+  .league-hero-copy
+  > .eyebrow,
+#root .app-shell.kanto-game.local-league.has-season .league-hero-copy > p {
+  display: none;
+}
+#root .app-shell.kanto-game.local-league.has-season .league-hero-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+#root .app-shell.kanto-game.local-league.has-season .league-hero-facts {
+  margin: 0;
+  gap: 14px;
+}
+#root .app-shell.kanto-game.local-league.has-season .league-hero-facts b {
+  font-size: 24px;
+}
+#root .app-shell.kanto-game.local-league .league-status-strip {
+  margin: 0 26px;
+  padding: 8px 16px;
+  background: #dce8ee;
+  color: #28496e;
+  border: 2px solid #315d8c;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game.local-league .league-status-strip li {
+  color: #315376;
+}
+#root .app-shell.kanto-game.local-league .league-status-strip li[aria-current] {
+  color: #a42d36;
+}
+#root
+  .app-shell.kanto-game.local-league
+  .league-status-strip
+  li[aria-current]
+  > span {
+  color: #fffbed;
+  background: #bd2d36;
+}
+#root .app-shell.kanto-game.local-league .sprite-toggle {
+  background: #194679;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game.local-league .league-friend-card {
+  color: #16395e;
+  background: #ecf0e8;
+  border: 2px solid #6e8aa6;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game.local-league .league-friend-card.is-leading {
+  background: #fff1c7;
+  border-color: #a58a3e;
+}
+#root .app-shell.kanto-game.local-league .friend-card-top,
+#root .app-shell.kanto-game.local-league .friend-card-rate {
+  color: #2f577c;
+}
+#root .app-shell.kanto-game.local-league .friend-card-record strong,
+#root .app-shell.kanto-game.local-league .friend-card-identity h3 {
+  color: #173966;
+  font-weight: 400;
+}
+#root .app-shell.kanto-game.local-league .friend-card-players {
+  background: #e1e9e5;
+}
+#root .app-shell.kanto-game.local-league .draft-prospect,
+#root .app-shell.kanto-game.local-league .draft-inspector {
+  background: #fffbed;
+  color: #173c66;
+  border: 2px solid #6b89aa;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game.local-league .draft-prospect h4 {
+  color: #173c66;
+}
+#root .app-shell.kanto-game.local-league .draft-card-tools {
+  background: #e4eceb;
+}
+#root .app-shell.kanto-game.local-league .draft-card-tools span,
+#root .app-shell.kanto-game.local-league .draft-card-detail {
+  color: #335b7b;
+}
+#root .app-shell.kanto-game.local-league .draft-recommendations button {
+  background: #e8eddf;
+  border: 2px solid #6d88a7;
+  border-radius: 0;
+  color: #183d68;
+}
+#root
+  .app-shell.kanto-game.local-league
+  .draft-recommendations
+  button:first-child {
+  background: #fff0c0;
+  border-color: #a07a3d;
+}
+#root .app-shell.kanto-game.local-league .draft-recommendations strong,
+#root .app-shell.kanto-game.local-league .draft-recommendations small {
+  color: #204d78;
+}
+#root
+  .app-shell.kanto-game.local-league
+  :is(.local-clock, .local-draft-layout, .local-roster, .roster-bench li) {
+  background: #fffbed;
+  color: #193b63;
+  border-color: #6e8eaa;
+}
+#root .app-shell.kanto-game.local-league .roster-court {
+  background: #c9dedd;
+  border-color: #355d81;
+}
+#root .app-shell.kanto-game.local-league .roster-court-lines {
+  stroke: #427388;
+}
+#root .app-shell.kanto-game.local-league .roster-court-player {
+  color: #133a63;
+}
+#root .app-shell.kanto-game.local-league .roster-court-player > span {
+  background: #fffbed;
+  color: #17365b;
+}
+#root .app-shell.kanto-game.local-league .roster-court-player.is-empty > span {
+  background: none;
+  color: #41637c;
+}
+#root .app-shell.kanto-game .playoff-stage-track li,
+#root .app-shell.kanto-game .playoff-stage-track small {
+  color: #365a7a;
+}
+#root .app-shell.kanto-game .playoff-stage-track li[aria-current] {
+  color: #a32d36;
+}
+#root .app-shell.kanto-game .playoff-stage-track li[aria-current] > span {
+  background: #c02c35;
+  color: #fffbed;
+  border-color: #a22b34;
+}
+#root .app-shell.kanto-game .playoff-user-status {
+  background: #e3ece7;
+  color: #254b6b;
+  border: 1px solid #7b99b0;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .playoff-advance {
+  background: #e0e9ed;
+  border: 2px solid #5d809e;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .playoff-round-status strong {
+  color: #173f77;
+  font-weight: 400;
+}
+#root .app-shell.kanto-game .playoff-round-status span {
+  color: #486782;
+}
+#root .app-shell.kanto-game .playoff-series-detail {
+  background: #fffbed;
+  border: 4px double #315a81;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .series-contender-name,
+#root .app-shell.kanto-game .playoff-series-detail h4 {
+  color: #153a68;
+  font-weight: 400;
+}
+#root .app-shell.kanto-game .series-contender-seed,
+#root .app-shell.kanto-game .series-win-track small {
+  color: #456581;
+}
+#root .app-shell.kanto-game .series-win-track b {
+  color: #bc2a34;
+  font-weight: 400;
+}
+#root .app-shell.kanto-game .series-win-pips i {
+  border-color: #3c628a;
+}
+#root .app-shell.kanto-game .series-win-pips i.is-won {
+  background: #bd2b35;
+  border-color: #bd2b35;
+}
+#root .app-shell.kanto-game .playoff-game {
+  background: #e2ebec;
+  color: #1d4269;
+  border: 1px solid #7896b0;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .playoff-game-teams small,
+#root .app-shell.kanto-game .playoff-box-link {
+  color: #375f83;
+}
+#root .app-shell.kanto-game .playoff-bracket-scroll {
+  background: #dce7e7;
+  border: 2px solid #6285a3;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .playoff-series-node,
+#root .app-shell.kanto-game .playoff-series-node.is-decided {
+  background: #fffbed;
+  border: 2px solid #6b8daa;
+  border-radius: 0;
+  color: #244e72;
+}
+#root .app-shell.kanto-game .playoff-series-node[aria-pressed="true"] {
+  border-color: #b32e38;
+  box-shadow: 1px 1px #b32e38;
+}
+#root .app-shell.kanto-game .playoff-team.is-winner {
+  color: #23603d;
+}
+#root .app-shell.kanto-game .playoff-team.is-user {
+  color: #a22d35;
+}
+#root .app-shell.kanto-game .playoff-series-label,
+#root .app-shell.kanto-game .playoff-series-footer,
+#root .app-shell.kanto-game .playoff-seed {
+  color: #45637c;
+}
+#root .app-shell.kanto-game .playoff-round h4 {
+  color: #184477;
+}
+#root .app-shell.kanto-game .playoff-honors article {
+  background: #fff0c2;
+  border: 4px double #8f7339;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .playoff-honors h4,
+#root .app-shell.kanto-game .playoff-champion h4,
+#root .app-shell.kanto-game .playoff-mvp strong {
+  color: #173d69;
+  font-weight: 400;
+}
+#root .app-shell.kanto-game .playoff-honors p,
+#root .app-shell.kanto-game .playoff-mvp small {
+  color: #445f75;
+}
+@media (min-width: 1600px) {
+  #root .app-shell.kanto-game > main {
+    padding-inline: 42px;
+  }
+}
+@media (max-width: 1200px) {
+  #root .app-shell.kanto-game {
+    padding-left: 150px;
+  }
+  #root .app-shell.kanto-game .kanto-sidebar {
+    width: 150px;
+    background-size: 150px auto;
+  }
+  #root .app-shell.kanto-game .kanto-sidebar button {
+    gap: 9px;
+    padding: 10px;
+    font-size: 23px;
+  }
+  #root .app-shell.kanto-game .masthead,
+  #root .app-shell.kanto-game .kanto-masthead {
+    margin-left: -150px;
+  }
+  #root .app-shell.kanto-game .page-links {
+    display: none;
+  }
+  .kanto-coach-record {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .kanto-coach {
+    padding-right: 12px;
+  }
+  .kanto-record {
+    gap: 16px;
+  }
+  .kanto-record strong {
+    font-size: 60px;
+  }
+  .kanto-season-copy {
+    padding: 18px;
+  }
+  .kanto-leader-body strong {
+    font-size: 52px;
+  }
+  #root .app-shell.kanto-game .kanto-leader-body .portrait {
+    height: 118px;
+  }
+}
+@media (max-width: 900px) {
+  #root .app-shell.kanto-game {
+    padding-left: 0;
+  }
+  #root .app-shell.kanto-game .masthead,
+  #root .app-shell.kanto-game .kanto-masthead {
+    margin-left: 0;
+    min-height: 90px;
+    padding: 14px 18px;
+  }
+  #root .app-shell.kanto-game .brand {
+    font-size: 35px;
+  }
+  #root .app-shell.kanto-game .mode-tabs {
+    order: 3;
+    margin-left: 0;
+    width: 100%;
+  }
+  #root .app-shell.kanto-game .mode-tabs button {
+    flex: 1;
+    justify-content: center;
+    font-size: 18px;
+    padding: 8px;
+  }
+  #root .app-shell.kanto-game .header-play {
+    margin-left: auto;
+    font-size: 16px;
+  }
+  #root .app-shell.kanto-game .kanto-sidebar {
+    position: static;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: #143c70;
+  }
+  .kanto-sidebar nav {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+  }
+  #root .app-shell.kanto-game .kanto-sidebar button {
+    min-height: 53px;
+    padding: 7px;
+    gap: 6px;
+    justify-content: center;
+    font-size: 23px;
+    border: 1px solid #6b91bd;
+  }
+  #root .app-shell.kanto-game .kanto-sidebar button[aria-current] {
+    border-left: 1px solid #6b91bd;
+    border-bottom: 4px solid #c32c37;
+  }
+  #root .app-shell.kanto-game .kanto-sidebar button svg {
+    width: 20px;
+    height: 20px;
+  }
+  #root .app-shell.kanto-game .kanto-sidebar p {
+    display: none;
+  }
+  #root .app-shell.kanto-game > main {
+    padding: 18px;
+  }
+  #root .app-shell.kanto-game.local-league .local-header {
+    margin: 18px 18px 0;
+  }
+  #root .app-shell.kanto-game.local-league .league-status-strip {
+    margin-inline: 18px;
+  }
+  #root .app-shell.kanto-game .kanto-season-copy h2 {
+    font-size: 40px;
+  }
+  .kanto-leader-heading {
+    gap: 7px;
+  }
+  #root .app-shell.kanto-game .kanto-leader-heading h4 {
+    font-size: 25px;
+  }
+}
+@media (max-width: 600px) {
+  #root .app-shell.kanto-game > main {
+    padding: 12px;
+  }
+  #root .app-shell.kanto-game .kanto-masthead > span {
+    display: none;
+  }
+  #root .app-shell.kanto-game .kanto-sidebar button {
+    flex-direction: column;
+    gap: 0;
+    font-size: 21px;
+  }
+  #root
+    .app-shell.kanto-game
+    :is(.season-panel, .league-panel, .playoff-panel) {
+    padding: 13px;
+  }
+  #root .app-shell.kanto-game .kanto-season-feature {
+    grid-template-columns: 1fr;
+  }
+  #root .app-shell.kanto-game .kanto-season-copy h2 {
+    font-size: 40px;
+    margin-bottom: 16px;
+  }
+  .kanto-season-art {
+    min-height: 200px;
+  }
+  #root .app-shell.kanto-game .kanto-season-art .kanto-star {
+    width: 65%;
+    height: 94%;
+  }
+  .kanto-coach-record {
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+    gap: 12px;
+  }
+  .kanto-record {
+    flex: 1;
+    justify-content: space-around;
+  }
+  .kanto-record strong {
+    font-size: 62px;
+  }
+  .kanto-record span {
+    font-size: 16px;
+  }
+  #root .app-shell.kanto-game .kanto-playoffs-link {
+    width: 100%;
+    justify-content: center;
+    font-size: 28px;
+  }
+  .kanto-leader-grid {
+    grid-template-columns: 1fr;
+  }
+  .kanto-leader-grid article,
+  .kanto-leader-grid article:first-child {
+    border-right: 0;
+    border-bottom: 1px solid #98acbe;
+    padding: 12px 0;
+  }
+  .kanto-leader-grid article:last-child {
+    border: 0;
+  }
+  .kanto-leader-body {
+    justify-content: space-evenly;
+  }
+  #root .app-shell.kanto-game .kanto-leader-body .portrait {
+    width: 100px;
+    height: 100px;
+  }
+  .kanto-leader-body strong {
+    font-size: 62px;
+  }
+  .kanto-roster-strip ol {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px 7px;
+    padding: 12px;
+  }
+  .kanto-roster-strip > div > span {
+    display: none;
+  }
+  #root .app-shell.kanto-game .player-spotlight {
+    border-right: 0;
+    border-bottom: 1px solid #9eb0bd;
+  }
+  #root .app-shell.kanto-game .spotlight-player h4 {
+    font-size: 25px;
+  }
+  #root .app-shell.kanto-game .spotlight-value strong {
+    font-size: 38px;
+  }
+  #root .app-shell.kanto-game.local-league .local-header {
+    margin: 12px 12px 0;
+  }
+  #root .app-shell.kanto-game.local-league .league-status-strip {
+    margin-inline: 12px;
+    padding: 8px;
+  }
+  #root .app-shell.kanto-game.local-league .league-status-strip li {
+    font-size: 10px;
+  }
+  #root .app-shell.kanto-game.local-league .league-status-strip li > span {
+    display: none;
+  }
+  #root .app-shell.kanto-game.local-league.has-season .local-header {
+    gap: 10px;
+  }
+  #root .app-shell.kanto-game.local-league .league-hero-facts span {
+    font-size: 9px;
+  }
+  #root .app-shell.kanto-game.local-league .league-hero-facts b {
+    font-size: 21px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .app-shell.kanto-game *,
+  #root .app-shell.kanto-game *::before {
+    scroll-behavior: auto !important;
+  }
+}
+/* Keep controls legible when older feature styles load lazily. */
+#root .app-shell.kanto-game.local-league {
+  padding-top: 0;
+  padding-right: 0;
+}
+#root .app-shell.kanto-game.local-league .local-header-actions .button {
+  color: #153b6b;
+  background: #e1ebef;
+  border: 2px solid #315b86;
+  box-shadow: none;
+  font-size: 18px;
+  min-height: 40px;
+}
+#root .app-shell.kanto-game.local-league .local-header-actions .text-button {
+  font-size: 16px;
+  color: #194c84;
+}
+#root .app-shell.kanto-game .sprite-controls {
+  color: #214977;
+}
+#root .app-shell.kanto-game .sprite-controls > div {
+  background: #e8eef1;
+  border: 1px solid #597b9e;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .sprite-controls button {
+  background: #e8eef1;
+  color: #1d477a;
+  border-radius: 0;
+  font-size: 16px;
+}
+#root .app-shell.kanto-game .sprite-controls button[aria-pressed="true"] {
+  background: #194e91;
+  color: #fffbed;
+}
+@media (min-width: 901px) {
+  #root .app-shell.kanto-game .brand {
+    font-size: 58px;
+  }
+  #root .app-shell.kanto-game .kanto-sidebar {
+    background-size: 290px auto;
+  }
+}
+#root .app-shell.kanto-game .kanto-exit {
+  color: #fffbed;
+  background: #10366c;
+  border: 2px solid #86a7ce;
+  padding: 8px 14px;
+  font-size: 20px;
+}
+#root .app-shell.kanto-game .kanto-league-options {
+  margin: 0 0 20px;
+  color: #31557b;
+  border: 1px solid #7e97b3;
+  background: #e7edf0;
+}
+#root .app-shell.kanto-game .kanto-league-options > summary {
+  font: 400 21px var(--display);
+  padding: 11px 15px;
+  cursor: pointer;
+}
+#root .app-shell.kanto-game .kanto-league-options .local-header {
+  margin: 0 14px;
+}
+#root .app-shell.kanto-game .kanto-league-options .league-status-strip {
+  margin: 0 14px 14px;
+}
+#root .app-shell.kanto-game .kanto-league-options .save-menu {
+  margin: 14px;
+}
+@media (max-width: 600px) {
+  #root .app-shell.kanto-game .kanto-masthead {
+    gap: 10px;
+  }
+  #root .app-shell.kanto-game .kanto-exit {
+    margin-left: auto;
+    font-size: 16px;
+    padding: 6px 9px;
+  }
+  #root .app-shell.kanto-game .kanto-masthead .brand {
+    font-size: 30px;
+  }
+}
+
+/* Match the clubhouse palette inside the simulation explorer as it opens. */
+#root .app-shell.kanto-game .matchup-lab.local-panel,
+#root .app-shell.kanto-game .analysis-cards article {
+  color: var(--ink);
+  background: var(--cream);
+  border: 3px double #315b86;
+  border-radius: 1px;
+}
+#root .app-shell.kanto-game .analysis-cards :is(small, p),
+#root .app-shell.kanto-game .analysis-guide p {
+  color: #405d7a;
+}
+
+@media (min-width: 1201px) {
+  .kanto-season-feature {
+    min-height: 360px;
+  }
+  #root .app-shell.kanto-game .kanto-season-copy h2 {
+    font-size: 64px;
+  }
+  .kanto-record strong {
+    font-size: 96px;
+  }
+  .kanto-leader-body strong {
+    font-size: 76px;
+  }
+  #root .app-shell.kanto-game .kanto-leader-body .portrait {
+    height: 155px;
+  }
+  #root .app-shell.kanto-game .kanto-playoffs-link {
+    font-size: 32px;
+  }
+}
+
+#root .app-shell.kanto-game.local-league :is(input, select, textarea) {
+  color: #17385f;
+  background: #fffdf5;
+  border: 2px solid #718cad;
+  border-radius: 2px;
+}
+#root .app-shell.kanto-game .local-review-player {
+  background: #e9edf0;
+  border: 1px solid #7892ad;
+  border-radius: 1px;
+}
+
+#root .app-shell.kanto-game .draft-open-roles button {
+  background: #e2ebf0;
+  color: #214b78;
+  border: 1px solid #6886a5;
+  border-radius: 1px;
+  padding: 7px 10px;
+  font: 400 17px var(--display);
+}
+#root .app-shell.kanto-game .draft-open-roles button[aria-pressed="true"] {
+  background: #1a4b8d;
+  color: #fffbed;
+  border-bottom: 3px solid #c32e3b;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .draft-term-trigger,
+    .roster-bench-label,
+    .roster-bench li > b,
+    .roster-court-player > b
+  ) {
+  color: #31577c;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .draft-prospect-top b,
+    .draft-prospect-name,
+    .draft-impact-rating,
+    .draft-skill-snapshot b,
+    .draft-verdict b
+  ) {
+  color: #173c66;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .draft-archetype,
+    .draft-impact-rank,
+    .draft-skill-snapshot > div > span:first-child,
+    .draft-impact-rating > small,
+    .draft-impact-change > strong small,
+    .draft-tool-bars dt,
+    .draft-role-verdict small
+  ) {
+  color: #42617d;
+}
+#root .app-shell.kanto-game :is(.draft-card-impact, .draft-role-verdict) {
+  background: #e7edf0;
+  border-color: #8ba1b7;
+  border-radius: 1px;
+}
+#root .app-shell.kanto-game .draft-impact-change > strong {
+  color: #315e42;
+}
+#root
+  .app-shell.kanto-game
+  :is(.draft-impact-change > strong.loss, .draft-impact-delta.loss) {
+  color: #ab2936;
+}
+#root
+  .app-shell.kanto-game
+  :is(.draft-impact-change > strong.gain, .draft-impact-delta.gain) {
+  color: #286044;
+}
+#root .app-shell.kanto-game .draft-prospect > .types span {
+  background: #e1e8ed;
+  color: #173c66;
+  border-color: #91a4b8;
+}
+#root .app-shell.kanto-game .draft-compare-toggle {
+  background: #e0eaf1;
+  color: #234e7a;
+  border-color: #6f8ba8;
+  border-radius: 1px;
+}
+#root .app-shell.kanto-game .draft-prospect-portrait {
+  background: none;
+}
+#root .app-shell.kanto-game .draft-tool-bars dd > span {
+  background: #bccbd8;
+}
+#root .app-shell.kanto-game .draft-tool-bars i {
+  background: #245e9c;
+}
+#root .app-shell.kanto-game .advanced-scouting {
+  background: #e6edf1;
+  border: 1px solid #7894b2;
+  border-radius: 1px;
+}
+#root .app-shell.kanto-game .advanced-scouting > summary strong {
+  color: #1a467c;
+  font: 400 20px var(--display);
+}
+#root .app-shell.kanto-game .draft-prospect-top {
+  color: #42617e;
+}
+#root .app-shell.kanto-game .types span,
+#root .app-shell.kanto-game .draft-prospect > .types span {
+  background: #18375d;
+  border-color: #18375d;
+  font: 400 16px var(--display);
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .draft-team-impact,
+    .draft-impact-ranking,
+    .draft-position-locks,
+    .draft-shortlist,
+    .draft-lineup-plan
+  ) {
+  background: #eef1ea;
+  color: #173b63;
+  border-color: #829ab2;
+  border-radius: 1px;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .draft-impact-leader,
+    .draft-impact-comparison .is-prioritized,
+    .draft-compare-number.is-leading
+  ) {
+  background: #fff0bf;
+  color: #58441a;
+  border-color: #a88c4f;
+}
+#root .app-shell.kanto-game .draft-team-impact :is(th, td) {
+  color: #274e72;
+  border-color: #a3b4c3;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .draft-impact-summary b,
+    .draft-impact-outlook dd,
+    .draft-comparison strong,
+    .draft-comparison b
+  ) {
+  color: #173b63;
+}
+#root
+  .app-shell.kanto-game
+  :is(.draft-impact-outlook dt, .draft-impact-context) {
+  color: #42617d;
+}
+#root .app-shell.kanto-game .draft-impact-track {
+  background: #c7d3db;
+}
+#root .app-shell.kanto-game .draft-impact-track .after {
+  background: #225b9d;
+}
+#root
+  .app-shell.kanto-game
+  :is(.draft-shortlist-chips button, .draft-position-lock-buttons button) {
+  background: #e0eaf1;
+  color: #214c77;
+  border-color: #829ab2;
+  border-radius: 1px;
+}
+#root
+  .app-shell.kanto-game
+  .draft-position-lock-buttons
+  button[aria-pressed="true"] {
+  background: #1a4b8d;
+  color: #fffbed;
+}
+#root
+  .app-shell.kanto-game
+  :is(.draft-position-lock-buttons button small, .draft-roster-lock) {
+  color: #a12d39;
+}
+#root .app-shell.kanto-game .draft-comparison th:first-child {
+  background: #e3eaf0;
+  color: #214c77;
+}
+#root .app-shell.kanto-game .draft-comparison thead {
+  background: #1d467b;
+  color: #fffbed;
+}
+#root .app-shell.kanto-game .draft-team-impact td.gain {
+  color: #276044;
+}
+#root .app-shell.kanto-game .draft-team-impact td.loss {
+  color: #ab2936;
+}
