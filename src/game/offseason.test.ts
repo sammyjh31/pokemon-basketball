@@ -333,7 +333,7 @@ describe("the league offseason", () => {
         .map((team) => ({
           ...team,
           personalityVersion: 1 as const,
-          movesetVersion: 3 as const,
+          movesetVersion: 4 as const,
         })),
     );
     expect(next.franchise!.year).toBe(2);

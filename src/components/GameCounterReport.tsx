@@ -1,4 +1,9 @@
 import {
+  CounterLearningDecision,
+  CounterLearningResults,
+} from "./CounterLearningReport";
+import type { CounterResults } from "../game/counterLearning";
+import {
   COUNTER_LABELS,
   COUNTER_IDS,
   type CounterPlan,
@@ -9,10 +14,12 @@ import { ScoutingContinuityNote } from "./CoachScoutingSummary";
 import { POKEMON_BY_ID } from "../data/pokemon";
 export function GameCounterReport({
   plans,
+  results,
   teams,
   sequences = [],
 }: {
   plans?: { home: CounterPlan[]; away: CounterPlan[] };
+  results?: { home?: CounterResults; away?: CounterResults };
   teams: LeagueTeam[];
   sequences?: CourtSequence[];
 }) {
@@ -43,6 +50,9 @@ export function GameCounterReport({
                   {COUNTER_LABELS[plan.id]} · {plan.observations.toFixed(1)}{" "}
                   recent observations · {(plan.confidence * 100).toFixed(0)}%
                   confidence
+                  {plan.learning && (
+                    <CounterLearningDecision learning={plan.learning} />
+                  )}
                 </li>
               ))}
             </ul>
@@ -61,6 +71,21 @@ export function GameCounterReport({
         offensive counter-combos. These reduce or recover move bonuses; they are
         not guaranteed stops or made baskets. Each participant pays energy.
       </p>
+      {results && (
+        <details>
+          <summary>Counter results in this game</summary>
+          {(["home", "away"] as const).map(
+            (side, i) =>
+              results[side] && (
+                <CounterLearningResults
+                  key={side}
+                  label={`${teams[i]?.name ?? side} counter outcomes`}
+                  results={results[side]!}
+                />
+              ),
+          )}
+        </details>
+      )}
       {events.length > 0 && (
         <details>
           <summary>View counter timing and participants</summary>

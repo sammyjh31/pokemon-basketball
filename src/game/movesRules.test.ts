@@ -10,7 +10,7 @@ import {
 } from "./localLeague";
 import { loadGame } from "./persistence";
 it("enables the shared moves rules for new solo and both local draft formats", () => {
-  expect(initialState(55).run.movesetVersion).toBe(3);
+  expect(initialState(55).run.movesetVersion).toBe(4);
   for (const mode of ["generational", "full-pool"] as const) {
     const draft = createLocalLeague(
       [
@@ -31,8 +31,8 @@ it("enables the shared moves rules for new solo and both local draft formats", (
         },
       },
     );
-    expect(draft.movesetVersion).toBe(3);
-    expect(parseLocalLeague(JSON.stringify(draft)).movesetVersion).toBe(3);
+    expect(draft.movesetVersion).toBe(4);
+    expect(parseLocalLeague(JSON.stringify(draft)).movesetVersion).toBe(4);
   }
 });
 it("propagates the rule to every CPU club and retains it through team validation", () => {

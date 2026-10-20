@@ -346,6 +346,10 @@ export interface LeagueGameSummary extends LeagueFixture {
   overtimePeriods: number;
 }
 export interface LeagueMatch {
+  counterResults?: {
+    home?: import("./counterLearning").CounterResults;
+    away?: import("./counterLearning").CounterResults;
+  };
   counterPlans?: {
     home: import("./counterTypes").CounterPlan[];
     away: import("./counterTypes").CounterPlan[];

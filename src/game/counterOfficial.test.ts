@@ -14,6 +14,7 @@ it("keeps played games from injecting simulated counter scouting", () => {
       moveObservations: { home: { moves: { "quick-attack": 50 }, combos: {} } },
     },
     { counterPlans: { home: [], away: [] } },
+    { counterResults: { home: { version: 1, counters: {} } } },
   ]) {
     const forged = { ...game, match: { ...game.match, ...extra } };
     expect(() => validateOfficialGame(forged, fixture, teams)).toThrow();

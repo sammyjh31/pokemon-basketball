@@ -241,7 +241,7 @@ describe("franchise lifecycle", () => {
         .map((team) => ({
           ...team,
           personalityVersion: 1 as const,
-          movesetVersion: 3 as const,
+          movesetVersion: 4 as const,
         })),
     );
     expect(next.run.leagueTeams).not.toBe(offseason.franchise!.teams);

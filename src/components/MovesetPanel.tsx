@@ -37,7 +37,7 @@ export function MovesetPanel({
         automatically. Moves are basketball adaptations, with energy costs and
         cooldowns. Earned mastery follows Pokémon through trades and seasons.
       </p>
-      {team.movesetVersion === 3 && (
+      {(team.movesetVersion ?? 0) >= 3 && (
         <p>
           Coaches automatically counter repeated moves and combos using observed
           evidence. Defensive responses and offensive counter-combos cost energy

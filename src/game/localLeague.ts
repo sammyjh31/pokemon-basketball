@@ -170,7 +170,7 @@ export function createLocalLeague(
           matchupVersion: 1 as const,
           possessionVersion: 1 as const,
           gameFlowVersion: 1 as const,
-          movesetVersion: 3 as const,
+          movesetVersion: 4 as const,
         }
       : {}),
     version,
@@ -449,7 +449,8 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
               ...draft.options.engineRules,
               adaptiveCoaching:
                 draft.options.engineRules.adaptiveCoaching &&
-                !draft.managers.some((m) => m.teamId === team.id),
+                ((draft.movesetVersion === 4 && !!coaching.coach) ||
+                  !draft.managers.some((m) => m.teamId === team.id)),
             },
           }
         : {}),
@@ -624,11 +625,11 @@ export function updateLocalCoaching(
 /**
  * Upper bound on saved text. Long careers now retain annual scouting books
  * and frozen opening knowledge as replay inputs. A conservative 50-year,
- * 30-club rich-scouting projection measures 182M characters (see
+ * 30-club rich-scouting/outcome projection measures 328M characters (see
  * scoutingSaveBudget.test.ts). IndexedDB handles saves beyond localStorage.
  * Team/player/year structure bounds still apply before game reconstruction.
  */
-export const LOCAL_SAVE_MAX_LENGTH = 256_000_000;
+export const LOCAL_SAVE_MAX_LENGTH = 384_000_000;
 /** Compact inputs are saved; results replay with the same seed and simulation model. */
 export function parseLocalLeague(
   raw: string,

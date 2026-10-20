@@ -129,6 +129,6 @@ it("retains all-team counter learning, regular/playoff totals and full history t
     validateFranchise(tampered.franchise, tampered.run, true),
   ).toThrow();
   const next = startFranchiseSeason(cold.value.state, 823);
-  expect(next.run.movesetVersion).toBe(3);
+  expect(next.run.movesetVersion).toBe(4);
   expect(next.franchise!.history).toEqual(cold.value.state.franchise!.history);
 }, 600000);
