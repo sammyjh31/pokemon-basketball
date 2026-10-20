@@ -2,6 +2,7 @@ import { isMovesetVersion } from "./basketballMoves";
 import { validateCoach, coachOffers } from "./trainerCoaches";
 import { isCourtVersion } from "./courtTypes";
 import { POKEMON_BY_ID } from "../data/pokemon";
+import { inDraftPool, isDraftPool, type DraftPool } from "./draftPool";
 import { initialState } from "./state";
 import {
   simulateSeason,
@@ -99,6 +100,8 @@ function validate(
     source = object(raw.roster),
     history = object(root.records);
   if (raw.mode !== "spin" && raw.mode !== "free") return fail();
+  if (raw.draftPool !== undefined && !isDraftPool(raw.draftPool)) return fail();
+  const draftPool = isDraftPool(raw.draftPool) ? raw.draftPool : undefined;
   if (
     typeof raw.includeLegends !== "boolean" ||
     typeof raw.id !== "string" ||
@@ -114,15 +117,27 @@ function validate(
       continue;
     }
     const mon = POKEMON_BY_ID.get(
-      integer(id, 1, Object.hasOwn(root, "franchise") ? 1025 : 251),
+      integer(
+        id,
+        1,
+        Object.hasOwn(root, "franchise")
+          ? 1025
+          : draftPool === undefined
+            ? 251
+            : 809,
+      ),
     );
     if (!mon || (!raw.includeLegends && mon.legendary)) return fail();
+    if (!Object.hasOwn(root, "franchise") && !inDraftPool(draftPool, mon.id))
+      return fail();
     roster[position] = mon.id;
   }
   const chosen = Object.values(roster).filter((id) => id !== null);
   if (new Set(chosen).size !== chosen.length || !Array.isArray(raw.offerIds))
     return fail();
-  const offerIds = raw.offerIds.map((id) => integer(id, 1, 251));
+  const offerIds = raw.offerIds.map((id) =>
+    integer(id, 1, draftPool === undefined ? 251 : 809),
+  );
   const expectedOffers = raw.mode === "spin" && chosen.length < 8 ? 4 : 0;
   if (
     offerIds.length !== expectedOffers ||
@@ -130,6 +145,7 @@ function validate(
     offerIds.some(
       (id) =>
         chosen.includes(id) ||
+        !inDraftPool(draftPool, id) ||
         (!raw.includeLegends && POKEMON_BY_ID.get(id)!.legendary),
     )
   )
@@ -220,6 +236,7 @@ function validate(
   )
     return fail();
   const run: Run = {
+    ...(draftPool !== undefined ? { draftPool } : {}),
     ...(coach ? { coach } : {}),
     ...(raw.coachDraftRequired ? { coachDraftRequired: true as const } : {}),
     ...(raw.abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
@@ -486,19 +503,20 @@ function readGame(
   storage: StorageLike,
   fallbackSeed: number,
   deferLeague: boolean,
+  freshPool?: DraftPool,
 ): PreparedGameLoad {
   let source: string | null;
   try {
     source = savedGameSource(storage);
   } catch {
     return {
-      state: initialState(fallbackSeed),
+      state: initialState(fallbackSeed, freshPool),
       notice:
         "Browser storage is unavailable. You can play, but progress will not be saved.",
     };
   }
   if (source === null)
-    return { state: initialState(fallbackSeed), notice: null };
+    return { state: initialState(fallbackSeed, freshPool), notice: null };
   let franchiseSave = false;
   try {
     const parsed: unknown = JSON.parse(source);
@@ -746,8 +764,9 @@ export function loadGame(
 export function prepareGameLoad(
   storage: StorageLike,
   fallbackSeed: number,
+  freshPool?: DraftPool,
 ): PreparedGameLoad {
-  return readGame(storage, fallbackSeed, true);
+  return readGame(storage, fallbackSeed, true, freshPool);
 }
 export function saveGame(
   storage: StorageLike,

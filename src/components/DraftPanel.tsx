@@ -1,5 +1,6 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
-import { POKEMON, POKEMON_BY_ID, TYPES } from "../data/pokemon";
+import { ALL_POKEMON, POKEMON_BY_ID, TYPES } from "../data/pokemon";
+import { draftPokemon } from "../game/draftPool";
 import {
   attributes,
   ATTRIBUTE_KEYS,
@@ -25,7 +26,7 @@ const scoresFor = (sort: Exclude<SortKey, "dex">) => {
   let scores = sortScores.get(sort);
   if (!scores) {
     scores = new Map(
-      POKEMON.map((mon) => [
+      ALL_POKEMON.map((mon) => [
         mon.id,
         POSITIONS.includes(sort as Position)
           ? positionRating(mon, sort as Position)
@@ -78,7 +79,7 @@ export function DraftPanel({
       ? Number(query.replace(/^#/, ""))
       : null;
     const taken = new Set(Object.values(run.roster));
-    const list = POKEMON.filter(
+    const list = draftPokemon(run.draftPool).filter(
       (mon) =>
         !taken.has(mon.id) &&
         (run.includeLegends || !mon.legendary) &&
@@ -95,6 +96,7 @@ export function DraftPanel({
     run.offerIds,
     run.roster,
     run.includeLegends,
+    run.draftPool,
     deferredSearch,
     type,
     sort,
@@ -347,7 +349,7 @@ export function DraftPanel({
         <p>
           {run.mode === "spin"
             ? "Choose one of four Pokémon each round. Place it in an open position. Each pick locks in, so make it count."
-            : "Choose from 251 Pokémon across Gen 1 and 2. Swap positions by selecting two players on the court. Randomize for a fresh team."}{" "}
+            : `Choose from ${draftPokemon(run.draftPool).length} Pokémon. Swap positions by selecting two players on the court. Randomize for a fresh team.`}{" "}
           Fill five starting positions and three bench slots, then play your
           season.
         </p>

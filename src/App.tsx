@@ -1,4 +1,6 @@
 import { publicAsset } from "./assets";
+import { ChallengePoolPicker } from "./components/ChallengePoolPicker";
+import { draftPoolLabel, type DraftPool } from "./game/draftPool";
 import { RestoreProgress } from "./components/RestoreProgress";
 import { MasteryPanel } from "./components/MasteryPanel";
 import { teamsWithMastery } from "./game/abilityMastery";
@@ -199,12 +201,17 @@ export default function App({
     };
   }, []);
   const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("pixel");
-  const start = (mode: Mode, includeLegends: boolean) => {
+  const start = (
+    mode: Mode,
+    includeLegends: boolean,
+    draftPool?: DraftPool,
+  ) => {
     if (simulating || playoffSimulating || restoring) return;
     dispatch({
       type: "NEW_RUN",
       mode,
       includeLegends,
+      draftPool,
       seed: newSeed(),
       coachDraftRequired: true,
     });
@@ -228,8 +235,15 @@ export default function App({
     reason: "new" | "mode" | "legends" = "new",
   ) => {
     if (busy) return;
-    if (!hasProgress && !state.franchise) return start(mode, includeLegends);
-    const onConfirm = () => start(mode, includeLegends);
+    const pool =
+      mode === "spin"
+        ? reason === "legends"
+          ? run.draftPool
+          : (run.draftPool ?? "all")
+        : undefined;
+    if (!hasProgress && !state.franchise)
+      return start(mode, includeLegends, pool);
+    const onConfirm = () => start(mode, includeLegends, pool);
     if (state.franchise)
       return setConfirm({
         title: "End this franchise?",
@@ -256,6 +270,31 @@ export default function App({
         onConfirm,
       });
     setConfirm({ onConfirm });
+  };
+  const changeGeneration = (pool: DraftPool) => {
+    if (
+      busy ||
+      run.result ||
+      state.franchise ||
+      run.mode !== "spin" ||
+      pool === run.draftPool
+    )
+      return;
+    const apply = () => {
+      dispatch({ type: "DRAFT_POOL", pool });
+      setPending(null);
+      setSwap(null);
+      setConfirm(null);
+      setAnnouncement(`${draftPoolLabel(pool)} draft ready.`);
+    };
+    if (!hasProgress) return apply();
+    setConfirm({
+      title: "Change draft generation?",
+      description:
+        "This restarts your picks and restores two re-rolls. Your chosen coach and completed season records stay saved.",
+      confirmLabel: "Restart draft",
+      onConfirm: apply,
+    });
   };
   /** Lineup builder keeps the roster and only changes the available pool. */
   const changeLegends = (includeLegends: boolean) => {
@@ -617,6 +656,14 @@ export default function App({
                   </button>
                 </p>
               )}
+              {!state.franchise && run.mode === "spin" && (
+                <ChallengePoolPicker
+                  pool={run.draftPool}
+                  includeLegends={run.includeLegends}
+                  disabled={busy || !!run.result}
+                  onChange={changeGeneration}
+                />
+              )}
               {(choosingCoach ||
                 (state.franchise?.phase === "offseason" &&
                   canSelectTrainer(state))) && (
@@ -728,6 +775,7 @@ export default function App({
                               roster: randomLineup(
                                 run.includeLegends,
                                 newSeed(),
+                                run.draftPool,
                               ),
                             });
                             setPending(null);

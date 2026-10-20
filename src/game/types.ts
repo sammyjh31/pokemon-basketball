@@ -225,6 +225,8 @@ export interface Run {
   gameFlowVersion?: 1;
   id: string;
   mode: Mode;
+  /** Optional opening-draft selection; omitted on original Gen I–II runs. */
+  draftPool?: import("./draftPool").DraftPool;
   includeLegends: boolean;
   roster: Roster;
   offerIds: number[];

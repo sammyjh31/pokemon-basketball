@@ -12,6 +12,7 @@ import type {
 import type { RookieDraft, RookiePick } from "./rookieDraftTypes";
 import type { FreeAgency } from "./freeAgencyTypes";
 import { lotteryOrder, recordOrder } from "./draftLottery";
+import { inDraftPool, isDraftPool, type DraftPool } from "./draftPool";
 
 const fail = (): never => {
   throw new Error("Invalid saved franchise transactions");
@@ -56,6 +57,7 @@ export function validateRosterTransactions(
   reports: OffseasonReport[] | undefined,
   freeAgency?: FreeAgency,
   cpuSince?: number,
+  initialDraftPool?: DraftPool,
 ): { drafts?: RookieDraft[]; expected: number[][] } {
   const hasDrafts = value !== undefined;
   if (
@@ -154,9 +156,21 @@ export function validateRosterTransactions(
       (phase === "season" && drafts.at(-1)!.year !== year - 1))
   )
     return fail();
-  // Every franchise starts from the original Gen I–II league. Later members
-  // must be accounted for by an eligible, never-before-rostered draft pick.
-  if (history[0].rosters.flat().some((id) => id > 251)) return fail();
+  // Opening membership uses its recorded pool; later additions still require
+  // an eligible, never-before-rostered rookie pick or recorded transaction.
+  if (initialDraftPool !== undefined && !isDraftPool(initialDraftPool))
+    return fail();
+  if (
+    history[0].rosters
+      .flat()
+      .some((id) => id > (initialDraftPool === undefined ? 251 : 809))
+  )
+    return fail();
+  if (
+    initialDraftPool !== undefined &&
+    history[0].rosters[0].some((id) => !inDraftPool(initialDraftPool, id))
+  )
+    return fail();
   let expected = history[0].rosters.map((roster) => [...roster]),
     tradeIndex = 0;
   const used = new Set(expected.flat());

@@ -297,6 +297,13 @@ export function enterOffseason(state: GameState): GameState {
   )
     archive.replay = captureSeasonReplay(run);
   const franchise: Franchise = {
+    ...((previous ? previous.initialDraftPool : run.draftPool) !== undefined
+      ? {
+          initialDraftPool: previous
+            ? previous.initialDraftPool
+            : run.draftPool,
+        }
+      : {}),
     ...(previous?.coachOffice ? { coachOffice: previous.coachOffice } : {}),
     modelVersion:
       run.chemistryGrowthVersion === 1 || run.abilityMasteryVersion === 1
