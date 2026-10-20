@@ -40,6 +40,14 @@ The build uses the base path reported by Pages, so portraits, pixel sprites, coa
 
 All game data and portraits are bundled locally. Gameplay needs no external API, accounts, database, or secrets. Progress is saved in the current browser (see [Saving](#saving)); clearing site data clears progress. If saving is unavailable, play continues in memory with a notice. This is not a multiplayer leaderboard or an anti-cheat system.
 
+## Scouting that follows coaches across seasons
+
+Coaches retain compact annual scouting books in solo and local franchises. At the next season boundary, their own observations follow them between jobs; a new hire also receives weaker club reports. Known shooting tendencies and uniquely attributable species signatures follow traded Pokémon. Rookies start unknown. Team-system and pair-combo reads lose confidence with roster turnover or an opposing coaching change, then refresh through actual games. Rearranging the same eight players does not erase knowledge.
+
+Older evidence fades each year; coaches consult at most eight prior seasons. Opening knowledge feeds the same automatic matchup/counter engine used by every simulated regular-season, CPU and playoff game. **Scouting carried into this season** explains opponent continuity in coach reports; box scores show the carried context alongside current-game reads and timing. No extra coaching controls are needed.
+
+Books and opening inputs are preserved with archived seasons and authenticated replay evidence. Existing unseeded games keep their exact results. A completed v3 season can supply the first book at its next boundary; older seasons without recorded books receive no invented observations. Warm loads retain verified history, and long local careers use IndexedDB with a larger bounded save allowance for the added scouting history.
+
 ## Automatic move counters and counter-combos
 
 New move rules let coaches learn repeated offensive moves and paid combo setups during games and from earlier meetings in the same season. Recent observations fade between meetings; the regular-season scouting record carries into the playoffs. CPU fixtures, partial season advances and historical box scores use the same shared engine. Saved pregame observations stay separate from later results.

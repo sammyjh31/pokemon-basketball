@@ -18,6 +18,7 @@ test("coaches explain knowledge across a season, trade and coaching change", asy
       "/src/game/match.ts",
       "/src/game/opponentScouting.ts",
       "/src/game/scoutingContinuity.ts",
+      "/src/game/rosterTrades.ts",
     ];
     const [
       react,
@@ -29,6 +30,7 @@ test("coaches explain knowledge across a season, trade and coaching change", asy
       engine,
       scout,
       continuity,
+      trades,
     ] = await Promise.all(paths.map((p) => import(p)));
     const teams = league.createLeague({
       ...fixture.performanceRun(),
@@ -51,11 +53,15 @@ test("coaches explain knowledge across a season, trade and coaching change", asy
         [teams[0].coach.id]: { teamId: 0, opponents: { 1: memory["0:1"] } },
       },
     };
-    const changed = structuredClone(teams);
-    [changed[1].roster.PG, changed[2].roster.PG] = [
-      changed[2].roster.PG,
-      changed[1].roster.PG,
-    ];
+    const changed = structuredClone(
+      trades.exchangePlayers(
+        teams,
+        1,
+        2,
+        teams[1].roster.PG,
+        teams[2].roster.PG,
+      ),
+    );
     [changed[1].coach, changed[2].coach] = [changed[2].coach, changed[1].coach];
     const next = continuity.seedCoachScouting(
       [{ year: 1, coachBook: book }],
@@ -67,22 +73,20 @@ test("coaches explain knowledge across a season, trade and coaching change", asy
     const target = document.createElement("main");
     target.style.cssText = "max-width:1100px;margin:auto;padding:16px";
     document.body.append(target);
-    dom.default
-      .createRoot(target)
-      .render(
-        react.default.createElement(
-          "div",
-          null,
-          react.default.createElement(summary.CoachScoutingSummary, {
-            team: next[0],
-          }),
-          react.default.createElement(report.GameCounterReport, {
-            plans: second.counterPlans,
-            teams: next.slice(0, 2),
-            sequences: second.insights.court,
-          }),
-        ),
-      );
+    dom.default.createRoot(target).render(
+      react.default.createElement(
+        "div",
+        null,
+        react.default.createElement(summary.CoachScoutingSummary, {
+          team: next[0],
+        }),
+        react.default.createElement(report.GameCounterReport, {
+          plans: second.counterPlans,
+          teams: next.slice(0, 2),
+          sequences: second.insights.court,
+        }),
+      ),
+    );
     return {
       known: Object.keys(next[0].scoutingSeed.opponents[2].scouting.players)
         .length,

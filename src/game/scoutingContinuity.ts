@@ -24,6 +24,7 @@ import type {
 const AGE = 0.72,
   HANDOVER = 0.35,
   LOOKBACK = 8;
+const members = (ids: readonly number[]) => [...ids].sort((a, b) => a - b);
 const round = (n: number) => Math.round(n * 1000) / 1000;
 const fail = (): never => {
   throw Error("Invalid carried coach scouting.");
@@ -287,10 +288,58 @@ export function seedCoachScouting<T extends LeagueTeam>(
           weight: HANDOVER,
         });
     }
+    // Index each coach's observed facts once, rather than rescan every old
+    // opponent for every current player during every archived-year validation.
+    const knownPlayers = new Map<
+      number,
+      { data: ScoutedPlayer; weight: number; source: Source }
+    >();
+    const knownSignatures = new Map<
+      number,
+      {
+        moves: NonNullable<OpponentScouting["moveReads"]>["moves"];
+        source: Source;
+      }
+    >();
+    for (const source of sources) {
+      const weight = AGE ** (year - source.book.year) * source.weight;
+      for (const data of [
+        ...Object.values(source.entry.opponents),
+        { players: source.entry.selfPlayers ?? {} },
+      ])
+        for (const [key, known] of Object.entries(data.players)) {
+          const id = Number(key),
+            best = knownPlayers.get(id);
+          if (
+            !best ||
+            known.attempts * weight > best.data.attempts * best.weight
+          )
+            knownPlayers.set(id, { data: known, weight, source });
+        }
+      for (const [target, data] of Object.entries(source.entry.opponents)) {
+        const old = source.book.teams[Number(target)];
+        if (!old) continue;
+        for (const move of signatureMoves) {
+          if (move.signature?.kind !== "species") continue;
+          const count = round(
+            (data.moveReads?.moves[move.id] ?? 0) * weight * 0.7,
+          );
+          if (count < 0.05) continue;
+          const eligible = old.roster.filter((id) =>
+            move.signature!.speciesIds!.includes(id),
+          );
+          if (eligible.length !== 1) continue;
+          const id = eligible[0],
+            known = knownSignatures.get(id) ?? { moves: {}, source };
+          known.moves[move.id] = Math.max(known.moves[move.id] ?? 0, count);
+          knownSignatures.set(id, known);
+        }
+      }
+    }
     const opponents: Record<number, SeedOpponent> = {};
     for (const opponent of teams) {
       if (opponent.id === team.id) continue;
-      const ids = Object.values(opponent.roster) as number[];
+      const ids = members(Object.values(opponent.roster) as number[]);
       const candidates = sources
         .flatMap((source) => {
           const data = source.entry.opponents[opponent.id],
@@ -313,22 +362,7 @@ export function seedCoachScouting<T extends LeagueTeam>(
         OpponentScouting["moveReads"]
       >["moves"] = {};
       for (const id of ids) {
-        let best:
-          { data: ScoutedPlayer; weight: number; source: Source } | undefined;
-        for (const source of sources)
-          for (const data of [
-            ...Object.values(source.entry.opponents),
-            { players: source.entry.selfPlayers ?? {} },
-          ]) {
-            const known = data.players[id],
-              weight = AGE ** (year - source.book.year) * source.weight;
-            if (
-              known &&
-              (!best ||
-                known.attempts * weight > best.data.attempts * best.weight)
-            )
-              best = { data: known, weight, source };
-          }
+        const best = knownPlayers.get(id);
         if (best) {
           const compact = compactScouting(
             { ...emptyScouting(), players: { [id]: best.data } },
@@ -339,34 +373,14 @@ export function seedCoachScouting<T extends LeagueTeam>(
             fallback ??= best.source;
           }
         }
-        // Family signatures follow a traded player only when the observed roster identifies a unique user.
-        for (const source of sources)
-          for (const [target, data] of Object.entries(source.entry.opponents)) {
-            const old = source.book.teams[Number(target)];
-            if (!old?.roster.includes(id)) continue;
-            for (const move of signatureMoves)
-              if (
-                move.signature?.kind === "species" &&
-                move.signature.speciesIds?.includes(id) &&
-                old.roster.filter((member) =>
-                  move.signature!.speciesIds!.includes(member),
-                ).length === 1
-              ) {
-                const count = round(
-                  (data.moveReads?.moves[move.id] ?? 0) *
-                    AGE ** (year - source.book.year) *
-                    source.weight *
-                    0.7,
-                );
-                if (count >= 0.05) {
-                  signatureReads[move.id] = Math.max(
-                    signatureReads[move.id] ?? 0,
-                    count,
-                  );
-                  fallback ??= source;
-                }
-              }
+        const signature = knownSignatures.get(id);
+        if (signature) {
+          for (const [move, n] of Object.entries(signature.moves)) {
+            const key = move as (typeof MOVE_IDS)[number];
+            signatureReads[key] = Math.max(signatureReads[key] ?? 0, n!);
           }
+          fallback ??= signature.source;
+        }
       }
       if (
         !chosen &&
@@ -441,8 +455,10 @@ export function initialSeasonScouting(teams: LeagueTeam[]): ScoutingMemory {
         const opponent = teams.find((t) => t.id === Number(key));
         if (
           !opponent ||
-          JSON.stringify(entry.roster) !==
-            JSON.stringify(Object.values(opponent.roster)) ||
+          JSON.stringify(members(entry.roster)) !==
+            JSON.stringify(
+              members(Object.values(opponent.roster) as number[]),
+            ) ||
           entry.opponentCoachId !== opponent.coach?.id
         )
           return fail();
@@ -489,8 +505,8 @@ export function openingScouting(home: LeagueTeam, away: LeagueTeam) {
       return fail();
     if (
       old &&
-      (JSON.stringify(old.roster) !==
-        JSON.stringify(Object.values(opponent.roster)) ||
+      (JSON.stringify(members(old.roster)) !==
+        JSON.stringify(members(Object.values(opponent.roster) as number[])) ||
         old.opponentCoachId !== opponent.coach?.id)
     )
       return fail();

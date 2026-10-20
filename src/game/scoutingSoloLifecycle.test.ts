@@ -36,6 +36,7 @@ it("retains full-league and playoff scouting into a saved partial second franchi
   expect(next.run.leagueTeams!.every((t) => t.scoutingSeed?.year === 2)).toBe(
     true,
   );
+  next = gameReducer(next, { type: "SWAP", first: "PG", second: "SG" });
   next = { ...next, run: await advanceFranchiseSeasonAsync(next.run, 2) };
   expect(
     next.run.seasonProgress!.result!.league!.games.every(

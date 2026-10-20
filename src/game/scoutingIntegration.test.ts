@@ -3,7 +3,11 @@ import { createLeague } from "./league";
 import { performanceRun } from "./seasonPerformance.testUtils";
 import { simulateMatch } from "./match";
 import { recordScouting, scoutingForMatch } from "./opponentScouting";
-import { seedCoachScouting, initialSeasonScouting } from "./scoutingContinuity";
+import {
+  seedCoachScouting,
+  initialSeasonScouting,
+  validateScoutingSeeds,
+} from "./scoutingContinuity";
 import { captureCoachBook } from "./coachScoutingArchive";
 import { localSeasonBuilder } from "./localSeason";
 import { simulatePlayoffs } from "./playoffs";
@@ -51,6 +55,35 @@ it("seeds every regular/CPU/partial fixture and standalone match from the same a
     teams,
     2,
   );
+  const swapped = {
+    ...all[0],
+    roster: { ...all[0].roster, PG: all[0].roster.SG, SG: all[0].roster.PG },
+  };
+  expect(() => simulateMatch(swapped, all[1], 1982)).not.toThrow();
+  expect(() =>
+    validateScoutingSeeds(
+      [
+        {
+          year: 1,
+          coachBook: {
+            ...book,
+            teams: teams.map((t) => ({
+              id: t.id,
+              roster: Object.values(t.roster) as number[],
+              coachId: t.coach!.id,
+            })),
+          },
+        },
+      ],
+      [swapped, ...all.slice(1)],
+      2,
+    ),
+  ).not.toThrow();
+  const swappedRound = seasonBuilder(
+    { ...run, leagueTeams: all, roster: swapped.roster },
+    1,
+  );
+  expect(() => swappedRound.fixtures.forEach(swappedRound.play)).not.toThrow();
   const round = seasonBuilder({ ...run, leagueTeams: all }, 1);
   round.fixtures.forEach(round.play);
   expect(round.finish().league!.scouting!["0:1"].carried).toBe(1);

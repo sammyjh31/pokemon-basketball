@@ -29,3 +29,9 @@
 - Policy/engine: 44 checks across 6 files passed; additional signature attribution/zero-shot trade cases passed (7 policy checks).
 - Full lifecycle: 3 checks across 3 files passed in272s, including full1230-game solo year, partial year2 cold/warm restore, two local years and mixed historical move rules v1/v2.
 - UI summary: 2 checks passed. Browser/typecheck temporarily obstructed by concurrent visual-refresh JSX edits; those files are excluded from this branch commit.
+
+- Clean attached release checkout created because the earlier checkout was concurrently used for visual refresh. Release branch `codex/scouting-continuity-release`; no foreign edits included.
+- Independent review caught two P1 defects; regression RED/GREEN verifies position-swap tolerance and long-career save-size support. Rich30club/50year projected181.2M chars; reader bound256M,17M storage/routing reopen verified.
+- Indexed lookup preserves facts and improves49book30club benchmark from287ms to29.9ms per boundary and9.85s to819ms across50 boundaries (reviewer measurement).
+- Focused134 checks/16files passed38.4s; review-fix16checks/5files passed11.7s; typecheck passes clean checkout.
+- Browser4 desktop/mobile checks passed21.4s. Production local year2 compiled worker cold5860ms/warm947ms, exact frozen history and seeds preserved; no page errors/HTTP failures.
