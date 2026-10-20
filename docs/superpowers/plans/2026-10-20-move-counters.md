@@ -33,3 +33,6 @@
 - Core evidence: 59 checks in eight files pass (11.68 s), including frozen v2 match SHA 7fe4e0361617b96cb95abbed7a5ff52485648d2d3ecc3d8dae84312b2e480088 and prior moves-v1 coverage. Adoption/new-feature group 15 checks passed (14.54 s). Typecheck passed. New full-league and local cold/warm lifecycle group running.
 - Ruling: record offensive observations directly in compact match output, rather than infer them from total move uses; a move used defensively must not be mistaken for an offensive pattern. Official arcade boxes cannot invent these observations.
 - Ruling: historical v1/v2 local fixture explicitly pins its second season to v2; default adoption assertions advance to v3. No released fingerprint is updated.
+
+- Final regression group: 103 checks/19 files passed (23.49 s). Full all-seven solo/cold-warm + mixed local lifecycle group: 4 checks/3 files passed (243.10 s). Browser move/signature/counter flows: 6/6 (15.2 s); final counter screenshots: 2/2 (5.7 s). Independent review no findings.
+- Follow-up: manual official records must reject simulated moveObservations/counterPlans. Confirmed RED, added two-field guard, official/new-match regression group 17/4files passed (21.39 s). Reviewer checked the follow-up with no findings.

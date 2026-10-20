@@ -1,5 +1,17 @@
 # Local and cloud handoff — 2026-10-20
 
+## Automatic move counters and counter-combos — October 20
+
+`movesetVersion: 3` extends v2 signatures/combos with observed-only counter scouting. New solo/local defaults and next franchise boundaries adopt 3; old archives and active runs retain their versions. All `>=2` checks deliberately retain original v2 behavior. The full v2 match SHA stays `7fe4e0361617b96cb95abbed7a5ff52485648d2d3ecc3d8dae84312b2e480088`; original v1 frozen tests pass too.
+
+`moveCounters.ts` owns match-local reads, cooldowns, eligibility and payments. Four defensive responses reduce existing live move bonuses, capped at 42%; two offensive paired answers recover only part of the disrupted benefits. Individual responses cost 2.5 energy; paired defense costs 3 per participant, offense answers cost 3.5. Participant cooldowns are 55 seconds; one defensive response and one offensive answer per segment prevent recursive chains. Coordination depends on active players, minimum mastery (25 defense/75 offense), chemistry, energy and coaching adaptability. Adaptive-coaching/ability switches are respected.
+
+Observations are emitted from actual offensive move activations and paid combo setups, including interrupted setups, before their affected court resolution. `LeagueMatch.moveObservations` carries these counts in both full and compact matches. Existing `recordScouting` discounts prior reads by 0.65 and adds completed-game evidence into optional `OpponentScouting.moveReads`; cloning and validation preserve immutable pregame snapshots. This reaches CPU/solo/local/partial seasons, postseason and archived replay without another simulation path. Reads are current-season memory and carry into that year's playoffs. Official arcade games reject invented observation/plan fields and move telemetry.
+
+Optional `MoveStats.counters` validates known IDs and integer counts and participates in existing merge/equality/career validation. It stores participant activations, never invented makes or stops. `GameCounterReport` and the existing move usage component show evidence, confidence, real timing, energy and usage across boxes/season/playoffs/careers. Older views get no fabricated data.
+
+Verification so far: 103 focused checks in 19 files passed (23.49 s); four real solo/local lifecycle checks in three files passed (243.10 s), including all-seven 1,230-game league, playoffs, career totals, tamper detection, mixed v1/v2 history and cold/warm restoration. The official-boundary follow-up passed 17 checks in four files (21.39 s). Six desktop/mobile move/signature/counter flows passed (15.2 s), with the final counter flows repeated 2/2 (5.7 s) for readable screenshots. Typecheck/build pass with the existing bundle-size advisory. One independent whole-branch review and its small official-boundary follow-up found no remaining issues. Final production-hosting evidence will be added before release. These are targeted groups, not a new full-suite run.
+
 ## Generation-selectable lineup builder — October 20
 
 The builder now exposes the shared Gen I–VII / all-seven selector before coach selection. An explicit pool applies to search, placement, randomization and bench filling; CPU recruitment still uses all 809 species with globally unique eight-player rosters. Switching to a builder without an explicit prior selection defaults to all seven. New runs and mode changes retain an explicit selection; old saved drafts retain their original Gen I–II pool until the player changes it.
