@@ -23,7 +23,7 @@ import type { OfficialGame } from "../game/franchiseFeatures";
 import { submitPlayoffGame, simulatePlayoffsAsync } from "../game/playoffs";
 import type { PlayoffMode } from "../game/playoffTypes";
 import type { GameState, Run } from "../game/types";
-import { parseLineup } from "../game/lineup";
+import { parseLineup, parseLineupPool } from "../game/lineup";
 type HookAction = GameAction | { type: "RESTORE_SAVED"; state: GameState };
 const reducer = (state: GameState, action: HookAction) =>
   action.type === "RESTORE_SAVED" ? action.state : gameReducer(state, action);
@@ -65,6 +65,7 @@ export function useGame(
         state: initial,
         notice: null,
         roster: null,
+        sharedPool: undefined,
         confirmImport: false,
         restore: undefined,
         preserveSource: false,
@@ -84,6 +85,9 @@ export function useGame(
       ? prepared
       : { ...prepared, ...settleLoad(storage, prepared, source) };
     const roster = parseLineup(window.location.search);
+    const sharedPool = roster
+      ? (parseLineupPool(window.location.search) ?? undefined)
+      : undefined;
     const hasProgress =
       Object.values(loaded.state.run.roster).some((id) => id !== null) ||
       loaded.state.run.rerollsLeft < 2;
@@ -92,9 +96,7 @@ export function useGame(
         type: "NEW_RUN",
         mode: "free",
         includeLegends: true,
-        ...(Object.values(roster).some((id) => id !== null && id > 251)
-          ? { draftPool: "all" as const }
-          : {}),
+        draftPool: sharedPool,
         seed: newSeed(),
       });
       loaded.state = gameReducer(fresh, { type: "SET_LINEUP", roster });
@@ -109,6 +111,7 @@ export function useGame(
     return {
       ...loaded,
       roster,
+      sharedPool,
       confirmImport: !!roster && hasProgress,
       source,
       seed,
@@ -365,9 +368,7 @@ export function useGame(
         type: "NEW_RUN",
         mode: "free",
         includeLegends: true,
-        ...(Object.values(loaded.roster).some((id) => id !== null && id > 251)
-          ? { draftPool: "all" as const }
-          : {}),
+        draftPool: loaded.sharedPool,
         seed: newSeed(),
       });
       dispatch({ type: "SET_LINEUP", roster: loaded.roster });
@@ -379,6 +380,7 @@ export function useGame(
     // Consume the import after mounting so refresh restores subsequent edits.
     const url = new URL(window.location.href);
     url.searchParams.delete("lineup");
+    url.searchParams.delete("pool");
     window.history.replaceState(null, "", url);
   }, [loaded.roster, importPending, restoring]);
   useEffect(() => {

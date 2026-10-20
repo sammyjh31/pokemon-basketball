@@ -2,14 +2,18 @@ import {
   DRAFT_GENERATIONS,
   draftPokemon,
   draftPoolLabel,
+  isDraftPool,
   type DraftPool,
 } from "../game/draftPool";
+import type { Mode } from "../game/types";
 export function ChallengePoolPicker({
+  mode = "spin",
   pool,
   includeLegends,
   disabled,
   onChange,
 }: {
+  mode?: Mode;
   pool: DraftPool | undefined;
   includeLegends: boolean;
   disabled: boolean;
@@ -19,20 +23,21 @@ export function ChallengePoolPicker({
     (p) => includeLegends || !p.legendary,
   ).length;
   return (
-    <section className="challenge-pool" aria-label="Challenge Pokémon pool">
+    <section
+      className="challenge-pool"
+      aria-label={`${mode === "free" ? "Lineup" : "Challenge"} Pokémon pool`}
+    >
       <label>
         Draft pool
         <select
-          aria-label="Challenge generation"
+          aria-label={`${mode === "free" ? "Lineup" : "Challenge"} generation`}
           value={pool ?? "legacy"}
           disabled={disabled}
-          onChange={(e) =>
-            onChange(
-              e.target.value === "all"
-                ? "all"
-                : (Number(e.target.value) as DraftPool),
-            )
-          }
+          onChange={(e) => {
+            const next =
+              e.target.value === "all" ? "all" : Number(e.target.value);
+            if (isDraftPool(next)) onChange(next);
+          }}
         >
           {pool === undefined && (
             <option value="legacy">Generations I–II (saved pool)</option>
@@ -49,7 +54,9 @@ export function ChallengePoolPicker({
         {draftPoolLabel(pool)} · {count} eligible Pokémon.{" "}
         {pool === undefined
           ? "This saved draft keeps its original player pool."
-          : "Your offers and re-rolls use this pool. CPU teams draft from all seven generations, with unique rosters."}
+          : mode === "free"
+            ? "Search, randomize and auto-fill bench use this pool. CPU teams draft from all seven generations, with unique rosters."
+            : "Your offers and re-rolls use this pool. CPU teams draft from all seven generations, with unique rosters."}
       </p>
     </section>
   );

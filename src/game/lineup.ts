@@ -1,5 +1,5 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
-import { draftPokemon, type DraftPool } from "./draftPool";
+import { draftPokemon, inDraftPool, type DraftPool } from "./draftPool";
 import { nextRandom } from "./random";
 import { ROSTER_SLOTS, type Roster } from "./types";
 
@@ -21,15 +21,25 @@ export function validRoster(
   );
 }
 
+/** Undefined means an old, untagged Gen I–II link; null means an invalid tag. */
+export function parseLineupPool(search: string): DraftPool | undefined | null {
+  const pool = new URLSearchParams(search).get("pool");
+  if (pool === null) return undefined;
+  if (pool === "all") return "all";
+  return /^[1-7]$/.test(pool) ? (Number(pool) as DraftPool) : null;
+}
+
 export function parseLineup(search: string): Roster | null {
   const source = new URLSearchParams(search).get("lineup");
   if (!source || !/^\d{1,3}(,\d{1,3}){4}(,\d{1,3}){0,3}$/.test(source))
     return null;
   const ids = source.split(",").map(Number);
-  const max = new URLSearchParams(search).get("pool") === "all" ? 809 : 251;
+  const pool = parseLineupPool(search);
+  if (pool === null) return null;
+  const max = pool === undefined ? 251 : 809;
   if (
     (ids.length !== 5 && ids.length !== 8) ||
-    ids.some((id) => id > max) ||
+    ids.some((id) => id !== 0 && !inDraftPool(pool, id)) ||
     ids.every((id) => id === 0)
   )
     return null;
@@ -39,12 +49,17 @@ export function parseLineup(search: string): Roster | null {
   return validRoster(roster, true, max) ? roster : null;
 }
 
-export function lineupLink(base: string, roster: Roster): string {
+export function lineupLink(
+  base: string,
+  roster: Roster,
+  pool?: DraftPool,
+): string {
   const url = new URL(base);
   url.search = "";
   url.hash = "";
   url.search = `lineup=${ROSTER_SLOTS.map((p) => roster[p] ?? 0).join(",")}`;
-  if (Object.values(roster).some((id) => id !== null && id > 251))
+  if (pool !== undefined) url.searchParams.set("pool", String(pool));
+  else if (Object.values(roster).some((id) => id !== null && id > 251))
     url.searchParams.set("pool", "all");
   return url.toString();
 }

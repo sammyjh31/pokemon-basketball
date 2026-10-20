@@ -18,10 +18,10 @@ export function LineupTools({
   useEffect(() => {
     setNotice("");
     setFallback("");
-  }, [run.roster]);
+  }, [run.roster, run.draftPool]);
   const filled = Object.values(run.roster).some((id) => id !== null);
   const copy = async () => {
-    const link = lineupLink(window.location.href, run.roster);
+    const link = lineupLink(window.location.href, run.roster, run.draftPool);
     try {
       await navigator.clipboard.writeText(link);
       setNotice("Lineup link copied.");

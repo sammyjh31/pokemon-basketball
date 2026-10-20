@@ -201,11 +201,27 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     if (
       state.franchise ||
       run.result ||
-      run.mode !== "spin" ||
       !isDraftPool(action.pool) ||
       action.pool === run.draftPool
     )
       return state;
+    if (run.mode === "free")
+      return {
+        ...state,
+        run: {
+          ...run,
+          draftPool: action.pool,
+          roster: Object.fromEntries(
+            ROSTER_SLOTS.map((slot) => [
+              slot,
+              run.roster[slot] !== null &&
+              inDraftPool(action.pool, run.roster[slot]!)
+                ? run.roster[slot]
+                : null,
+            ]),
+          ) as typeof run.roster,
+        },
+      };
     const next = createRun(
       "spin",
       run.includeLegends,

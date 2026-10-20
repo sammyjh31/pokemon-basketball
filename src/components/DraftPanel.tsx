@@ -67,7 +67,7 @@ export function DraftPanel({
   const [search, setSearch] = useState(""),
     [type, setType] = useState("");
   const [sort, setSort] = useState<SortKey>("dex");
-  // Typing stays responsive; the 251-card grid catches up a frame later.
+  // Typing stays responsive; the player grid catches up a frame later.
   const deferredSearch = useDeferredValue(search);
   const count = Object.values(run.roster).filter(Boolean).length;
   const chosen = POKEMON_BY_ID.get(pending ?? -1);
