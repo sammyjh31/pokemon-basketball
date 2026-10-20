@@ -7,6 +7,7 @@ export interface ScoutedPlayer {
 
 /** Observations of one opponent, discounted between meetings; never a win bonus. */
 export interface OpponentScouting {
+  moveReads?: import("./counterTypes").MoveReads;
   games: number;
   possessions: number;
   pickRolls: number;

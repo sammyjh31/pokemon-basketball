@@ -1,3 +1,10 @@
+import {
+  beginCounterSegment,
+  counterMove,
+  counterCombo,
+  type CounterRuntime,
+} from "./moveCounters";
+import type { CounterEvent } from "./counterTypes";
 import { activateMove, beginMoveSegment } from "./matchMoves";
 import {
   beginComboSegment,
@@ -25,6 +32,9 @@ import type {
 
 export type Court = Map<Player, CourtPoint>;
 export interface CourtContext {
+  defensiveCounters?: CounterRuntime;
+  offensiveCounters?: CounterRuntime;
+  counterChemistry?: number;
   combos?: import("./matchCombos").ComboRuntime;
   comboChemistry?: number;
   movesNow?: number;
@@ -446,6 +456,8 @@ export function resolveCourtPossession(
   source: CourtContext,
   random: () => number,
 ) {
+  beginCounterSegment(source.defensiveCounters);
+  beginCounterSegment(source.offensiveCounters);
   if (source.movesNow !== undefined)
     beginMoveSegment([...source.offense, ...source.defense]);
   if (source.combos) beginComboSegment(source.combos);
@@ -470,6 +482,7 @@ export function resolveCourtPossession(
     seconds = 0;
   const initialClock = clock,
     actions: CourtAction[] = [];
+  const counterEvents: CounterEvent[] = [];
   const moveEvents: MoveEvent[] = [];
   const comboEvents: ComboEvent[] = [];
   const useMove = (
@@ -484,7 +497,24 @@ export function resolveCourtPossession(
       receiver,
       zone,
     });
-    if (event) moveEvents.push(event);
+    if (event) {
+      moveEvents.push(event);
+      if (c.offense.includes(player)) {
+        const guard = c.guards.get(player);
+        if (guard) {
+          const counter = counterMove(
+            c.defensiveCounters,
+            player,
+            guard,
+            event,
+            c.movesNow + seconds,
+            c.defense,
+            receiver,
+          );
+          if (counter) counterEvents.push(counter);
+        }
+      }
+    }
   };
   const startPair = (
     kind: "screen" | "pass" | "kickout",
@@ -500,7 +530,25 @@ export function resolveCourtPossession(
         (a) => a.kind === "drive" && a.playerId === from.box.playerId,
       ),
     });
-    if (event) comboEvents.push(event);
+    if (event) {
+      comboEvents.push(event);
+      counterEvents.push(
+        ...counterCombo(
+          c.defensiveCounters,
+          c.offensiveCounters,
+          c.combos,
+          event,
+          {
+            now: c.movesNow + seconds,
+            offense: c.offense,
+            defense: c.defense,
+            guards: c.guards,
+            offenseChemistry: c.comboChemistry ?? 50,
+            defenseChemistry: c.counterChemistry ?? 50,
+          },
+        ),
+      );
+    }
   };
   let coverage: ScreenCoverage | undefined, coverageReason: string | undefined;
   let outcome: CourtSequence["outcome"] = "shot",
@@ -866,7 +914,20 @@ export function resolveCourtPossession(
         clock: releaseClock,
         zone: shot.zone,
       });
-      if (event) moveEvents.push(event);
+      if (event) {
+        moveEvents.push(event);
+        if (player === ball) {
+          const counter = counterMove(
+            c.defensiveCounters,
+            ball,
+            shot.defender,
+            event,
+            releaseTime,
+            c.defense,
+          );
+          if (counter) counterEvents.push(counter);
+        }
+      }
     }
     if (shot.defender.moves?.effects.movement !== 1)
       court.set(
@@ -893,7 +954,7 @@ export function resolveCourtPossession(
         releaseTime = c.movesNow + seconds;
         releaseClock = clock;
         // V1 retains its released timing; V2 waits for match-level pressure/foul checks.
-        if (ball.moves?.version !== 2) commitReleaseMoves();
+        if ((ball.moves?.version ?? 0) < 2) commitReleaseMoves();
       }
       spend("shoot", rushedAdvance ? clock : Math.min(clock, 0.6));
     }
@@ -935,12 +996,13 @@ export function resolveCourtPossession(
       (geometry.defender.moves?.effects.contest ?? 0),
     ...(moveEvents.length ? { moves: moveEvents } : {}),
     ...(comboEvents.length ? { combos: comboEvents } : {}),
+    ...(counterEvents.length ? { counters: counterEvents } : {}),
     outcome,
     points: 0,
   };
   let shotCommitted = false;
   const commitShotMoves =
-    ball.moves?.version === 2 && releaseTime !== undefined
+    (ball.moves?.version ?? 0) >= 2 && releaseTime !== undefined
       ? () => {
           if (shotCommitted || sequence.outcome !== "shot") return;
           shotCommitted = true;
@@ -960,6 +1022,7 @@ export function resolveCourtPossession(
             (final.defender.moves?.effects.contest ?? 0);
           if (moveEvents.length) sequence.moves = moveEvents;
           if (comboEvents.length) sequence.combos = comboEvents;
+          if (counterEvents.length) sequence.counters = counterEvents;
         }
       : undefined;
   return {

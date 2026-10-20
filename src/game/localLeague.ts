@@ -170,7 +170,7 @@ export function createLocalLeague(
           matchupVersion: 1 as const,
           possessionVersion: 1 as const,
           gameFlowVersion: 1 as const,
-          movesetVersion: 2 as const,
+          movesetVersion: 3 as const,
         }
       : {}),
     version,

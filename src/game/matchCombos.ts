@@ -29,6 +29,8 @@ export interface ComboRuntime {
     b: ComboPlayer;
     received: boolean;
     cancelled?: boolean;
+    countered?: boolean;
+    readByDefense?: boolean;
     now: number;
     strength: number;
     lineupChemistry: number;
@@ -65,7 +67,8 @@ function ready(
     now >= 0 &&
     p.box.teamId === runtime.teamId &&
     (p.box.fouls ?? 0) < 6 &&
-    p.moves?.version === 2 &&
+    p.moves !== undefined &&
+    p.moves.version >= 2 &&
     p.moves.plan.xp >= 25 &&
     (!checkUsed || !p.moves.used) &&
     Number.isFinite(p.energy) &&

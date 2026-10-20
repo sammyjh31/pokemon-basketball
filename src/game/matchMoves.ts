@@ -21,7 +21,7 @@ export const neutralMoveEffects = () => ({
   drive: 0,
 });
 export interface MoveRuntime {
-  version: 1 | 2;
+  version: 1 | 2 | 3;
   pokemonId: number;
   plan: MoveAssignment;
   effects: ReturnType<typeof neutralMoveEffects>;
@@ -60,7 +60,7 @@ export function beginMoveSegment(players: readonly Mover[]) {
 }
 /** V2 teamwork and signatures share a bounded effect budget; v1 arithmetic stays frozen. */
 export function capMoveEffects(player: Mover) {
-  if (player.moves?.version !== 2) return;
+  if (!player.moves || player.moves.version < 2) return;
   const e = player.moves.effects;
   for (const [key, maximum] of Object.entries({
     movement: 1.35,
@@ -99,7 +99,7 @@ export function activateMove(
     (move) =>
       move.opportunities.includes(opportunity) &&
       (!move.signature ||
-        (state.version === 2 &&
+        (state.version >= 2 &&
           state.plan.xp >= move.signature.minimumMastery &&
           (move.signature.kind === "species"
             ? move.signature.speciesIds!.includes(state.pokemonId)

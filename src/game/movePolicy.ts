@@ -142,7 +142,7 @@ export function coachMoves(
         : 0;
     return role + style + control;
   };
-  const pool = movePool(id, team.movesetVersion === 2 ? 2 : 1);
+  const pool = movePool(id, (team.movesetVersion ?? 0) >= 2 ? 2 : 1);
   const moves = pool
     .filter((move) => !move.signature || xp >= move.signature.minimumMastery)
     .map((move, order) => ({ move, order, value: value(move) }))
@@ -183,14 +183,14 @@ export function moveValue(
           (plan.specialization === "fundamentals" ? 0 : 0.4),
       )
     : 0;
-  return team.movesetVersion === 2
+  return (team.movesetVersion ?? 0) >= 2
     ? Math.min(3, basic + comboValue(team, id, profile, xp))
     : basic;
 }
 
 /** Upcoming or equipped signature practice; uses the same finite species pool and coach selection. */
 export function signatureTrainingFocus(team: MoveTeam, id: number) {
-  if (team.movesetVersion !== 2 || !movesEnabled(team)) return undefined;
+  if ((team.movesetVersion ?? 0) < 2 || !movesEnabled(team)) return undefined;
   const signatures = movePool(id, 2).filter((m) => m.signature);
   const xp = team.abilityMastery?.[id] ?? 0;
   const next = signatures

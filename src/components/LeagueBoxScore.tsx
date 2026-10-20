@@ -1,3 +1,4 @@
+import { GameCounterReport } from "./GameCounterReport";
 import { GameMovesReport, GameComboReport } from "./MovesetPanel";
 import { GameMasteryReport } from "./MasteryPanel";
 import { GameFlowPanel } from "./GameFlowPanel";
@@ -331,6 +332,11 @@ export function LeagueBoxScore({
             </tbody>
           </table>
         </div>
+        <GameCounterReport
+          plans={match.counterPlans}
+          teams={[home, away]}
+          sequences={match.insights?.court}
+        />
         <GameMovesReport assignments={match.moveAssignments} />
         <GameComboReport
           assignments={match.comboAssignments}

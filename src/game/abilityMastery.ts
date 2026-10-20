@@ -253,7 +253,7 @@ export function advanceMastery(
                 ),
               ) * 0.025
             : 0) +
-          (team.movesetVersion === 2
+          ((team.movesetVersion ?? 0) >= 2
             ? Math.min(
                 2,
                 Object.values(stats?.moves?.combos?.shotsCreated ?? {}).reduce(

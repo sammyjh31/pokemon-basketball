@@ -23,6 +23,7 @@ export interface CourtAction {
   clock: number;
 }
 export interface CourtSequence {
+  counters?: import("./counterTypes").CounterEvent[];
   combos?: import("./comboTypes").ComboEvent[];
   moves?: import("./moveTypes").MoveEvent[];
   possession: number;

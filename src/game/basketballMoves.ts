@@ -85,8 +85,8 @@ export const basketballMoves: readonly BasketballMove[] = [
   },
 ];
 export const allBasketballMoves = [...basketballMoves, ...signatureMoves];
-export const isMovesetVersion = (value: unknown): value is 1 | 2 =>
-  value === 1 || value === 2;
+export const isMovesetVersion = (value: unknown): value is 1 | 2 | 3 =>
+  value === 1 || value === 2 || value === 3;
 export function movesEnabled(team: Partial<MoveTeam>) {
   return (
     isMovesetVersion(team.movesetVersion) &&
@@ -97,9 +97,10 @@ export function movesEnabled(team: Partial<MoveTeam>) {
   );
 }
 export const signaturesEnabled = (team: Partial<MoveTeam>) =>
-  team.movesetVersion === 2 && movesEnabled(team);
+  (team.movesetVersion === 2 || team.movesetVersion === 3) &&
+  movesEnabled(team);
 /** Basketball adaptations, deliberately separate from canonical battle learnsets. */
-export function movePool(id: number, version: 1 | 2 = 1): BasketballMove[] {
+export function movePool(id: number, version: 1 | 2 | 3 = 1): BasketballMove[] {
   const mon = POKEMON_BY_ID.get(id);
   if (!mon) return [];
   const a = playerProfile(mon).attributes;
@@ -130,5 +131,5 @@ export function movePool(id: number, version: 1 | 2 = 1): BasketballMove[] {
         return true;
     }
   });
-  return version === 2 ? [...basic, ...signatureMovesForSpecies(id)] : basic;
+  return version >= 2 ? [...basic, ...signatureMovesForSpecies(id)] : basic;
 }

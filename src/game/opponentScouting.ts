@@ -1,3 +1,4 @@
+import { updatedMoveReads, validateMoveReads } from "./counterTelemetry";
 import type { LeagueBox, LeagueMatch, LeagueTeam } from "./types";
 import type {
   MatchScouting,
@@ -37,6 +38,7 @@ function updateOpponent(
   box: LeagueBox[],
   match: LeagueMatch,
   opponentSide: "home" | "away",
+  observer: LeagueTeam,
 ): OpponentScouting {
   const players: Record<number, ScoutedPlayer> = {};
   for (const id of Object.values(opponent.roster)) {
@@ -59,6 +61,16 @@ function updateOpponent(
   }
   const tactics = match.typeTactics?.[opponentSide];
   return {
+    ...(observer.movesetVersion === 3 &&
+    observer.engineRules?.adaptiveCoaching !== false &&
+    observer.engineRules?.abilities !== false
+      ? {
+          moveReads: updatedMoveReads(
+            prior.moveReads,
+            match.moveObservations?.[opponentSide],
+          ),
+        }
+      : {}),
     games: prior.games + 1,
     possessions: prior.possessions * RECENCY + match.possessions,
     pickRolls: prior.pickRolls * RECENCY + match.plays.pickRoll[opponentSide],
@@ -84,6 +96,7 @@ export function recordScouting(
     match.awayBox,
     match,
     "away",
+    home,
   );
   memory[awayKey] = updateOpponent(
     memory[awayKey] ?? emptyScouting(),
@@ -91,6 +104,7 @@ export function recordScouting(
     match.homeBox,
     match,
     "home",
+    away,
   );
 }
 
@@ -146,7 +160,13 @@ function validateOpponent(
   value: unknown,
   opponent: LeagueTeam,
 ): OpponentScouting {
-  const input = record(value, HISTORY_KEYS),
+  const hasReads =
+    !!value && typeof value === "object" && Object.hasOwn(value, "moveReads");
+  if (hasReads && opponent.movesetVersion !== 3) return invalid();
+  const input = record(
+      value,
+      hasReads ? [...HISTORY_KEYS, "moveReads"] : HISTORY_KEYS,
+    ),
     games = count(input.games, 1000),
     possessions = count(input.possessions),
     pickRolls = count(input.pickRolls),
@@ -184,7 +204,23 @@ function validateOpponent(
       return invalid();
     players[id] = { attempts, points, rimAttempts, threeAttempts };
   }
-  return { games, possessions, pickRolls, switches, helpRotations, players };
+  const moveReads = hasReads ? validateMoveReads(input.moveReads) : undefined;
+  if (
+    games === 0 &&
+    moveReads &&
+    (Object.keys(moveReads.moves).length ||
+      Object.keys(moveReads.combos).length)
+  )
+    return invalid();
+  return {
+    games,
+    possessions,
+    pickRolls,
+    switches,
+    helpRotations,
+    players,
+    ...(moveReads ? { moveReads } : {}),
+  };
 }
 
 /** Validate external pregame observations and return an independently owned view. */

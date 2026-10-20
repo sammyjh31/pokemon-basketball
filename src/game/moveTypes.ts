@@ -45,7 +45,7 @@ export const SIGNATURE_MOVE_IDS = [
   "lucario-aura-sphere",
 ] as const;
 export const MOVE_IDS = [...BASE_MOVE_IDS, ...SIGNATURE_MOVE_IDS] as const;
-export type MovesetVersion = 1 | 2;
+export type MovesetVersion = 1 | 2 | 3;
 export interface SignatureEffects {
   movement?: number;
   passing?: number;
@@ -117,6 +117,7 @@ export type MoveTeam = Pick<
   };
 };
 export interface MoveStats {
+  counters?: import("./counterTypes").CounterStats;
   combos?: import("./comboTypes").ComboStats;
   uses: Partial<Record<MoveId, number>>;
   energySpent: number;

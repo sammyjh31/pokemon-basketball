@@ -1,3 +1,8 @@
+import {
+  COUNTER_LABELS,
+  type CounterId,
+  type CounterComboId,
+} from "../game/counterTypes";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
   allBasketballMoves,
@@ -32,6 +37,14 @@ export function MovesetPanel({
         automatically. Moves are basketball adaptations, with energy costs and
         cooldowns. Earned mastery follows Pokémon through trades and seasons.
       </p>
+      {team.movesetVersion === 3 && (
+        <p>
+          Coaches automatically counter repeated moves and combos using observed
+          evidence. Defensive responses and offensive counter-combos cost energy
+          and depend on mastery, chemistry and available players. Counter
+          scouting is disabled when adaptive coaching or abilities are off.
+        </p>
+      )}
       <p>
         {historical
           ? "Assignments projected from this archived roster and pregame XP."
@@ -78,7 +91,7 @@ export function MovesetPanel({
                     </li>
                   ))}
                 </ul>
-                {team.movesetVersion === 2 && (
+                {(team.movesetVersion ?? 0) >= 2 && (
                   <details>
                     <summary>Signature moves and unlocks</summary>
                     <p>
@@ -116,7 +129,7 @@ export function MovesetPanel({
           })}
         </ul>
       )}
-      {team.movesetVersion === 2 && movesEnabled(team) && (
+      {(team.movesetVersion ?? 0) >= 2 && movesEnabled(team) && (
         <details>
           <summary>Coach combo playbook</summary>
           <p>
@@ -184,6 +197,24 @@ export function MoveUsage({ rows }: { rows: AbilityStatsRow[] }) {
                       Participant counts; each partner receives credit. Shots
                       created are attempts, not made baskets. Energy includes
                       combo setup costs.
+                    </p>
+                  )}
+                  {stats.counters && (
+                    <p>
+                      {Object.entries(stats.counters.responses)
+                        .map(
+                          ([id, n]) =>
+                            `${COUNTER_LABELS[id as CounterId]} ×${n}`,
+                        )
+                        .concat(
+                          Object.entries(stats.counters.counterCombos).map(
+                            ([id, n]) =>
+                              `${COUNTER_LABELS[id as CounterComboId]} ×${n}`,
+                          ),
+                        )
+                        .join(" · ")}{" "}
+                      · Participant activations, not guaranteed stops or
+                      baskets. Energy includes counter costs.
                     </p>
                   )}
                   <small>

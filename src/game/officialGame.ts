@@ -618,6 +618,8 @@ export function validateOfficialGame(
   const game = value as unknown as OfficialGame,
     match = game.match;
   if (
+    match.moveObservations !== undefined ||
+    match.counterPlans !== undefined ||
     !integer(match.overtimePeriods, 0, 100) ||
     !integer(match.homeScore) ||
     !integer(match.awayScore) ||

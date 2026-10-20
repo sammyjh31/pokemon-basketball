@@ -95,7 +95,8 @@ export function verifyMasteryChronology(
       sources = expected;
     replace(item.fromTeamId ?? 0, give, receive, "trade", sources);
     replace(item.teamId, receive, give, "trade", sources);
-    if (expected?.[0].movesetVersion === 2) expected = syncTeamBonds(expected);
+    if (expected && (expected[0].movesetVersion ?? 0) >= 2)
+      expected = syncTeamBonds(expected);
   };
   const boundary = (initial: LeagueTeam[]): LeagueTeam[] => {
     if (initial[0].abilityMasteryVersion !== 1) {
@@ -125,7 +126,7 @@ export function verifyMasteryChronology(
           : initial;
       // V2 partnership practice must use the same verified, earned familiarity as camp.
       // Chemistry chronology independently validates this final bank.
-      if (initial[0].movesetVersion === 2)
+      if ((initial[0].movesetVersion ?? 0) >= 2)
         expected = teamsWithChemistry(
           expected,
           archived.replay!.playoffs.chemistryBonds,
