@@ -1,0 +1,238 @@
+/* Shared game surfaces extend the Local League art direction. */
+.app-shell {
+  --panel: #142131;
+  --line: #36465b;
+  --gold: #f0d885;
+  --muted: #b0bfd0;
+  --blue: #9dc7f0;
+  color: #f2efdf;
+}
+.app-shell .masthead {
+  background: #152132;
+  border-bottom: 1px solid #46536a;
+}
+.app-shell .brand {
+  color: #f4efd9;
+}
+.app-shell .brand > span {
+  color: #f0d885;
+}
+.app-shell .mode-tabs {
+  background: #0a1422;
+  border: 1px solid #3d4d61;
+  border-radius: 12px;
+  padding: 4px;
+}
+.app-shell .mode-tabs button {
+  border-radius: 8px;
+}
+.app-shell .mode-tabs button[aria-pressed="true"] {
+  color: #192231;
+  background: #f0d885;
+}
+.app-shell .button {
+  border-radius: 10px;
+  min-height: 44px;
+}
+.app-shell .button.primary {
+  background: #f0d885;
+  color: #17202d;
+}
+.app-shell .button.secondary {
+  border-color: #526176;
+  background: #1a293b;
+}
+.app-shell .draft-panel,
+.app-shell .bench-panel,
+.app-shell .season-panel,
+.app-shell .arcade-entry {
+  border-radius: 22px;
+  border-color: #405067;
+  background: #111c2b;
+}
+.app-shell .draft-panel {
+  padding: 28px;
+}
+.app-shell .draft-panel h2 {
+  font-size: 30px;
+}
+.app-shell .offer-card,
+.app-shell .pokemon-card,
+.app-shell .bench-slot {
+  border-radius: 15px;
+  border-color: #43536a;
+  background: linear-gradient(145deg, #243347, #172434);
+}
+.app-shell .offer-card .portrait {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+}
+.app-shell .placement-preview {
+  border-radius: 16px;
+  background: #1b2b3e;
+  border-color: #50637b;
+}
+.app-shell .personal-records {
+  border-radius: 14px;
+  background: #1a2a3c;
+  padding: 16px;
+}
+.app-shell .bench-slot .portrait {
+  width: 68px;
+  height: 68px;
+  object-fit: contain;
+}
+.app-shell .bench-slot.is-empty {
+  background: #132031;
+}
+.app-shell .season-heading h2 {
+  font-size: clamp(28px, 3vw, 40px);
+  color: #f4efdd;
+}
+.app-shell .season-overview {
+  grid-template-columns: 1fr 0.8fr 1fr;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 20px;
+  background: linear-gradient(120deg, #24364a, #152335);
+  border-color: #586578;
+}
+.app-shell .season-record > strong {
+  color: #f0d885;
+  text-shadow: 0 5px 30px #eacb5e15;
+}
+.app-shell .season-squad-art {
+  width: 100%;
+  align-self: stretch;
+  display: grid;
+  align-items: center;
+}
+.app-shell .season-squad-art .portrait {
+  height: 150px;
+}
+.app-shell .season-squad-art .portrait:nth-child(2) {
+  height: 180px;
+}
+.app-shell .season-meta .mvp .portrait {
+  width: 100px;
+  height: 110px;
+  object-fit: contain;
+}
+.app-shell .schedule-wrap {
+  border-radius: 15px;
+  border: 1px solid #3e4f65;
+  overflow: auto;
+}
+.app-shell .schedule-table th {
+  background: #203249;
+}
+.app-shell .schedule-table td {
+  border-color: #2e4055;
+}
+.app-shell .schedule-table tr.game-win {
+  background: #162e2c;
+}
+.app-shell .schedule-table tr.game-loss {
+  background: #302532;
+}
+.app-shell .opponent-mark {
+  border-radius: 10px;
+  background: #253c51;
+  border-color: #57718b;
+}
+.app-shell .game-score-button {
+  border-radius: 8px;
+  background: #243c50;
+}
+.app-shell .team-ratings,
+.app-shell .franchise-summary,
+.app-shell .franchise-section,
+.app-shell .franchise-trade,
+.app-shell .training-panel {
+  border-radius: 16px;
+  border-color: #43546b;
+  background-color: #172638;
+}
+.app-shell .box-score-dialog,
+.app-shell .league-box-score {
+  border-radius: 20px;
+  background-color: #111f30;
+  border-color: #50637b;
+}
+.app-shell .box-team-heading,
+.app-shell .league-team-profile {
+  border-radius: 14px;
+  background: #1d3045;
+  border-color: #4c637d;
+}
+@media (max-width: 1050px) {
+  .app-shell .season-overview {
+    grid-template-columns: 1fr 1fr;
+  }
+  .app-shell .season-squad-art {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  .app-shell .season-overview {
+    grid-template-columns: 1fr;
+  }
+  .app-shell .draft-panel {
+    padding: 20px;
+  }
+  .app-shell .draft-panel,
+  .app-shell .bench-panel,
+  .app-shell .season-panel,
+  .app-shell .arcade-entry {
+    border-radius: 16px;
+  }
+  .app-shell .season-meta .mvp .portrait {
+    width: 72px;
+    height: 80px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell *,
+  .app-shell *::before,
+  .app-shell *::after {
+    scroll-behavior: auto !important;
+  }
+}
+/* Arcade menus share the palette; the court renderer keeps its own graphics. */
+.arcade-shell:has(.arcade-setup),
+.arcade-shell:has(.arcade-results) {
+  --arcade-orange: #f0d885;
+  --arcade-cream: #f4efdf;
+  --arcade-panel: #172638;
+  --arcade-border: #445970;
+}
+.arcade-shell .arcade-setup .arcade-card,
+.arcade-shell .arcade-results .arcade-card {
+  border-radius: 20px;
+  background: linear-gradient(140deg, #20334a, #142235);
+}
+.app-shell .coach-draft {
+  border-radius: 22px;
+  background: #142132;
+  border-color: #40546c;
+}
+.app-shell .coach-card {
+  border-radius: 16px;
+  background: linear-gradient(140deg, #243448, #162536);
+  border-color: #465c73;
+}
+.app-shell .coach-card .coach-portrait {
+  width: 100px;
+  height: 100px;
+  border-radius: 14px;
+  background: #0f1d2d;
+}
+.app-shell .season-meta,
+.app-shell .mvp > div {
+  min-width: 0;
+}
+.app-shell .mvp strong {
+  overflow-wrap: anywhere;
+}

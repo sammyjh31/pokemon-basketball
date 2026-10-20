@@ -235,6 +235,13 @@ describe("local league pass-and-play", () => {
     expect(within(table).getByText("Sam")).toBeInTheDocument();
     expect(within(table).getByText("Alex")).toBeInTheDocument();
     const records = table.textContent;
+    // Results render before the save effect runs. Wait for persisted completion
+    // before validating/replaying the saved season.
+    await waitFor(() =>
+      expect(JSON.parse(storage.data.get(LOCAL_LEAGUE_KEY)!).completed).toBe(
+        true,
+      ),
+    );
     expect(
       parseLocalLeague(storage.data.get(LOCAL_LEAGUE_KEY)!).completed,
     ).toBe(true);

@@ -11,6 +11,7 @@ import { LeagueBoxScore } from "./LeagueBoxScore";
 import { Leaders } from "./LeaguePanel";
 import { Portrait } from "./Portrait";
 import "../playoffs.css";
+import { SeriesMatchup, TeamArtwork } from "./ResultsVisuals";
 
 const nodeCenter = (round: number, index: number) =>
   (index + 0.5) * 120 * 2 ** round;
@@ -150,6 +151,42 @@ export function PlayoffPanel({
           </span>
         )}
       </div>
+      <ol className="playoff-stage-track" aria-label="Championship rounds">
+        {PLAYOFF_ROUND_LABELS.map((label, round) =>
+          round < firstRound ? null : (
+            <li
+              key={label}
+              aria-current={
+                !completed && round === activeRound ? "step" : undefined
+              }
+              className={completed || round < activeRound ? "is-complete" : ""}
+            >
+              <span>
+                {completed || round < activeRound
+                  ? "✓"
+                  : String(round - firstRound + 1).padStart(2, "0")}
+              </span>
+              <div>
+                <strong>{label}</strong>
+                <small>
+                  {
+                    bracket.series.filter(
+                      (series) =>
+                        series.round === round && series.winnerId !== null,
+                    ).length
+                  }{" "}
+                  /{" "}
+                  {
+                    bracket.series.filter((series) => series.round === round)
+                      .length
+                  }{" "}
+                  series decided
+                </small>
+              </div>
+            </li>
+          ),
+        )}
+      </ol>
       {managers && (
         <div className="playoff-manager-statuses" aria-live="polite">
           {managers.map((manager) => (
@@ -158,6 +195,15 @@ export function PlayoffPanel({
               className={`playoff-user-status${bracket.championId === manager.teamId ? " is-champion" : ""}`}
               aria-label={`${manager.name}'s playoff status`}
             >
+              <span className="playoff-manager-art" aria-hidden="true">
+                <TeamArtwork
+                  compact
+                  roster={
+                    league.teams.find((team) => team.id === manager.teamId)
+                      ?.roster
+                  }
+                />
+              </span>
               <strong>
                 {manager.name} · {teamName(manager.teamId)}
               </strong>
@@ -174,6 +220,15 @@ export function PlayoffPanel({
       {completed && (
         <div className="playoff-honors">
           <article className="playoff-champion" aria-label="Playoff champion">
+            <span className="champion-cup" aria-hidden="true">
+              ★
+            </span>
+            <TeamArtwork
+              roster={
+                league.teams.find((team) => team.id === bracket.championId)
+                  ?.roster
+              }
+            />
             <span className="eyebrow">PLAYOFF CHAMPION</span>
             <h4>{teamName(bracket.championId)}</h4>
             {managers && (
@@ -302,6 +357,121 @@ export function PlayoffPanel({
       <div id={`${id}-content`} className="league-view">
         {view === "bracket" ? (
           <>
+            <section
+              className="playoff-series-detail"
+              id={`${id}-series`}
+              aria-label="Selected playoff series"
+            >
+              <div className="results-section-heading">
+                <div>
+                  <span className="eyebrow">
+                    {PLAYOFF_ROUND_LABELS[selected.round]} · SERIES{" "}
+                    {selected.index + 1}
+                  </span>
+                  <h4 ref={detailHeading} tabIndex={-1}>
+                    {teamLabel(selected.higherSeedId)} vs.{" "}
+                    {teamLabel(selected.lowerSeedId)}
+                  </h4>
+                  <p>{seriesStatus(selected)}</p>
+                </div>
+                <button
+                  type="button"
+                  className="button secondary playoff-back"
+                  onClick={() => {
+                    const node = document.getElementById(
+                      `${id}-node-${selected.id}`,
+                    );
+                    node?.focus({ preventScroll: true });
+                    node?.scrollIntoView?.({
+                      block: "center",
+                      inline: "nearest",
+                      behavior: "instant",
+                    });
+                  }}
+                >
+                  Back to bracket
+                </button>
+              </div>
+              <SeriesMatchup
+                winsNeeded={Math.ceil(bestOf / 2)}
+                sides={[
+                  {
+                    team: league.teams.find(
+                      (team) => team.id === selected.higherSeedId,
+                    ),
+                    seed: seed(selected.higherSeedId),
+                    wins: selected.higherSeedWins,
+                    winner:
+                      selected.higherSeedId !== null &&
+                      selected.winnerId === selected.higherSeedId,
+                  },
+                  {
+                    team: league.teams.find(
+                      (team) => team.id === selected.lowerSeedId,
+                    ),
+                    seed: seed(selected.lowerSeedId),
+                    wins: selected.lowerSeedWins,
+                    winner:
+                      selected.lowerSeedId !== null &&
+                      selected.winnerId === selected.lowerSeedId,
+                  },
+                ]}
+              />
+              {selected.higherSeedId !== null && (
+                <p className="stat-legend">
+                  Home court: {teamName(selected.higherSeedId)} · Games{" "}
+                  {homeGames}
+                </p>
+              )}
+              {selected.games.length ? (
+                <div className="playoff-game-list">
+                  {selected.games.map((game, index) => (
+                    <button
+                      type="button"
+                      className="playoff-game"
+                      key={game.id}
+                      aria-label={`View playoff box score: ${PLAYOFF_ROUND_LABELS[selected.round]} · Game ${index + 1}, ${teamName(game.awayTeamId)} ${game.awayScore} at ${teamName(game.homeTeamId)} ${game.homeScore}`}
+                      onClick={() =>
+                        setSelectedGame({
+                          game,
+                          context: `${PLAYOFF_ROUND_LABELS[selected.round]} · Game ${index + 1}`,
+                        })
+                      }
+                    >
+                      <span className="playoff-game-number">
+                        Game {index + 1}
+                        <small>
+                          FINAL
+                          {game.overtimePeriods
+                            ? ` · ${game.overtimePeriods > 1 ? game.overtimePeriods : ""}OT`
+                            : ""}
+                        </small>
+                      </span>
+                      <span className="playoff-game-teams">
+                        <span>
+                          {teamName(game.awayTeamId)} <small>AWAY</small>{" "}
+                          <b>{game.awayScore}</b>
+                        </span>
+                        <span>
+                          {teamName(game.homeTeamId)} <small>HOME</small>{" "}
+                          <b>{game.homeScore}</b>
+                        </span>
+                      </span>
+                      <span className="playoff-box-link">
+                        Box score <span aria-hidden="true">↗</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="league-empty">
+                  {selected.higherSeedId === null ||
+                  selected.lowerSeedId === null
+                    ? "This matchup will be set when the previous round finishes."
+                    : "No games played in this series yet. Play the next slate to tip off."}
+                </p>
+              )}
+            </section>
             <p className="playoff-scroll-hint" id={`${id}-scroll`}>
               Select any series for its games. Scroll sideways to follow the
               bracket <span aria-hidden="true">→</span>
@@ -384,7 +554,24 @@ export function PlayoffPanel({
                                     <span className="playoff-seed">
                                       {seed(teamId) ?? "—"}
                                     </span>
-                                    <span>{teamName(teamId)}</span>
+                                    <span
+                                      className="playoff-node-art"
+                                      aria-hidden="true"
+                                    >
+                                      {teamId !== null && (
+                                        <TeamArtwork
+                                          compact
+                                          roster={
+                                            league.teams.find(
+                                              (team) => team.id === teamId,
+                                            )?.roster
+                                          }
+                                        />
+                                      )}
+                                    </span>
+                                    <span className="playoff-team-name">
+                                      {teamName(teamId)}
+                                    </span>
                                     <b>
                                       {teamId === null
                                         ? "—"
@@ -411,96 +598,6 @@ export function PlayoffPanel({
                 )}
               </div>
             </div>
-            <section
-              className="playoff-series-detail"
-              id={`${id}-series`}
-              aria-label="Selected playoff series"
-            >
-              <div className="results-section-heading">
-                <div>
-                  <span className="eyebrow">
-                    {PLAYOFF_ROUND_LABELS[selected.round]} · SERIES{" "}
-                    {selected.index + 1}
-                  </span>
-                  <h4 ref={detailHeading} tabIndex={-1}>
-                    {teamLabel(selected.higherSeedId)} vs.{" "}
-                    {teamLabel(selected.lowerSeedId)}
-                  </h4>
-                  <p>{seriesStatus(selected)}</p>
-                </div>
-                <button
-                  type="button"
-                  className="button secondary playoff-back"
-                  onClick={() => {
-                    const node = document.getElementById(
-                      `${id}-node-${selected.id}`,
-                    );
-                    node?.focus({ preventScroll: true });
-                    node?.scrollIntoView?.({
-                      block: "center",
-                      inline: "nearest",
-                      behavior: "instant",
-                    });
-                  }}
-                >
-                  Back to bracket
-                </button>
-              </div>
-              {selected.higherSeedId !== null && (
-                <p className="stat-legend">
-                  Home court: {teamName(selected.higherSeedId)} · Games{" "}
-                  {homeGames}
-                </p>
-              )}
-              {selected.games.length ? (
-                <div className="playoff-game-list">
-                  {selected.games.map((game, index) => (
-                    <button
-                      type="button"
-                      className="playoff-game"
-                      key={game.id}
-                      aria-label={`View playoff box score: ${PLAYOFF_ROUND_LABELS[selected.round]} · Game ${index + 1}, ${teamName(game.awayTeamId)} ${game.awayScore} at ${teamName(game.homeTeamId)} ${game.homeScore}`}
-                      onClick={() =>
-                        setSelectedGame({
-                          game,
-                          context: `${PLAYOFF_ROUND_LABELS[selected.round]} · Game ${index + 1}`,
-                        })
-                      }
-                    >
-                      <span className="playoff-game-number">
-                        Game {index + 1}
-                        <small>
-                          FINAL
-                          {game.overtimePeriods
-                            ? ` · ${game.overtimePeriods > 1 ? game.overtimePeriods : ""}OT`
-                            : ""}
-                        </small>
-                      </span>
-                      <span className="playoff-game-teams">
-                        <span>
-                          {teamName(game.awayTeamId)} <small>AWAY</small>{" "}
-                          <b>{game.awayScore}</b>
-                        </span>
-                        <span>
-                          {teamName(game.homeTeamId)} <small>HOME</small>{" "}
-                          <b>{game.homeScore}</b>
-                        </span>
-                      </span>
-                      <span className="playoff-box-link">
-                        Box score <span aria-hidden="true">↗</span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p className="league-empty">
-                  {selected.higherSeedId === null ||
-                  selected.lowerSeedId === null
-                    ? "This matchup will be set when the previous round finishes."
-                    : "No games played in this series yet. Play the next slate to tip off."}
-                </p>
-              )}
-            </section>
           </>
         ) : (
           <>

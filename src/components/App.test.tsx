@@ -217,12 +217,12 @@ describe("playable draft room", () => {
       ).toBeInTheDocument();
       expect(screen.getByRole("img", { name: "Pikachu" })).toHaveAttribute(
         "src",
-        "/pokemon-pixel/25.png",
+        "/pokemon/25.png",
       );
-      fireEvent.click(screen.getByRole("button", { name: "Artwork" }));
+      fireEvent.click(screen.getByRole("button", { name: "Pixel" }));
       expect(screen.getByRole("img", { name: "Pikachu" })).toHaveAttribute(
         "src",
-        "/pokemon/25.png",
+        "/pokemon-pixel/25.png",
       );
     },
   );

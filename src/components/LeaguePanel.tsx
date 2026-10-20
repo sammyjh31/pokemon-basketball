@@ -30,6 +30,7 @@ import { SeasonInsightsPanel } from "./SeasonInsightsPanel";
 import { simulateMatch } from "../game/match";
 import { LeagueAnalytics } from "./LeagueAnalytics";
 import "../league.css";
+import { PlayerSpotlights, TeamArtwork } from "./ResultsVisuals";
 
 const name = (id: number) => POKEMON_BY_ID.get(id)?.name ?? `#${id}`;
 const ratio = (a: number, b: number) => (b > 0 ? a / b : null);
@@ -389,6 +390,25 @@ export function Leaders({
           </label>
         )}
       </div>
+      <PlayerSpotlights
+        label={`${scope} player spotlights`}
+        statistic={column.title}
+        mode={totals ? "totals" : "per game"}
+        rows={players.flatMap((p) => {
+          const v = value(p, column);
+          return v === null
+            ? []
+            : [
+                {
+                  key: p.playerId,
+                  pokemonId: p.pokemonId,
+                  subtitle: `${p.teamName} · ${p.slot}`,
+                  value: v,
+                  formatted: formatted(v, column.kind, totals),
+                },
+              ];
+        })}
+      />
       <div
         className="results-table-wrap"
         tabIndex={0}
@@ -461,15 +481,18 @@ export function Leaders({
           </tbody>
         </table>
       </div>
-      <AbilityStats
-        label={`${scope} ability activations`}
-        rows={players.map((p) => ({
-          key: p.playerId,
-          label: name(p.pokemonId),
-          pokemonId: p.pokemonId,
-          abilityActivations: p.abilityActivations,
-        }))}
-      />
+      <details className="results-deep-dive">
+        <summary>Abilities, physical effects & move usage</summary>
+        <AbilityStats
+          label={`${scope} ability activations`}
+          rows={players.map((p) => ({
+            key: p.playerId,
+            label: name(p.pokemonId),
+            pokemonId: p.pokemonId,
+            abilityActivations: p.abilityActivations,
+          }))}
+        />
+      </details>
       {!players.length && (
         <p className="league-empty">No players match these filters.</p>
       )}
@@ -645,6 +668,14 @@ function Standings({
                     onClick={() => onTeam(s.teamId)}
                   >
                     <span className="league-rank">{index + 1}</span>
+                    <span aria-hidden="true">
+                      <TeamArtwork
+                        compact
+                        roster={
+                          league.teams.find((t) => t.id === s.teamId)?.roster
+                        }
+                      />
+                    </span>
                     {league.teams.find((t) => t.id === s.teamId)?.name}
                   </button>
                 </th>

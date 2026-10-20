@@ -12,6 +12,7 @@ import {
 } from "../game/types";
 import { Portrait } from "./Portrait";
 import { SeasonStats } from "./SeasonStats";
+import { TeamArtwork } from "./ResultsVisuals";
 import { BoxScore } from "./BoxScore";
 import { LeaguePanel } from "./lazyPanels";
 import { LeagueBoxScore } from "./LeagueBoxScore";
@@ -280,6 +281,9 @@ export function SeasonPanel({
                     ? "One game at a time."
                     : "Rotation, role fit and coaching"}
               </span>
+            </div>
+            <div className="season-squad-art" aria-hidden="true">
+              <TeamArtwork roster={run.roster} />
             </div>
             <div className="season-meta">
               <span className="eyebrow">

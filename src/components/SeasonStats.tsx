@@ -3,6 +3,7 @@ import { useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import type { SeasonAward, SeasonPlayer } from "../game/types";
 import { Portrait } from "./Portrait";
+import { PlayerSpotlights } from "./ResultsVisuals";
 
 type StatColumn = {
   key: string;
@@ -157,6 +158,25 @@ export function SeasonStats({
             </button>
           </div>
         </div>
+        <PlayerSpotlights
+          label="Team player spotlights"
+          statistic={sortColumn.title}
+          mode={mode === "per-game" ? "per game" : "totals"}
+          rows={sorted.flatMap((player) => {
+            const value = statValue(player, sortColumn);
+            return value === null
+              ? []
+              : [
+                  {
+                    key: player.pokemonId,
+                    pokemonId: player.pokemonId,
+                    subtitle: `${player.slot} · ${player.gamesPlayed} games`,
+                    value,
+                    formatted: format(player, sortColumn),
+                  },
+                ];
+          })}
+        />
         <p className="stats-scroll-hint">
           Scroll across for more stats. Select a column to sort.
         </p>
@@ -253,15 +273,18 @@ export function SeasonStats({
             </tbody>
           </table>
         </div>
-        <AbilityStats
-          label="Season ability activations"
-          rows={sorted.map((p) => ({
-            key: p.pokemonId,
-            label: POKEMON_BY_ID.get(p.pokemonId)?.name ?? `#${p.pokemonId}`,
-            pokemonId: p.pokemonId,
-            abilityActivations: p.abilityActivations,
-          }))}
-        />
+        <details className="results-deep-dive">
+          <summary>Abilities, physical effects & move usage</summary>
+          <AbilityStats
+            label="Season ability activations"
+            rows={sorted.map((p) => ({
+              key: p.pokemonId,
+              label: POKEMON_BY_ID.get(p.pokemonId)?.name ?? `#${p.pokemonId}`,
+              pokemonId: p.pokemonId,
+              abilityActivations: p.abilityActivations,
+            }))}
+          />
+        </details>
         <p className="stat-legend">
           GP / GS: games played / started · HIGH: most points in one game · DD /
           TD: double / triple doubles. Percentages use total attempts; — means

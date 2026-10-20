@@ -167,6 +167,42 @@ const setup = (animate = false) =>
   );
 
 describe("league results", () => {
+  it("keeps visual player spotlights in sync with sorting, filters and totals", () => {
+    render(
+      <Leaders
+        league={{
+          ...league,
+          players: league.players.map((p) =>
+            p.pokemonId === 9 ? { ...p, points: 3280 } : p,
+          ),
+        }}
+      />,
+    );
+    const cards = () =>
+      screen.getByRole("region", { name: "League player spotlights" });
+    expect(within(cards()).getAllByRole("article")[0]).toHaveTextContent(
+      "Blastoise",
+    );
+    expect(within(cards()).getAllByRole("article")[0]).toHaveTextContent(
+      "40.0",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Totals" }));
+    expect(within(cards()).getAllByRole("article")[0]).toHaveTextContent(
+      "3,280",
+    );
+    fireEvent.change(screen.getByLabelText("Search league players"), {
+      target: { value: "Bulbasaur" },
+    });
+    expect(within(cards()).getAllByRole("article")).toHaveLength(1);
+    expect(within(cards()).getByRole("article")).toHaveTextContent("820");
+    fireEvent.change(screen.getByLabelText("Search league players"), {
+      target: { value: "no-such-player" },
+    });
+    expect(
+      screen.queryByRole("region", { name: "League player spotlights" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("builds season insights from each fixture's earned familiarity snapshot", async () => {
     const clubs: LeagueTeam[] = teams.map((team) => ({
       ...team,

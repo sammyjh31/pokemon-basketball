@@ -41,6 +41,7 @@ import { RulesPanel } from "./components/RulesPanel";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { LineupTools } from "./components/LineupTools";
 import { SpriteContext, type SpriteStyle } from "./components/SpriteControls";
+import "./gameVisual.css";
 import { BenchPanel } from "./components/BenchPanel";
 import { emptyRoster } from "./game/types";
 import { randomLineup } from "./game/lineup";
@@ -205,7 +206,7 @@ export default function App({
       window.clearTimeout(timer);
     };
   }, []);
-  const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("pixel");
+  const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("artwork");
   const start = (
     mode: Mode,
     includeLegends: boolean,

@@ -157,6 +157,38 @@ function setup(
 const panel = () => screen.getByRole("region", { name: "Playoffs" });
 
 describe("playoff presentation", () => {
+  it("shows the selected matchup's actual roster and series wins, including shorter local series", () => {
+    const playoffs = postseason();
+    playoffs.format = {
+      teamCount: 30,
+      gamesPerTeam: 82,
+      playoffTeams: 16,
+      bestOf: 3,
+    };
+    playoffs.series[0].higherSeedWins = 1;
+    render(
+      <PlayoffPanel
+        league={league}
+        seasonSeed={11}
+        playoffs={playoffs}
+        onAdvance={() => {}}
+      />,
+    );
+    const matchup = () =>
+      screen.getByRole("region", { name: "Series matchup" });
+    expect(
+      within(matchup()).getByRole("img", { name: "Alakazam" }),
+    ).toBeInTheDocument();
+    expect(
+      within(matchup()).getByLabelText(`${teams[0].name}: 1 of 2 wins needed`),
+    ).toHaveTextContent("1");
+    fireEvent.click(
+      screen.getByRole("button", { name: /View Quarterfinals series 1:/ }),
+    );
+    expect(within(matchup()).queryByRole("img")).not.toBeInTheDocument();
+    expect(within(matchup()).getAllByText("To be decided")).toHaveLength(2);
+  });
+
   it("tracks every local friend, including nonzero team IDs, elimination and championship ownership", () => {
     const managers = [
       { name: "Sam", teamId: 1 },

@@ -143,6 +143,32 @@ afterEach(() => {
 });
 
 describe("season player results", () => {
+  it("shows the same player and value in the visual spotlight as the selected statistic", () => {
+    render(
+      <SeasonPanel
+        run={makeRun()}
+        ratings={ratings}
+        animate={false}
+        onSimulate={() => {}}
+      />,
+    );
+    const cards = () =>
+      screen.getByRole("region", { name: "Team player spotlights" });
+    expect(within(cards()).getAllByRole("article")[0]).toHaveTextContent(
+      "Bulbasaur",
+    );
+    expect(within(cards()).getAllByRole("article")[0]).toHaveTextContent(
+      "20.0",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Sort by assists" }));
+    expect(within(cards()).getAllByRole("article")[0]).toHaveTextContent(
+      "Ivysaur",
+    );
+    expect(within(cards()).getAllByRole("article")[0]).toHaveTextContent("5.0");
+    fireEvent.click(screen.getByRole("button", { name: "Totals" }));
+    expect(within(cards()).getAllByRole("article")[0]).toHaveTextContent("410");
+  });
+
   it("requires all eight roster spots before allowing simulation", () => {
     const run = makeRun();
     run.result = null;
