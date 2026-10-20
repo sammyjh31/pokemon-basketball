@@ -196,40 +196,72 @@ export function DraftProspectCard({
             {teamImpact.slot}
           </p>
           <p>{teamImpact.entry.metric.label}</p>
-          <strong
-            className={
-              (teamImpact.entry.metric.delta ?? 0) > 0
-                ? "gain"
-                : (teamImpact.entry.metric.delta ?? 0) < 0
-                  ? "loss"
-                  : ""
-            }
-          >
-            {draftImpactChangeLabel(teamImpact.entry.metric.delta)}
-            {teamImpact.entry.metric.delta !== null && (
-              <small>
-                {teamImpact.lineup ? " vs rearranged baseline" : " vs now"}
-              </small>
-            )}
-          </strong>
-          <span className="draft-impact-projected">
+          <div className="draft-impact-scoreline">
+            <b className="draft-impact-rating">
+              {teamImpact.entry.metric.after.toFixed(1)}
+              <small>/100</small>
+            </b>
+            <span className="draft-impact-change">
+              <strong
+                className={
+                  (teamImpact.entry.metric.delta ?? 0) > 0
+                    ? "gain"
+                    : (teamImpact.entry.metric.delta ?? 0) < 0
+                      ? "loss"
+                      : ""
+                }
+              >
+                {draftImpactChangeLabel(teamImpact.entry.metric.delta)}
+                {teamImpact.entry.metric.delta !== null && (
+                  <small>
+                    {teamImpact.lineup ? " vs rearranged baseline" : " vs now"}
+                  </small>
+                )}
+              </strong>
+            </span>
+          </div>
+          <span className="draft-impact-projected sr-only">
             {teamImpact.entry.metric.after.toFixed(1)} projected / 100
           </span>
         </div>
       )}
-      <div className="draft-card-tools">
-        <span className="eyebrow">Best tools</span>
-        {tools.slice(0, 2).map((tool) => (
-          <p key={tool.key}>
-            <span>{tool.label}</span>
-            <b>{Math.round(profile.attributes[tool.key])}</b>
-          </p>
+      <div
+        className="draft-skill-snapshot"
+        aria-label={`${mon.name} basketball tools`}
+      >
+        {(
+          [
+            ["threePoint", "3PT"],
+            ["passing", "PASS"],
+            ["interiorDefense", "PAINT D"],
+            ["rebounding", "REBOUND"],
+          ] as const
+        ).map(([key, label]) => (
+          <div key={key}>
+            <span>{label}</span>
+            <b>{Math.round(profile.attributes[key])}</b>
+            <span className="draft-skill-track" aria-hidden="true">
+              <i style={{ width: `${profile.attributes[key]}%` }} />
+            </span>
+          </div>
         ))}
       </div>
-      <p className="draft-card-tradeoff">
-        <b>Tradeoff · {weakest.label}</b>
-        {weakest.tradeoff}
-      </p>
+      <details className="draft-card-detail">
+        <summary>Strengths & tradeoff</summary>
+        <div className="draft-card-tools">
+          <span className="eyebrow">Best tools</span>
+          {tools.slice(0, 2).map((tool) => (
+            <p key={tool.key}>
+              <span>{tool.label}</span>
+              <b>{Math.round(profile.attributes[tool.key])}</b>
+            </p>
+          ))}
+        </div>
+        <p className="draft-card-tradeoff">
+          <b>Tradeoff · {weakest.label}</b>
+          {weakest.tradeoff}
+        </p>
+      </details>
       <button
         className="draft-compare-toggle"
         aria-label={`Compare ${mon.name}`}

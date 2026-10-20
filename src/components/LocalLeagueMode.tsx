@@ -49,9 +49,15 @@ import { PlayoffPanel } from "./PlayoffPanel";
 import { MatchupLab } from "./MatchupLab";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Portrait } from "./Portrait";
-import { SpriteContext } from "./SpriteControls";
+import {
+  SpriteContext,
+  SpriteControls,
+  type SpriteStyle,
+} from "./SpriteControls";
+import { LeagueHeroArt, LeagueFriendCards } from "./LeagueVisuals";
 import "../localLeague.css";
 import "../localDraft.css";
+import "../leagueVisual.css";
 
 function ReviewTeams({
   draft,
@@ -290,20 +296,61 @@ export function LocalLeagueMode({
     saveControls,
   } = useLocalLeague(storage);
   const [confirm, setConfirm] = useState(false);
+  const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>("artwork");
   const league = result?.league;
   const rankings = draft && league ? rankLocalManagers(draft, league) : [];
   const ready = draft ? draft.picks.length === localDraftSize(draft) : false;
   const year = draft?.career?.year ?? 1;
   const offseason = draft?.career?.phase === "offseason";
+  const leader = rankings[0]?.manager.teamId ?? draft?.managers[0]?.teamId;
+  const featuredRoster =
+    league?.teams.find((team) => team.id === leader)?.roster ??
+    draft?.career?.teams.find((team) => team.id === leader)?.roster;
+  const featuredIds = featuredRoster
+    ? Object.values(featuredRoster).filter((id): id is number => id !== null)
+    : (draft?.picks
+        .filter((p) => p.teamId === leader)
+        .map((p) => p.pokemonId) ?? []);
+  const stage = league ? 2 : ready ? 1 : 0;
   return (
-    <SpriteContext.Provider value="pixel">
+    <SpriteContext.Provider value={spriteStyle}>
       <div className="app-shell local-league">
-        <header className="local-header">
-          <div>
-            <span className="eyebrow">POKÉMON BASKETBALL</span>
-            <h1>Local league{draft?.options ? ` · Year ${year}` : ""}</h1>
-            <p>Draft with friends. Chase the championship.</p>
+        <header className="local-header league-hero">
+          <div className="league-hero-copy">
+            <span className="eyebrow">
+              POKÉMON BASKETBALL{" "}
+              <span className="league-local-badge">PLAY WITH FRIENDS</span>
+            </span>
+            <h1>
+              Local league
+              {draft?.options && (
+                <span className="league-year">Year {year}</span>
+              )}
+            </h1>
+            <p>Your team. Your rivals. One championship.</p>
+            {draft && (
+              <div className="league-hero-facts" aria-label="League format">
+                <span>
+                  <b>
+                    {draft?.options?.format.teamCount ??
+                      draft?.order.length ??
+                      8}
+                  </b>{" "}
+                  TEAMS
+                </span>
+                <span>
+                  <b>
+                    {draft?.options?.format.gamesPerTeam ?? (draft ? 82 : 28)}
+                  </b>{" "}
+                  GAMES
+                </span>
+                <span>
+                  <b>8</b> ROSTER SPOTS
+                </span>
+              </div>
+            )}
           </div>
+          <LeagueHeroArt ids={featuredIds.length ? featuredIds : [6, 9, 3]} />
           <div className="local-header-actions">
             <button
               className="button secondary"
@@ -323,6 +370,20 @@ export function LocalLeagueMode({
             )}
           </div>
         </header>
+        <div className="league-status-strip">
+          <ol aria-label="League journey">
+            {["The draft", "Regular season", "Playoffs"].map((label, index) => (
+              <li
+                key={label}
+                aria-current={index === stage ? "step" : undefined}
+              >
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                {label}
+              </li>
+            ))}
+          </ol>
+          <SpriteControls value={spriteStyle} onChange={setSpriteStyle} />
+        </div>
         <main>
           {notice && (
             <p className="notice" role="status">
@@ -334,8 +395,10 @@ export function LocalLeagueMode({
               {error}
             </p>
           )}
-          <SaveMenu {...saveControls} />
-          {!restoration && (!draft || draft.version === 2) && <MatchupLab />}
+          <div className="league-utilities">
+            <SaveMenu {...saveControls} />
+            {!restoration && (!draft || draft.version === 2) && <MatchupLab />}
+          </div>
           {draft &&
             ready &&
             !draft.coachDraftRequired &&
@@ -556,6 +619,7 @@ export function LocalLeagueMode({
                   {rankings[0].standing.wins}–{rankings[0].standing.losses} · #
                   {rankings[0].leagueRank} in the full league
                 </p>
+                <LeagueFriendCards rankings={rankings} teams={league.teams} />
                 <div
                   className="results-table-wrap"
                   tabIndex={0}

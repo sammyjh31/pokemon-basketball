@@ -46,6 +46,7 @@ import { useDraftPool } from "./useDraftPool";
 import { DraftTerm, DRAFT_TERMS } from "./DraftTerm";
 import { DraftLineupPreview } from "./DraftLineupPreview";
 import { DraftPositionLocks } from "./DraftPositionLocks";
+import { DraftRosterBoard } from "./LeagueVisuals";
 
 const ADVANCED_SCOUTING_KEY = "pokemon-basketball:advanced-scouting";
 
@@ -395,9 +396,7 @@ export function LocalLeagueDraft({
             <span className="draft-style">{TACTIC_LABELS[tactic]}</span>
           </div>
           <p className="draft-board-intro">
-            Start with the top three below. Each is ranked by projected team
-            impact on your best lineup. Open Advanced scouting to rank the whole
-            pool, lock positions or compare up to three players.
+            Scout your next star. The top three show who helps your lineup most.
           </p>
           <div className="draft-open-roles" aria-label="Open roster positions">
             <span>Lineup / open roles</span>
@@ -993,22 +992,7 @@ export function LocalLeagueDraft({
           <section className="local-panel">
             <span className="eyebrow">{turn.manager!.name}'S ROSTER</span>
             <h3>{LOCAL_TEAMS[turn.teamId].name}</h3>
-            <ol className="local-roster-list">
-              {ROSTER_SLOTS.map((s) => {
-                const pick = picks.find((p) => p.slot === s);
-                return (
-                  <li key={s}>
-                    <b>{s}</b>
-                    <span>
-                      {pick ? POKEMON_BY_ID.get(pick.pokemonId)!.name : "Empty"}
-                      {lockedSlots.includes(s) && (
-                        <small className="draft-roster-lock">Locked</small>
-                      )}
-                    </span>
-                  </li>
-                );
-              })}
-            </ol>
+            <DraftRosterBoard roster={roster} lockedSlots={lockedSlots} />
             <p className="stat-legend">
               Five starters and three reserves. Lineup moves are previewed
               before each pick and applied when you confirm.
@@ -1022,6 +1006,7 @@ export function LocalLeagueDraft({
                 .reverse()
                 .map((pick, index) => (
                   <li key={draft.picks.length - index}>
+                    <Portrait mon={POKEMON_BY_ID.get(pick.pokemonId)!} />
                     <strong>{POKEMON_BY_ID.get(pick.pokemonId)!.name}</strong>
                     <span>
                       {draft.managers.find((m) => m.teamId === pick.teamId)

@@ -59,6 +59,29 @@ function completeDraft(version: 1 | 2 = 2) {
 }
 
 describe("local league pass-and-play", () => {
+  it("shows the actual format for a legacy league in the visual header", async () => {
+    const draft = createLocalLeague(
+      [
+        { name: "Sam", teamId: 0 },
+        { name: "Alex", teamId: 1 },
+      ],
+      false,
+      42,
+      1,
+    );
+    render(
+      <LocalLeagueMode
+        onExit={() => {}}
+        storage={memory({ [LOCAL_LEAGUE_KEY]: JSON.stringify(draft) })}
+      />,
+    );
+    const format = await screen.findByLabelText("League format");
+    await waitFor(() =>
+      expect(within(format).getByText("30")).toBeInTheDocument(),
+    );
+    expect(within(format).getByText("82")).toBeInTheDocument();
+  });
+
   it("shows unit chemistry for current leagues and preserves the historical passing-bonus explanation", () => {
     const draft = {
       ...completeDraft(),
