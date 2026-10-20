@@ -134,9 +134,9 @@ test("signature moves, coach pair plans and actual combo timing remain readable"
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.getByText("Signature moves and unlocks", { exact: true }).click();
+  await panel.getByText("Signature moves and unlocks", { exact: true }).click();
   await expect(panel).toContainText("25 XP");
-  await page.getByText("Coach combo playbook", { exact: true }).click();
+  await panel.getByText("Coach combo playbook", { exact: true }).click();
   await expect(panel).toContainText("chemistry");
   await page
     .getByText("View planned partnerships and actual timing", { exact: true })
