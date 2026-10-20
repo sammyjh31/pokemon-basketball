@@ -1,5 +1,6 @@
-import { coachMoves } from "./movePolicy";
-import { movesEnabled } from "./basketballMoves";
+import { comboTrainingFocus } from "./comboPolicy";
+import { coachMoves, signatureTrainingFocus } from "./movePolicy";
+import { isMovesetVersion, movesEnabled } from "./basketballMoves";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
   abilitiesEnabled,
@@ -24,7 +25,10 @@ export interface MasteryTeam {
   coach?: LeagueTeam["coach"];
   abilityVersion?: 1;
   abilityMasteryVersion?: 1;
-  movesetVersion?: 1;
+  chemistryVersion?: 1;
+  chemistryGrowthVersion?: 1;
+  chemistryBonds?: LeagueTeam["chemistryBonds"];
+  movesetVersion?: import("./moveTypes").MovesetVersion;
   tactic?: import("./types").Tactic;
   development?: LeagueTeam["development"];
   abilityMastery?: MasteryRoster;
@@ -240,7 +244,7 @@ export function advanceMastery(
           Math.min(uses, 24) * 0.015 +
           Math.min(contacts, 20) * 0.01 +
           Math.min(motion, 10) * 0.01 +
-          (team.movesetVersion === 1
+          (isMovesetVersion(team.movesetVersion)
             ? Math.min(
                 8,
                 Object.values(stats?.moves?.uses ?? {}).reduce(
@@ -248,6 +252,15 @@ export function advanceMastery(
                   0,
                 ),
               ) * 0.025
+            : 0) +
+          (team.movesetVersion === 2
+            ? Math.min(
+                2,
+                Object.values(stats?.moves?.combos?.shotsCreated ?? {}).reduce(
+                  (sum, n) => sum + n!,
+                  0,
+                ),
+              ) * 0.03
             : 0)) *
           learning *
           pace,
@@ -364,7 +377,15 @@ export function trainMastery(
     const movePlan = team.tactic
       ? coachMoves({ ...team, tactic: team.tactic }, id)
       : undefined;
-    const movePractice = !!movePlan?.moves.length && focus === movePlan.focus;
+    const movePractice =
+      !!movePlan?.moves.length &&
+      (focus === movePlan.focus ||
+        (team.tactic &&
+          focus ===
+            signatureTrainingFocus({ ...team, tactic: team.tactic }, id)));
+    const comboPractice =
+      team.tactic &&
+      focus === comboTrainingFocus({ ...team, tactic: team.tactic }, id);
     const aligned = focus === speciesAbility(id).training;
     const seed =
       (seasonSeed ^
@@ -387,7 +408,11 @@ export function trainMastery(
           : 1;
     const gained = enabled
       ? clamp(
-          (practice + (aligned ? 8 : 0) + (movePractice ? 8 : 0)) * workload +
+          (practice +
+            (aligned ? 8 : 0) +
+            (movePractice ? 8 : 0) +
+            (comboPractice ? 4 : 0)) *
+            workload +
             (breakthrough ? 15 : 0),
           0,
           65,
@@ -407,6 +432,11 @@ export function trainMastery(
         ...(movePlan?.moves.length
           ? [
               `Automatic move practice: ${movePlan.moves.map((m) => m.name).join(", ")}; ${movePractice ? "aligned practice earns eight additional XP before workload and caps" : "team-focused practice retains existing learning"}. Specialization follows the coach’s pregame assignment; stored XP stays with the player.`,
+            ]
+          : []),
+        ...(comboPractice
+          ? [
+              "Automatic combo practice develops the player’s role with teammates; four additional XP before workload and caps stays in the existing mastery bank.",
             ]
           : []),
         breakthrough

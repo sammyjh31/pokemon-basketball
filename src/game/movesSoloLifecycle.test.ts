@@ -76,6 +76,6 @@ it("retains a complete new-rule solo league, playoffs, careers and move totals a
   row.regular.abilityActivations!.moves!.uses[move]!++;
   expect(() => validateFranchise(bad.franchise, bad.run, true)).toThrow();
   const next = startFranchiseSeason(cold.value.state, 823);
-  expect(next.run.movesetVersion).toBe(1);
+  expect(next.run.movesetVersion).toBe(2);
   expect(next.franchise!.history).toEqual(cold.value.state.franchise!.history);
 }, 600000);

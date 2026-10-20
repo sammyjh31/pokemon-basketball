@@ -166,6 +166,23 @@ export function RulesPanel({ onClose }: { onClose: () => void }) {
           moves begin in new seasons. Played arcade games keep their existing
           abilities and controls.
         </p>
+        <h3>Signature moves and combo plays</h3>
+        <p>
+          New seasons include 18 type techniques at 25 mastery XP and 14 species
+          or family signatures at 100 XP, such as Pikachu’s Volt Tackle and
+          Charizard’s Skyhook. Coaches select eligible moves within existing
+          slots and automatically train useful signatures and partnerships.
+          Pick-and-roll, pick-and-pop, drive-and-kick and complementary-type
+          elemental relays need 25 XP for both partners. Coaches consider
+          mastery, earned pair familiarity, current lineup chemistry, energy,
+          game clock and cooldowns. Both partners spend energy and their move
+          opportunity; interrupted setups earn no shot-created credit. Completed
+          combo shots add bounded mastery experience. Reports separate planned
+          partnerships, actual setups and shots created from made baskets.
+          Chemistry and abilities must be enabled for combos. Existing seasons
+          retain their saved move rules; franchises adopt these changes next
+          season.
+        </p>
         <h3>Find the right role</h3>
         <div className="formula-grid">
           {POSITION_GUIDE.map(([title, description]) => (

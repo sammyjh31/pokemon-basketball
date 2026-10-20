@@ -1,6 +1,7 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { playerProfile } from "./playerProfile";
 import type { BasketballMove, MoveTeam } from "./moveTypes";
+import { signatureMoves, signatureMovesForSpecies } from "./signatureMoves";
 export const basketballMoves: readonly BasketballMove[] = [
   {
     id: "quick-attack",
@@ -83,21 +84,26 @@ export const basketballMoves: readonly BasketballMove[] = [
     cooldown: 150,
   },
 ];
+export const allBasketballMoves = [...basketballMoves, ...signatureMoves];
+export const isMovesetVersion = (value: unknown): value is 1 | 2 =>
+  value === 1 || value === 2;
 export function movesEnabled(team: Partial<MoveTeam>) {
   return (
-    team.movesetVersion === 1 &&
+    isMovesetVersion(team.movesetVersion) &&
     team.abilityVersion === 1 &&
     team.abilityMasteryVersion === 1 &&
     team.courtVersion !== undefined &&
     team.engineRules?.abilities !== false
   );
 }
+export const signaturesEnabled = (team: Partial<MoveTeam>) =>
+  team.movesetVersion === 2 && movesEnabled(team);
 /** Basketball adaptations, deliberately separate from canonical battle learnsets. */
-export function movePool(id: number): BasketballMove[] {
+export function movePool(id: number, version: 1 | 2 = 1): BasketballMove[] {
   const mon = POKEMON_BY_ID.get(id);
   if (!mon) return [];
   const a = playerProfile(mon).attributes;
-  return basketballMoves.filter((move) => {
+  const basic = basketballMoves.filter((move) => {
     switch (move.id) {
       case "quick-attack":
         return (
@@ -124,4 +130,5 @@ export function movePool(id: number): BasketballMove[] {
         return true;
     }
   });
+  return version === 2 ? [...basic, ...signatureMovesForSpecies(id)] : basic;
 }

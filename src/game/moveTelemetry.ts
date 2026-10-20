@@ -1,4 +1,10 @@
 import { MOVE_IDS, type MoveStats } from "./moveTypes";
+import {
+  emptyComboStats,
+  mergeComboStats,
+  sameComboStats,
+  validateComboStats,
+} from "./comboTelemetry";
 const round = (value: number) => Math.round(value * 1e6) / 1e6;
 export const emptyMoveStats = (): MoveStats => ({
   uses: {},
@@ -14,13 +20,16 @@ export function mergeMoveStats(target: MoveStats, source: MoveStats) {
   target.energyRecovered = round(
     target.energyRecovered + source.energyRecovered,
   );
+  if (source.combos)
+    mergeComboStats((target.combos ??= emptyComboStats()), source.combos);
 }
 /** Summary-only seasons predate moves; only recorded years can contribute. */
 export function sameMoveStats(a?: MoveStats, b?: MoveStats): boolean {
   return (
     MOVE_IDS.every((id) => (a?.uses[id] ?? 0) === (b?.uses[id] ?? 0)) &&
     (a?.energySpent ?? 0) === (b?.energySpent ?? 0) &&
-    (a?.energyRecovered ?? 0) === (b?.energyRecovered ?? 0)
+    (a?.energyRecovered ?? 0) === (b?.energyRecovered ?? 0) &&
+    sameComboStats(a?.combos, b?.combos)
   );
 }
 export function validateMoveStats(raw: unknown): MoveStats {
@@ -29,7 +38,7 @@ export function validateMoveStats(raw: unknown): MoveStats {
   const value = raw as Record<string, unknown>,
     uses = value.uses;
   if (
-    Object.keys(value).length !== 3 ||
+    Object.keys(value).length !== (value.combos === undefined ? 3 : 4) ||
     !uses ||
     typeof uses !== "object" ||
     Array.isArray(uses) ||
@@ -49,5 +58,8 @@ export function validateMoveStats(raw: unknown): MoveStats {
     uses: { ...uses },
     energySpent: value.energySpent as number,
     energyRecovered: value.energyRecovered as number,
+    ...(value.combos !== undefined
+      ? { combos: validateComboStats(value.combos) }
+      : {}),
   };
 }

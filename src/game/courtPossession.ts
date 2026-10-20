@@ -1,4 +1,13 @@
 import { activateMove, beginMoveSegment } from "./matchMoves";
+import {
+  beginComboSegment,
+  startCombo,
+  noteComboPass,
+  completeCombo,
+  comboReceiverPreference,
+  reserveComboDrive,
+} from "./matchCombos";
+import type { ComboEvent } from "./comboTypes";
 import type { MoveEvent, MoveOpportunity } from "./moveTypes";
 import { physicalPlayerEffects } from "./physicalAbilities";
 import { recordPhysicalAbility } from "./abilities";
@@ -16,6 +25,8 @@ import type {
 
 export type Court = Map<Player, CourtPoint>;
 export interface CourtContext {
+  combos?: import("./matchCombos").ComboRuntime;
+  comboChemistry?: number;
   movesNow?: number;
   coach?: CoachAssignment;
   offense: Player[];
@@ -437,6 +448,7 @@ export function resolveCourtPossession(
 ) {
   if (source.movesNow !== undefined)
     beginMoveSegment([...source.offense, ...source.defense]);
+  if (source.combos) beginComboSegment(source.combos);
   const c = { ...source, guards: new Map(source.guards) },
     court = createCourt(c);
   const shell =
@@ -459,6 +471,7 @@ export function resolveCourtPossession(
   const initialClock = clock,
     actions: CourtAction[] = [];
   const moveEvents: MoveEvent[] = [];
+  const comboEvents: ComboEvent[] = [];
   const useMove = (
     player: Player,
     opportunity: MoveOpportunity,
@@ -472,6 +485,22 @@ export function resolveCourtPossession(
       zone,
     });
     if (event) moveEvents.push(event);
+  };
+  const startPair = (
+    kind: "screen" | "pass" | "kickout",
+    from: Player,
+    to: Player,
+  ) => {
+    if (!c.combos || c.movesNow === undefined) return;
+    const event = startCombo(c.combos, kind, from, to, c.movesNow + seconds, {
+      clock,
+      active: c.offense,
+      chemistry: c.comboChemistry,
+      hadDrive: actions.some(
+        (a) => a.kind === "drive" && a.playerId === from.box.playerId,
+      ),
+    });
+    if (event) comboEvents.push(event);
   };
   let coverage: ScreenCoverage | undefined, coverageReason: string | undefined;
   let outcome: CourtSequence["outcome"] = "shot",
@@ -532,6 +561,7 @@ export function resolveCourtPossession(
       )
     )
       return false;
+    startPair(kind, ball, target);
     if (c.movesNow !== undefined) useMove(ball, "pass", target);
     if (
       random() <
@@ -549,6 +579,7 @@ export function resolveCourtPossession(
       }
       return false;
     }
+    if (c.combos) noteComboPass(c.combos, ball, target);
     passer = ball;
     ball = target;
     droveAfterCatch = false;
@@ -590,6 +621,7 @@ export function resolveCourtPossession(
         false,
       )
     ) {
+      startPair("screen", c.handler, c.screener);
       useMove(c.screener, "screen");
       useMove(c.guards.get(c.handler)!, "navigate");
       const selection =
@@ -696,7 +728,8 @@ export function resolveCourtPossession(
                   : "midRange",
             ) *
               0.05 -
-            (g.zone === "mid" ? 0.9 : 0),
+            (g.zone === "mid" ? 0.9 : 0) +
+            (c.combos ? comboReceiverPreference(c.combos, ball, p) : 0),
         };
       })
       .sort((a, b) => b.value - a.value);
@@ -726,7 +759,17 @@ export function resolveCourtPossession(
         ball.body && defender.body
           ? matchupEdges(ball, defender)
           : { quickness: 0, type: 0 };
-      if (clock >= 3.3 + (ball.body?.inertia ?? 0.5)) useMove(ball, "drive");
+      if (
+        clock >= 3.3 + (ball.body?.inertia ?? 0.5) &&
+        !reserveComboDrive(
+          c.combos,
+          ball,
+          c.offense,
+          (c.movesNow ?? 0) + seconds,
+          clock,
+        )
+      )
+        useMove(ball, "drive");
       const chance = clamp(
         0.48 +
           (ball.moves?.effects.drive ?? 0) +
@@ -808,6 +851,34 @@ export function resolveCourtPossession(
     !clockLimited
   )
     relocateForIntent(c, court, ball, c.zoneIntent(ball), random, spend);
+  let releaseTime: number | undefined,
+    releaseClock = 0;
+  const commitReleaseMoves = () => {
+    if (releaseTime === undefined) return;
+    const shot = courtGeometry(court, ball, c.offense, c.defense);
+    const combo = completeCombo(c.combos, ball, shot.zone, releaseTime);
+    if (combo) comboEvents.push(combo);
+    for (const [player, opportunity] of [
+      [ball, "shoot"],
+      [shot.defender, "defend"],
+    ] as const) {
+      const event = activateMove(player, opportunity, releaseTime, {
+        clock: releaseClock,
+        zone: shot.zone,
+      });
+      if (event) moveEvents.push(event);
+    }
+    if (shot.defender.moves?.effects.movement !== 1)
+      court.set(
+        shot.defender,
+        moveToward(
+          court.get(shot.defender)!,
+          court.get(ball)!,
+          shot.defender,
+          0.15,
+        ),
+      );
+  };
   if (outcome === "shot") {
     if (
       clockLimited &&
@@ -819,19 +890,10 @@ export function resolveCourtPossession(
       spend("violation", clock, undefined, false);
     } else {
       if (c.movesNow !== undefined) {
-        const shot = courtGeometry(court, ball, c.offense, c.defense);
-        useMove(ball, "shoot", undefined, shot.zone);
-        useMove(shot.defender, "defend", undefined, shot.zone);
-        if (shot.defender.moves?.effects.movement !== 1)
-          court.set(
-            shot.defender,
-            moveToward(
-              court.get(shot.defender)!,
-              court.get(ball)!,
-              shot.defender,
-              0.15,
-            ),
-          );
+        releaseTime = c.movesNow + seconds;
+        releaseClock = clock;
+        // V1 retains its released timing; V2 waits for match-level pressure/foul checks.
+        if (ball.moves?.version !== 2) commitReleaseMoves();
       }
       spend("shoot", rushedAdvance ? clock : Math.min(clock, 0.6));
     }
@@ -872,10 +934,36 @@ export function resolveCourtPossession(
       (ball.moves?.effects.shot ?? 0) -
       (geometry.defender.moves?.effects.contest ?? 0),
     ...(moveEvents.length ? { moves: moveEvents } : {}),
+    ...(comboEvents.length ? { combos: comboEvents } : {}),
     outcome,
     points: 0,
   };
+  let shotCommitted = false;
+  const commitShotMoves =
+    ball.moves?.version === 2 && releaseTime !== undefined
+      ? () => {
+          if (shotCommitted || sequence.outcome !== "shot") return;
+          shotCommitted = true;
+          commitReleaseMoves();
+          const final = courtGeometry(court, ball, c.offense, c.defense);
+          sequence.positions = [...court].map(([p, point]) => ({
+            ...point,
+            playerId: p.box.playerId,
+            offense: c.offense.includes(p),
+          }));
+          sequence.defenderDistance = final.defenderDistance;
+          sequence.paintCrowding = final.paintCrowding;
+          sequence.shotLogOdds =
+            final.shotLogOdds +
+            late +
+            (ball.moves?.effects.shot ?? 0) -
+            (final.defender.moves?.effects.contest ?? 0);
+          if (moveEvents.length) sequence.moves = moveEvents;
+          if (comboEvents.length) sequence.combos = comboEvents;
+        }
+      : undefined;
   return {
+    ...(commitShotMoves ? { commitShotMoves } : {}),
     sequence,
     finishPlay: (c.putback
       ? "post"

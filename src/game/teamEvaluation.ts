@@ -50,7 +50,7 @@ export interface EvaluationTeam {
   development?: PlayerDevelopment;
   abilityVersion?: 1;
   abilityMasteryVersion?: 1;
-  movesetVersion?: 1;
+  movesetVersion?: import("./moveTypes").MovesetVersion;
   courtVersion?: import("./courtTypes").CourtVersion;
   abilityMastery?: Record<number, number>;
   physicalAbilityVersion?: 1;

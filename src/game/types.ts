@@ -208,7 +208,7 @@ export interface Run {
   abilityVersion?: 1;
   abilityMasteryVersion?: 1;
   /** Coach-managed moves and mastery paths; absent on historical inputs. */
-  movesetVersion?: 1;
+  movesetVersion?: import("./moveTypes").MovesetVersion;
   /** Physical species abilities; absent on historical seasons for exact replay. */
   physicalAbilityVersion?: 1;
   /** Active-five basketball chemistry; independent of the ability switch. */
@@ -287,7 +287,7 @@ export interface LeagueTeam {
   abilityVersion?: 1;
   abilityMasteryVersion?: 1;
   /** Coach-managed moves and mastery paths; absent on historical inputs. */
-  movesetVersion?: 1;
+  movesetVersion?: import("./moveTypes").MovesetVersion;
   /** Physical species abilities; absent on historical seasons for exact replay. */
   physicalAbilityVersion?: 1;
   /** Active-five basketball chemistry; independent of the ability switch. */
@@ -343,6 +343,7 @@ export interface LeagueGameSummary extends LeagueFixture {
   overtimePeriods: number;
 }
 export interface LeagueMatch {
+  comboAssignments?: Record<number, import("./comboTypes").ComboAssignment[]>;
   moveAssignments?: Record<string, import("./moveTypes").MoveAssignment>;
   moraleReport?: MoraleGameReport;
   masteryReport?: import("./abilityMastery").MasteryGameReport;

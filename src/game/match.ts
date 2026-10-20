@@ -1,6 +1,7 @@
+import { createComboRuntime, comboPlayWeights } from "./matchCombos";
 import { createMoveRuntime } from "./matchMoves";
 import { emptyMoveStats } from "./moveTelemetry";
-import { movesEnabled } from "./basketballMoves";
+import { isMovesetVersion, movesEnabled } from "./basketballMoves";
 import {
   applyMasterySnapshot,
   masteryGameReport,
@@ -179,7 +180,7 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   const planKey = config.rotationPlan
     ? `:${ROSTER_SLOTS.map((slot) => config.rotationPlan!.minutes[slot]).join(",")}:${config.rotationPlan.closing.join(",")}`
     : "";
-  const key = `${config.abilityMasteryVersion === 1 ? `mastery1:${JSON.stringify(config.abilityMastery ?? {})}:` : ""}${config.personalityVersion === 1 ? "personality1:" : ""}${config.moraleVersion === 1 ? `morale1:${JSON.stringify(config.morale ?? {})}:` : ""}${config.chemistryGrowthVersion === 1 ? `growth1:${JSON.stringify(config.chemistryBonds ?? {})}:` : ""}${chemistryEnabled(config) ? `chemistry1:${config.engineRules?.familiarity ?? 0}:` : ""}${physicalAbilitiesEnabled(config) ? "physical1:" : ""}${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
+  const key = `${config.movesetVersion ? `moves${config.movesetVersion}:` : ""}${config.abilityMasteryVersion === 1 ? `mastery1:${JSON.stringify(config.abilityMastery ?? {})}:` : ""}${config.personalityVersion === 1 ? "personality1:" : ""}${config.moraleVersion === 1 ? `morale1:${JSON.stringify(config.morale ?? {})}:` : ""}${config.chemistryGrowthVersion === 1 ? `growth1:${JSON.stringify(config.chemistryBonds ?? {})}:` : ""}${chemistryEnabled(config) ? `chemistry1:${config.engineRules?.familiarity ?? 0}:` : ""}${physicalAbilitiesEnabled(config) ? "physical1:" : ""}${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
   let targets = targetCache.get(key);
   if (!targets) {
     targets =
@@ -283,7 +284,9 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
     }
     for (const player of players) player.box.started = floor.includes(player);
   }
+  const combos = createComboRuntime(config);
   return {
+    ...(combos ? { combos } : {}),
     config: config.engineRules ? { ...config } : config,
     side,
     players,
@@ -485,8 +488,9 @@ export function simulateMatch(
   const flowNotes: string[] = [];
   if (
     home.movesetVersion !== away.movesetVersion ||
-    (home.movesetVersion !== undefined && home.movesetVersion !== 1) ||
-    (home.movesetVersion === 1 &&
+    (home.movesetVersion !== undefined &&
+      !isMovesetVersion(home.movesetVersion)) ||
+    (isMovesetVersion(home.movesetVersion) &&
       (home.courtVersion === undefined ||
         home.abilityVersion !== 1 ||
         home.abilityMasteryVersion !== 1))
@@ -1662,6 +1666,11 @@ export function simulateMatch(
             0.4 * Math.max(...opportunities);
         }
       }
+      if (offense.combos)
+        for (const [comboPlay, bonus] of Object.entries(
+          comboPlayWeights(offense.combos, offense.floor, elapsedSeconds()),
+        ))
+          weights[PLAY_TYPES.indexOf(comboPlay as PlayType)] += bonus!;
       if (chaseThree) weights[4] += 45;
       if (playoff) weights[0] *= 0.9;
       const atoShot = !!atoPlay && firstAction && !secondChance;
@@ -1750,6 +1759,12 @@ export function simulateMatch(
           {
             offense: offense.floor,
             defense: defense.floor,
+            ...(offense.combos
+              ? {
+                  combos: offense.combos,
+                  comboChemistry: getMatchChemistry(offense)?.score,
+                }
+              : {}),
             ...(movesEnabled(offense.config)
               ? { movesNow: elapsedSeconds() }
               : {}),
@@ -2210,6 +2225,7 @@ export function simulateMatch(
         } else if (courtEnabled) shotClock = Math.max(14, shotClock);
         continue;
       }
+      court?.commitShotMoves?.();
       const spacing =
         court?.spacing ??
         average(
@@ -2901,6 +2917,11 @@ export function simulateMatch(
     result.moveAssignments = Object.fromEntries(
       [...h.players, ...a.players].map((p) => [p.box.playerId, p.moves!.plan]),
     );
+  if (h.combos || a.combos)
+    result.comboAssignments = {
+      [home.id]: h.combos?.plans ?? [],
+      [away.id]: a.combos?.plans ?? [],
+    };
   // Quarter evidence is retained internally for coaching even when callers only need a compact result.
   if (possessionDepth)
     for (const p of [...h.players, ...a.players])

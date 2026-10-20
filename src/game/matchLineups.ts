@@ -27,6 +27,7 @@ export interface Player {
   consecutive: number;
 }
 export interface Team {
+  combos?: import("./matchCombos").ComboRuntime;
   config: LeagueTeam;
   players: Player[];
   floor: Player[]; // Ordered PG, SG, SF, PF, C, including substitute roles.

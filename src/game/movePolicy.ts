@@ -2,6 +2,7 @@ import { POKEMON_BY_ID } from "../data/pokemon";
 import { movePool, movesEnabled } from "./basketballMoves";
 import { playerProfile, type PlayerProfile } from "./playerProfile";
 import { getCoach } from "./trainerCoaches";
+import { comboValue } from "./comboPolicy";
 import type {
   BasketballMove,
   MoveAssignment,
@@ -82,6 +83,30 @@ export function coachMoves(
           ? "power"
           : "control";
   const value = (m: BasketballMove) => {
+    if (m.signature) {
+      const role =
+        m.focus === "conditioning"
+          ? (a.speed + a.ballHandling) / 2
+          : m.focus === "playmaking"
+            ? (a.passing + a.composure) / 2 +
+              Math.max(0, 65 - average("passing")) * 0.35
+            : m.focus === "shooting"
+              ? (a.threePoint + a.midRange + a.composure) / 3
+              : m.focus === "defense"
+                ? (a.perimeterDefense + a.interiorDefense) / 2
+                : (a.strength + p.traits.screening + a.finishing) / 3;
+      const style =
+        (tactic === "pace" && m.focus === "conditioning") ||
+        (tactic === "perimeter" && m.focus === "shooting") ||
+        (tactic === "balanced" && m.focus === "playmaking") ||
+        (tactic === "interior" && m.focus === "position") ||
+        (tactic === "defense" && m.focus === "defense")
+          ? 12
+          : 0;
+      return (
+        role + style + (m.signature.kind === "species" ? 16 : 8) - m.cost * 0.4
+      );
+    }
     const role =
       m.id === "quick-attack" || m.id === "agility"
         ? (a.speed + a.ballHandling) / 2
@@ -117,7 +142,9 @@ export function coachMoves(
         : 0;
     return role + style + control;
   };
-  const moves = movePool(id)
+  const pool = movePool(id, team.movesetVersion === 2 ? 2 : 1);
+  const moves = pool
+    .filter((move) => !move.signature || xp >= move.signature.minimumMastery)
     .map((move, order) => ({ move, order, value: value(move) }))
     .sort((a, b) => b.value - a.value || a.order - b.order)
     .slice(0, xp >= 400 ? 4 : xp >= 200 ? 3 : 2)
@@ -135,7 +162,7 @@ export function coachMoves(
     reasons: [
       `${coach?.name ?? "Team staff"} selects moves for ${p.bestPosition}, ${tactic} offense, stamina and roster needs.`,
       `${specializationRules[specialization].name}: ${specializationRules[specialization].description}`,
-      `${moves.length} equipped moves from ${movePool(id).length} eligible basketball adaptations; earned XP stays with the player when the coach reassigns a path.`,
+      `${moves.length} equipped moves from ${pool.length} eligible basketball adaptations; earned XP stays with the player when the coach reassigns a path.`,
     ],
   };
 }
@@ -147,7 +174,7 @@ export function moveValue(
   xp?: number,
 ): number {
   const plan = coachMoves(team, id, { profile, xp });
-  return plan.moves.length
+  const basic = plan.moves.length
     ? Math.min(
         3,
         plan.moves.length * 0.2 +
@@ -156,4 +183,27 @@ export function moveValue(
           (plan.specialization === "fundamentals" ? 0 : 0.4),
       )
     : 0;
+  return team.movesetVersion === 2
+    ? Math.min(3, basic + comboValue(team, id, profile, xp))
+    : basic;
+}
+
+/** Upcoming or equipped signature practice; uses the same finite species pool and coach selection. */
+export function signatureTrainingFocus(team: MoveTeam, id: number) {
+  if (team.movesetVersion !== 2 || !movesEnabled(team)) return undefined;
+  const signatures = movePool(id, 2).filter((m) => m.signature);
+  const xp = team.abilityMastery?.[id] ?? 0;
+  const next = signatures
+    .filter((m) => m.signature!.minimumMastery > xp)
+    .sort(
+      (a, b) => a.signature!.minimumMastery - b.signature!.minimumMastery,
+    )[0];
+  const planned = coachMoves(team, id, {
+    xp: Math.max(xp, next?.signature!.minimumMastery ?? 0),
+  });
+  return (
+    planned.moves.find((m) => m.signature)?.focus ??
+    next?.focus ??
+    signatures[0]?.focus
+  );
 }

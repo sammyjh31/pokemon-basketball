@@ -1,3 +1,4 @@
+import { isMovesetVersion } from "./basketballMoves";
 import { MOVE_IDS } from "./moveTypes";
 import { sameMoveStats } from "./moveTelemetry";
 import { captureNewsGames, validateNewsGames } from "./archive";
@@ -373,8 +374,8 @@ export function validateLeagueTeams(
   const gameFlowVersion = object(rows[0]).gameFlowVersion;
   const movesetVersion = object(rows[0]).movesetVersion;
   if (
-    (movesetVersion !== undefined && movesetVersion !== 1) ||
-    (movesetVersion === 1 &&
+    (movesetVersion !== undefined && !isMovesetVersion(movesetVersion)) ||
+    (isMovesetVersion(movesetVersion) &&
       (abilityVersion !== 1 ||
         abilityMasteryVersion !== 1 ||
         courtVersion === undefined))
@@ -474,7 +475,9 @@ export function validateLeagueTeams(
       ...(typeVersion === 1 ? { typeMatchupsVersion: 1 as const } : {}),
       ...(tacticsVersion === 1 ? { typeTacticsVersion: 1 as const } : {}),
       ...(abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
-      ...(movesetVersion === 1 ? { movesetVersion: 1 as const } : {}),
+      ...(isMovesetVersion(movesetVersion)
+        ? { movesetVersion: movesetVersion }
+        : {}),
       ...(abilityMasteryVersion === 1
         ? {
             abilityMasteryVersion: 1 as const,

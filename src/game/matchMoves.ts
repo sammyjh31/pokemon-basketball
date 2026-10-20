@@ -2,6 +2,7 @@ import { coachMoves, specializationRules } from "./movePolicy";
 import { movesEnabled } from "./basketballMoves";
 import { getCoach } from "./trainerCoaches";
 import { emptyMoveStats } from "./moveTelemetry";
+import { POKEMON_BY_ID } from "../data/pokemon";
 import type { AbilityBox } from "./abilities";
 import type {
   MoveAssignment,
@@ -20,23 +21,28 @@ export const neutralMoveEffects = () => ({
   drive: 0,
 });
 export interface MoveRuntime {
+  version: 1 | 2;
+  pokemonId: number;
   plan: MoveAssignment;
   effects: ReturnType<typeof neutralMoveEffects>;
   readyAt: Partial<Record<MoveId, number>>;
   used: boolean;
   risk: number;
 }
-type Mover = {
+export type MoveParticipant = {
   moves?: MoveRuntime;
   energy: number;
-  box: AbilityBox & { playerId: string };
+  box: AbilityBox & { playerId: string; teamId?: number };
 };
+type Mover = MoveParticipant;
 export function createMoveRuntime(
   team: MoveTeam,
   id: number,
 ): MoveRuntime | undefined {
   return movesEnabled(team)
     ? {
+        version: team.movesetVersion!,
+        pokemonId: id,
         plan: coachMoves(team, id),
         effects: neutralMoveEffects(),
         readyAt: {},
@@ -51,6 +57,26 @@ export function beginMoveSegment(players: readonly Mover[]) {
       p.moves.effects = neutralMoveEffects();
       p.moves.used = false;
     }
+}
+/** V2 teamwork and signatures share a bounded effect budget; v1 arithmetic stays frozen. */
+export function capMoveEffects(player: Mover) {
+  if (player.moves?.version !== 2) return;
+  const e = player.moves.effects;
+  for (const [key, maximum] of Object.entries({
+    movement: 1.35,
+    passing: 1.3,
+    screen: 1.4,
+    navigation: 1.35,
+    shot: 0.18,
+    contest: 0.14,
+    drive: 0.12,
+  })) {
+    const field = key as keyof typeof e;
+    e[field] = Math.max(
+      field === "shot" || field === "contest" || field === "drive" ? 0 : 1,
+      Math.min(maximum, e[field]),
+    );
+  }
 }
 /** Match-local, deterministic opportunity decisions; never reads a future shot roll. */
 export function activateMove(
@@ -72,6 +98,23 @@ export function activateMove(
   const move = state.plan.moves.find(
     (move) =>
       move.opportunities.includes(opportunity) &&
+      (!move.signature ||
+        (state.version === 2 &&
+          state.plan.xp >= move.signature.minimumMastery &&
+          (move.signature.kind === "species"
+            ? move.signature.speciesIds!.includes(state.pokemonId)
+            : POKEMON_BY_ID.get(state.pokemonId)?.types.includes(
+                move.signature.type!,
+              )) &&
+          (opportunity !== "pass" ||
+            (!!context.receiver?.moves &&
+              context.receiver.box.playerId !== player.box.playerId &&
+              (player.box.teamId === undefined ||
+                context.receiver.box.teamId === undefined ||
+                player.box.teamId === context.receiver.box.teamId))))) &&
+      (!move.zones ||
+        !["shoot", "defend"].includes(opportunity) ||
+        move.zones.includes(context.zone as any)) &&
       now >= (state.readyAt[move.id] ?? 0) &&
       (move.id !== "recover" || player.energy <= 52) &&
       (move.id !== "iron-defense" ||
@@ -133,6 +176,17 @@ export function activateMove(
       break;
     }
   }
+  if (move.signature && move.effects) {
+    for (const key of Object.keys(e) as (keyof typeof e)[])
+      e[key] += (move.effects[key] ?? 0) * strength;
+    if (move.effects.receiverShot && context.receiver?.moves)
+      context.receiver.moves.effects.shot = Math.max(
+        context.receiver.moves.effects.shot,
+        move.effects.receiverShot * strength,
+      );
+  }
+  capMoveEffects(player);
+  if (context.receiver) capMoveEffects(context.receiver);
   const a = (player.box.abilityActivations ??= {
     offense: 0,
     support: 0,

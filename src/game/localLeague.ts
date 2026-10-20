@@ -1,3 +1,4 @@
+import { isMovesetVersion } from "./basketballMoves";
 import { neutralMorale } from "./playerMorale";
 import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
 import { validateCoach } from "./trainerCoaches";
@@ -57,7 +58,7 @@ export interface LocalLeague {
   typeTacticsVersion?: 1;
   abilityVersion?: 1;
   abilityMasteryVersion?: 1;
-  movesetVersion?: 1;
+  movesetVersion?: import("./moveTypes").MovesetVersion;
   /** Physical species abilities; absent on historical seasons for exact replay. */
   physicalAbilityVersion?: 1;
   /** Active-five basketball chemistry; independent of the ability switch. */
@@ -169,7 +170,7 @@ export function createLocalLeague(
           matchupVersion: 1 as const,
           possessionVersion: 1 as const,
           gameFlowVersion: 1 as const,
-          movesetVersion: 1 as const,
+          movesetVersion: 2 as const,
         }
       : {}),
     version,
@@ -396,7 +397,9 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
         ? { typeMatchupsVersion: 1 as const }
         : {}),
       ...(draft.abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
-      ...(draft.movesetVersion === 1 ? { movesetVersion: 1 as const } : {}),
+      ...(isMovesetVersion(draft.movesetVersion)
+        ? { movesetVersion: draft.movesetVersion }
+        : {}),
       ...(draft.abilityMasteryVersion === 1
         ? {
             abilityMasteryVersion: 1 as const,
@@ -482,7 +485,9 @@ export function localLeagueRun(draft: LocalLeague): Run {
       ? { typeMatchupsVersion: 1 as const }
       : {}),
     ...(teams[0].abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
-    ...(teams[0].movesetVersion === 1 ? { movesetVersion: 1 as const } : {}),
+    ...(isMovesetVersion(teams[0].movesetVersion)
+      ? { movesetVersion: teams[0].movesetVersion }
+      : {}),
     ...(teams[0].abilityMasteryVersion === 1
       ? { abilityMasteryVersion: 1 as const }
       : {}),
@@ -635,8 +640,9 @@ export function parseLocalLeague(
     (value.abilityMasteryVersion !== undefined &&
       value.abilityMasteryVersion !== 1) ||
     (value.abilityMasteryVersion === 1 && value.abilityVersion !== 1) ||
-    (value.movesetVersion !== undefined && value.movesetVersion !== 1) ||
-    (value.movesetVersion === 1 &&
+    (value.movesetVersion !== undefined &&
+      !isMovesetVersion(value.movesetVersion)) ||
+    (isMovesetVersion(value.movesetVersion) &&
       (value.abilityVersion !== 1 ||
         value.abilityMasteryVersion !== 1 ||
         value.courtVersion === undefined)) ||
@@ -697,7 +703,8 @@ export function parseLocalLeague(
   delete draft.gameFlowVersion;
   if (value.abilityVersion === 1) draft.abilityVersion = 1;
   if (value.abilityMasteryVersion === 1) draft.abilityMasteryVersion = 1;
-  if (value.movesetVersion === 1) draft.movesetVersion = 1;
+  if (isMovesetVersion(value.movesetVersion))
+    draft.movesetVersion = value.movesetVersion;
   if (value.physicalAbilityVersion === 1) draft.physicalAbilityVersion = 1;
   if (value.chemistryVersion === 1) draft.chemistryVersion = 1;
   if (value.chemistryGrowthVersion === 1) draft.chemistryGrowthVersion = 1;

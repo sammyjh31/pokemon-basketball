@@ -1,3 +1,4 @@
+import { isMovesetVersion } from "./basketballMoves";
 import { retainMastery } from "./abilityMastery";
 import { retainMorale } from "./playerMorale";
 import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
@@ -159,7 +160,8 @@ export function createLeague(run: Run): LeagueTeam[] {
     if (run.typeMatchupsVersion === 1) team.typeMatchupsVersion = 1;
     if (run.typeTacticsVersion === 1) team.typeTacticsVersion = 1;
     if (run.abilityVersion === 1) team.abilityVersion = 1;
-    if (run.movesetVersion === 1) team.movesetVersion = 1;
+    if (isMovesetVersion(run.movesetVersion))
+      team.movesetVersion = run.movesetVersion;
     if (run.abilityMasteryVersion === 1) {
       if (run.abilityVersion !== 1)
         throw new Error("Ability mastery requires abilities.");
