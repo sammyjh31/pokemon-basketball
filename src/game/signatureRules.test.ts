@@ -10,7 +10,7 @@ import {
   localLeagueTeams,
 } from "./localLeague";
 it("starts new solo and local drafts on signatures and retains either recorded version", () => {
-  expect(initialState(55).run.movesetVersion).toBe(3);
+  expect(initialState(55).run.movesetVersion).toBe(4);
   for (const mode of ["generational", "full-pool"] as const) {
     const draft = createLocalLeague(
       [
@@ -31,10 +31,10 @@ it("starts new solo and local drafts on signatures and retains either recorded v
         },
       },
     );
-    expect(draft.movesetVersion).toBe(3);
-    expect(parseLocalLeague(JSON.stringify(draft)).movesetVersion).toBe(3);
+    expect(draft.movesetVersion).toBe(4);
+    expect(parseLocalLeague(JSON.stringify(draft)).movesetVersion).toBe(4);
   }
-  for (const version of [1, 2, 3] as const) {
+  for (const version of [1, 2, 3, 4] as const) {
     const teams = createLeague({
       ...performanceRun(),
       movesetVersion: version,

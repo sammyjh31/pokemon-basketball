@@ -1,3 +1,7 @@
+import {
+  updateCounterResults,
+  validateCounterResults,
+} from "./counterLearning";
 import { updatedMoveReads, validateMoveReads } from "./counterTelemetry";
 import type { LeagueBox, LeagueMatch, LeagueTeam } from "./types";
 import type {
@@ -61,7 +65,17 @@ function updateOpponent(
   }
   const tactics = match.typeTactics?.[opponentSide];
   return {
-    ...(observer.movesetVersion === 3 &&
+    ...(observer.movesetVersion === 4 &&
+    observer.engineRules?.adaptiveCoaching !== false &&
+    observer.engineRules?.abilities !== false
+      ? {
+          counterResults: updateCounterResults(
+            prior.counterResults,
+            match.counterResults?.[opponentSide === "home" ? "away" : "home"],
+          ),
+        }
+      : {}),
+    ...((observer.movesetVersion ?? 0) >= 3 &&
     observer.engineRules?.adaptiveCoaching !== false &&
     observer.engineRules?.abilities !== false
       ? {
@@ -168,14 +182,20 @@ export function validateOpponentScouting(
   if (
     carried &&
     ((value as Record<string, unknown>).carried !== 1 ||
-      opponent.movesetVersion !== 3)
+      (opponent.movesetVersion ?? 0) < 3)
   )
     return invalid();
-  if (hasReads && opponent.movesetVersion !== 3) return invalid();
+  if (hasReads && (opponent.movesetVersion ?? 0) < 3) return invalid();
+  const hasResults =
+    !!value &&
+    typeof value === "object" &&
+    Object.hasOwn(value, "counterResults");
+  if (hasResults && opponent.movesetVersion !== 4) return invalid();
   const input = record(value, [
       ...HISTORY_KEYS,
       ...(hasReads ? ["moveReads"] : []),
       ...(carried ? ["carried"] : []),
+      ...(hasResults ? ["counterResults"] : []),
     ]),
     games = count(input.games, 1000),
     possessions = count(input.possessions),
@@ -218,6 +238,16 @@ export function validateOpponentScouting(
       return invalid();
     players[id] = { attempts, points, rimAttempts, threeAttempts };
   }
+  const counterResults = hasResults
+    ? validateCounterResults(input.counterResults)
+    : undefined;
+  if (
+    games === 0 &&
+    !carried &&
+    counterResults &&
+    Object.keys(counterResults.counters).length
+  )
+    return invalid();
   const moveReads = hasReads ? validateMoveReads(input.moveReads) : undefined;
   if (
     games === 0 &&
@@ -228,6 +258,7 @@ export function validateOpponentScouting(
   )
     return invalid();
   return {
+    ...(counterResults ? { counterResults } : {}),
     ...(carried ? { carried: 1 as const } : {}),
     games,
     possessions,

@@ -1,5 +1,9 @@
 import { openingScouting } from "./scoutingContinuity";
-import { createCounterRuntime } from "./moveCounters";
+import {
+  createCounterRuntime,
+  settleCounterSegment,
+  learnedCounterPlayWeights,
+} from "./moveCounters";
 import { createComboRuntime, comboPlayWeights } from "./matchCombos";
 import { createMoveRuntime } from "./matchMoves";
 import { emptyMoveStats } from "./moveTelemetry";
@@ -550,8 +554,16 @@ export function simulateMatch(
   };
   const h = buildTeam(prepared(home, away), "home"),
     a = buildTeam(prepared(away, home), "away");
-  h.counters = createCounterRuntime(h.config, scouting?.home.moveReads);
-  a.counters = createCounterRuntime(a.config, scouting?.away.moveReads);
+  h.counters = createCounterRuntime(
+    h.config,
+    scouting?.home.moveReads,
+    scouting?.home.counterResults,
+  );
+  a.counters = createCounterRuntime(
+    a.config,
+    scouting?.away.moveReads,
+    scouting?.away.counterResults,
+  );
   const loadManaged = { home: false, away: false };
   if (flow)
     for (const team of [h, a]) {
@@ -785,6 +797,13 @@ export function simulateMatch(
   );
   if (courtEnabled) result.insights!.court = [];
   let activeCourt: CourtSequence | undefined;
+  const settleCourt = () => {
+    if (activeCourt && (h.counters?.learning || a.counters?.learning)) {
+      settleCounterSegment(h.counters, activeCourt);
+      settleCounterSegment(a.counters, activeCourt);
+      activeCourt = undefined;
+    }
+  };
   const playerDetail = new Map(
     result.insights?.possession?.players.map((p) => [p.playerId, p]),
   );
@@ -1545,6 +1564,7 @@ export function simulateMatch(
       refreshLineupChemistry(defense);
       if (courtEnabled && periodTicks * 7.5 - courtSecondsInPeriod < 0.000001)
         return;
+      settleCourt();
       activeCourt = undefined;
       createdBy = undefined;
       screenBy = undefined;
@@ -1675,6 +1695,10 @@ export function simulateMatch(
           comboPlayWeights(offense.combos, offense.floor, elapsedSeconds()),
         ))
           weights[PLAY_TYPES.indexOf(comboPlay as PlayType)] += bonus!;
+      for (const [play, change] of Object.entries(
+        learnedCounterPlayWeights(offense.counters),
+      ))
+        weights[PLAY_TYPES.indexOf(play as PlayType)] += change!;
       if (chaseThree) weights[4] += 45;
       if (playoff) weights[0] *= 0.9;
       const atoShot = !!atoPlay && firstAction && !secondChance;
@@ -2814,6 +2838,7 @@ export function simulateMatch(
         const defense = offense === h ? a : h;
         if (flow) callTimeout(offense, defense);
         possession(offense, defense);
+        settleCourt();
         completedPossessions++;
         offense = defense;
       }
@@ -2888,6 +2913,7 @@ export function simulateMatch(
             rush
         ) {
           possession(offense, defense);
+          settleCourt();
           completedPossessions++;
           offense = defense;
         }
@@ -2933,6 +2959,11 @@ export function simulateMatch(
       home: h.counters?.prior ?? [],
       away: a.counters?.prior ?? [],
     };
+    if (h.counters?.learning || a.counters?.learning)
+      result.counterResults = {
+        ...(h.counters?.learning ? { home: h.counters.learning.observed } : {}),
+        ...(a.counters?.learning ? { away: a.counters.learning.observed } : {}),
+      };
     result.moveObservations = {
       ...(a.counters ? { home: a.counters.observed } : {}),
       ...(h.counters ? { away: h.counters.observed } : {}),

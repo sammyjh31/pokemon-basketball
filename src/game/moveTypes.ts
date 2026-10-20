@@ -45,7 +45,7 @@ export const SIGNATURE_MOVE_IDS = [
   "lucario-aura-sphere",
 ] as const;
 export const MOVE_IDS = [...BASE_MOVE_IDS, ...SIGNATURE_MOVE_IDS] as const;
-export type MovesetVersion = 1 | 2 | 3;
+export type MovesetVersion = 1 | 2 | 3 | 4;
 export interface SignatureEffects {
   movement?: number;
   passing?: number;

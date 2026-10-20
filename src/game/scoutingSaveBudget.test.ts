@@ -1,3 +1,4 @@
+import { COUNTER_KEYS, emptyCounterSample } from "./counterLearning";
 import { expect, it } from "vitest";
 import { createLeague } from "./league";
 import { performanceRun } from "./seasonPerformance.testUtils";
@@ -10,7 +11,7 @@ import { LOCAL_SAVE_MAX_LENGTH } from "./localLeague";
 import { needsBackgroundLocalRestore } from "./localLeagueRestore";
 import { SaveStorage } from "./saveStorage";
 it("budgets rich scouting books and opening seeds for a supported 50-year,30-club career", async () => {
-  const teams = createLeague({ ...performanceRun(), movesetVersion: 3 });
+  const teams = createLeague({ ...performanceRun(), movesetVersion: 4 });
   const book: CoachBook = {
     version: 1,
     year: 1,
@@ -27,6 +28,34 @@ it("budgets rich scouting books and opening seeds for a supported 50-year,30-clu
       if (other.id !== team.id)
         opponents[other.id] = {
           ...emptyScouting(),
+          counterResults: {
+            version: 1,
+            counters: Object.fromEntries(
+              COUNTER_KEYS.map((id) => [
+                id,
+                {
+                  used: {
+                    ...emptyCounterSample(),
+                    attacks: 99.123,
+                    points: 99.123,
+                    scoreless: 20.123,
+                    turnovers: 10.123,
+                    fouls: 5.123,
+                    energy: 200.123,
+                    answered: 10.123,
+                  },
+                  without: {
+                    ...emptyCounterSample(),
+                    attacks: 99.123,
+                    points: 150.123,
+                    scoreless: 20.123,
+                    turnovers: 10.123,
+                    fouls: 5.123,
+                  },
+                },
+              ]),
+            ),
+          },
           games: 8,
           possessions: 1000.123,
           pickRolls: 200.123,

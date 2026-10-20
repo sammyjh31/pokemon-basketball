@@ -63,7 +63,7 @@ it("adopts moves only in the next local season, while the previous archive repla
   ).toBe(true);
   const next = startNextLocalSeason(old);
   const teams = localLeagueTeams(next);
-  expect(teams.every((t) => t.movesetVersion === 3)).toBe(true);
+  expect(teams.every((t) => t.movesetVersion === 4)).toBe(true);
   expect(JSON.stringify(next.career!.history)).toBe(archived);
   expect(sha(replayLocalHistory(next, 1))).toBe(sha(before));
   const match = simulateMatch(teams[0], teams[1], 901);

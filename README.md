@@ -48,6 +48,14 @@ Older evidence fades each year; coaches consult at most eight prior seasons. Ope
 
 Books and opening inputs are preserved with archived seasons and authenticated replay evidence. Existing unseeded games keep their exact results. A completed v3 season can supply the first book at its next boundary; older seasons without recorded books receive no invented observations. Warm loads retain verified history, and long local careers use IndexedDB with a larger bounded save allowance for the added scouting history.
 
+## Coaches learn which counters work
+
+New seasons use moveset rules v4. Coaches compare actual attacks where they used each response with observed attacks where they withheld it. The record includes points allowed or scored, scoreless attacks, turnovers, fouls, energy and offensive counter-answers. Small samples receive less weight. Coaches automatically prioritize useful responses, reduce costly ones, keep testing alternatives and adjust offensive combo play selection. Existing mastery, chemistry, active-player and energy requirements still apply.
+
+Pregame counter reports show **Prioritize**, **Balanced use**, **Test and learn** or **Use sparingly** with sample counts. **Counter results in this game** expands the actual comparisons. Carried scouting books show the same evidence for future seasons. These are descriptive comparisons: lineups, timing and matchups affect results. Learning updates after completed attacks, including free throws, and works identically in compact simulations, CPU fixtures, local leagues, franchise advances and playoffs. Played arcade games supply no simulated counter samples.
+
+New solo/local drafts and the next franchise season adopt v4. Current and archived omitted/v1/v2/v3 seasons retain exact rules and results. Local clubs with an appointed trainer now use automatic adaptive coaching under v4 when enabled. Outcome evidence follows the existing annual scouting books, aging and roster/coaching turnover rules; it stays tied to the observed team context when Pokémon move.
+
 ## Automatic move counters and counter-combos
 
 New move rules let coaches learn repeated offensive moves and paid combo setups during games and from earlier meetings in the same season. Recent observations fade between meetings; the regular-season scouting record carries into the playoffs. CPU fixtures, partial season advances and historical box scores use the same shared engine. Saved pregame observations stay separate from later results.
@@ -58,7 +66,7 @@ Pairs with at least 75 mastery XP each and adequate chemistry can automatically 
 
 Box scores show **Coach counter scouting** with pregame evidence, confidence, timing and participants. Player move usage reports actual defensive responses and offensive counter-combos; these participant counts and their energy costs aggregate into season, playoff and career reports. They do not claim made baskets or successful stops. No manual coaching controls are needed. Disabling adaptive coaching disables reads/responses; disabling abilities disables moves and counters.
 
-New solo/local drafts and future franchise seasons use moveset rules v3. Active and historical omitted/v1/v2 seasons keep their saved behavior. Officially played arcade games cannot supply invented simulated counter observations or usage.
+New solo/local drafts and future franchise seasons use moveset rules v4. Active and historical omitted/v1/v2/v3 seasons keep their saved behavior. Officially played arcade games cannot supply invented simulated counter observations or usage.
 
 ## Saving
 

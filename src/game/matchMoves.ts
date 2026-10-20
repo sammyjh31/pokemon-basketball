@@ -21,7 +21,7 @@ export const neutralMoveEffects = () => ({
   drive: 0,
 });
 export interface MoveRuntime {
-  version: 1 | 2 | 3;
+  version: 1 | 2 | 3 | 4;
   pokemonId: number;
   plan: MoveAssignment;
   effects: ReturnType<typeof neutralMoveEffects>;

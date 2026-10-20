@@ -13,7 +13,7 @@ export function captureCoachBook(
   if (
     !league.scouting ||
     !league.teams.every(
-      (t) => t.movesetVersion === 3 && t.typeTacticsVersion === 1,
+      (t) => (t.movesetVersion ?? 0) >= 3 && t.typeTacticsVersion === 1,
     )
   )
     return;

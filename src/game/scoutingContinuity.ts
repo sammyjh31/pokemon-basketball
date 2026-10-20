@@ -1,3 +1,7 @@
+import {
+  updateCounterResults,
+  strongestCounterResults,
+} from "./counterLearning";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { getCoach } from "./trainerCoaches";
 import {
@@ -96,6 +100,15 @@ export function compactScouting(
   }
   const result: OpponentScouting = {
     ...emptyScouting(),
+    ...(data.counterResults
+      ? {
+          counterResults: updateCounterResults(
+            data.counterResults,
+            undefined,
+            factor,
+          ),
+        }
+      : {}),
     games: Math.min(500, data.games),
     possessions: round(data.possessions * factor),
     pickRolls: round(data.pickRolls * factor),
@@ -165,7 +178,7 @@ export function parseCoachBook(
       const target = integer(Number(key), 0, teams.length - 1);
       if (String(target) !== key || target === teamId) return fail();
       const scouting = validateOpponentScouting(data, {
-        movesetVersion: 3,
+        movesetVersion: 4,
         roster: asRoster(teams[target].roster),
       });
       if (!scouting.games) return fail();
@@ -176,7 +189,7 @@ export function parseCoachBook(
         ? undefined
         : validateOpponentScouting(
             { ...emptyScouting(), games: 1, players: source.selfPlayers },
-            { movesetVersion: 3, roster: asRoster(teams[teamId].roster) },
+            { movesetVersion: 4, roster: asRoster(teams[teamId].roster) },
           ).players;
     coaches[id] = {
       teamId,
@@ -220,7 +233,7 @@ export function parseScoutingSeed(
     )
       return fail();
     const scouting = validateOpponentScouting(p.scouting, {
-      movesetVersion: 3,
+      movesetVersion: 4,
       roster: asRoster(ids),
     });
     if (scouting.carried !== 1) return fail();
@@ -263,7 +276,7 @@ export function seedCoachScouting<T extends LeagueTeam>(
   return teams.map((team) => {
     if (
       !team.coach ||
-      team.movesetVersion !== 3 ||
+      (team.movesetVersion ?? 0) < 3 ||
       team.typeTacticsVersion !== 1
     )
       return team;
@@ -391,6 +404,16 @@ export function seedCoachScouting<T extends LeagueTeam>(
       const scouting = chosen
         ? compactScouting(chosen.data, chosen.factor)
         : emptyScouting();
+      if (team.movesetVersion === 4) {
+        const results = strongestCounterResults(
+          candidates.map((c) => ({
+            results: c.data.counterResults,
+            factor: c.factor,
+          })),
+        );
+        if (results) scouting.counterResults = results;
+        else delete scouting.counterResults;
+      } else delete scouting.counterResults;
       scouting.carried = 1;
       scouting.players = players;
       if (chosen?.data.moveReads) {
@@ -447,7 +470,7 @@ export function initialSeasonScouting(teams: LeagueTeam[]): ScoutingMemory {
       const seed = parseScoutingSeed(team.scoutingSeed, team.id, teams.length);
       if (
         seed.coachId !== team.coach?.id ||
-        team.movesetVersion !== 3 ||
+        (team.movesetVersion ?? 0) < 3 ||
         team.typeTacticsVersion !== 1
       )
         return fail();
@@ -499,7 +522,7 @@ export function openingScouting(home: LeagueTeam, away: LeagueTeam) {
       old = seed.opponents[opponent.id];
     if (
       seed.coachId !== team.coach?.id ||
-      team.movesetVersion !== 3 ||
+      (team.movesetVersion ?? 0) < 3 ||
       team.typeTacticsVersion !== 1
     )
       return fail();

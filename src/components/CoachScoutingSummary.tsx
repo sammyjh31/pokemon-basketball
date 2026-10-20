@@ -1,3 +1,4 @@
+import { CounterLearningResults } from "./CounterLearningReport";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { getCoach } from "../game/trainerCoaches";
 import type { SeedOpponent } from "../game/scoutingContinuityTypes";
@@ -51,6 +52,12 @@ export function CoachScoutingSummary({ team }: { team: LeagueTeam }) {
                 .join(", ") || "No recorded shots yet"}
               .
             </p>
+            {entry.scouting.counterResults && (
+              <CounterLearningResults
+                label={`${entry.opponentName} counter results carried forward`}
+                results={entry.scouting.counterResults}
+              />
+            )}
           </article>
         ))}
         <p>

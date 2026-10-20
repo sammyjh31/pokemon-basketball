@@ -7,6 +7,7 @@ export interface ScoutedPlayer {
 
 /** Observations of one opponent, discounted between meetings; never a win bonus. */
 export interface OpponentScouting {
+  counterResults?: import("./counterLearning").CounterResults;
   /** Versioned cross-season observations, including known players on a new club. */
   carried?: 1;
   moveReads?: import("./counterTypes").MoveReads;

@@ -1,3 +1,12 @@
+import {
+  addCounterOutcome,
+  counterDecision,
+  counterUse,
+  emptyCounterResults,
+  type CounterKey,
+  type CounterResults,
+} from "./counterLearning";
+import type { CourtSequence } from "./courtTypes";
 import { allBasketballMoves, movesEnabled } from "./basketballMoves";
 import { getCoach } from "./trainerCoaches";
 import { capMoveEffects, type MoveParticipant } from "./matchMoves";
@@ -17,6 +26,13 @@ import {
 const clamp = (n: number, a = 0, b = 1) => Math.max(a, Math.min(b, n));
 const round = (n: number) => Math.round(n * 1e6) / 1e6;
 export interface CounterRuntime {
+  learning?: {
+    knowledge: CounterResults;
+    observed: CounterResults;
+    opportunities: Set<CounterKey>;
+    serial: Partial<Record<CounterKey, number>>;
+    decisions: Partial<Record<CounterKey, boolean>>;
+  };
   teamId: number;
   reads: MoveReads;
   observed: MoveReads;
@@ -58,26 +74,48 @@ export function counterPlans(reads: MoveReads): CounterPlan[] {
 export function createCounterRuntime(
   team: MoveTeam & { id: number },
   prior?: MoveReads,
+  results?: CounterResults,
 ): CounterRuntime | undefined {
   if (
-    team.movesetVersion !== 3 ||
+    (team.movesetVersion ?? 0) < 3 ||
     !movesEnabled(team) ||
     team.engineRules?.adaptiveCoaching === false
   )
     return;
   const reads = prior ? structuredClone(prior) : { moves: {}, combos: {} };
+  const learning =
+    team.movesetVersion === 4
+      ? {
+          knowledge: structuredClone(results ?? emptyCounterResults()),
+          observed: emptyCounterResults(),
+          opportunities: new Set<CounterKey>(),
+          serial: {},
+          decisions: {},
+        }
+      : undefined;
   return {
+    ...(learning ? { learning } : {}),
     teamId: team.id,
     reads,
     observed: { moves: {}, combos: {} },
-    prior: counterPlans(reads),
+    prior: counterPlans(reads).map((p) =>
+      learning
+        ? { ...p, learning: counterDecision(learning.knowledge, p.id) }
+        : p,
+    ),
     adaptability: getCoach(team.coach?.id ?? "")?.adaptability ?? 0.5,
     readyAt: {},
     used: false,
   };
 }
 export function beginCounterSegment(runtime?: CounterRuntime) {
-  if (runtime) runtime.used = false;
+  if (runtime) {
+    runtime.used = false;
+    if (runtime.learning) {
+      runtime.learning.opportunities.clear();
+      runtime.learning.decisions = {};
+    }
+  }
 }
 function ready(
   runtime: CounterRuntime,
@@ -93,7 +131,7 @@ function ready(
     active.includes(p) &&
     p.box.teamId === runtime.teamId &&
     (p.box.fouls ?? 0) < 6 &&
-    p.moves?.version === 3 &&
+    (p.moves?.version ?? 0) >= 3 &&
     p.energy >= 35 + cost &&
     now >= (runtime.readyAt[p.box.playerId] ?? 0)
   );
@@ -109,7 +147,11 @@ function pay(
   return players.map((p) => {
     const before = p.energy;
     p.energy = Math.max(25, before - cost);
-    runtime.readyAt[p.box.playerId] = now + 55;
+    const emphasis = runtime.learning
+      ? counterDecision(runtime.learning.knowledge, id).emphasis
+      : undefined;
+    runtime.readyAt[p.box.playerId] =
+      now + (emphasis === "emphasize" ? 45 : emphasis === "reduce" ? 70 : 55);
     const ability = (p.box.abilityActivations ??= {
       offense: 0,
       support: 0,
@@ -207,7 +249,14 @@ export function counterMove(
   runtime.reads.moves[event.move] = (runtime.reads.moves[event.move] ?? 0) + 1;
   const id = moveRead(event.move),
     read = counterPlans(runtime.reads).find((p) => p.id === id);
-  if (!id || !read || !ready(runtime, defender, now, active, 2.5)) return;
+  if (id) runtime.learning?.opportunities.add(id);
+  if (
+    !id ||
+    !read ||
+    !ready(runtime, defender, now, active, 2.5) ||
+    !wantsCounter(runtime, id)
+  )
+    return;
   const amount = strength(runtime, read, [defender]);
   const changes = suppress(
     receiver ? [attacker, receiver] : [attacker],
@@ -259,6 +308,7 @@ export function counterCombo(
     e = c.guards.get(b);
   const id = comboRead(event.id),
     read = counterPlans(def.reads).find((p) => p.id === id);
+  def.learning?.opportunities.add(id);
   if (
     !read ||
     !d ||
@@ -268,7 +318,8 @@ export function counterCombo(
     !c.offense.includes(b) ||
     !ready(def, d, c.now, c.defense, 3) ||
     !ready(def, e, c.now, c.defense, 3) ||
-    Math.min(d.moves!.plan.xp, e.moves!.plan.xp) < 25
+    Math.min(d.moves!.plan.xp, e.moves!.plan.xp) < 25 ||
+    !wantsCounter(def, id)
   )
     return [];
   const amount = strength(def, read, [d, e], c.defenseChemistry);
@@ -287,17 +338,19 @@ export function counterCombo(
       energySpent: pay(def, [d, e], id, c.now, 3),
     },
   ];
+  const response: CounterComboId =
+    id === "switch-deny" ? "slip-and-seal" : "reverse-relay";
+  off?.learning?.opportunities.add(response);
   // One offensive answer to a visible defensive response; no recursive counter chain.
   if (
     !off ||
     c.offenseChemistry < 40 ||
     Math.min(a.moves!.plan.xp, b.moves!.plan.xp) < 75 ||
     !ready(off, a, c.now, c.offense, 3.5) ||
-    !ready(off, b, c.now, c.offense, 3.5)
+    !ready(off, b, c.now, c.offense, 3.5) ||
+    !wantsCounter(off, response)
   )
     return events;
-  const response: CounterComboId =
-    id === "switch-deny" ? "slip-and-seal" : "reverse-relay";
   const recovery = clamp(
     0.3 + off.adaptability * 0.3 + c.offenseChemistry * 0.002,
     0.3,
@@ -319,4 +372,64 @@ export function counterCombo(
     energySpent: pay(off, [a, b], response, c.now, 3.5),
   });
   return events;
+}
+
+function wantsCounter(runtime: CounterRuntime, id: CounterKey): boolean {
+  const learning = runtime.learning;
+  if (!learning) return true;
+  if (learning.decisions[id] === undefined) {
+    const serial = (learning.serial[id] ?? 0) + 1;
+    learning.serial[id] = serial;
+    learning.decisions[id] = counterUse(learning.knowledge, id, serial);
+  }
+  return learning.decisions[id]!;
+}
+/** Called once after the attack's shooting/free throws and before the next segment begins. */
+export function settleCounterSegment(
+  runtime: CounterRuntime | undefined,
+  sequence: CourtSequence,
+) {
+  const learning = runtime?.learning;
+  if (!learning) return;
+  for (const id of learning.opportunities) {
+    const event = sequence.counters?.find(
+      (e) => e.id === id && e.playerIds[0].startsWith(`${runtime.teamId}:`),
+    );
+    const answered =
+      !!event &&
+      COUNTER_IDS.includes(id as CounterId) &&
+      !!sequence.counters?.some(
+        (e) =>
+          !COUNTER_IDS.includes(e.id as CounterId) && e.target === event.target,
+      );
+    const outcome = {
+      points: sequence.points,
+      scoreless: Number(sequence.points === 0),
+      turnovers: Number(
+        sequence.outcome === "turnover" || sequence.outcome === "violation",
+      ),
+      fouls: Number(sequence.outcome === "foul"),
+      energy: event?.energySpent.reduce((a, b) => a + b, 0) ?? 0,
+      answered: Number(answered),
+    };
+    addCounterOutcome(learning.observed, id, !!event, outcome);
+    addCounterOutcome(learning.knowledge, id, !!event, outcome);
+  }
+  learning.opportunities.clear();
+}
+/** Adjust the offensive mix from prior and completed in-game counter-combo results. */
+export function learnedCounterPlayWeights(
+  runtime?: CounterRuntime,
+): Partial<Record<"pickRoll" | "spotUp", number>> {
+  if (!runtime?.learning) return {};
+  return {
+    pickRoll:
+      12 *
+      runtime.adaptability *
+      counterDecision(runtime.learning.knowledge, "slip-and-seal").value,
+    spotUp:
+      12 *
+      runtime.adaptability *
+      counterDecision(runtime.learning.knowledge, "reverse-relay").value,
+  };
 }

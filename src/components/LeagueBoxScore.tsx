@@ -334,6 +334,7 @@ export function LeagueBoxScore({
         </div>
         <GameCounterReport
           plans={match.counterPlans}
+          results={match.counterResults}
           teams={[home, away]}
           sequences={match.insights?.court}
         />

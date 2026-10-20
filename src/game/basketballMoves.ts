@@ -85,8 +85,8 @@ export const basketballMoves: readonly BasketballMove[] = [
   },
 ];
 export const allBasketballMoves = [...basketballMoves, ...signatureMoves];
-export const isMovesetVersion = (value: unknown): value is 1 | 2 | 3 =>
-  value === 1 || value === 2 || value === 3;
+export const isMovesetVersion = (value: unknown): value is 1 | 2 | 3 | 4 =>
+  value === 1 || value === 2 || value === 3 || value === 4;
 export function movesEnabled(team: Partial<MoveTeam>) {
   return (
     isMovesetVersion(team.movesetVersion) &&
@@ -97,10 +97,14 @@ export function movesEnabled(team: Partial<MoveTeam>) {
   );
 }
 export const signaturesEnabled = (team: Partial<MoveTeam>) =>
-  (team.movesetVersion === 2 || team.movesetVersion === 3) &&
+  team.movesetVersion !== undefined &&
+  team.movesetVersion >= 2 &&
   movesEnabled(team);
 /** Basketball adaptations, deliberately separate from canonical battle learnsets. */
-export function movePool(id: number, version: 1 | 2 | 3 = 1): BasketballMove[] {
+export function movePool(
+  id: number,
+  version: 1 | 2 | 3 | 4 = 1,
+): BasketballMove[] {
   const mon = POKEMON_BY_ID.get(id);
   if (!mon) return [];
   const a = playerProfile(mon).attributes;

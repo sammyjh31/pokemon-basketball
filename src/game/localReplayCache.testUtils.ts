@@ -22,8 +22,8 @@ import { ROSTER_SLOTS } from "./types";
 /** Real modern games, trainers, camps, two-round rookie drafts and transitions. */
 export function localCareerFixture(
   years = 10,
-  moves: boolean | 1 | 2 | 3 = true,
-  laterMoves?: 1 | 2 | 3,
+  moves: boolean | 1 | 2 | 3 | 4 = true,
+  laterMoves?: 1 | 2 | 3 | 4,
 ) {
   let draft = createLocalLeague(
     [
@@ -44,6 +44,7 @@ export function localCareerFixture(
       },
     },
   );
+  if (moves === true) draft.movesetVersion = 3; // Frozen pre-outcome fixture; pass4 for modern learning.
   if (!moves) delete draft.movesetVersion;
   else if (moves !== true) draft.movesetVersion = moves;
   draft = { ...draft, coachDraftRequired: true };
@@ -87,10 +88,21 @@ export function localCareerFixture(
     if (year < years) {
       draft = startNextLocalSeason(draft);
       // Explicit historical fixtures keep the recorded boundary version.
-      if (laterMoves)
+      const boundaryMoves = laterMoves ?? (moves === true ? 3 : undefined);
+      if (boundaryMoves)
         draft.career!.teams = draft.career!.teams.map((t) => ({
           ...t,
-          movesetVersion: laterMoves,
+          movesetVersion: boundaryMoves,
+          ...(boundaryMoves < 4 && t.engineRules
+            ? {
+                engineRules: {
+                  ...t.engineRules,
+                  adaptiveCoaching:
+                    draft.options!.engineRules.adaptiveCoaching &&
+                    !draft.managers.some((m) => m.teamId === t.id),
+                },
+              }
+            : {}),
         }));
     }
   }

@@ -26,6 +26,7 @@ export interface CounterStats {
   counterCombos: Partial<Record<CounterComboId, number>>;
 }
 export interface CounterPlan {
+  learning?: import("./counterLearning").CounterDecision;
   id: CounterId;
   observations: number;
   confidence: number;

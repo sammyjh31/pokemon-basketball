@@ -788,7 +788,8 @@ function nextYearTeams(
   adoptPersonality = true,
   adoptMastery = true,
   adoptGameFlow = true,
-  adoptMoves: false | import("./moveTypes").MovesetVersion = 3,
+  adoptMoves: false | import("./moveTypes").MovesetVersion = 4,
+  adaptiveCoaching?: boolean,
 ): LeagueTeam[] {
   const archived = career.history.at(-1)!;
   const appointed = projectedCoaches(
@@ -831,6 +832,11 @@ function nextYearTeams(
         ? {
             engineRules: {
               ...team.engineRules,
+              ...(adoptMoves === 4 &&
+              team.coach &&
+              adaptiveCoaching !== undefined
+                ? { adaptiveCoaching }
+                : {}),
               familiarity: Math.min(
                 1,
                 (team.engineRules.familiarity + 0.15) * retained,
@@ -853,7 +859,10 @@ export function startNextLocalSeason(draft: LocalLeague): LocalLeague {
     fail("This local career has reached its season limit.");
   draft = reviewLocalCoaches(draft);
   const latest = draft.career!.history.at(-1)!;
-  if (!latest.coachBook && latest.teams.every((t) => t.movesetVersion === 3)) {
+  if (
+    !latest.coachBook &&
+    latest.teams.every((t) => (t.movesetVersion ?? 0) >= 3)
+  ) {
     const replay = replayLocalHistory(draft, latest.year),
       coachBook = captureCoachBook(
         replay.result.league!,
@@ -871,7 +880,20 @@ export function startNextLocalSeason(draft: LocalLeague): LocalLeague {
         },
       };
   }
-  const nextTeams = nextYearTeams(draft.career!);
+  const nextTeams = nextYearTeams(
+    draft.career!,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    4,
+    draft.options?.engineRules.adaptiveCoaching,
+  );
   const { playoffGames: _, ...base } = draft;
   return {
     ...base,
@@ -1185,7 +1207,8 @@ function parseTeams(
       rules.abilities !== expected.abilities ||
       rules.adaptiveCoaching !==
         (expected.adaptiveCoaching &&
-          !draft.managers.some((m) => m.teamId === id)) ||
+          ((movesetVersion === 4 && !!row.coach) ||
+            !draft.managers.some((m) => m.teamId === id))) ||
       typeof rules.familiarity !== "number" ||
       !Number.isFinite(rules.familiarity) ||
       rules.familiarity < 0 ||
@@ -1734,6 +1757,7 @@ export function parseLocalCareer(
         (object(array(nextRawTeams, draft.options.format.teamCount)[0])
           .movesetVersion as
           import("./moveTypes").MovesetVersion | undefined) ?? false,
+        draft.options.engineRules.adaptiveCoaching,
       );
     } else expected = replay.career!.teams;
     onProgress?.(i + 1, rawHistory.length);

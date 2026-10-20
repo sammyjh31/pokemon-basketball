@@ -620,6 +620,7 @@ export function validateOfficialGame(
   if (
     match.moveObservations !== undefined ||
     match.counterPlans !== undefined ||
+    match.counterResults !== undefined ||
     !integer(match.overtimePeriods, 0, 100) ||
     !integer(match.homeScore) ||
     !integer(match.awayScore) ||
