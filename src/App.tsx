@@ -1,6 +1,11 @@
 import { publicAsset } from "./assets";
 import { ChallengePoolPicker } from "./components/ChallengePoolPicker";
-import { draftPoolLabel, type DraftPool } from "./game/draftPool";
+import {
+  draftPoolLabel,
+  inDraftPool,
+  isDraftPool,
+  type DraftPool,
+} from "./game/draftPool";
 import { RestoreProgress } from "./components/RestoreProgress";
 import { MasteryPanel } from "./components/MasteryPanel";
 import { teamsWithMastery } from "./game/abilityMastery";
@@ -236,11 +241,7 @@ export default function App({
   ) => {
     if (busy) return;
     const pool =
-      mode === "spin"
-        ? reason === "legends"
-          ? run.draftPool
-          : (run.draftPool ?? "all")
-        : undefined;
+      reason === "legends" ? run.draftPool : (run.draftPool ?? "all");
     if (!hasProgress && !state.franchise)
       return start(mode, includeLegends, pool);
     const onConfirm = () => start(mode, includeLegends, pool);
@@ -276,7 +277,7 @@ export default function App({
       busy ||
       run.result ||
       state.franchise ||
-      run.mode !== "spin" ||
+      !isDraftPool(pool) ||
       pool === run.draftPool
     )
       return;
@@ -287,6 +288,18 @@ export default function App({
       setConfirm(null);
       setAnnouncement(`${draftPoolLabel(pool)} draft ready.`);
     };
+    if (run.mode === "free") {
+      const removed = Object.values(run.roster).filter(
+        (id): id is number => id !== null && !inDraftPool(pool, id),
+      );
+      if (!removed.length) return apply();
+      return setConfirm({
+        title: "Change lineup generation?",
+        description: `This removes ${removed.map((id) => POKEMON_BY_ID.get(id)!.name).join(", ")} from your lineup. Eligible players, your coach and completed season records stay saved.`,
+        confirmLabel: "Change pool",
+        onConfirm: apply,
+      });
+    }
     if (!hasProgress) return apply();
     setConfirm({
       title: "Change draft generation?",
@@ -656,8 +669,9 @@ export default function App({
                   </button>
                 </p>
               )}
-              {!state.franchise && run.mode === "spin" && (
+              {!state.franchise && (
                 <ChallengePoolPicker
+                  mode={run.mode}
                   pool={run.draftPool}
                   includeLegends={run.includeLegends}
                   disabled={busy || !!run.result}
