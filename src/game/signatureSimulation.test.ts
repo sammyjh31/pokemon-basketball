@@ -98,6 +98,12 @@ it("resolves signatures and coach-timed combinations from real actions with exac
                   a.targetId === event.playerIds[1],
               ),
           ).toBe(true);
+          const chainPasses = sequence.actions
+            .slice(definition.setup === "screen" ? setup + 1 : setup)
+            .filter((action) => ["pass", "kickout"].includes(action.kind));
+          expect(chainPasses).toHaveLength(1);
+          expect(chainPasses[0].playerId).toBe(event.playerIds[0]);
+          expect(chainPasses[0].targetId).toBe(event.playerIds[1]);
           expect(sequence.actions.at(-1)?.kind).toBe("shoot");
           expect(sequence.shooterId).toBe(event.playerIds[1]);
           expect(definition.zones).toContain(sequence.zone);

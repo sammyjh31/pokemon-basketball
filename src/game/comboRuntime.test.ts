@@ -7,6 +7,7 @@ import {
   noteComboPass,
   completeCombo,
   comboPlayWeights,
+  comboReceiverPreference,
   reserveComboDrive,
 } from "./matchCombos";
 import { signaturePlayer, signatureTeam } from "./signatureTestUtils";
@@ -38,8 +39,6 @@ it("charges two active partners once and creates a shot only after the actual pa
   expect(b.moves.used).toBe(true);
   expect(b.moves.effects.screen).toBeGreaterThan(1);
   expect(completeCombo(runtime, b, "rim", 11)).toBeUndefined();
-  noteComboPass(runtime, b, a);
-  expect(completeCombo(runtime, b, "rim", 12)).toBeUndefined();
   noteComboPass(runtime, a, b);
   expect(completeCombo(runtime, b, "three", 12)).toBeUndefined();
   const shot = completeCombo(runtime, b, "rim", 13);
@@ -52,6 +51,43 @@ it("charges two active partners once and creates a shot only after the actual pa
       shotsCreated: { "pick-roll": 1 },
     });
   expect(completeCombo(runtime, b, "rim", 14)).toBeUndefined();
+});
+it("permanently interrupts a pair after a wrong receiver without reopening the segment", () => {
+  const { runtime, a, b, context, team } = setup();
+  const thirdId = Object.values(team.roster).find(
+    (id) => id !== a.box.pokemonId && id !== b.box.pokemonId,
+  )!;
+  const c = signaturePlayer(team, thirdId);
+  context.active.push(c);
+  const plans = createComboRuntime(team)!.plans;
+  const second = plans.find(
+    (p) => p.initiatorId !== a.box.pokemonId && p.partnerId !== a.box.pokemonId,
+  );
+  expect(second).toBeDefined();
+  expect(startCombo(runtime, "screen", a, b, 10, context)).toBeDefined();
+  expect(comboReceiverPreference(runtime, a, b)).toBeGreaterThan(0);
+  noteComboPass(runtime, a, c);
+  expect(comboReceiverPreference(runtime, a, b)).toBe(0);
+  noteComboPass(runtime, c, a);
+  noteComboPass(runtime, a, b);
+  expect(completeCombo(runtime, b, "rim", 13)).toBeUndefined();
+  expect(b.box.abilityActivations).toHaveProperty("moves.combos", {
+    attempts: { "pick-roll": 1 },
+    shotsCreated: {},
+  });
+  expect(b.moves.effects.shot).toBe(0);
+  // Even an unrelated fresh pair cannot buy a second setup in this segment.
+  runtime.plans = plans;
+  const d = signaturePlayer(team, second!.initiatorId),
+    e = signaturePlayer(team, second!.partnerId);
+  expect(
+    startCombo(runtime, "screen", d, e, 20, { clock: 12, active: [d, e] }),
+  ).toBeUndefined();
+  beginComboSegment(runtime);
+  beginMoveSegment([a, b]);
+  expect(startCombo(runtime, "screen", a, b, 111, context)).toBeDefined();
+  noteComboPass(runtime, a, b);
+  expect(completeCombo(runtime, b, "rim", 113)?.stage).toBe("shot");
 });
 it("rejects bench, wrong-team, same-player, fouled-out, tired and rushed pair setups", () => {
   for (const kind of ["bench", "team", "same", "fouls", "energy", "clock"]) {

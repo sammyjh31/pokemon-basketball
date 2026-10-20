@@ -28,6 +28,7 @@ export interface ComboRuntime {
     a: ComboPlayer;
     b: ComboPlayer;
     received: boolean;
+    cancelled?: boolean;
     now: number;
     strength: number;
     lineupChemistry: number;
@@ -136,7 +137,9 @@ export function comboReceiverPreference(
   to: ComboPlayer,
 ): number {
   const pending = runtime?.pending;
-  return pending?.a === from && pending.b === to ? 1.4 * pending.strength : 0;
+  return pending?.a === from && pending.b === to && !pending.cancelled
+    ? 1.4 * pending.strength
+    : 0;
 }
 function record(
   p: ComboPlayer,
@@ -256,9 +259,11 @@ export function noteComboPass(
   from: ComboPlayer,
   to: ComboPlayer,
 ) {
-  if (runtime?.pending)
-    runtime.pending.received =
-      runtime.pending.a === from && runtime.pending.b === to;
+  const pending = runtime?.pending;
+  if (!pending || pending.cancelled) return;
+  pending.received = pending.a === from && pending.b === to;
+  // A wrong pass ends this combination, but the paid segment remains consumed.
+  if (!pending.received) pending.cancelled = true;
 }
 export function completeCombo(
   runtime: ComboRuntime | undefined,
@@ -270,6 +275,7 @@ export function completeCombo(
   if (
     !pending ||
     !pending.received ||
+    pending.cancelled ||
     pending.b !== shooter ||
     !Number.isFinite(now) ||
     now < pending.now ||
