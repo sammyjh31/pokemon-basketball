@@ -1,4 +1,9 @@
-import { coachMoves, specializationRules } from "./movePolicy";
+import { comboTrainingFocus } from "./comboPolicy";
+import {
+  coachMoves,
+  signatureTrainingFocus,
+  specializationRules,
+} from "./movePolicy";
 import { masteryXp } from "./abilityMastery";
 import {
   playerPersonality,
@@ -63,6 +68,8 @@ export function coachTrainingPlans(
     roster.map(({ mon, profile, role }) => {
       const a = profile.attributes;
       const moves = coachMoves(team, mon.id);
+      const signatureFocus = signatureTrainingFocus(team, mon.id);
+      const comboFocus = comboTrainingFocus(team, mon.id);
       const species = abilitiesEnabled(team)
         ? speciesAbility(mon.id)
         : undefined;
@@ -142,7 +149,9 @@ export function coachTrainingPlans(
                 ? shared
                   ? 0.2
                   : 5
-                : 0),
+                : 0) +
+              (signatureFocus === focus ? (shared ? 0.1 : 2.5) : 0) +
+              (comboFocus === focus ? (shared ? 0.1 : 2.5) : 0),
           };
         })
         .sort((x, y) => y.score - x.score);
@@ -220,7 +229,7 @@ export function coachTrainingPlans(
         reasons[1] += ` ${reasons[2]}`;
         reasons.splice(2, 1);
         reasons.push(
-          `Basketball moves and ${specializationRules[moves.specialization].name} specialization: ${moves.moves.map((m) => m.name).join(", ")}. ${chosen.focus === moves.focus ? "Aligned practice develops the selected moves" : "Team needs and recovery take priority over move-focused practice"}; the coach manages this automatically.`,
+          `Basketball moves and ${specializationRules[moves.specialization].name} specialization: ${moves.moves.map((m) => m.name).join(", ")}. ${chosen.focus === moves.focus ? "Aligned practice develops the selected moves" : "Team needs and recovery take priority over move-focused practice"}; the coach manages this automatically.${signatureFocus ? ` Signature practice: ${signatureFocus}; eligible moves unlock at 25 XP for types and 100 XP for species.` : ""}${comboFocus ? ` Combo practice: ${comboFocus}, preparing a role with a compatible teammate.` : ""}`,
         );
       }
       if (personality)

@@ -19,6 +19,7 @@ import type { OffseasonReport } from "./developmentTypes";
 function fixture() {
   const run = {
     ...createRun("free", true, 837),
+    movesetVersion: 1 as const,
     roster: {
       PG: 65,
       SG: 135,

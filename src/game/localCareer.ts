@@ -1,3 +1,4 @@
+import { isMovesetVersion } from "./basketballMoves";
 import { captureNewsGames } from "./archive";
 import {
   retainMastery,
@@ -776,7 +777,7 @@ function nextYearTeams(
   adoptPersonality = true,
   adoptMastery = true,
   adoptGameFlow = true,
-  adoptMoves = true,
+  adoptMoves: false | import("./moveTypes").MovesetVersion = 2,
 ): LeagueTeam[] {
   const archived = career.history.at(-1)!;
   const appointed = projectedCoaches(
@@ -809,7 +810,7 @@ function nextYearTeams(
       ...(adoptChemistry ? { chemistryVersion: 1 as const } : {}),
       ...(adoptEvaluation ? { evaluationVersion: 1 as const } : {}),
       ...(adoptMoves && team.courtVersion !== undefined
-        ? { movesetVersion: 1 as const }
+        ? { movesetVersion: adoptMoves }
         : {}),
       // Game flow needs court rules, which older local careers keep frozen.
       ...(adoptGameFlow && team.courtVersion !== undefined
@@ -1025,8 +1026,8 @@ function parseTeams(
     array(value, format.teamCount)[0],
   ).movesetVersion;
   if (
-    (movesetVersion !== undefined && movesetVersion !== 1) ||
-    (movesetVersion === 1 &&
+    (movesetVersion !== undefined && !isMovesetVersion(movesetVersion)) ||
+    (isMovesetVersion(movesetVersion) &&
       (abilityVersion !== 1 ||
         abilityMasteryVersion !== 1 ||
         draft.courtVersion === undefined))
@@ -1161,7 +1162,9 @@ function parseTeams(
         ? { typeMatchupsVersion: 1 as const }
         : {}),
       ...(abilityVersion === 1 ? { abilityVersion: 1 as const } : {}),
-      ...(movesetVersion === 1 ? { movesetVersion: 1 as const } : {}),
+      ...(isMovesetVersion(movesetVersion)
+        ? { movesetVersion: movesetVersion }
+        : {}),
       ...(abilityMasteryVersion === 1
         ? {
             abilityMasteryVersion: 1 as const,
@@ -1660,8 +1663,9 @@ export function parseLocalCareer(
           .abilityMasteryVersion === 1,
         object(array(nextRawTeams, draft.options.format.teamCount)[0])
           .gameFlowVersion === 1,
-        object(array(nextRawTeams, draft.options.format.teamCount)[0])
-          .movesetVersion === 1,
+        (object(array(nextRawTeams, draft.options.format.teamCount)[0])
+          .movesetVersion as
+          import("./moveTypes").MovesetVersion | undefined) ?? false,
       );
     } else expected = replay.career!.teams;
     onProgress?.(i + 1, rawHistory.length);

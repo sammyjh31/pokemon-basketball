@@ -1,3 +1,4 @@
+import { isMovesetVersion } from "./basketballMoves";
 import { masteryGameXpCap, masteryLevel } from "./masteryMath";
 import { nextRandom } from "./random";
 import type { FranchiseSeason } from "./franchiseTypes";
@@ -96,7 +97,9 @@ export function archivedSeasonRun(season: FranchiseSeason): Run {
     ...(user.evaluationVersion === 1 ? { evaluationVersion: 1 as const } : {}),
     ...(user.courtVersion ? { courtVersion: user.courtVersion } : {}),
     ...(user.gameFlowVersion === 1 ? { gameFlowVersion: 1 as const } : {}),
-    ...(user.movesetVersion === 1 ? { movesetVersion: 1 as const } : {}),
+    ...(isMovesetVersion(user.movesetVersion)
+      ? { movesetVersion: user.movesetVersion }
+      : {}),
     ...(user.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
     ...(user.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
     ...(user.typeTacticsVersion === 1

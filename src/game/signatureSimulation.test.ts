@@ -23,6 +23,18 @@ function clubs() {
     };
   });
 }
+it("can execute all four coach combinations in real league games", () => {
+  const teams = clubs(),
+    setups = new Set<string>(),
+    shots = new Set<string>();
+  for (let i = 0; i < teams.length; i += 2) {
+    const game = simulateMatch(teams[i], teams[i + 1], 81 + i);
+    for (const event of game.insights!.court!.flatMap((s) => s.combos ?? []))
+      (event.stage === "setup" ? setups : shots).add(event.id);
+  }
+  expect([...setups].sort()).toEqual([...COMBO_IDS].sort());
+  expect([...shots].sort()).toEqual([...COMBO_IDS].sort());
+});
 it("resolves signatures and coach-timed combinations from real actions with exact participant counters", () => {
   const teams = clubs();
   let signatures = 0,

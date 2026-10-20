@@ -187,3 +187,23 @@ export function moveValue(
     ? Math.min(3, basic + comboValue(team, id, profile, xp))
     : basic;
 }
+
+/** Upcoming or equipped signature practice; uses the same finite species pool and coach selection. */
+export function signatureTrainingFocus(team: MoveTeam, id: number) {
+  if (team.movesetVersion !== 2 || !movesEnabled(team)) return undefined;
+  const signatures = movePool(id, 2).filter((m) => m.signature);
+  const xp = team.abilityMastery?.[id] ?? 0;
+  const next = signatures
+    .filter((m) => m.signature!.minimumMastery > xp)
+    .sort(
+      (a, b) => a.signature!.minimumMastery - b.signature!.minimumMastery,
+    )[0];
+  const planned = coachMoves(team, id, {
+    xp: Math.max(xp, next?.signature!.minimumMastery ?? 0),
+  });
+  return (
+    planned.moves.find((m) => m.signature)?.focus ??
+    next?.focus ??
+    signatures[0]?.focus
+  );
+}

@@ -34,7 +34,7 @@ it("restores two new-rule local seasons with identical moves, camp XP and cached
   expect(warm.replayedYears).toEqual([]);
   expect(
     cold.draft.career!.history.every((h) =>
-      h.teams.every((t) => t.movesetVersion === 1),
+      h.teams.every((t) => t.movesetVersion === 2),
     ),
   ).toBe(true);
   const history = replayLocalHistory(warm.draft, 1);
@@ -63,7 +63,7 @@ it("adopts moves only in the next local season, while the previous archive repla
   ).toBe(true);
   const next = startNextLocalSeason(old);
   const teams = localLeagueTeams(next);
-  expect(teams.every((t) => t.movesetVersion === 1)).toBe(true);
+  expect(teams.every((t) => t.movesetVersion === 2)).toBe(true);
   expect(JSON.stringify(next.career!.history)).toBe(archived);
   expect(sha(replayLocalHistory(next, 1))).toBe(sha(before));
   const match = simulateMatch(teams[0], teams[1], 901);

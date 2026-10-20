@@ -20,7 +20,7 @@ import { simulatePlayoffs, playoffGameCount } from "./playoffs";
 import { ROSTER_SLOTS } from "./types";
 
 /** Real modern games, trainers, camps, two-round rookie drafts and transitions. */
-export function localCareerFixture(years = 10, moves = true) {
+export function localCareerFixture(years = 10, moves: boolean | 1 | 2 = true) {
   let draft = createLocalLeague(
     [
       { name: "Sam", teamId: 0 },
@@ -41,6 +41,7 @@ export function localCareerFixture(years = 10, moves = true) {
     },
   );
   if (!moves) delete draft.movesetVersion;
+  else if (moves !== true) draft.movesetVersion = moves;
   draft = { ...draft, coachDraftRequired: true };
   let selected = 0;
   for (let turn = localCoachTurn(draft); turn; turn = localCoachTurn(draft))

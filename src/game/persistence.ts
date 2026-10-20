@@ -1,3 +1,4 @@
+import { isMovesetVersion } from "./basketballMoves";
 import { validateCoach, coachOffers } from "./trainerCoaches";
 import { isCourtVersion } from "./courtTypes";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -191,8 +192,9 @@ function validate(
   )
     return fail();
   if (
-    (raw.movesetVersion !== undefined && raw.movesetVersion !== 1) ||
-    (raw.movesetVersion === 1 &&
+    (raw.movesetVersion !== undefined &&
+      !isMovesetVersion(raw.movesetVersion)) ||
+    (isMovesetVersion(raw.movesetVersion) &&
       (raw.abilityVersion !== 1 ||
         raw.abilityMasteryVersion !== 1 ||
         raw.courtVersion === undefined))
@@ -240,7 +242,9 @@ function validate(
     ...(raw.matchupVersion === 1 ? { matchupVersion: 1 as const } : {}),
     ...(raw.possessionVersion === 1 ? { possessionVersion: 1 as const } : {}),
     ...(raw.gameFlowVersion === 1 ? { gameFlowVersion: 1 as const } : {}),
-    ...(raw.movesetVersion === 1 ? { movesetVersion: 1 as const } : {}),
+    ...(isMovesetVersion(raw.movesetVersion)
+      ? { movesetVersion: raw.movesetVersion }
+      : {}),
     ...(raw.typeMatchupsVersion === 1
       ? { typeMatchupsVersion: 1 as const }
       : {}),
