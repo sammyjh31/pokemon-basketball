@@ -295,6 +295,35 @@ main {
   border-radius: 3px;
   padding: 2px 5px;
 }
+.challenge-pool {
+  padding: 14px;
+  margin-bottom: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+}
+.challenge-pool label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.challenge-pool select {
+  max-width: 100%;
+  min-height: 42px;
+  background: #080b0f;
+  color: #f4f4f7;
+  border: 1px solid #3b424c;
+  border-radius: 4px;
+  padding: 9px;
+}
+.challenge-pool p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 10px 0 0;
+}
 .legend-toggle {
   display: flex;
   gap: 9px;

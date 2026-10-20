@@ -41,6 +41,7 @@ import {
   type Roster,
 } from "./types";
 import { validRoster } from "./lineup";
+import { inDraftPool, isDraftPool, type DraftPool } from "./draftPool";
 import type { Playoffs } from "./playoffTypes";
 import {
   archiveFranchiseSeason,
@@ -53,6 +54,7 @@ import type { RotationPlan, TrainingPlans } from "./franchiseFeatures";
 import { validateRotationPlan } from "./rotationPlan";
 import { validateTrainingPlans } from "./training";
 export type GameAction =
+  | { type: "DRAFT_POOL"; pool: DraftPool }
   | { type: "SELECT_COACH"; id: string }
   | { type: "APPOINT_COACH"; id: string | null }
   | { type: "PROCESS_CPU_COACHES" }
@@ -87,13 +89,14 @@ export type GameAction =
       mode: Mode;
       includeLegends: boolean;
       seed: number;
+      draftPool?: DraftPool;
       coachDraftRequired?: true;
     }
   | { type: "LEGENDS"; includeLegends: boolean };
-export function initialState(seed: number): GameState {
+export function initialState(seed: number, draftPool?: DraftPool): GameState {
   return {
     version: 3,
-    run: createRun("spin", true, seed),
+    run: createRun("spin", true, seed, draftPool),
     records: {
       spin: { runs: 0, bestWins: 0, perfectSeasons: 0 },
       free: { runs: 0, bestWins: 0, perfectSeasons: 0 },
@@ -194,12 +197,43 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       run: { ...run, includeLegends: action.includeLegends, roster },
     };
   }
+  if (action.type === "DRAFT_POOL") {
+    if (
+      state.franchise ||
+      run.result ||
+      run.mode !== "spin" ||
+      !isDraftPool(action.pool) ||
+      action.pool === run.draftPool
+    )
+      return state;
+    const next = createRun(
+      "spin",
+      run.includeLegends,
+      Number(run.id.slice(4)),
+      action.pool,
+    );
+    return {
+      ...state,
+      run: {
+        ...next,
+        ...(run.coach ? { coach: run.coach } : {}),
+        ...(run.coachDraftRequired
+          ? { coachDraftRequired: true as const }
+          : {}),
+      },
+    };
+  }
   if (action.type === "NEW_RUN")
     return {
       version: 3,
       records: state.records,
       run: {
-        ...createRun(action.mode, action.includeLegends, action.seed),
+        ...createRun(
+          action.mode,
+          action.includeLegends,
+          action.seed,
+          action.draftPool,
+        ),
         ...(action.coachDraftRequired
           ? { coachDraftRequired: true as const }
           : {}),
@@ -278,8 +312,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   if (action.type === "SET_LINEUP") {
     if (
       run.mode !== "free" ||
-      !validRoster(action.roster, run.includeLegends) ||
-      Object.values(action.roster).some((id) => id !== null && id > 251)
+      !validRoster(
+        action.roster,
+        run.includeLegends,
+        run.draftPool === undefined ? 251 : 809,
+      ) ||
+      Object.values(action.roster).some(
+        (id) => id !== null && !inDraftPool(run.draftPool, id),
+      )
     )
       return state;
     return { ...state, run: { ...run, roster: { ...action.roster } } };

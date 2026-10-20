@@ -79,7 +79,7 @@ export function useGame(
     } catch {
       // prepareGameLoad reports unavailable storage.
     }
-    const prepared = prepareGameLoad(storage, seed);
+    const prepared = prepareGameLoad(storage, seed, "all");
     const loaded = prepared.restore
       ? prepared
       : { ...prepared, ...settleLoad(storage, prepared, source) };
@@ -92,6 +92,9 @@ export function useGame(
         type: "NEW_RUN",
         mode: "free",
         includeLegends: true,
+        ...(Object.values(roster).some((id) => id !== null && id > 251)
+          ? { draftPool: "all" as const }
+          : {}),
         seed: newSeed(),
       });
       loaded.state = gameReducer(fresh, { type: "SET_LINEUP", roster });
@@ -362,6 +365,9 @@ export function useGame(
         type: "NEW_RUN",
         mode: "free",
         includeLegends: true,
+        ...(Object.values(loaded.roster).some((id) => id !== null && id > 251)
+          ? { draftPool: "all" as const }
+          : {}),
         seed: newSeed(),
       });
       dispatch({ type: "SET_LINEUP", roster: loaded.roster });

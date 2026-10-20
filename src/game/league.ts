@@ -4,6 +4,7 @@ import { retainMorale } from "./playerMorale";
 import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
 import { assignLeagueCoaches } from "./trainerCoaches";
 import { POKEMON } from "../data/pokemon";
+import { draftPokemon, inDraftPool } from "./draftPool";
 import { OPPONENTS } from "../data/opponents";
 import { nextRandom } from "./random";
 import {
@@ -28,14 +29,21 @@ import {
 
 export function createLeague(run: Run): LeagueTeam[] {
   if (
-    !validRoster(run.roster, run.includeLegends) ||
+    !validRoster(
+      run.roster,
+      run.includeLegends,
+      run.draftPool === undefined ? 251 : 809,
+    ) ||
+    Object.values(run.roster).some(
+      (id) => id !== null && !inDraftPool(run.draftPool, id),
+    ) ||
     Object.values(run.roster).some((id) => id === null)
   )
     throw new Error("Draft eight distinct players first.");
   const taken = new Set(Object.values(run.roster));
-  const pool = POKEMON.filter(
-    (p) => !taken.has(p.id) && (run.includeLegends || !p.legendary),
-  );
+  const pool = (
+    run.draftPool === undefined ? POKEMON : draftPokemon("all")
+  ).filter((p) => !taken.has(p.id) && (run.includeLegends || !p.legendary));
   if (pool.length < 232)
     throw new Error("The league needs at least 240 eligible Pokémon.");
   let seed = (run.seasonSeed ^ 0x78abc132) >>> 0;

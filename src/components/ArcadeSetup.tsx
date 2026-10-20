@@ -28,7 +28,7 @@ export function prepareArcadeTeams(run: Run): {
       teams: [],
       error: `Fill ${missing.join(", ")} before tipoff. Arcade needs five starters and three reserves. Return to your roster to complete an eight-player draft.`,
     };
-  if (!validRoster(run.roster))
+  if (!validRoster(run.roster, run.includeLegends, 1025))
     return {
       teams: [],
       error:
@@ -44,7 +44,7 @@ export function prepareArcadeTeams(run: Run): {
       const valid = existing.every((team) => {
         if (team.id === 0) return true;
         if (
-          !validRoster(team.roster) ||
+          !validRoster(team.roster, true, 1025) ||
           ROSTER_SLOTS.some((slot) => team.roster[slot] == null)
         )
           return false;

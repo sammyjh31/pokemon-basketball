@@ -1,5 +1,15 @@
 # Local and cloud handoff — 2026-10-19
 
+## Generation-selectable 82–0 challenges — October 19
+
+The optional `Run.draftPool` selects `"all"` or an integer 1–7. Omission preserves the original Gen I–II draft and CPU recruiting inputs byte-for-byte. `draftPool.ts` is shared by offers, placement, free imported-lineup tools and save validation. Any explicitly selected opening pool uses all 809 Gen I–VII species for CPU recruitment, preserving thirty globally unique eight-player rosters. The individual-generation restriction applies only to the human opening draft, as explicitly chosen by the user.
+
+New browser games default to all seven; `prepareGameLoad` applies this only at its actual empty-source branch. Core callers without the optional fresh-pool argument retain their existing default. Saved games are never silently opted in. A regression covers a save appearing between the hook's source read and the loader's read. Changing pools uses the existing seed, clears picks/restores re-rolls and retains the coach; the UI confirms if picks or re-rolls exist. Completed runs and franchises cannot change their opening pool.
+
+Tagged shared lineup links allow IDs through 809; original untagged links stay limited to 251. The receiving builder explicitly opts into the all-seven pool, including placement, search, bench autofill and randomization. Serialized catalog URLs and factual Pokémon data are unchanged. Arcade preparation accepts real later-generation rosters. Franchise year two uses fixed league teams, so opening-generation restrictions do not prevent offseason roster moves; rookie scouting excludes players already used in the league.
+
+Verification in progress: draft/placement/persistence/UI/shared-lineup/arcade group 37 passed; loading-race regression plus generation UI 3 passed. New desktop/mobile browser flows passed 4/4 (18.8 s), including fresh defaults, all eight pool choices, restart confirmation/cancellation, coach retention, rerolls/reload and tagged shared imports. TypeScript and the Pages production build passed. A real full Gen VII league/playoff/franchise/cold+warm restoration test and original-release output checks are running before release.
+
 ## GitHub Pages publishing — October 19
 
 `.github/workflows/pages.yml` publishes production `dist/` after pushes to `main`, with manual dispatch available. It uses SHA-pinned official actions, locked dependencies, `.nvmrc`, the Pages-reported base path and a focused asset-path regression before the typecheck/build. Build/deploy permissions are separated; deployment targets the `github-pages` environment. Local development remains rooted at `/`.

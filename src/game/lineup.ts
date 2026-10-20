@@ -1,4 +1,5 @@
-import { POKEMON, POKEMON_BY_ID, POKEMON_COUNT } from "../data/pokemon";
+import { POKEMON_BY_ID } from "../data/pokemon";
+import { draftPokemon, type DraftPool } from "./draftPool";
 import { nextRandom } from "./random";
 import { ROSTER_SLOTS, type Roster } from "./types";
 
@@ -25,16 +26,17 @@ export function parseLineup(search: string): Roster | null {
   if (!source || !/^\d{1,3}(,\d{1,3}){4}(,\d{1,3}){0,3}$/.test(source))
     return null;
   const ids = source.split(",").map(Number);
+  const max = new URLSearchParams(search).get("pool") === "all" ? 809 : 251;
   if (
     (ids.length !== 5 && ids.length !== 8) ||
-    ids.some((id) => id > 251) ||
+    ids.some((id) => id > max) ||
     ids.every((id) => id === 0)
   )
     return null;
   const roster = Object.fromEntries(
     ROSTER_SLOTS.map((p, i) => [p, ids[i] || null]),
   ) as Roster;
-  return validRoster(roster) ? roster : null;
+  return validRoster(roster, true, max) ? roster : null;
 }
 
 export function lineupLink(base: string, roster: Roster): string {
@@ -42,13 +44,19 @@ export function lineupLink(base: string, roster: Roster): string {
   url.search = "";
   url.hash = "";
   url.search = `lineup=${ROSTER_SLOTS.map((p) => roster[p] ?? 0).join(",")}`;
+  if (Object.values(roster).some((id) => id !== null && id > 251))
+    url.searchParams.set("pool", "all");
   return url.toString();
 }
 
-export function randomLineup(includeLegends: boolean, seed: number): Roster {
-  const pool = POKEMON.filter((mon) => includeLegends || !mon.legendary).map(
-    (mon) => mon.id,
-  );
+export function randomLineup(
+  includeLegends: boolean,
+  seed: number,
+  selection?: DraftPool,
+): Roster {
+  const pool = draftPokemon(selection)
+    .filter((mon) => includeLegends || !mon.legendary)
+    .map((mon) => mon.id);
   for (let i = pool.length - 1; i > 0; i--) {
     const random = nextRandom(seed);
     seed = random.seed;

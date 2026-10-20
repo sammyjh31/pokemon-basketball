@@ -1,6 +1,7 @@
 import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
 import { COURT_VERSION } from "./courtTypes";
-import { POKEMON, POKEMON_BY_ID, POKEMON_COUNT } from "../data/pokemon";
+import { POKEMON_BY_ID } from "../data/pokemon";
+import { draftPokemon, inDraftPool, type DraftPool } from "./draftPool";
 import { nextRandom } from "./random";
 import {
   ROSTER_SLOTS,
@@ -14,9 +15,9 @@ export function refreshOffers(run: Run): Run {
   if (run.mode === "free" || ROSTER_SLOTS.every((p) => run.roster[p] !== null))
     return { ...run, offerIds: [] };
   const taken = new Set(Object.values(run.roster));
-  const ids = POKEMON.filter(
-    (p) => !taken.has(p.id) && (run.includeLegends || !p.legendary),
-  ).map((p) => p.id);
+  const ids = draftPokemon(run.draftPool)
+    .filter((p) => !taken.has(p.id) && (run.includeLegends || !p.legendary))
+    .map((p) => p.id);
   let seed = run.draftSeed;
   for (let i = ids.length - 1; i > 0; i--) {
     const roll = nextRandom(seed);
@@ -30,8 +31,10 @@ export function createRun(
   mode: Mode,
   includeLegends: boolean,
   seed: number,
+  draftPool?: DraftPool,
 ): Run {
   return refreshOffers({
+    ...(draftPool !== undefined ? { draftPool } : {}),
     id: `run-${seed >>> 0}`,
     typeMatchupsVersion: 1,
     typeTacticsVersion: 1,
@@ -80,7 +83,7 @@ export function placePokemon(
   if (
     run.result ||
     !mon ||
-    pokemonId > POKEMON_COUNT ||
+    !inDraftPool(run.draftPool, pokemonId) ||
     !ROSTER_SLOTS.includes(position) ||
     (!run.includeLegends && mon.legendary) ||
     Object.values(run.roster).includes(pokemonId)
@@ -119,7 +122,7 @@ export function swapPositions(
 
 export function autoFillBench(run: Run): Run {
   if (run.mode !== "free" || run.result) return run;
-  const pool = POKEMON.filter(
+  const pool = draftPokemon(run.draftPool).filter(
     (mon) =>
       !Object.values(run.roster).includes(mon.id) &&
       (run.includeLegends || !mon.legendary),
