@@ -36,6 +36,7 @@ import type { StorageLike } from "./game/persistence";
 import { useGame, newSeed } from "./hooks/useGame";
 import { Scoreboard } from "./components/Scoreboard";
 import { Court } from "./components/Court";
+import { DraftPickDock } from "./components/DraftPickDock";
 import { DraftPanel } from "./components/DraftPanel";
 import { SeasonPanel } from "./components/SeasonPanel";
 import { RulesPanel } from "./components/RulesPanel";
@@ -647,7 +648,9 @@ export default function App({
         <a className="skip-link" href="#main-content">
           Skip to main content
         </a>
-        <div className="app-shell kanto-game">
+        <div
+          className={`app-shell kanto-game${pending !== null ? " has-pending-pick" : ""}`}
+        >
           <Scoreboard
             mode={run.mode}
             localLeagueDisabled={busy || importPending}
@@ -1000,6 +1003,32 @@ export default function App({
               .
             </p>
           </footer>
+          {pending !== null &&
+            POKEMON_BY_ID.has(pending) &&
+            !run.result &&
+            !run.seasonProgress?.completedRounds &&
+            !choosingCoach &&
+            !state.franchise && (
+              <DraftPickDock
+                key={`${run.id}:${pending}`}
+                run={run}
+                pokemonId={pending}
+                disabled={
+                  busy || importPending || !!confirm || guideOpen || showChooser
+                }
+                onPlace={onSlot}
+                onCancel={() => {
+                  setPending(null);
+                  setSwap(null);
+                  setAnnouncement("Selection canceled.");
+                  document
+                    .querySelector<HTMLButtonElement>(
+                      `.pokemon-card[aria-pressed="true"]`,
+                    )
+                    ?.focus();
+                }}
+              />
+            )}
         </div>
         {confirm && (
           <ConfirmDialog

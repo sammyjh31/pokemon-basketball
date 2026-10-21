@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { KantoNavigation, LocalMasthead } from "./KantoShell";
 it("opens a hidden team section without leaving the local league route", () => {
   window.history.replaceState(null, "", "/#local-league");
@@ -54,4 +54,32 @@ it("exposes a local restart without opening league options", () => {
   expect(restart.closest("details")).toBeNull();
   fireEvent.click(restart);
   expect(requested).toBe(true);
+});
+
+it("takes Draft navigation directly to available players instead of the court", () => {
+  render(
+    <>
+      <KantoNavigation />
+      <section id="draft">
+        <section id="draft-board">Available players</section>
+      </section>
+    </>,
+  );
+  const board = document.getElementById("draft-board")!;
+  const scroll = vi.fn();
+  board.scrollIntoView = scroll;
+  fireEvent.click(screen.getByRole("button", { name: "Draft" }));
+  expect(scroll).toHaveBeenCalledOnce();
+});
+it("keeps Draft navigation working in local leagues without a solo board", () => {
+  render(
+    <>
+      <KantoNavigation />
+      <section id="draft">Local draft clock</section>
+    </>,
+  );
+  const scroll = vi.fn();
+  document.getElementById("draft")!.scrollIntoView = scroll;
+  fireEvent.click(screen.getByRole("button", { name: "Draft" }));
+  expect(scroll).toHaveBeenCalledOnce();
 });

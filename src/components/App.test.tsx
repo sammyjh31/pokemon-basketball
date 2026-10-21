@@ -288,6 +288,25 @@ describe("playable draft room", () => {
       screen.queryByRole("button", { name: /^Draft / }),
     ).not.toBeInTheDocument();
   }, 300000);
+  it("places a contextual draft pick and dismisses the pick station", () => {
+    const state = initialState(1037);
+    state.run.offerIds = [25, 1, 4, 7];
+    render(<App initial={state} storage={memory()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Draft Pikachu" }));
+    const station = screen.getByRole("region", { name: "Current draft pick" });
+    fireEvent.change(within(station).getByLabelText("Pick position"), {
+      target: { value: "SG" },
+    });
+    fireEvent.click(
+      within(station).getByRole("button", { name: "Place at SG" }),
+    );
+    expect(slot("SG")).toHaveTextContent("Pikachu");
+    expect(
+      screen.queryByRole("region", { name: "Current draft pick" }),
+    ).not.toBeInTheDocument();
+    pick();
+    expect(slot("SG")).toBeDisabled();
+  });
   it("counts two rerolls and clears pending selections", () => {
     render(<App initial={initialState(17)} storage={memory()} />);
     pick();

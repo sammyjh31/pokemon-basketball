@@ -28,3 +28,15 @@ The five `retro-*.css` files follow `kanto.css` in the existing entry point. Dom
 - Temporary preview fixture files and their server were removed. Screenshots reside in the local visualization folder `2026/10/20/pokebb-retro-every-screen`.
 
 These checks cover representative screens and interactions; they are not an exhaustive enumeration of every generated player or future career state. No full-season engine regression run was required for this presentation change.
+
+## Draft flow refinement
+
+The follow-up audit of the live challenge draft found that selecting a Pokémon left its identity and placement controls below the court and card grid. Draft navigation also targeted the enclosing fieldset, so phone users landed at the court instead of available players.
+
+- Added a contextual pick station to solo challenge and free drafting. It keeps the portrait, basketball role, position fit and explicit placement action visible. It defaults to the player's highest-rated open starting position, then bench depth; this is individual fit, not a team-impact forecast.
+- Challenge options exclude occupied slots. Free-draft replacements name the departing Pokémon before confirmation. Cancel returns focus to the selected card; background jobs and open dialogs disable the station.
+- Draft navigation now targets the player board, with the existing local-league draft target as a fallback.
+- Solo cards now show the engine's basketball archetype and segmented shooting, finishing and defense bars. Numeric ratings remain visible and are included in each card's accessible description.
+- The compact phone station uses two rows and reserves page-end space. Existing lineup placement and detailed scouting remain available.
+
+Verification: 28 focused component checks plus 7 draft App checks passed; TypeScript and the hosted-base production build passed. Independent review found no blocking issues. Browser QA covered desktop placement and 390px cancellation/reselection using isolated in-memory saves. Proof captures are in `2026/10/20/pokebb-draft-polish`. This refinement is local until the next requested publication.

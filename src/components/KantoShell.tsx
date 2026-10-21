@@ -55,7 +55,9 @@ export function LocalMasthead({
   );
 }
 export function scrollToGameSection(id: string) {
-  const target = document.getElementById(id);
+  const target =
+    (id === "draft" ? document.getElementById("draft-board") : null) ??
+    document.getElementById(id);
   const disclosure = target?.closest("details");
   if (disclosure instanceof HTMLDetailsElement) disclosure.open = true;
   target?.scrollIntoView?.({ block: "start", behavior: "instant" });

@@ -1,3 +1,5 @@
+import { useId } from "react";
+import { playerProfile } from "../game/playerProfile";
 import { useShinyPokemon, ShinyBadge } from "./ShinyPokemon";
 import { attributes, positionRating } from "../game/ratings";
 import { POSITIONS, type Pokemon } from "../game/types";
@@ -12,6 +14,7 @@ export function PokemonCard({
   onSelect: () => void;
 }) {
   mon = useShinyPokemon(mon);
+  const descriptionId = useId();
   const a = attributes(mon),
     best = [...POSITIONS].sort(
       (x, y) => positionRating(mon, y) - positionRating(mon, x),
@@ -24,6 +27,7 @@ export function PokemonCard({
       }
       aria-label={`Draft ${mon.name}`}
       aria-pressed={selected}
+      aria-describedby={descriptionId}
       onClick={onSelect}
     >
       <span className="card-top">
@@ -44,18 +48,25 @@ export function PokemonCard({
           </span>
         )}
       </div>
+      <span className="card-archetype">{playerProfile(mon).archetype}</span>
       <ShinyBadge mon={mon} />
       <TypeBadges types={mon.types} />
-      <div className="card-stats">
-        <span>
-          SHO <b>{Math.round(a.shooting)}</b>
-        </span>
-        <span>
-          FIN <b>{Math.round(a.finishing)}</b>
-        </span>
-        <span>
-          DEF <b>{Math.round((a.perimeterDefense + a.interiorDefense) / 2)}</b>
-        </span>
+      <div className="card-stats" id={descriptionId}>
+        {[
+          ["SHOOT", a.shooting],
+          ["FINISH", a.finishing],
+          ["DEFEND", (a.perimeterDefense + a.interiorDefense) / 2],
+        ].map(([label, value]) => (
+          <span key={label} className="card-skill">
+            <span>
+              {label}
+              <b>{Math.round(Number(value))}</b>
+            </span>
+            <i aria-hidden="true">
+              <i style={{ width: `${value}%` }} />
+            </i>
+          </span>
+        ))}
       </div>
       <span className="card-select">
         {selected ? "SELECTED" : "SELECT POKÉMON"}

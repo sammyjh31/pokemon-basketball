@@ -113,7 +113,11 @@ export function DraftPanel({
     sort,
   ]);
   return (
-    <section className="draft-panel" aria-label="Draft Pokémon">
+    <section
+      id="draft-board"
+      className="draft-panel"
+      aria-label="Draft Pokémon"
+    >
       <ShinyRules seed={run.shinySeed} />
       <div className="draft-title">
         <h1>
