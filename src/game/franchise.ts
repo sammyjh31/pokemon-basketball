@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { captureCoachBook } from "./coachScoutingArchive";
 import { seedCoachScouting } from "./scoutingContinuity";
 import { captureNewsGames } from "./archive";
@@ -290,7 +291,13 @@ export function enterOffseason(state: GameState): GameState {
   } catch {
     return state;
   }
-  if (previous && !sameMembership(previous.teams, teams)) return state;
+  if (
+    teams.some((team) => team.shinySeed !== run.shinySeed) ||
+    (previous &&
+      (previous.shinySeed !== run.shinySeed ||
+        !sameMembership(previous.teams, teams)))
+  )
+    return state;
   const year = previous?.year ?? 1,
     archive = seasonArchive(run, year);
   if (!archive) return state;
@@ -301,6 +308,7 @@ export function enterOffseason(state: GameState): GameState {
   )
     archive.replay = captureSeasonReplay(run);
   const franchise: Franchise = {
+    ...(run.shinySeed !== undefined ? { shinySeed: run.shinySeed } : {}),
     ...((previous ? previous.initialDraftPool : run.draftPool) !== undefined
       ? {
           initialDraftPool: previous
@@ -367,6 +375,8 @@ export function startFranchiseSeason(
   } catch {
     return state;
   }
+  const openingShinySeed = franchise.shinySeed;
+  if (teams.some((team) => team.shinySeed !== openingShinySeed)) return state;
   // Type rules roll forward only at the season boundary. Historical teams stay frozen.
   teams = syncTeamBonds(teams).map((team) => ({
     ...retainMastery(
@@ -413,8 +423,13 @@ export function startFranchiseSeason(
   }
   teams = seedCoachScouting(franchise.history, teams, franchise.year + 1);
   const user = teams[0];
+  const freshRun = createRun(state.run.mode, state.run.includeLegends, seed);
+  delete freshRun.shinySeed;
   const run: Run = {
-    ...createRun(state.run.mode, state.run.includeLegends, seed),
+    ...freshRun,
+    ...(franchise.shinySeed !== undefined
+      ? { shinySeed: franchise.shinySeed }
+      : {}),
     ...(user.coach ? { coach: user.coach } : {}),
     roster: { ...user.roster },
     tactic: user.tactic,
@@ -577,12 +592,20 @@ export function evaluateTrade(
     incoming = POKEMON_BY_ID.get(receiveId)!;
   values.outgoingValue = Math.max(
     ...POSITIONS.map((position) =>
-      positionRating(outgoing, position, user.development?.[giveId]),
+      positionRating(
+        shinyPokemon(outgoing, user.shinySeed),
+        position,
+        user.development?.[giveId],
+      ),
     ),
   );
   values.incomingValue = Math.max(
     ...POSITIONS.map((position) =>
-      positionRating(incoming, position, partner.development?.[receiveId]),
+      positionRating(
+        shinyPokemon(incoming, partner.shinySeed),
+        position,
+        partner.development?.[receiveId],
+      ),
     ),
   );
   values.partnerBefore = teamRatings(
@@ -591,6 +614,7 @@ export function evaluateTrade(
     partner.rotation,
     partner.development,
     partner.rotationPlan,
+    partner.shinySeed,
   ).overall;
   values.partnerAfter = teamRatings(
     { ...partner.roster, [receiveSlot]: giveId },
@@ -600,6 +624,7 @@ export function evaluateTrade(
       ? { ...partner.development, [giveId]: user.development?.[giveId] ?? {} }
       : undefined,
     partner.rotationPlan,
+    partner.shinySeed,
   ).overall;
   const abilityChange = values.outgoingValue - values.incomingValue;
   const fitChange = values.partnerAfter - values.partnerBefore;

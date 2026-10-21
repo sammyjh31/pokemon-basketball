@@ -1,3 +1,4 @@
+import { shinyPokemon } from "../game/shiny";
 import { MasteryPanel } from "./MasteryPanel";
 import { LeagueNewsPanel } from "./LeagueNewsPanel";
 import { buildLeagueNews } from "../game/leagueNews";
@@ -791,8 +792,9 @@ function Rosters({
           </thead>
           <tbody>
             {ROSTER_SLOTS.map((slot) => {
-              const mon = POKEMON_BY_ID.get(team.roster[slot] ?? -1);
-              if (!mon) return null;
+              const baseMon = POKEMON_BY_ID.get(team.roster[slot] ?? -1);
+              if (!baseMon) return null;
+              const mon = shinyPokemon(baseMon, team.shinySeed);
               const p = league.players.find(
                 (p) => p.teamId === team.id && p.pokemonId === mon.id,
               );

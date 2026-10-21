@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { isMovesetVersion } from "./basketballMoves";
 import { retainMastery } from "./abilityMastery";
 import { retainMorale } from "./playerMorale";
@@ -41,9 +42,9 @@ export function createLeague(run: Run): LeagueTeam[] {
   )
     throw new Error("Draft eight distinct players first.");
   const taken = new Set(Object.values(run.roster));
-  const pool = (
-    run.draftPool === undefined ? POKEMON : draftPokemon("all")
-  ).filter((p) => !taken.has(p.id) && (run.includeLegends || !p.legendary));
+  const pool = (run.draftPool === undefined ? POKEMON : draftPokemon("all"))
+    .filter((p) => !taken.has(p.id) && (run.includeLegends || !p.legendary))
+    .map((mon) => shinyPokemon(mon, run.shinySeed));
   if (pool.length < 232)
     throw new Error("The league needs at least 240 eligible Pokémon.");
   let seed = (run.seasonSeed ^ 0x78abc132) >>> 0;
@@ -60,7 +61,14 @@ export function createLeague(run: Run): LeagueTeam[] {
       tactic: run.tactic,
       rotation: run.rotation,
       defense: run.defense ?? "man",
-      ratings: teamRatings(run.roster, run.tactic, run.rotation),
+      ratings: teamRatings(
+        run.roster,
+        run.tactic,
+        run.rotation,
+        undefined,
+        undefined,
+        run.shinySeed,
+      ),
     },
     ...OPPONENTS.map((op, i) => ({
       id: op.id,
@@ -69,9 +77,20 @@ export function createLeague(run: Run): LeagueTeam[] {
       tactic: TACTICS[i % TACTICS.length],
       rotation: ROTATIONS[i % ROTATIONS.length],
       defense: DEFENSE_SCHEMES[i % DEFENSE_SCHEMES.length],
-      ratings: teamRatings(emptyRoster()),
+      ratings: teamRatings(
+        emptyRoster(),
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        run.shinySeed,
+      ),
     })),
   ];
+  teams = teams.map((team) => ({
+    ...team,
+    ...(run.shinySeed !== undefined ? { shinySeed: run.shinySeed } : {}),
+  }));
   // Modern recruiting uses the coach who will actually lead this club.
   // The historical path assigns trainers after drafting to preserve old seeds.
   if (run.evaluationVersion === 1) {
@@ -164,7 +183,14 @@ export function createLeague(run: Run): LeagueTeam[] {
     }
   });
   for (const team of teams) {
-    team.ratings = teamRatings(team.roster, team.tactic, team.rotation);
+    team.ratings = teamRatings(
+      team.roster,
+      team.tactic,
+      team.rotation,
+      undefined,
+      undefined,
+      run.shinySeed,
+    );
     if (run.typeMatchupsVersion === 1) team.typeMatchupsVersion = 1;
     if (run.typeTacticsVersion === 1) team.typeTacticsVersion = 1;
     if (run.abilityVersion === 1) team.abilityVersion = 1;

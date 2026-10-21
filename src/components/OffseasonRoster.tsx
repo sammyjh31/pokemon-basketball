@@ -1,3 +1,4 @@
+import { shinyPokemon } from "../game/shiny";
 import { projectedCoaches } from "../game/coachOffice";
 import { CoachSummary } from "./CoachSummary";
 import { useState } from "react";
@@ -81,7 +82,7 @@ export function OffseasonRoster({
         <div className="offseason-roster-grid">
           {ROSTER_SLOTS.map((slot) => {
             const id = team.roster[slot]!,
-              mon = POKEMON_BY_ID.get(id)!;
+              mon = shinyPokemon(POKEMON_BY_ID.get(id)!, team.shinySeed);
             return (
               <label key={slot} className="offseason-roster-card">
                 <Portrait mon={mon} />

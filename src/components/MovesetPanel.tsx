@@ -100,7 +100,7 @@ export function MovesetPanel({
                       coach chooses the best fit.
                     </p>
                     <ul>
-                      {movePool(id, 2)
+                      {movePool(id, 2, team.shinySeed)
                         .filter((m) => m.signature)
                         .map((move) => (
                           <li key={move.id}>

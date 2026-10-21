@@ -1,3 +1,5 @@
+import { shinyPokemon } from "../game/shiny";
+import { ShinyBadge } from "./ShinyPokemon";
 import { coachRotationMinutes } from "../game/coachPolicy";
 import type { PlayerDevelopment } from "../game/developmentTypes";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -69,6 +71,7 @@ export function BenchPanel({
             run.rotation,
             development,
             run.rotationPlan,
+            run.shinySeed,
           ),
     locked = !!run.result || (run.seasonProgress?.completedRounds ?? 0) > 0;
   return (
@@ -93,7 +96,10 @@ export function BenchPanel({
       </div>
       <div className="bench-grid">
         {BENCH_SLOTS.map((slot) => {
-          const mon = POKEMON_BY_ID.get(run.roster[slot] ?? -1);
+          const baseMon = POKEMON_BY_ID.get(run.roster[slot] ?? -1);
+          const mon = baseMon
+            ? shinyPokemon(baseMon, run.shinySeed)
+            : undefined;
           return (
             <button
               key={slot}
@@ -112,6 +118,7 @@ export function BenchPanel({
                 )}
               </div>
               <strong>{mon?.name ?? "Empty slot"}</strong>
+              {mon && <ShinyBadge mon={mon} />}
               <small>
                 {mon
                   ? `${bestPosition(mon, development?.[mon.id])} · ${Math.round(positionRating(mon, bestPosition(mon, development?.[mon.id]), development?.[mon.id]))} FIT`

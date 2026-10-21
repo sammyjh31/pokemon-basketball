@@ -9,6 +9,7 @@ export function Scoreboard({
   localLeagueDisabled = false,
   onGuide,
   onHowToPlay,
+  onRestart,
 }: {
   mode: Mode;
   disabled?: boolean;
@@ -19,14 +20,15 @@ export function Scoreboard({
   localLeagueDisabled?: boolean;
   onGuide?: () => void;
   onHowToPlay?: () => void;
+  onRestart?: () => void;
 }) {
   return (
     <header className="masthead" id="top">
       <GameBrand />
       {franchiseActive ? (
         <p className="mode-lock" id="mode-lock">
-          <strong>Franchise in progress.</strong> To switch modes, use “End
-          franchise / new draft” below the franchise.
+          <strong>Franchise in progress.</strong> Use “New game / Restart” to
+          end this franchise and start a new draft.
         </p>
       ) : (
         <nav className="mode-tabs" aria-label="Game modes">
@@ -82,9 +84,21 @@ export function Scoreboard({
           </button>
         )}
       </nav>
-      <a className="header-play" href="#arcade">
-        PLAY ARCADE <span aria-hidden="true">→</span>
-      </a>
+      <div className="masthead-actions">
+        {onRestart && (
+          <button
+            type="button"
+            className="header-restart"
+            disabled={disabled}
+            onClick={onRestart}
+          >
+            New game / Restart
+          </button>
+        )}
+        <a className="header-play" href="#arcade">
+          PLAY ARCADE <span aria-hidden="true">→</span>
+        </a>
+      </div>
     </header>
   );
 }

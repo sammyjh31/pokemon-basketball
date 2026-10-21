@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { comboTrainingFocus } from "./comboPolicy";
 import {
   coachMoves,
@@ -58,7 +59,10 @@ export function coachTrainingPlans(
   const roster = ROSTER_SLOTS.flatMap((slot) => {
     const mon = POKEMON_BY_ID.get(team.roster[slot]!);
     if (!mon) return [];
-    const profile = playerProfile(mon, team.development?.[mon.id]);
+    const profile = playerProfile(
+      shinyPokemon(mon, team.shinySeed),
+      team.development?.[mon.id],
+    );
     // Trainers choose lineups dynamically; a player's strongest position is their camp role.
     return [{ mon, profile, role: profile.bestPosition }];
   });

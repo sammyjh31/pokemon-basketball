@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { captureCoachBook } from "./coachScoutingArchive";
 import {
   seedCoachScouting,
@@ -165,6 +166,7 @@ export function restoreLocalTeams(teams: LocalTeamSnapshot[]): LeagueTeam[] {
         team.rotation,
         team.development,
         team.rotationPlan,
+        team.shinySeed,
       ),
     };
   });
@@ -257,6 +259,8 @@ function withDevelopment(
         team.tactic,
         team.rotation,
         development,
+        undefined,
+        team.shinySeed,
       ),
     };
   });
@@ -325,6 +329,7 @@ export function beginLocalOffseason(
       localSeasonSeed(draft),
       assignments[player.pokemonId]?.plan,
       (draft.courtVersion ?? 0) >= 3,
+      teams[player.teamId].shinySeed,
     ).changes,
     ...(assignments[player.pokemonId]
       ? { training: assignments[player.pokemonId] }
@@ -407,7 +412,14 @@ function appendRookie(
     ...team,
     roster,
     development,
-    ratings: teamRatings(roster, team.tactic, team.rotation, development),
+    ratings: teamRatings(
+      roster,
+      team.tactic,
+      team.rotation,
+      development,
+      undefined,
+      team.shinySeed,
+    ),
   };
   const archived = archiveOf(draft)!;
   return {
@@ -471,11 +483,17 @@ export function recommendedLocalRookie(draft: LocalLeague) {
         ? [slot as Position]
         : POSITIONS;
       const incoming = Math.max(
-        ...positions.map((p) => positionRating(mon, p)),
+        ...positions.map((p) =>
+          positionRating(shinyPokemon(mon, team.shinySeed), p),
+        ),
       );
       const previous = Math.max(
         ...positions.map((p) =>
-          positionRating(outgoing, p, team.development?.[release]),
+          positionRating(
+            shinyPokemon(outgoing, team.shinySeed),
+            p,
+            team.development?.[release],
+          ),
         ),
       );
       const development = { ...team.development, [mon.id]: {} };
@@ -608,7 +626,11 @@ export function evaluateLocalTrade(
   const ability = (team: LeagueTeam, id: number) =>
     Math.max(
       ...POSITIONS.map((p) =>
-        positionRating(POKEMON_BY_ID.get(id)!, p, team.development?.[id]),
+        positionRating(
+          shinyPokemon(POKEMON_BY_ID.get(id)!, team.shinySeed),
+          p,
+          team.development?.[id],
+        ),
       ),
     );
   const difference = ability(to, receiveId) - ability(from, giveId);
@@ -1148,6 +1170,7 @@ function parseTeams(
       (row.coach !== undefined && !validateCoach(row.coach)) ||
       row.id !== id ||
       row.name !== LOCAL_TEAMS[id].name ||
+      row.shinySeed !== draft.shinySeed ||
       row.simulationVersion !== 2 ||
       row.typeMatchupsVersion !== draft.typeMatchupsVersion ||
       row.typeTacticsVersion !== draft.typeTacticsVersion ||
@@ -1228,6 +1251,7 @@ function parseTeams(
       ...(row.coach ? { coach: validateCoach(row.coach)! } : {}),
       id,
       name: row.name,
+      ...(draft.shinySeed !== undefined ? { shinySeed: draft.shinySeed } : {}),
       simulationVersion: 2,
       ...(draft.typeMatchupsVersion === 1
         ? { typeMatchupsVersion: 1 as const }
@@ -1291,6 +1315,7 @@ function sameRosterState(actual: LeagueTeam[], expected: LeagueTeam[]) {
     const a = actual[i],
       e = expected[i];
     if (
+      a.shinySeed !== e.shinySeed ||
       !sameScoutingData(a.scoutingSeed, e.scoutingSeed) ||
       a.abilityVersion !== e.abilityVersion ||
       a.movesetVersion !== e.movesetVersion ||

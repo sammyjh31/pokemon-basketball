@@ -177,7 +177,12 @@ describe("local league pass-and-play", () => {
       screen.getByRole("heading", { name: /On the clock/ }),
     ).toHaveTextContent(currentLocalTurn(after)!.manager!.name);
     fireEvent.click(screen.getByRole("button", { name: "New local league" }));
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      /every career season, and playoff history/,
+    );
+    const savedBeforeCancel = storage.data.get(LOCAL_LEAGUE_KEY);
     fireEvent.click(screen.getByRole("button", { name: "Keep playing" }));
+    expect(storage.data.get(LOCAL_LEAGUE_KEY)).toBe(savedBeforeCancel);
     expect(parseLocalLeague(storage.data.get(LOCAL_LEAGUE_KEY)!).picks).toEqual(
       after.picks,
     );
@@ -235,6 +240,11 @@ describe("local league pass-and-play", () => {
     expect(within(table).getByText("Sam")).toBeInTheDocument();
     expect(within(table).getByText("Alex")).toBeInTheDocument();
     const records = table.textContent;
+    expect(
+      screen
+        .getByRole("button", { name: "New local league" })
+        .closest("details"),
+    ).toBeNull();
     // Results render before the save effect runs. Wait for persisted completion
     // before validating/replaying the saved season.
     await waitFor(() =>
@@ -340,6 +350,13 @@ describe("local league pass-and-play", () => {
       },
       { timeout: 30000 },
     );
+    fireEvent.click(screen.getByRole("button", { name: "New local league" }));
+    const completedSave = storage.data.get(LOCAL_LEAGUE_KEY);
+    fireEvent.click(screen.getByRole("button", { name: "Keep playing" }));
+    expect(storage.data.get(LOCAL_LEAGUE_KEY)).toBe(completedSave);
+    expect(
+      screen.getByRole("article", { name: "Playoff champion" }),
+    ).toHaveTextContent(champion!);
     fireEvent.click(screen.getByRole("button", { name: "New local league" }));
     fireEvent.click(
       screen.getByRole("button", { name: "Replace local league" }),

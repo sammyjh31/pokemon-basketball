@@ -97,8 +97,16 @@ export function draftRosterProfile(
   roster: Roster,
   tactic: Tactic,
   rotation: RotationStyle,
+  shinySeed?: number,
 ) {
-  const { ratings, rebounding } = teamRatingProfile(roster, tactic, rotation);
+  const { ratings, rebounding } = teamRatingProfile(
+    roster,
+    tactic,
+    rotation,
+    undefined,
+    undefined,
+    shinySeed,
+  );
   return {
     offense: ratings.offense,
     defense: ratings.defense,
@@ -136,19 +144,21 @@ function draftImpactProjector(
   slot: RosterSlot,
   tactic: Tactic,
   rotation: RotationStyle,
+  shinySeed?: number,
 ): (pokemonId: number) => DraftImpact | null {
   if (roster[slot] !== null) return () => null;
   const owned = new Set(Object.values(roster));
   const beforeCount = Object.values(roster).filter(
     (id) => id !== null && POKEMON_BY_ID.has(id),
   ).length;
-  const before = draftRosterProfile(roster, tactic, rotation);
+  const before = draftRosterProfile(roster, tactic, rotation, shinySeed);
   return (pokemonId) => {
     if (owned.has(pokemonId) || !POKEMON_BY_ID.has(pokemonId)) return null;
     const after = draftRosterProfile(
       { ...roster, [slot]: pokemonId },
       tactic,
       rotation,
+      shinySeed,
     );
     return draftImpactFromProfiles(before, after, beforeCount);
   };
@@ -160,8 +170,15 @@ export function projectDraftImpact(
   slot: RosterSlot,
   tactic: Tactic,
   rotation: RotationStyle,
+  shinySeed?: number,
 ): DraftImpact | null {
-  return draftImpactProjector(roster, slot, tactic, rotation)(pokemonId);
+  return draftImpactProjector(
+    roster,
+    slot,
+    tactic,
+    rotation,
+    shinySeed,
+  )(pokemonId);
 }
 
 /** Reuse the current team's baseline for the entire available pool. */
@@ -171,6 +188,7 @@ export function projectDraftPool(
   position: Exclude<DraftImpactPosition, "best-lineup">,
   tactic: Tactic,
   rotation: RotationStyle,
+  shinySeed?: number,
 ): DraftImpactProjection[] {
   const slots =
     position === "best-open"
@@ -178,7 +196,7 @@ export function projectDraftPool(
       : [position];
   const projectors = slots.map((slot) => ({
     slot,
-    project: draftImpactProjector(roster, slot, tactic, rotation),
+    project: draftImpactProjector(roster, slot, tactic, rotation, shinySeed),
   }));
   return [...new Set(pokemonIds)].flatMap((pokemonId) => {
     return projectors.flatMap(({ slot, project }) => {

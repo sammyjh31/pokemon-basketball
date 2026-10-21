@@ -97,6 +97,7 @@ export interface MoveAssignment {
 export type MoveTeam = Pick<
   LeagueTeam,
   | "roster"
+  | "shinySeed"
   | "tactic"
   | "coach"
   | "development"

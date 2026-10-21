@@ -47,6 +47,8 @@ export function seasonTeams(run: Run): LeagueTeam[] {
         run.simulationVersion,
       )
     : createLeague(run);
+  if (teams.some((team) => team.shinySeed !== run.shinySeed))
+    throw new Error("Season shiny identities must match their league.");
   if (run.seasonProgress && run.seasonProgress.completedRounds > 0)
     return teams;
   const members = new Set(Object.values(teams[0].roster));
@@ -75,6 +77,7 @@ export function seasonTeams(run: Run): LeagueTeam[] {
       run.rotation,
       teams[0].development,
       run.rotationPlan,
+      run.shinySeed,
     ),
   };
   if (!run.rotationPlan) delete teams[0].rotationPlan;

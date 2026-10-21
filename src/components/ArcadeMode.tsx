@@ -322,7 +322,7 @@ export function ArcadeMode({
       ...Object.values(run.roster),
       ...Object.values(opponent.roster),
     ].filter((id): id is number => id !== null);
-    loadArcadeAssets(ids)
+    loadArcadeAssets(ids, run.shinySeed)
       .then((loaded) => {
         if (!cancelled) {
           setAssets(loaded);
@@ -338,7 +338,7 @@ export function ArcadeMode({
     return () => {
       cancelled = true;
     };
-  }, [run.roster, opponentId, prepared]);
+  }, [run.roster, run.shinySeed, opponentId, prepared]);
   const changeSettings = (next: ArcadeSettings) => {
     setSettings(next);
     saveArcadeSettings(next);

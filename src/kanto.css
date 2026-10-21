@@ -1660,3 +1660,179 @@
 #root .app-shell.kanto-game .draft-team-impact td.loss {
   color: #ab2936;
 }
+
+#root .app-shell.kanto-game .masthead-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+#root .app-shell.kanto-game .header-restart {
+  color: #fffbed;
+  background: #194780;
+  border: 2px solid #9bbbd8;
+  font: 400 20px var(--display);
+  padding: 9px 14px;
+  min-height: 44px;
+}
+#root .app-shell.kanto-game .header-restart:hover:not(:disabled) {
+  background: #2b609e;
+}
+#root .app-shell.kanto-game .header-restart:disabled {
+  opacity: 0.5;
+}
+#root .app-shell.kanto-game .shiny-badge {
+  display: inline-block;
+  width: fit-content;
+  padding: 2px 7px;
+  color: #51350c;
+  background: #ffe28b;
+  border: 1px solid #8d6a22;
+  font: 400 17px/1.1 var(--display);
+  white-space: nowrap;
+}
+#root .app-shell.kanto-game .portrait.is-shiny {
+  filter: drop-shadow(0 0 4px #e0ad2d) drop-shadow(1px 2px #79531366);
+}
+#root .app-shell.kanto-game .shiny-rules {
+  color: #5c4a23;
+  background: #fff2c8;
+  border: 1px solid #c7ad68;
+  font:
+    500 12px/1.6 Inter,
+    sans-serif;
+  padding: 10px 12px;
+  margin: 0 0 16px;
+}
+#root .app-shell.kanto-game .rookie-draft-progress {
+  scroll-margin: 24px;
+  padding: 18px;
+  border: 3px double #385d8a;
+}
+#root .app-shell.kanto-game .rookie-draft-progress progress {
+  width: 100%;
+  accent-color: #285d9c;
+  margin-bottom: 12px;
+}
+@media (max-width: 600px) {
+  #root .app-shell.kanto-game .kanto-masthead {
+    align-items: center;
+  }
+  #root .app-shell.kanto-game .kanto-masthead .masthead-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+  #root .app-shell.kanto-game .kanto-masthead .masthead-actions > button {
+    flex: 1;
+    font-size: 18px;
+  }
+  #root .app-shell.kanto-game .header-restart {
+    font-size: 18px;
+  }
+}
+#root
+  .app-shell.kanto-game
+  :is(.rookie-draft, .rookie-prospect, .rookie-selection) {
+  color: #183b65;
+  background: #fffbed;
+  border: 2px solid #809ab4;
+  border-radius: 1px;
+}
+#root .app-shell.kanto-game .rookie-recommendation {
+  background: #e9eee3;
+  color: #224e3b;
+  border-color: #77927b;
+  border-radius: 1px;
+}
+#root .app-shell.kanto-game .rookie-prospect:hover {
+  background: #e7edf2;
+}
+#root .app-shell.kanto-game .rookie-prospect.selected {
+  background: #fff0bf;
+  border-color: #a87628;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .rookie-intro,
+    .rookie-note,
+    .rookie-ready p,
+    .rookie-recommendation small
+  ) {
+  color: #45617d;
+}
+#root .app-shell.kanto-game .rookie-draft :is(input, select) {
+  color: #173b63;
+  background: #fffdf5;
+  border-color: #809ab4;
+}
+#root .app-shell.kanto-game .rookie-board th {
+  color: #fffbed;
+  background: #1d467b;
+}
+
+#root .app-shell.kanto-game .lineup-panel,
+#root .app-shell.kanto-game .team-ratings {
+  background: #fffbed;
+  color: #163b66;
+  border-color: #7892ae;
+  border-radius: 1px;
+}
+#root .app-shell.kanto-game .lineup-panel .panel-heading {
+  background: #e4ebef;
+  border-color: #7892ae;
+}
+#root .app-shell.kanto-game .team-ratings strong {
+  color: #173e72;
+}
+#root .app-shell.kanto-game .team-ratings .overall strong {
+  color: #a82c3c;
+}
+#root .app-shell.kanto-game .team-ratings :is(span, small) {
+  color: #42607c;
+}
+
+#root .app-shell.kanto-game .button {
+  color: #163d6a;
+  background: #e5edf2;
+}
+#root .app-shell.kanto-game .button.primary {
+  color: #fffbed;
+  background: #c52b32;
+}
+
+#root .app-shell.kanto-game .slot-name.is-shiny {
+  background: #ffe28b;
+  color: #51350c;
+  border-color: #8d6a22;
+}
+
+/* Keep the offseason checklist readable in the clubhouse theme. */
+#root .app-shell.kanto-game .offseason-step {
+  background: #f5f0dc;
+  border: 2px solid #8ca6ad;
+}
+#root .app-shell.kanto-game .offseason-step-body strong {
+  color: #16384f;
+}
+#root .app-shell.kanto-game .offseason-step-status {
+  color: #31556a;
+}
+#root .app-shell.kanto-game .offseason-step.is-todo .offseason-step-status {
+  color: #9b382d;
+}
+#root .app-shell.kanto-game .offseason-step-number {
+  color: #16384f;
+  border-color: #31556a;
+  background: #dbe7e2;
+}
+#root .app-shell.kanto-game .offseason-step.is-done .offseason-step-number {
+  color: #174d35;
+  background: #d8ebbd;
+}
+#root .app-shell.kanto-game .offseason-step-body .button {
+  max-width: 100%;
+  font-size: 18px;
+  padding: 8px;
+}

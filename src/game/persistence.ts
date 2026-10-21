@@ -235,7 +235,12 @@ function validate(
       (raw.seasonProgress && object(raw.seasonProgress).completedRounds !== 0))
   )
     return fail();
+  const shinySeed =
+    raw.shinySeed === undefined
+      ? undefined
+      : integer(raw.shinySeed, 0, 0xffffffff);
   const run: Run = {
+    ...(shinySeed !== undefined ? { shinySeed } : {}),
     ...(draftPool !== undefined ? { draftPool } : {}),
     ...(coach ? { coach } : {}),
     ...(raw.coachDraftRequired ? { coachDraftRequired: true as const } : {}),
@@ -295,7 +300,11 @@ function validate(
   if (Object.hasOwn(raw, "leagueTeams")) {
     if (!Object.hasOwn(root, "franchise") || chosen.length !== 8) return fail();
     run.leagueTeams = validateLeagueTeams(raw.leagueTeams, run.includeLegends);
-    if (run.leagueTeams[0].coach?.id !== run.coach?.id) return fail();
+    if (
+      run.leagueTeams[0].coach?.id !== run.coach?.id ||
+      run.leagueTeams.some((team) => team.shinySeed !== run.shinySeed)
+    )
+      return fail();
     if (
       run.leagueTeams.some(
         (team) =>

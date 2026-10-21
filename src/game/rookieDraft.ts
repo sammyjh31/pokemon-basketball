@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { withRosterMastery } from "./abilityMastery";
 import { withRosterMorale } from "./playerMorale";
 import { createRivalStrategy } from "./rivalRosterStrategy";
@@ -95,7 +96,9 @@ type Profile = {
 function profile(
   mon: Pokemon,
   development?: LeagueTeam["development"],
+  shinySeed?: number,
 ): Profile {
+  mon = shinyPokemon(mon, shinySeed);
   const offsets = development?.[mon.id],
     fits = Object.fromEntries(
       POSITIONS.map((position) => [
@@ -110,12 +113,13 @@ function profile(
   };
 }
 // Prospect facts never change; amortize their attribute conversion across all clubs.
-const prospectProfiles = new Map<number, Profile>();
-function prospectProfile(mon: Pokemon): Profile {
-  let result = prospectProfiles.get(mon.id);
+const prospectProfiles = new WeakMap<Pokemon, Profile>();
+function prospectProfile(mon: Pokemon, shinySeed?: number): Profile {
+  mon = shinyPokemon(mon, shinySeed);
+  let result = prospectProfiles.get(mon);
   if (!result) {
     result = profile(mon);
-    prospectProfiles.set(mon.id, result);
+    prospectProfiles.set(mon, result);
   }
   return result;
 }
@@ -145,6 +149,7 @@ function replacedTeam(
           team.rotation,
           development,
           team.rotationPlan,
+          team.shinySeed,
         ),
       },
       team,
@@ -193,7 +198,9 @@ export function recommendedRookiePick(
   if (!prospects.length) return null;
   const roster = ROSTER_SLOTS.flatMap((slot) => {
     const mon = POKEMON_BY_ID.get(team.roster[slot] ?? -1);
-    return mon ? [{ slot, mon, profile: profile(mon, team.development) }] : [];
+    return mon
+      ? [{ slot, mon, profile: profile(mon, team.development, team.shinySeed) }]
+      : [];
   });
   if (roster.length !== 8) return null;
   if (team.evaluationVersion === 1) {
@@ -284,7 +291,7 @@ export function recommendedRookiePick(
     score: number;
   }[] = [];
   for (const mon of prospects) {
-    const incoming = prospectProfile(mon);
+    const incoming = prospectProfile(mon, team.shinySeed);
     for (const row of roster) {
       const outgoing = row.profile;
       const fit = (p: Profile) =>
@@ -396,7 +403,10 @@ function recordPass(franchise: Franchise): Franchise {
   });
 }
 
-export function beginRookieDraft(state: GameState): GameState {
+export function beginRookieDraft(
+  state: GameState,
+  onProgress?: (completed: number, total: number) => void,
+): GameState {
   const f = state.franchise;
   if (
     !f ||
@@ -426,23 +436,30 @@ export function beginRookieDraft(state: GameState): GameState {
     tradeIndex: f.trades.length,
     ...(lottery ? { passes: [] } : {}),
   };
-  return advanceRookieDraft({
-    ...state,
-    franchise: {
-      ...f,
-      modelVersion: 3,
-      rookieDrafts: [...(f.rookieDrafts ?? []), draft],
+  return advanceRookieDraft(
+    {
+      ...state,
+      franchise: {
+        ...f,
+        modelVersion: 3,
+        rookieDrafts: [...(f.rookieDrafts ?? []), draft],
+      },
     },
-  });
+    onProgress,
+  );
 }
 
 /** At most sixty iterations, and normally at most 29 CPU picks before the user chooses. */
-export function advanceRookieDraft(state: GameState): GameState {
+export function advanceRookieDraft(
+  state: GameState,
+  onProgress?: (completed: number, total: number) => void,
+): GameState {
   let f = state.franchise;
   if (!f || !ready(f)) return state;
   for (let step = 0; step < 60; step++) {
     const draft = currentDraft(f);
     if (!draft || draft.complete) break;
+    onProgress?.(draftTurn(draft), 60);
     if (!rookieProspects(f, state.run.includeLegends).length) {
       f = replaceDraft(f, { ...draft, complete: true, exhausted: true });
       break;
@@ -458,6 +475,9 @@ export function advanceRookieDraft(state: GameState): GameState {
         : recordPick(f, pick.pokemonId, pick.releasedId);
   }
   const next = f === state.franchise ? state : { ...state, franchise: f };
+  const finalDraft = currentDraft(f);
+  if (finalDraft)
+    onProgress?.(finalDraft.complete ? 60 : draftTurn(finalDraft), 60);
   // Under CPU rules v1, clubs sign free agents as soon as the market opens,
   // before the user's own moves.
   return cpuRulesApply(f) && currentDraft(f)?.complete
@@ -466,7 +486,10 @@ export function advanceRookieDraft(state: GameState): GameState {
 }
 
 /** The user's turn in a model-2 draft: keep the current roster. */
-export function passRookiePick(state: GameState): GameState {
+export function passRookiePick(
+  state: GameState,
+  onProgress?: (completed: number, total: number) => void,
+): GameState {
   const f = state.franchise,
     draft = f && currentDraft(f);
   if (
@@ -478,13 +501,14 @@ export function passRookiePick(state: GameState): GameState {
     draft.order[draftTurn(draft) % 30] !== 0
   )
     return state;
-  return advanceRookieDraft({ ...state, franchise: recordPass(f) });
+  return advanceRookieDraft({ ...state, franchise: recordPass(f) }, onProgress);
 }
 
 export function selectRookie(
   state: GameState,
   pokemonId: number,
   releasedId: number,
+  onProgress?: (completed: number, total: number) => void,
 ): GameState {
   const f = state.franchise,
     draft = f && currentDraft(f);
@@ -500,8 +524,11 @@ export function selectRookie(
     )
   )
     return state;
-  return advanceRookieDraft({
-    ...state,
-    franchise: recordPick(f, pokemonId, releasedId),
-  });
+  return advanceRookieDraft(
+    {
+      ...state,
+      franchise: recordPick(f, pokemonId, releasedId),
+    },
+    onProgress,
+  );
 }

@@ -1,3 +1,6 @@
+import { positionRating } from "../game/ratings";
+import { shinyPokemon } from "../game/shiny";
+import { POKEMON_BY_ID } from "../data/pokemon";
 import { useState } from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it } from "vitest";
@@ -58,4 +61,41 @@ it("swaps an offseason starter with a reserve and persists coaching and minutes"
       "Custom targets",
     ),
   ).toBeInTheDocument();
+});
+
+it("shows the same shiny bonus in offseason role fit as the scouting engine", () => {
+  const base = initialState(1369958318);
+  base.run.mode = "free";
+  base.run.includeLegends = true;
+  base.run.roster = {
+    PG: 25,
+    SG: 150,
+    SF: 149,
+    PF: 68,
+    C: 143,
+    B1: 9,
+    B2: 94,
+    B3: 59,
+  };
+  const teams = createLeague(base.run);
+  const franchise = {
+    modelVersion: 3 as const,
+    shinySeed: base.run.shinySeed,
+    year: 1,
+    phase: "offseason" as const,
+    teams,
+    history: [],
+    careers: [],
+    trades: [],
+  };
+  render(<OffseasonRoster franchise={franchise} onChange={() => {}} />);
+  const guard = screen
+    .getByRole("combobox", { name: "Point guard player" })
+    .closest("label")!;
+  expect(
+    within(guard).getByRole("img", { name: "Shiny Pikachu" }),
+  ).toBeInTheDocument();
+  expect(guard).toHaveTextContent(
+    `${Math.round(positionRating(shinyPokemon(POKEMON_BY_ID.get(25)!, base.run.shinySeed), "PG"))} role fit`,
+  );
 });

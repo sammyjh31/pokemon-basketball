@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { playerProfile } from "./playerProfile";
 import type { BasketballMove, MoveTeam } from "./moveTypes";
@@ -104,10 +105,11 @@ export const signaturesEnabled = (team: Partial<MoveTeam>) =>
 export function movePool(
   id: number,
   version: 1 | 2 | 3 | 4 = 1,
+  shinySeed?: number,
 ): BasketballMove[] {
   const mon = POKEMON_BY_ID.get(id);
   if (!mon) return [];
-  const a = playerProfile(mon).attributes;
+  const a = playerProfile(shinyPokemon(mon, shinySeed)).attributes;
   const basic = basketballMoves.filter((move) => {
     switch (move.id) {
       case "quick-attack":

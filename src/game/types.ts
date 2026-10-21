@@ -68,6 +68,8 @@ export const TACTIC_LABELS: Record<Tactic, string> = {
 export const ROTATIONS = ["balanced", "starters", "bench"] as const;
 export type RotationStyle = (typeof ROTATIONS)[number];
 export interface Pokemon {
+  /** Cosmetic identity; attribute bonuses are computed, never saved as development. */
+  shiny?: true;
   id: number;
   name: string;
   types: string[];
@@ -192,6 +194,8 @@ export interface SeasonResult {
   awards?: SeasonAward[];
 }
 export interface Run {
+  /** Stable league-wide species identity; omitted for historical replay. */
+  shinySeed?: number;
   coach?: CoachAssignment;
   coachDraftRequired?: true;
   simulationVersion?: 2;
@@ -270,6 +274,8 @@ export const DEFENSE_LABELS: Record<DefenseScheme, string> = {
 export type PlayType =
   "transition" | "pickRoll" | "isolation" | "post" | "spotUp";
 export interface LeagueTeam {
+  /** Stable league-wide species identity; omitted for historical replay. */
+  shinySeed?: number;
   scoutingSeed?: import("./scoutingContinuityTypes").CoachScoutingSeed;
   chemistryBonds?: PairBonds;
   morale?: MoraleRoster;

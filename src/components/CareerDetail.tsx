@@ -1,3 +1,4 @@
+import { shinyPokemon } from "../game/shiny";
 import { MasteryPanel, MasteryTrainingReport } from "./MasteryPanel";
 import { currentMasteryBanks } from "../game/currentMastery";
 import { teamsWithMastery } from "../game/abilityMastery";
@@ -118,7 +119,10 @@ export function CareerDetail({
   const headers = defense ? defenseHeaders : statHeaders;
   const cells = (row: CareerTotals) =>
     defense ? defenseCells(row, totals) : statCells(row, totals);
-  const pokemon = POKEMON_BY_ID.get(pokemonId)!,
+  const pokemon = shinyPokemon(
+      POKEMON_BY_ID.get(pokemonId)!,
+      franchise.shinySeed,
+    ),
     team = (
       franchise.phase === "season"
         ? teamsWithMastery(

@@ -1,3 +1,4 @@
+import { shinyPokemon, SHINY_SKILL_BONUS } from "./shiny";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import type { RotationPlan } from "./franchiseFeatures";
 import { validateRotationPlan } from "./rotationPlan";
@@ -189,6 +190,10 @@ export function attributes(
         );
     }
   }
+  if (mon.shiny) {
+    for (const key of DEVELOPMENT_SKILLS)
+      raw[key] = clamp(raw[key] + SHINY_SKILL_BONUS);
+  }
   // Summary skills are convex blends; modest type traits stay modest here too.
   raw.shooting =
     0.5 * raw.threePoint + 0.3 * raw.midRange + 0.2 * raw.freeThrow;
@@ -300,11 +305,18 @@ function skills(mon: Pokemon, offsets?: DevelopmentRatings) {
   if (!offsets) baseSkills.set(mon, result);
   return result;
 }
-function players(roster: Roster, development?: PlayerDevelopment) {
+function players(
+  roster: Roster,
+  development?: PlayerDevelopment,
+  shinySeed?: number,
+) {
   return ROSTER_SLOTS.flatMap((slot) => {
     const mon = POKEMON_BY_ID.get(roster[slot] ?? -1);
     if (!mon) return [];
-    const { a, fits } = skills(mon, development?.[mon.id]);
+    const { a, fits } = skills(
+      shinyPokemon(mon, shinySeed),
+      development?.[mon.id],
+    );
     const position = POSITIONS.includes(slot as Position)
       ? (slot as Position)
       : POSITIONS.reduce((best, p) => (fits[p] > fits[best] ? p : best), "PG");
@@ -325,9 +337,10 @@ export function rotationMinutes(
   rotation: RotationStyle = "balanced",
   development?: PlayerDevelopment,
   plan?: RotationPlan,
+  shinySeed?: number,
 ): Record<RosterSlot, number> {
   if (plan) return validateRotationPlan(plan).minutes;
-  return minutesForPlayers(players(roster, development), rotation);
+  return minutesForPlayers(players(roster, development, shinySeed), rotation);
 }
 
 function minutesForPlayers(
@@ -377,8 +390,16 @@ export function teamRatings(
   rotation: RotationStyle = "balanced",
   development?: PlayerDevelopment,
   plan?: RotationPlan,
+  shinySeed?: number,
 ): TeamRatings {
-  return teamRatingProfile(roster, tactic, rotation, development, plan).ratings;
+  return teamRatingProfile(
+    roster,
+    tactic,
+    rotation,
+    development,
+    plan,
+    shinySeed,
+  ).ratings;
 }
 
 /** Shared evaluation for team ratings and draft tools; keeps minutes identical. */
@@ -388,8 +409,9 @@ export function teamRatingProfile(
   rotation: RotationStyle = "balanced",
   development?: PlayerDevelopment,
   plan?: RotationPlan,
+  shinySeed?: number,
 ): { ratings: TeamRatings; rebounding: number } {
-  const available = players(roster, development),
+  const available = players(roster, development, shinySeed),
     filled = available.filter((p) => p.starter).length;
   const empty = {
     offense: 0,

@@ -61,12 +61,21 @@ it("continues a completed league into the next season and restores its careers w
   expect(screen.getByRole("button", { name: "Start season 2" })).toBeDisabled();
   fireEvent.click(screen.getByRole("button", { name: "Open rookie draft" }));
   fireEvent.click(screen.getByRole("button", { name: "Begin rookie draft" }));
+  await act(async () => {
+    await vi.runAllTimersAsync();
+  });
   fireEvent.click(
     screen.getByRole("button", { name: "Draft recommended pick" }),
   );
+  await act(async () => {
+    await vi.runAllTimersAsync();
+  });
   fireEvent.click(
     screen.getByRole("button", { name: "Draft recommended pick" }),
   );
+  await act(async () => {
+    await vi.runAllTimersAsync();
+  });
   const drafted = JSON.parse(storage.getItem(STORAGE_KEY)!) as GameState;
   expect(drafted.franchise!.rookieDrafts![0].picks).toHaveLength(60);
   fireEvent.click(screen.getByRole("button", { name: "Start season 2" }));
@@ -187,14 +196,18 @@ it("saves an accepted offseason trade, keeps careers, and restores both rosters"
   expect(
     screen.getByRole("region", { name: "Offseason roster management" }),
   ).toHaveTextContent(nameOf(offer.receiveIds[0]));
-  fireEvent.click(
-    screen.getByRole("button", { name: "End franchise / new draft" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "New game / Restart" }));
   expect(screen.getByRole("dialog")).toHaveTextContent(
     /career stats, trades and championship history/,
   );
   fireEvent.click(screen.getByRole("button", { name: "Keep playing" }));
   expect(JSON.parse(storage.getItem(STORAGE_KEY)!)).toEqual(traded);
+  fireEvent.click(screen.getByRole("button", { name: "New game / Restart" }));
+  fireEvent.click(screen.getByRole("button", { name: "End franchise" }));
+  const restarted = JSON.parse(storage.getItem(STORAGE_KEY)!);
+  expect(restarted.franchise).toBeUndefined();
+  expect(restarted.records).toEqual(traded.records);
+  expect(Object.values(restarted.run.roster)).toEqual(Array(8).fill(null));
 }, 300000);
 
 import {

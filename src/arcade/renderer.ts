@@ -1,3 +1,4 @@
+import { isShinyPokemon } from "../game/shiny";
 import { publicAsset } from "../assets";
 import type {
   ArcadeEvent,
@@ -89,6 +90,7 @@ function measureSprite(image: HTMLImageElement): void {
 /** A missing or stalled image must never hold the exhibition loading screen open. */
 export async function loadArcadeAssets(
   ids: number[],
+  shinySeed?: number,
 ): Promise<Map<number, HTMLImageElement>> {
   const assets = new Map<number, HTMLImageElement>();
   await Promise.all(
@@ -121,7 +123,9 @@ export async function loadArcadeAssets(
             image.onload = () => finish(true);
             image.onerror = () => finish(false);
             try {
-              image.src = publicAsset(`/pokemon-pixel/${id}.png`);
+              image.src = publicAsset(
+                `/${isShinyPokemon(id, shinySeed) ? "pokemon-shiny" : "pokemon-pixel"}/${id}.png`,
+              );
             } catch {
               finish(false);
             }

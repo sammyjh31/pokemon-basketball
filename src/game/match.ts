@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { openingScouting } from "./scoutingContinuity";
 import {
   createCounterRuntime,
@@ -186,7 +187,7 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
   const planKey = config.rotationPlan
     ? `:${ROSTER_SLOTS.map((slot) => config.rotationPlan!.minutes[slot]).join(",")}:${config.rotationPlan.closing.join(",")}`
     : "";
-  const key = `${config.movesetVersion ? `moves${config.movesetVersion}:` : ""}${config.abilityMasteryVersion === 1 ? `mastery1:${JSON.stringify(config.abilityMastery ?? {})}:` : ""}${config.personalityVersion === 1 ? "personality1:" : ""}${config.moraleVersion === 1 ? `morale1:${JSON.stringify(config.morale ?? {})}:` : ""}${config.chemistryGrowthVersion === 1 ? `growth1:${JSON.stringify(config.chemistryBonds ?? {})}:` : ""}${chemistryEnabled(config) ? `chemistry1:${config.engineRules?.familiarity ?? 0}:` : ""}${physicalAbilitiesEnabled(config) ? "physical1:" : ""}${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
+  const key = `${config.shinySeed !== undefined ? `shiny:${config.shinySeed}:` : ""}${config.movesetVersion ? `moves${config.movesetVersion}:` : ""}${config.abilityMasteryVersion === 1 ? `mastery1:${JSON.stringify(config.abilityMastery ?? {})}:` : ""}${config.personalityVersion === 1 ? "personality1:" : ""}${config.moraleVersion === 1 ? `morale1:${JSON.stringify(config.morale ?? {})}:` : ""}${config.chemistryGrowthVersion === 1 ? `growth1:${JSON.stringify(config.chemistryBonds ?? {})}:` : ""}${chemistryEnabled(config) ? `chemistry1:${config.engineRules?.familiarity ?? 0}:` : ""}${physicalAbilitiesEnabled(config) ? "physical1:" : ""}${config.evaluationVersion ?? 0}:${config.evaluationVersion === 1 ? `${config.tactic}:${config.defense}:` : ""}${abilitiesEnabled(config) ? "abilities1" : "legacy"}:${config.coach?.id ?? ""}:${ids.join(",")}:${config.rotation}:${offsetsKey}${planKey}`;
   let targets = targetCache.get(key);
   if (!targets) {
     targets =
@@ -197,6 +198,7 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
             config.rotation,
             config.development,
             config.rotationPlan,
+            config.shinySeed,
           );
     // A bounded cache covers many seasons without retaining every custom roster.
     if (targetCache.size > 240) targetCache.clear();
@@ -222,7 +224,7 @@ function buildTeam(config: LeagueTeam, side: Side): Team {
       typeEdges: new Map(),
       profile: moraleProfile(
         playerProfile(
-          POKEMON_BY_ID.get(pokemonId)!,
+          shinyPokemon(POKEMON_BY_ID.get(pokemonId)!, config.shinySeed),
           config.development?.[pokemonId],
         ),
         config,

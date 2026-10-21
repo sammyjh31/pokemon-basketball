@@ -26,6 +26,32 @@ it("opens a hidden team section without leaving the local league route", () => {
 });
 
 it("keeps the exit unavailable while a simulation batch is running", () => {
-  render(<LocalMasthead onExit={() => {}} disabled />);
+  render(
+    <LocalMasthead
+      onExit={() => {}}
+      onRestart={() => {}}
+      disabled
+      restartDisabled
+    />,
+  );
   expect(screen.getByRole("button", { name: "Back to game" })).toBeDisabled();
+  expect(
+    screen.getByRole("button", { name: "New local league" }),
+  ).toBeDisabled();
+});
+
+it("exposes a local restart without opening league options", () => {
+  let requested = false;
+  render(
+    <LocalMasthead
+      onExit={() => {}}
+      onRestart={() => {
+        requested = true;
+      }}
+    />,
+  );
+  const restart = screen.getByRole("button", { name: "New local league" });
+  expect(restart.closest("details")).toBeNull();
+  fireEvent.click(restart);
+  expect(requested).toBe(true);
 });

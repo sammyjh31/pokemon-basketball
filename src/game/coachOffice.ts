@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { evaluateTeam } from "./teamEvaluation";
 import {
   COACHES,
@@ -127,7 +128,14 @@ export function coachRosterFit(team: LeagueTeam, coach: TrainerCoach): number {
     );
   const profiles = Object.values(team.roster).flatMap((id) => {
     const mon = POKEMON_BY_ID.get(id!);
-    return mon ? [playerProfile(mon, team.development?.[mon.id])] : [];
+    return mon
+      ? [
+          playerProfile(
+            shinyPokemon(mon, team.shinySeed),
+            team.development?.[mon.id],
+          ),
+        ]
+      : [];
   });
   if (!profiles.length) return 0;
   const score =
@@ -173,7 +181,10 @@ export function reviewCpuCoaches(
   if (!teams.every((t) => t.coach)) return next;
   const strength = teams.map((t) => {
     const players = Object.values(t.roster).map((id) =>
-      playerProfile(POKEMON_BY_ID.get(id!)!, t.development?.[id!]),
+      playerProfile(
+        shinyPokemon(POKEMON_BY_ID.get(id!)!, t.shinySeed),
+        t.development?.[id!],
+      ),
     );
     return (
       players.reduce((n, p) => n + Math.max(...Object.values(p.positions)), 0) /

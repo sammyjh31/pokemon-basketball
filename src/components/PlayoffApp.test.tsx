@@ -39,6 +39,9 @@ it("saves one complete playoff slate, blocks duplicate work and resets, then res
   fireEvent.click(advance);
   expect(advance).toBeDisabled();
   expect(screen.getByRole("button", { name: "New run" })).toBeDisabled();
+  expect(
+    screen.getByRole("button", { name: "New game / Restart" }),
+  ).toBeDisabled();
   expect(screen.getByRole("button", { name: "Lineup builder" })).toBeDisabled();
   expect(screen.getByRole("button", { name: "Play arcade" })).toBeDisabled();
   expect(

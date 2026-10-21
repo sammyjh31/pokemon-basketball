@@ -33,6 +33,25 @@ function Harness({
 }
 
 describe("rookie draft panel", () => {
+  it("lets a modern user scout while the recommendation is calculated in the background", () => {
+    const state = beginRookieDraft(rookieFixture());
+    state.franchise!.teams[0].evaluationVersion = 1;
+    render(<Harness initial={state} />);
+    expect(
+      screen.getByText(
+        "Scouting your recommendation… You can choose a prospect while the coach reviews the class.",
+      ),
+    ).toBeInTheDocument();
+    fireEvent.change(
+      screen.getByRole("searchbox", { name: "Search rookie prospects" }),
+      { target: { value: "Treecko" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Scout Treecko/ }));
+    expect(
+      screen.getByRole("region", { name: "Treecko scouting report" }),
+    ).toBeInTheDocument();
+  });
+
   it("explains the class and two-round replacement rules, and waits for development", () => {
     const state = rookieFixture();
     state.franchise!.offseasons = [];

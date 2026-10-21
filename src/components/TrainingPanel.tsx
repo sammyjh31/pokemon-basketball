@@ -1,4 +1,6 @@
-import { useId, useState } from "react";
+import { ShinyContext } from "./ShinyPokemon";
+import { shinyPokemon } from "../game/shiny";
+import { useContext, useId, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
   TRAINING_FOCUSES,
@@ -43,9 +45,10 @@ function TrainingDraft({
   disabled,
   onChange,
 }: TrainingPanelProps) {
+  const shinySeed = useContext(ShinyContext);
   const players = ROSTER_SLOTS.flatMap((slot) => {
     const mon = POKEMON_BY_ID.get(roster[slot] ?? -1);
-    return mon ? [{ mon, slot }] : [];
+    return mon ? [{ mon: shinyPokemon(mon, shinySeed), slot }] : [];
   });
   const [draft, setDraft] = useState<TrainingPlans>(() =>
     Object.fromEntries(

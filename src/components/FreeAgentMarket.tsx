@@ -1,3 +1,4 @@
+import { shinyPokemon } from "../game/shiny";
 import { EvaluationFactors } from "./EvaluationFactors";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -73,7 +74,9 @@ function MarketRoom({
   const chosen = market.find((agent) => agent.pokemonId === selectedId);
   const releasedSlot =
     user && ROSTER_SLOTS.find((slot) => user.roster[slot] === releaseId);
-  const released = releasedSlot ? POKEMON_BY_ID.get(releaseId!) : undefined;
+  const released = releasedSlot
+    ? shinyPokemon(POKEMON_BY_ID.get(releaseId!)!, franchise.shinySeed)
+    : undefined;
   const evaluation = useMemo(
     () =>
       chosen && released
@@ -100,7 +103,10 @@ function MarketRoom({
     const query = search.trim().toLowerCase().replace(/^#/, "");
     return market
       .map((agent) => {
-        const mon = POKEMON_BY_ID.get(agent.pokemonId)!;
+        const mon = shinyPokemon(
+          POKEMON_BY_ID.get(agent.pokemonId)!,
+          franchise.shinySeed,
+        );
         const slotPosition =
           releasedSlot && POSITIONS.includes(releasedSlot as Position)
             ? (releasedSlot as Position)
@@ -378,7 +384,10 @@ function MarketRoom({
                 ROSTER_SLOTS.map((slot) => {
                   const id = user.roster[slot];
                   if (id === null) return null;
-                  const mon = POKEMON_BY_ID.get(id)!;
+                  const mon = shinyPokemon(
+                    POKEMON_BY_ID.get(id)!,
+                    franchise.shinySeed,
+                  );
                   const development = user.development?.[id];
                   return (
                     <option key={slot} value={id}>

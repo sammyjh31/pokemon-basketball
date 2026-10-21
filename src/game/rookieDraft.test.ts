@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ROOKIE_POKEMON } from "../data/pokemon";
 import { teamRatings } from "./ratings";
+import { isShinyPokemon } from "./shiny";
 import {
   advanceRookieDraft,
   beginRookieDraft,
@@ -13,6 +14,27 @@ import type { RookieDraft } from "./rookieDraftTypes";
 import { rookieFixture } from "./rookieDraft.testUtils";
 
 describe("generational rookie drafts", () => {
+  it("retains a seeded rookie's boosted team rating after replacing a player", () => {
+    const state = rookieFixture();
+    let seed = 0;
+    while (!isShinyPokemon(252, seed)) seed++;
+    state.run.shinySeed = seed;
+    state.franchise!.shinySeed = seed;
+    state.franchise!.teams.forEach((team) => {
+      team.shinySeed = seed;
+    });
+    const next = selectRookie(beginRookieDraft(state), 252, 129);
+    const team = next.franchise!.teams[0];
+    const ordinary = teamRatings(
+      team.roster,
+      team.tactic,
+      team.rotation,
+      team.development,
+      team.rotationPlan,
+    );
+    expect(team.ratings.overall).toBeGreaterThan(ordinary.overall);
+  });
+
   it("upgrades a processed legacy franchise before adding draft records", () => {
     const state = rookieFixture();
     state.franchise!.modelVersion = 2;

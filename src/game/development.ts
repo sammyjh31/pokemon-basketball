@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { attributes, clamp, positionRating } from "./ratings";
 import { nextRandom } from "./random";
@@ -46,8 +47,9 @@ export function developPlayer(
   seasonSeed: number,
   plan?: PlayerTrainingPlan,
   balanced = false,
+  shinySeed?: number,
 ): PlayerDevelopmentChange {
-  const mon = POKEMON_BY_ID.get(player.pokemonId)!;
+  const mon = shinyPokemon(POKEMON_BY_ID.get(player.pokemonId)!, shinySeed);
   const a = attributes(mon, previous);
   let seed =
     (seasonSeed ^

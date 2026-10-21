@@ -1,34 +1,14 @@
-import { createLineupDraftProjector } from "./draftLineup";
+import { runDraftLineupJob, type DraftLineupJob } from "./draftLineupJobs";
 import { runDraftPoolJob, type DraftPoolJob } from "./draftPoolJobs";
-import type { DraftImpactFocus } from "./draftImpact";
-import type { Roster, RosterSlot, RotationStyle, Tactic } from "./types";
-
-export interface DraftLineupJob {
-  ids: number[];
-  roster: Roster;
-  tactic: Tactic;
-  rotation: RotationStyle;
-  focus: DraftImpactFocus;
-  lockedSlots?: readonly RosterSlot[];
-}
+export type { DraftLineupJob } from "./draftLineupJobs";
 self.onmessage = ({ data }: MessageEvent<DraftLineupJob | DraftPoolJob>) => {
   // Advice and fixed-position rankings are single-shot replies.
   if ("kind" in data) {
     self.postMessage({ result: runDraftPoolJob(data) });
     return;
   }
-  const project = createLineupDraftProjector(
-    data.roster,
-    data.tactic,
-    data.rotation,
-    data.focus,
-    data.lockedSlots,
+  const projections = runDraftLineupJob(data, (done) =>
+    self.postMessage({ done }),
   );
-  const projections = [];
-  for (const [i, id] of data.ids.entries()) {
-    const projection = project(id);
-    if (projection) projections.push(projection);
-    if ((i + 1) % 40 === 0) self.postMessage({ done: i + 1 });
-  }
   self.postMessage({ done: data.ids.length, projections });
 };

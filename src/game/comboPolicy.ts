@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { signaturesEnabled } from "./basketballMoves";
 import { comboPlays, type ComboAssignment, type ComboId } from "./comboTypes";
@@ -73,7 +74,10 @@ function players(team: MoveTeam) {
       ? [
           {
             id: mon.id,
-            profile: playerProfile(mon, team.development?.[mon.id]),
+            profile: playerProfile(
+              shinyPokemon(mon, team.shinySeed),
+              team.development?.[mon.id],
+            ),
             xp: team.abilityMastery?.[mon.id] ?? 0,
           },
         ]
@@ -183,7 +187,9 @@ export function comboValue(
   if (!mon) return 0;
   const currentXp = xp ?? team.abilityMastery?.[id] ?? 0;
   if (currentXp < 25) return 0;
-  const p = profile ?? playerProfile(mon, team.development?.[id]);
+  const p =
+    profile ??
+    playerProfile(shinyPokemon(mon, team.shinySeed), team.development?.[id]);
   let best = 0;
   for (const partner of players(team)) {
     if (partner.id === id || partner.xp < 25) continue;

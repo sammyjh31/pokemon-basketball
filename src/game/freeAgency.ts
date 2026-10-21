@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { withRosterMastery } from "./abilityMastery";
 import { withRosterMorale } from "./playerMorale";
 import { withKnownBonds } from "./teammateChemistry";
@@ -99,7 +100,9 @@ export function freeAgentMarket(
         const mon = POKEMON_BY_ID.get(pokemonId);
         if (!mon || owned.has(pokemonId)) return [];
         const development = { ...(offsets.get(pokemonId) ?? {}) };
-        const fits = POSITIONS.map((p) => positionRating(mon, p, development));
+        const fits = POSITIONS.map((p) =>
+          positionRating(shinyPokemon(mon, f.shinySeed), p, development),
+        );
         const rating = Math.max(...fits);
         return [
           {
@@ -155,6 +158,7 @@ function replacePlayer(
             team.rotation,
             development,
             team.rotationPlan,
+            team.shinySeed,
           ),
         },
         sources,
@@ -169,8 +173,12 @@ function replacePlayer(
     { [agent.pokemonId]: agent.abilityMastery ?? 0 },
   );
 }
-function skillProfile(id: number, offsets: DevelopmentRatings = {}) {
-  const mon = POKEMON_BY_ID.get(id)!;
+function skillProfile(
+  id: number,
+  offsets: DevelopmentRatings = {},
+  shinySeed?: number,
+) {
+  const mon = shinyPokemon(POKEMON_BY_ID.get(id)!, shinySeed);
   const fits = Object.fromEntries(
     POSITIONS.map((p) => [p, positionRating(mon, p, offsets)]),
   ) as Record<Position, number>;
@@ -313,8 +321,8 @@ export function evaluateFreeAgentSigning(
   const scored = fitScore(
     team,
     slot,
-    skillProfile(pokemonId, agent.development),
-    skillProfile(releasedId, team.development?.[releasedId]),
+    skillProfile(pokemonId, agent.development, team.shinySeed),
+    skillProfile(releasedId, team.development?.[releasedId], team.shinySeed),
   );
   const delta = next.ratings.overall - team.ratings.overall;
   return {
@@ -431,11 +439,16 @@ export function cpuFreeAgentChoice(
     profile: skillProfile(
       team.roster[slot]!,
       team.development?.[team.roster[slot]!],
+      team.shinySeed,
     ),
   }));
   const options = pool
     .flatMap((agent) => {
-      const profile = skillProfile(agent.pokemonId, agent.development);
+      const profile = skillProfile(
+        agent.pokemonId,
+        agent.development,
+        team.shinySeed,
+      );
       return outgoing.map((out) => ({
         agent,
         releasedId: out.id,

@@ -51,6 +51,7 @@ export function processOffseason(state: GameState): GameState {
       assignments[player.pokemonId]?.plan ??
         f.trainingPlans?.[player.pokemonId],
       balanced,
+      teams[player.teamId].shinySeed,
     ),
     ...(assignments[player.pokemonId]
       ? { training: assignments[player.pokemonId] }
@@ -93,6 +94,7 @@ export function processOffseason(state: GameState): GameState {
         team.rotation,
         development,
         team.rotationPlan,
+        team.shinySeed,
       ),
     };
   });

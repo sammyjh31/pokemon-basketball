@@ -1,3 +1,4 @@
+import { shinyPokemon } from "../game/shiny";
 import { LeagueBoxScore } from "./LeagueBoxScore";
 import type { LeagueGameSummary } from "../game/types";
 import { MasteryPanel } from "./MasteryPanel";
@@ -464,7 +465,9 @@ function Offseason({
                       {playerName(id)}
                     </button>
                     {(() => {
-                      const mon = POKEMON_BY_ID.get(id);
+                      const baseMon = POKEMON_BY_ID.get(id);
+                      const mon =
+                        baseMon && shinyPokemon(baseMon, user.shinySeed);
                       const offsets = user.development?.[id];
                       return (
                         mon && (

@@ -7,6 +7,7 @@ import {
   type DraftImpactProjection,
 } from "./draftImpact";
 import { playerProfile } from "./playerProfile";
+import { shinyPokemon } from "./shiny";
 import {
   emptyRoster,
   POSITIONS,
@@ -30,10 +31,11 @@ function assignmentSeed(
   ids: number[],
   fixed: Roster,
   focus?: DraftImpactFocus,
+  shinySeed?: number,
 ): Roster {
   ids = ids.filter((id) => !Object.values(fixed).includes(id));
   const utilities = ids.map((id) => {
-    const p = playerProfile(POKEMON_BY_ID.get(id)!);
+    const p = playerProfile(shinyPokemon(POKEMON_BY_ID.get(id)!, shinySeed));
     const a = p.attributes;
     const tool =
       focus === "spacing"
@@ -94,6 +96,7 @@ function searchLineup(
   rotation: RotationStyle,
   focus: DraftImpactFocus,
   locked: ReadonlySet<RosterSlot>,
+  shinySeed?: number,
 ) {
   const cache = new Map<
     string,
@@ -105,7 +108,7 @@ function searchLineup(
     if (cached) return cached;
     const result = {
       roster,
-      profile: draftRosterProfile(roster, tactic, rotation),
+      profile: draftRosterProfile(roster, tactic, rotation, shinySeed),
       moves: ROSTER_SLOTS.filter(
         (s) => original[s] !== null && original[s] !== roster[s],
       ).length,
@@ -161,6 +164,7 @@ export function createLineupDraftProjector(
   rotation: RotationStyle,
   focus: DraftImpactFocus,
   lockedSlots: readonly RosterSlot[] = [],
+  shinySeed?: number,
 ): (pokemonId: number) => DraftImpactProjection | null {
   const locked = new Set(lockedSlots);
   const fixed = emptyRoster();
@@ -174,12 +178,17 @@ export function createLineupDraftProjector(
   );
   if (owned.length >= 8) return () => null;
   const before = searchLineup(
-    [roster, assignmentSeed(owned, fixed), assignmentSeed(owned, fixed, focus)],
+    [
+      roster,
+      assignmentSeed(owned, fixed, undefined, shinySeed),
+      assignmentSeed(owned, fixed, focus, shinySeed),
+    ],
     roster,
     tactic,
     rotation,
     focus,
     locked,
+    shinySeed,
   );
   return (pokemonId) => {
     if (owned.includes(pokemonId) || !POKEMON_BY_ID.has(pokemonId)) return null;
@@ -192,8 +201,19 @@ export function createLineupDraftProjector(
         [s]: pokemonId,
       })),
     );
-    seeds.push(assignmentSeed(ids, fixed), assignmentSeed(ids, fixed, focus));
-    const after = searchLineup(seeds, roster, tactic, rotation, focus, locked);
+    seeds.push(
+      assignmentSeed(ids, fixed, undefined, shinySeed),
+      assignmentSeed(ids, fixed, focus, shinySeed),
+    );
+    const after = searchLineup(
+      seeds,
+      roster,
+      tactic,
+      rotation,
+      focus,
+      locked,
+      shinySeed,
+    );
     const impact = draftImpactFromProfiles(
       before.profile,
       after.profile,

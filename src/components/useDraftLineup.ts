@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createLineupDraftProjector } from "../game/draftLineup";
 import type { DraftImpactProjection } from "../game/draftImpact";
-import type { DraftLineupJob } from "../game/draftLineup.worker";
+import type { DraftLineupJob } from "../game/draftLineupJobs";
 
 /** Cancels obsolete jobs; never exposes rankings made for a different roster/priority. */
 export function useDraftLineup(job: DraftLineupJob | null) {
@@ -34,6 +34,7 @@ export function useDraftLineup(job: DraftLineupJob | null) {
           job.rotation,
           job.focus,
           job.lockedSlots,
+          job.shinySeed,
         );
         const end = Math.min(i + 4, job.ids.length);
         for (; i < end; i++) {

@@ -1,3 +1,4 @@
+import { useShinyPokemon } from "./ShinyPokemon";
 import { publicAsset } from "../assets";
 import { useContext, useState } from "react";
 import { SpriteContext } from "./SpriteControls";
@@ -9,9 +10,14 @@ export function Portrait({
   mon: Pokemon;
   className?: string;
 }) {
+  mon = useShinyPokemon(mon);
   const style = useContext(SpriteContext);
   const src = publicAsset(
-    style === "pixel" ? `/pokemon-pixel/${mon.id}.png` : mon.spriteUrl,
+    mon.shiny
+      ? `/pokemon-shiny/${mon.id}.png`
+      : style === "pixel"
+        ? `/pokemon-pixel/${mon.id}.png`
+        : mon.spriteUrl,
   );
   const [failed, setFailed] = useState<string | null>(null);
   return failed === src ? (
@@ -24,9 +30,10 @@ export function Portrait({
     </span>
   ) : (
     <img
-      className={`portrait ${style} ${className}`}
+      className={`portrait ${style}${mon.shiny ? " is-shiny" : ""} ${className}`}
       src={src}
-      alt={mon.name}
+      alt={mon.shiny ? `Shiny ${mon.name}` : mon.name}
+      title={mon.shiny ? `Shiny ${mon.name} · +3 skills` : undefined}
       loading="lazy"
       onError={() => setFailed(src)}
       draggable={false}

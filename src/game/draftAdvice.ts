@@ -6,6 +6,7 @@ import {
 } from "./teamEvaluation";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { playerProfile } from "./playerProfile";
+import { shinyPokemon } from "./shiny";
 import {
   POSITIONS,
   ROSTER_SLOTS,
@@ -32,14 +33,23 @@ export function recommendRosterPicks(
   tactic: Tactic,
   limit = 3,
   team?: EvaluationTeam,
+  shinySeed?: number,
 ): DraftRecommendation[] {
+  const variantSeed = shinySeed ?? team?.shinySeed;
   const used = new Set(Object.values(roster));
   const vacancies = ROSTER_SLOTS.filter((s) => roster[s] == null);
   if (!vacancies.length) return [];
   const starters = POSITIONS.filter((p) => roster[p] == null);
-  const available = pool.filter((p) => !used.has(p.id));
+  const available = pool
+    .filter((p) => !used.has(p.id))
+    .map((mon) => shinyPokemon(mon, variantSeed));
   if (team?.evaluationVersion === 1) {
-    const context = createEvaluationContext({ ...team, roster, tactic });
+    const context = createEvaluationContext({
+      ...team,
+      roster,
+      tactic,
+      ...(variantSeed !== undefined ? { shinySeed: variantSeed } : {}),
+    });
     const positions = starters.length ? starters : [...POSITIONS];
     const evaluations = new Map(
       positions.map((position) => [
@@ -84,7 +94,7 @@ export function recommendRosterPicks(
   const current = [...used]
     .flatMap((id) => (id == null ? [] : [POKEMON_BY_ID.get(id)!]))
     .filter(Boolean)
-    .map((p) => playerProfile(p).attributes);
+    .map((p) => playerProfile(shinyPokemon(p, variantSeed)).attributes);
   const needs = (["passing", "threePoint", "interiorDefense"] as const).map(
     (key) => ({
       key,

@@ -67,6 +67,7 @@ export function archivedSeasonRun(season: FranchiseSeason): Run {
     user = replay.teams[0];
   return {
     id: `run-${season.seasonSeed}`,
+    ...(user.shinySeed !== undefined ? { shinySeed: user.shinySeed } : {}),
     mode: "free",
     includeLegends: true,
     ...(user.coach ? { coach: user.coach } : {}),

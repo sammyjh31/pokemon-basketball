@@ -1,3 +1,6 @@
+import { useContext } from "react";
+import { shinyPokemon } from "../game/shiny";
+import { useShinyPokemon, ShinyBadge, ShinyContext } from "./ShinyPokemon";
 import { speciesAbility } from "../game/abilities";
 import { physicalAbilityDescription } from "../game/physicalAbilities";
 import type { CSSProperties } from "react";
@@ -79,6 +82,7 @@ export function prospectTools(mon: Pokemon) {
 }
 
 export function DraftToolBars({ mon }: { mon: Pokemon }) {
+  mon = useShinyPokemon(mon);
   const { attributes } = playerProfile(mon);
   return (
     <dl className="draft-tool-bars">
@@ -124,6 +128,7 @@ export function DraftProspectCard({
   onSelect: () => void;
   onCompare: () => void;
 }) {
+  mon = useShinyPokemon(mon);
   const profile = playerProfile(mon),
     tools = prospectTools(mon),
     weakest = tools[tools.length - 1];
@@ -180,6 +185,7 @@ export function DraftProspectCard({
           {selected ? "Scouting now ✓" : "View scouting →"}
         </span>
       </button>
+      <ShinyBadge mon={mon} />
       <TypeBadges types={mon.types} />
       {teamImpact && (
         <div className="draft-card-impact">
@@ -294,6 +300,8 @@ export function DraftComparison({
   onPosition: (position: Position) => void;
   onScout: (id: number) => void;
 }) {
+  const shinySeed = useContext(ShinyContext);
+  mons = mons.map((mon) => shinyPokemon(mon, shinySeed));
   const profiles = mons.map((mon) => playerProfile(mon));
   const numericRow = (label: string, values: number[], note?: string) => (
     <tr key={label}>

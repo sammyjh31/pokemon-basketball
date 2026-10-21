@@ -1,5 +1,7 @@
+import { ShinyContext } from "./ShinyPokemon";
+import { shinyPokemon } from "../game/shiny";
 import { bodyProfile, previewBodyShot } from "../game/bodyMatchups";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { FRANCHISE_POKEMON, POKEMON_BY_ID } from "../data/pokemon";
 import { playerProfile } from "../game/playerProfile";
 import { evaluateShot, type ShotZone } from "../game/shotModel";
@@ -17,6 +19,7 @@ import "../teamAnalytics.css";
 import "../typeMatchups.css";
 
 export function MatchupLab() {
+  const shinySeed = useContext(ShinyContext);
   const [open, setOpen] = useState(false),
     [shooter, setShooter] = useState(65),
     [defender, setDefender] = useState(143);
@@ -26,8 +29,8 @@ export function MatchupLab() {
   const [energy, setEnergy] = useState(100),
     [spacing, setSpacing] = useState(55),
     [position, setPosition] = useState<Position>("PG");
-  const a = POKEMON_BY_ID.get(shooter)!,
-    b = POKEMON_BY_ID.get(defender)!,
+  const a = shinyPokemon(POKEMON_BY_ID.get(shooter)!, shinySeed),
+    b = shinyPokemon(POKEMON_BY_ID.get(defender)!, shinySeed),
     ap = playerProfile(a),
     bp = playerProfile(b);
   const baseShot = evaluateShot({
@@ -90,8 +93,12 @@ export function MatchupLab() {
                 onChange={(e) => {
                   setShooter(Number(e.target.value));
                   setPosition(
-                    playerProfile(POKEMON_BY_ID.get(Number(e.target.value))!)
-                      .bestPosition,
+                    playerProfile(
+                      shinyPokemon(
+                        POKEMON_BY_ID.get(Number(e.target.value))!,
+                        shinySeed,
+                      ),
+                    ).bestPosition,
                   );
                 }}
               >

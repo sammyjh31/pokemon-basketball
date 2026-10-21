@@ -89,6 +89,8 @@ export interface CpuRules {
   since: number;
 }
 export interface Franchise {
+  /** Stable league-wide species identity; omitted for historical replay. */
+  shinySeed?: number;
   /** Opening draft eligibility; omitted for original Gen I–II leagues. */
   initialDraftPool?: import("./draftPool").DraftPool;
   coachOffice?: import("./coachOffice").CoachOffice;

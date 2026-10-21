@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { speciesAbility } from "./abilities";
 import { moraleProfile } from "./playerMorale";
@@ -596,7 +597,10 @@ export function alternateTactic(
     return mon
       ? [
           moraleProfile(
-            playerProfile(mon, team.development?.[mon.id]),
+            playerProfile(
+              shinyPokemon(mon, team.shinySeed),
+              team.development?.[mon.id],
+            ),
             team,
             mon.id,
           ),

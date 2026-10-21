@@ -16,6 +16,7 @@ export type DraftPoolJob =
       tactic: Tactic;
       /** Coaching and rule versions for contextual team value. */
       team?: EvaluationTeam;
+      shinySeed?: number;
     }
   | {
       kind: "fixed";
@@ -24,6 +25,7 @@ export type DraftPoolJob =
       position: Exclude<DraftImpactPosition, "best-lineup">;
       tactic: Tactic;
       rotation: RotationStyle;
+      shinySeed?: number;
     };
 export type DraftPoolResult<J extends DraftPoolJob> = J extends {
   kind: "advice";
@@ -42,6 +44,7 @@ export function runDraftPoolJob<J extends DraftPoolJob>(
           job.tactic,
           job.pool.length,
           job.team,
+          job.shinySeed,
         )
       : projectDraftPool(
           job.ids,
@@ -49,6 +52,7 @@ export function runDraftPoolJob<J extends DraftPoolJob>(
           job.position,
           job.tactic,
           job.rotation,
+          job.shinySeed,
         )
   ) as DraftPoolResult<J>;
 }

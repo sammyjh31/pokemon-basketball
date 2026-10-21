@@ -1,5 +1,8 @@
+import { shinyPokemon } from "../game/shiny";
+import { ShinyBadge } from "./ShinyPokemon";
 import { EvaluationFactors } from "./EvaluationFactors";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { runRookieDraftJob } from "../game/rookieDraftClient";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { cpuRulesApply } from "../game/cpuRules";
 import { lotteryOrder, recordOrder } from "../game/draftLottery";
@@ -61,14 +64,57 @@ function DraftRoom({
     lottery = draft ? draft.modelVersion === 2 : cpuRulesApply(f);
   const userTurn = !!draft && !draft.complete && draft.order[turn % 30] === 0;
   const prospects = useMemo(
-    () => rookieProspects(f, state.run.includeLegends),
+    () =>
+      rookieProspects(f, state.run.includeLegends).map((mon) =>
+        shinyPokemon(mon, f.shinySeed),
+      ),
     [f, state.run.includeLegends],
   );
-  const recommendation = useMemo(
+  const modern = user.evaluationVersion === 1;
+  const [scouting, setScouting] = useState<{
+    source: typeof f;
+    value: ReturnType<typeof recommendedRookiePick>;
+    error?: string;
+  } | null>(null);
+  const [scoutRetry, setScoutRetry] = useState(0);
+  useEffect(() => {
+    if (!modern || !userTurn || disabled) return;
+    const controller = new AbortController();
+    setScouting(null);
+    void runRookieDraftJob(
+      {
+        kind: "recommendation",
+        franchise: f,
+        includeLegends: state.run.includeLegends,
+      },
+      controller.signal,
+    )
+      .then((value) => {
+        if (!controller.signal.aborted) setScouting({ source: f, value });
+      })
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setScouting({
+            source: f,
+            value: null,
+            error:
+              "The coach could not finish scouting. Choose a prospect below or retry the recommendation.",
+          });
+      });
+    return () => controller.abort();
+  }, [f, modern, userTurn, disabled, state.run.includeLegends, scoutRetry]);
+  const legacyRecommendation = useMemo(
     () =>
-      userTurn ? recommendedRookiePick(f, 0, state.run.includeLegends) : null,
-    [f, state.run.includeLegends, userTurn],
+      userTurn && !modern
+        ? recommendedRookiePick(f, 0, state.run.includeLegends)
+        : null,
+    [f, state.run.includeLegends, userTurn, modern],
   );
+  const recommendation = modern
+    ? scouting?.source === f
+      ? scouting.value
+      : null
+    : legacyRecommendation;
   const [search, setSearch] = useState(""),
     [position, setPosition] = useState<Position | "">("");
   const [selectedId, setSelectedId] = useState<number | null>(null),
@@ -185,6 +231,23 @@ function DraftRoom({
               <legend className="sr-only">
                 Choose your rookie and player to release
               </legend>
+              {modern && !disabled && scouting?.source !== f && (
+                <p role="status">
+                  Scouting your recommendation… You can choose a prospect while
+                  the coach reviews the class.
+                </p>
+              )}
+              {scouting?.source === f && scouting.error && (
+                <div className="rookie-note">
+                  <p role="alert">{scouting.error}</p>
+                  <button
+                    className="button"
+                    onClick={() => setScoutRetry((retry) => retry + 1)}
+                  >
+                    Retry recommendation
+                  </button>
+                </div>
+              )}
               {recommendation && (
                 <div className="rookie-recommendation">
                   <div>
@@ -279,6 +342,7 @@ function DraftRoom({
                           <Portrait mon={mon} />
                           <span>
                             <strong>{mon.name}</strong>
+                            <ShinyBadge mon={mon} />
                             <small>
                               #{mon.id} · {best}
                             </small>

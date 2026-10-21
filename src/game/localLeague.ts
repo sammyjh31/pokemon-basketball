@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { isMovesetVersion } from "./basketballMoves";
 import { neutralMorale } from "./playerMorale";
 import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
@@ -50,6 +51,8 @@ export interface LocalPick {
   slot: RosterSlot;
 }
 export interface LocalLeague {
+  /** Stable league-wide species identity; omitted for historical replay. */
+  shinySeed?: number;
   coachDraftRequired?: true;
   version: 1 | 2;
   options?: LocalLeagueOptions;
@@ -174,6 +177,7 @@ export function createLocalLeague(
         }
       : {}),
     version,
+    shinySeed: (seed ^ 0x51a7e123) >>> 0,
     ...(configured ? { options: configured } : {}),
     seed,
     includeLegends,
@@ -343,7 +347,15 @@ export function advanceLocalCpu(source: LocalLeague): LocalLeague {
     const ranked = localLeaguePool(draft)
       .filter((p) => !taken.has(p.id) && (draft.includeLegends || !p.legendary))
       .map((mon) => {
-        const { fits, skills: a } = profiles.get(mon.id)!;
+        const variant = shinyPokemon(mon, draft.shinySeed);
+        const { fits, skills: a } = variant.shiny
+          ? {
+              skills: attributes(variant),
+              fits: Object.fromEntries(
+                POSITIONS.map((pos) => [pos, positionRating(variant, pos)]),
+              ) as Record<(typeof POSITIONS)[number], number>,
+            }
+          : profiles.get(mon.id)!;
         const positions = vacancies.length ? vacancies : [...POSITIONS];
         const position = positions.reduce((best, pos) =>
           fits[pos] > fits[best] ? pos : best,
@@ -411,6 +423,7 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
       ...(draft.physicalAbilityVersion === 1
         ? { physicalAbilityVersion: 1 as const }
         : {}),
+      ...(draft.shinySeed !== undefined ? { shinySeed: draft.shinySeed } : {}),
       ...(draft.chemistryVersion === 1 ? { chemistryVersion: 1 as const } : {}),
       ...(draft.personalityVersion === 1
         ? { personalityVersion: 1 as const }
@@ -454,7 +467,14 @@ export function localLeagueTeams(draft: LocalLeague): LeagueTeam[] {
             },
           }
         : {}),
-      ratings: teamRatings(roster, coaching.tactic, coaching.rotation),
+      ratings: teamRatings(
+        roster,
+        coaching.tactic,
+        coaching.rotation,
+        undefined,
+        undefined,
+        draft.shinySeed,
+      ),
     };
   });
 }
@@ -465,6 +485,7 @@ export function localLeagueRun(draft: LocalLeague): Run {
   if (draft.coachDraftRequired) error("Choose each manager’s trainer first.");
   const teams = localLeagueTeams(draft);
   const run = createRun("free", draft.includeLegends, draft.seed);
+  delete run.shinySeed;
   delete run.typeMatchupsVersion;
   delete run.typeTacticsVersion;
   delete run.abilityVersion;
@@ -482,6 +503,7 @@ export function localLeagueRun(draft: LocalLeague): Run {
   delete run.gameFlowVersion;
   return {
     ...run,
+    ...(draft.shinySeed !== undefined ? { shinySeed: draft.shinySeed } : {}),
     ...(draft.typeMatchupsVersion === 1
       ? { typeMatchupsVersion: 1 as const }
       : {}),
@@ -556,6 +578,8 @@ export function swapLocalSlots(
       team.tactic,
       team.rotation,
       team.development,
+      undefined,
+      team.shinySeed,
     );
     return { ...draft, career: { ...draft.career, teams } };
   }
@@ -605,6 +629,8 @@ export function updateLocalCoaching(
                   coaching.tactic,
                   coaching.rotation,
                   team.development,
+                  undefined,
+                  team.shinySeed,
                 ),
               }
             : team,
@@ -640,6 +666,10 @@ export function parseLocalLeague(
   const value = JSON.parse(raw);
   if (
     !value ||
+    (value.shinySeed !== undefined &&
+      (!Number.isInteger(value.shinySeed) ||
+        value.shinySeed < 0 ||
+        value.shinySeed > 0xffffffff)) ||
     (value.abilityVersion !== undefined && value.abilityVersion !== 1) ||
     (value.abilityMasteryVersion !== undefined &&
       value.abilityMasteryVersion !== 1) ||
@@ -690,6 +720,8 @@ export function parseLocalLeague(
   );
   const count = localTeamCount(draft);
   // Creation opts in; loading must retain the saved season rules.
+  delete draft.shinySeed;
+  if (value.shinySeed !== undefined) draft.shinySeed = value.shinySeed;
   delete draft.typeMatchupsVersion;
   delete draft.typeTacticsVersion;
   delete draft.abilityVersion;

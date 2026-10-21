@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { movesEnabled } from "./basketballMoves";
 import { moveValue } from "./movePolicy";
 import type { MoveTeam } from "./moveTypes";
@@ -43,6 +44,7 @@ export { abilityUsefulness } from "./abilityEvaluation";
 
 /** Deliberately independent of consumers and save formats. Context is a fresh snapshot. */
 export interface EvaluationTeam {
+  shinySeed?: number;
   roster: Roster;
   tactic: Tactic;
   defense?: DefenseScheme;
@@ -74,6 +76,7 @@ const NEED_SKILLS = [
 ] as const;
 type NeedSkill = (typeof NEED_SKILLS)[number];
 export interface EvaluationContext {
+  shinySeed?: number;
   moves?: MoveTeam;
   tactic: Tactic;
   defense: DefenseScheme;
@@ -139,7 +142,8 @@ function rosterProfiles(
 ) {
   const excludedSet = new Set(excluded);
   return ROSTER_SLOTS.flatMap((slot) => {
-    const mon = POKEMON_BY_ID.get(team.roster[slot]!);
+    const baseMon = POKEMON_BY_ID.get(team.roster[slot]!);
+    const mon = baseMon ? shinyPokemon(baseMon, team.shinySeed) : undefined;
     return mon && !excludedSet.has(mon.id)
       ? [
           {
@@ -348,6 +352,7 @@ export function createEvaluationContext(
   const plan = evaluationGamePlan(team),
     players = rosterProfiles(team, excludeIds);
   return {
+    ...(team.shinySeed !== undefined ? { shinySeed: team.shinySeed } : {}),
     tactic: plan.tactic,
     defense: plan.defense,
     abilities: abilitiesEnabled(team),
@@ -515,7 +520,10 @@ export function evaluatePlayer(
 ): PlayerEvaluation {
   const mon = POKEMON_BY_ID.get(pokemonId);
   if (!mon) throw new Error("Cannot evaluate an unknown Pokémon.");
-  const raw = playerProfile(mon, offsets ?? context.development[pokemonId]);
+  const raw = playerProfile(
+    shinyPokemon(mon, context.shinySeed),
+    offsets ?? context.development[pokemonId],
+  );
   const base = scoreProfile(context, pokemonId, raw, role);
   if (!context.morale) return base;
   const effective = scoreProfile(
@@ -664,7 +672,7 @@ export function evaluationTrainingOptions(
         ?.chemistry.value ?? 0)
     : 0;
   const current = playerProfile(
-    POKEMON_BY_ID.get(pokemonId)!,
+    shinyPokemon(POKEMON_BY_ID.get(pokemonId)!, team.shinySeed),
     offsets,
   ).attributes;
   const focuses = [

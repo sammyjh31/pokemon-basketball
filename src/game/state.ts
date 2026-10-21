@@ -342,7 +342,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   }
   if (action.type === "SIMULATE" || action.type === "APPLY_SEASON") {
     if (action.type === "APPLY_SEASON" && action.source !== run) return state;
-    if (!teamRatings(run.roster, run.tactic, run.rotation).complete)
+    if (
+      !teamRatings(
+        run.roster,
+        run.tactic,
+        run.rotation,
+        undefined,
+        undefined,
+        run.shinySeed,
+      ).complete
+    )
       return state;
     const result =
         action.type === "APPLY_SEASON" ? action.result : simulateSeason(run),

@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { clamp, positionRating } from "./ratings";
 import { typeMatchup } from "./typeMatchups";
@@ -132,7 +133,11 @@ export function createRivalStrategy(
       ? clamp(
           Math.max(
             ...POSITIONS.map((p) =>
-              positionRating(mon, p, development.get(id)),
+              positionRating(
+                shinyPokemon(mon, team.shinySeed),
+                p,
+                development.get(id),
+              ),
             ),
           ) / 90,
           0.3,

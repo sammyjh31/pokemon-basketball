@@ -36,6 +36,7 @@ export function createRun(
   return refreshOffers({
     ...(draftPool !== undefined ? { draftPool } : {}),
     id: `run-${seed >>> 0}`,
+    shinySeed: (seed ^ 0x51a7e123) >>> 0,
     typeMatchupsVersion: 1,
     typeTacticsVersion: 1,
     abilityVersion: 1,

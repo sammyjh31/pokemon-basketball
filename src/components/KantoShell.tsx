@@ -19,22 +19,38 @@ export function GameBrand({ local = false }: { local?: boolean }) {
 export function LocalMasthead({
   onExit,
   disabled = false,
+  onRestart,
+  restartDisabled = disabled,
 }: {
   onExit: () => void;
   disabled?: boolean;
+  onRestart?: () => void;
+  restartDisabled?: boolean;
 }) {
   return (
     <div className="kanto-masthead">
       <GameBrand local />
       <span>ONE COMPUTER. EVERY RIVALRY.</span>
-      <button
-        type="button"
-        className="kanto-exit"
-        onClick={onExit}
-        disabled={disabled}
-      >
-        Back to game
-      </button>
+      <div className="masthead-actions">
+        {onRestart && (
+          <button
+            type="button"
+            className="header-restart"
+            onClick={onRestart}
+            disabled={restartDisabled}
+          >
+            New local league
+          </button>
+        )}
+        <button
+          type="button"
+          className="kanto-exit"
+          onClick={onExit}
+          disabled={disabled}
+        >
+          Back to game
+        </button>
+      </div>
     </div>
   );
 }

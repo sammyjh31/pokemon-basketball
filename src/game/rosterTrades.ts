@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { withRosterMastery, masteryXp } from "./abilityMastery";
 import { withRosterMorale } from "./playerMorale";
 import { withKnownBonds } from "./teammateChemistry";
@@ -60,6 +61,7 @@ export function exchangePlayers(
               team.rotation,
               development,
               team.rotationPlan,
+              team.shinySeed,
             ),
           },
           teams,
@@ -91,7 +93,11 @@ export function cpuTrades(
         const positions = Object.fromEntries(
           POSITIONS.map((pos) => [
             pos,
-            positionRating(POKEMON_BY_ID.get(id!)!, pos, allDevelopment[id!]),
+            positionRating(
+              shinyPokemon(POKEMON_BY_ID.get(id!)!, team.shinySeed),
+              pos,
+              allDevelopment[id!],
+            ),
           ]),
         ) as Record<Position, number>;
         return [
@@ -284,7 +290,7 @@ export function exchangePackage(
         id,
         POSITIONS.map((position) =>
           positionRating(
-            POKEMON_BY_ID.get(id)!,
+            shinyPokemon(POKEMON_BY_ID.get(id)!, team.shinySeed),
             position,
             other.development?.[id],
           ),
@@ -385,6 +391,7 @@ export function exchangePackage(
               team.rotation,
               development,
               team.rotationPlan,
+              team.shinySeed,
             ),
           },
           teams,

@@ -1,3 +1,6 @@
+import { useContext } from "react";
+import { ShinyContext } from "./ShinyPokemon";
+import { isShinyPokemon } from "../game/shiny";
 import { publicAsset } from "../assets";
 import { teamsWithMastery } from "../game/abilityMastery";
 import { currentMasteryBanks } from "../game/currentMastery";
@@ -95,6 +98,7 @@ export function ArcadePortrait({
   className?: string;
 }) {
   const [failed, setFailed] = useState(false);
+  const shinySeed = useContext(ShinyContext);
   const mon = POKEMON_BY_ID.get(id);
   return failed ? (
     <span
@@ -106,7 +110,9 @@ export function ArcadePortrait({
   ) : (
     <img
       className={`arcade-sprite ${className}`}
-      src={publicAsset(`/pokemon-pixel/${id}.png`)}
+      src={publicAsset(
+        `/${isShinyPokemon(id, shinySeed) ? "pokemon-shiny" : "pokemon-pixel"}/${id}.png`,
+      )}
       alt=""
       draggable={false}
       onError={() => setFailed(true)}

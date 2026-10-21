@@ -1,3 +1,4 @@
+import { shinyPokemon } from "../game/shiny";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import type { Franchise } from "../game/franchiseTypes";
@@ -68,7 +69,8 @@ function PackageRoster({
     <ul className="trade-package-roster" aria-label={`${side} players`}>
       {ROSTER_SLOTS.map((slot) => {
         const id = team.roster[slot],
-          mon = POKEMON_BY_ID.get(id ?? -1);
+          baseMon = POKEMON_BY_ID.get(id ?? -1);
+        const mon = baseMon ? shinyPokemon(baseMon, team.shinySeed) : undefined;
         if (id === null || !mon) return null;
         const development = team.development?.[id],
           position = bestPosition(mon, development);

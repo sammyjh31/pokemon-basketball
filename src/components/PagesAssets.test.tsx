@@ -71,3 +71,19 @@ it.each(["/", "/pokemon-basketball/"])(
     expect([...assets.keys()]).toEqual([25, 26]);
   },
 );
+
+it("preloads the canonical shiny sprite under the Pages path for playable games", async () => {
+  vi.stubEnv("BASE_URL", "/pokemon-basketball/");
+  const requested: string[] = [];
+  class LoadedImage {
+    onload: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+    set src(value: string) {
+      requested.push(value);
+      queueMicrotask(() => this.onload?.());
+    }
+  }
+  vi.stubGlobal("Image", LoadedImage);
+  await loadArcadeAssets([25], 1677);
+  expect(requested).toEqual(["/pokemon-basketball/pokemon-shiny/25.png"]);
+});

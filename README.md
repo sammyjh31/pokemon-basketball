@@ -347,3 +347,12 @@ Formulas are in [the league model](docs/LEAGUE_MODEL.md#court-version-3-balance-
 Open **Inside this result → Court positioning and possession chains** for coverage counts, multi-action attacks, late-clock shots, turnovers, an action browser and a court diagram. These locations influence the engine; earlier schematic shot charts remain labeled as such. Coverage counts and scoring differences are observations, not proof of causation. The model is fictional game tuning, not empirical tracking data.
 
 Standard franchises adopt the update at the next season boundary. Current seasons, archived results and existing local careers keep their saved rules. Start a new local league to adopt the update there. No saved result is silently recalculated under new rules.
+
+
+### Tester update: rare shinies, responsive rookie drafts, and restart
+
+New solo games and local leagues roll a fixed shiny identity per species at 1 in 1,024 odds. A shiny uses its canonical shiny sprite and gains +3 to basketball skills, capped at 100. The identity and bonus persist through trades, development, and future seasons. Refreshing does not reroll a league; existing saves without shiny identities stay unchanged.
+
+Solo franchise rookie drafting and recommendations now run in a background worker. CPU turns report progress and can be canceled. A completed action replaces the save atomically; cancellation or failure preserves the previous state. Browsers without Web Workers retain the synchronous compatibility fallback.
+
+Use **New game / Restart** in the solo header or **New local league** in the local header. Both open a confirmation before replacing the current game.

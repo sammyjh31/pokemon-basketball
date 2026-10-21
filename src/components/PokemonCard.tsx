@@ -1,3 +1,4 @@
+import { useShinyPokemon, ShinyBadge } from "./ShinyPokemon";
 import { attributes, positionRating } from "../game/ratings";
 import { POSITIONS, type Pokemon } from "../game/types";
 import { Portrait, TypeBadges, TYPE_COLORS } from "./Portrait";
@@ -10,6 +11,7 @@ export function PokemonCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  mon = useShinyPokemon(mon);
   const a = attributes(mon),
     best = [...POSITIONS].sort(
       (x, y) => positionRating(mon, y) - positionRating(mon, x),
@@ -42,6 +44,7 @@ export function PokemonCard({
           </span>
         )}
       </div>
+      <ShinyBadge mon={mon} />
       <TypeBadges types={mon.types} />
       <div className="card-stats">
         <span>

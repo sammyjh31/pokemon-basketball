@@ -1,5 +1,7 @@
 import { useEffect, useReducer, useState, useRef } from "react";
 import { gameReducer, type GameAction } from "../game/state";
+import { runRookieDraftJob } from "../game/rookieDraftClient";
+import type { RookieDraftAction } from "../game/rookieDraftJobs";
 import {
   prepareGameLoad,
   saveGame,
@@ -199,8 +201,67 @@ export function useGame(
   });
   const playoffController = useRef<AbortController | null>(null);
   useEffect(() => () => playoffController.current?.abort(), []);
+  const [rookieDraftBusy, setRookieDraftBusy] = useState(false);
+  const [rookieDraftProgress, setRookieDraftProgress] = useState({
+    completed: 0,
+    total: 60,
+  });
+  const [rookieDraftError, setRookieDraftError] = useState<string | null>(null);
+  const rookieController = useRef<AbortController | null>(null);
+  useEffect(() => () => rookieController.current?.abort(), []);
+  const cancelRookieDraft = () => {
+    if (!rookieController.current) return;
+    rookieController.current.abort();
+    rookieController.current = null;
+    busy.current = false;
+    setRookieDraftBusy(false);
+  };
+  const runRookieAction = async (action: RookieDraftAction) => {
+    if (busy.current) return;
+    const source = latestState.current;
+    const controller = new AbortController();
+    rookieController.current = controller;
+    busy.current = true;
+    setRookieDraftBusy(true);
+    setRookieDraftProgress({ completed: 0, total: 60 });
+    setRookieDraftError(null);
+    try {
+      const next = await runRookieDraftJob(
+        { kind: "solo-action", state: source, action },
+        controller.signal,
+        (completed, total) => {
+          if (!controller.signal.aborted)
+            setRookieDraftProgress({ completed, total });
+        },
+      );
+      if (controller.signal.aborted || latestState.current !== source) return;
+      setCanSave(true);
+      rawDispatch({ type: "RESTORE_SAVED", state: next });
+    } catch (error) {
+      if (!controller.signal.aborted)
+        setRookieDraftError(
+          `${error instanceof Error ? error.message : "The rookie draft could not finish."} Your progress is unchanged. Try the draft again.`,
+        );
+    } finally {
+      if (rookieController.current === controller) {
+        rookieController.current = null;
+        busy.current = false;
+        setRookieDraftBusy(false);
+      }
+    }
+  };
   const dispatch = (action: GameAction) => {
+    if (
+      action.type === "BEGIN_ROOKIE_DRAFT" ||
+      action.type === "ADVANCE_ROOKIE_DRAFT" ||
+      action.type === "PASS_ROOKIE_PICK" ||
+      action.type === "PICK_ROOKIE"
+    ) {
+      void runRookieAction(action);
+      return;
+    }
     if (!busy.current) {
+      if (action.type === "NEW_RUN") setRookieDraftError(null);
       setCanSave(true);
       rawDispatch(action);
     }
@@ -409,7 +470,7 @@ export function useGame(
     kind: "game",
     slot: STORAGE_KEY,
     storage,
-    busy: restoring || simulating || playoffSimulating,
+    busy: restoring || simulating || playoffSimulating || rookieDraftBusy,
     otherTab,
     exportSave: () => JSON.stringify(latestState.current),
     checkImport: async (source, onProgress, signal) => {
@@ -454,5 +515,9 @@ export function useGame(
     simulationError,
     restoring,
     restorationProgress,
+    rookieDraftBusy,
+    rookieDraftProgress,
+    rookieDraftError,
+    cancelRookieDraft,
   };
 }

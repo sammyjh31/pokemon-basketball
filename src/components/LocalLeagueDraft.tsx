@@ -1,3 +1,5 @@
+import { shinyPokemon } from "../game/shiny";
+import { ShinyBadge, ShinyRules } from "./ShinyPokemon";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import {
@@ -129,9 +131,11 @@ export function LocalLeagueDraft({
         : impactSlot;
   const pool = useMemo(() => {
     const taken = new Set(draft.picks.map((p) => p.pokemonId));
-    return localLeaguePool(draft).filter(
-      (p) => !taken.has(p.id) && (draft.includeLegends || !p.legendary),
-    );
+    return localLeaguePool(draft)
+      .map((mon) => shinyPokemon(mon, draft.shinySeed))
+      .filter(
+        (p) => !taken.has(p.id) && (draft.includeLegends || !p.legendary),
+      );
   }, [draft]);
   const generations = [
     ...new Set(localLeaguePool(draft).map((p) => localGeneration(p.id))),
@@ -165,7 +169,9 @@ export function LocalLeagueDraft({
       pool,
       roster,
       tactic,
+      shinySeed: draft.shinySeed,
       team: {
+        shinySeed: draft.shinySeed,
         roster,
         ...draft.coaching[turn.teamId],
         evaluationVersion: draft.evaluationVersion,
@@ -197,6 +203,7 @@ export function LocalLeagueDraft({
     () =>
       impactSlot === "best-lineup"
         ? {
+            shinySeed: draft.shinySeed,
             ids: pool.map((p) => p.id),
             roster,
             tactic,
@@ -205,7 +212,16 @@ export function LocalLeagueDraft({
             lockedSlots,
           }
         : null,
-    [pool, roster, impactSlot, tactic, rotation, impactFocus, lockedSlots],
+    [
+      pool,
+      roster,
+      impactSlot,
+      tactic,
+      rotation,
+      impactFocus,
+      lockedSlots,
+      draft.shinySeed,
+    ],
   );
   const lineupSearch = useDraftLineup(lineupJob);
   const fixedJob = useMemo(
@@ -214,13 +230,14 @@ export function LocalLeagueDraft({
         ? null
         : {
             kind: "fixed" as const,
+            shinySeed: draft.shinySeed,
             ids: pool.map((p) => p.id),
             roster,
             position: impactSlot,
             tactic,
             rotation,
           },
-    [pool, roster, impactSlot, tactic, rotation],
+    [pool, roster, impactSlot, tactic, rotation, draft.shinySeed],
   );
   const fixedSearch = useDraftPool(fixedJob);
   const fixedProjections = useMemo(
@@ -286,7 +303,10 @@ export function LocalLeagueDraft({
         ),
     [pool, query, sort, generation, adviceById, impactById],
   );
-  const mon = selected === null ? null : POKEMON_BY_ID.get(selected)!;
+  const mon =
+    selected === null
+      ? null
+      : shinyPokemon(POKEMON_BY_ID.get(selected)!, draft.shinySeed);
   const choose = (
     id: number,
     previewSlot?: RosterSlot,
@@ -300,7 +320,7 @@ export function LocalLeagueDraft({
       selectedHeading.current?.focus();
       selectedHeading.current?.scrollIntoView?.({ block: "nearest" });
     }
-    const candidate = POKEMON_BY_ID.get(id)!;
+    const candidate = shinyPokemon(POKEMON_BY_ID.get(id)!, draft.shinySeed);
     const starting = vacancies.filter((s) =>
       POSITIONS.includes(s as Position),
     ) as Position[];
@@ -349,8 +369,17 @@ export function LocalLeagueDraft({
             slot,
             tactic,
             draft.coaching[turn.teamId].rotation,
+            draft.shinySeed,
           ),
-    [roster, selected, slot, tactic, draft.coaching, turn.teamId],
+    [
+      roster,
+      selected,
+      slot,
+      tactic,
+      draft.coaching,
+      turn.teamId,
+      draft.shinySeed,
+    ],
   );
   const impact = proposed?.impact ?? fixedImpact;
   const selectedAdvice = mon ? adviceById.get(mon.id)! : null;
@@ -390,6 +419,7 @@ export function LocalLeagueDraft({
           className="local-panel local-pool"
           aria-label="Available Pokémon"
         >
+          <ShinyRules seed={draft.shinySeed} />
           <div className="draft-board-heading">
             <div>
               <span className="eyebrow">YOUR SCOUTING DESK</span>
@@ -747,7 +777,9 @@ export function LocalLeagueDraft({
                         compared.includes(p.pokemonId),
                       )}
                       pending={rankingPending}
-                      mons={compared.map((id) => POKEMON_BY_ID.get(id)!)}
+                      mons={compared.map((id) =>
+                        shinyPokemon(POKEMON_BY_ID.get(id)!, draft.shinySeed),
+                      )}
                       roster={roster}
                       slot={impactSlot}
                       focus={impactFocus}
@@ -769,7 +801,9 @@ export function LocalLeagueDraft({
                         Compare individual skills & physical profiles
                       </summary>
                       <DraftComparison
-                        mons={compared.map((id) => POKEMON_BY_ID.get(id)!)}
+                        mons={compared.map((id) =>
+                          shinyPokemon(POKEMON_BY_ID.get(id)!, draft.shinySeed),
+                        )}
                         advice={adviceById}
                         position={comparePosition}
                         onPosition={setComparePosition}
@@ -853,6 +887,7 @@ export function LocalLeagueDraft({
             <div className="draft-inspector-player">
               <Portrait mon={mon} />
               <div>
+                <ShinyBadge mon={mon} />
                 <h3 ref={selectedHeading} tabIndex={-1}>
                   {mon.name}
                 </h3>

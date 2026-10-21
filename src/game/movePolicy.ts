@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { movePool, movesEnabled } from "./basketballMoves";
 import { playerProfile, type PlayerProfile } from "./playerProfile";
@@ -60,14 +61,21 @@ export function coachMoves(
   };
   const mon = POKEMON_BY_ID.get(id);
   if (!mon || !movesEnabled(team)) return empty;
-  const p = projection?.profile ?? playerProfile(mon, team.development?.[id]),
+  const p =
+      projection?.profile ??
+      playerProfile(shinyPokemon(mon, team.shinySeed), team.development?.[id]),
     a = p.attributes;
   const coach = getCoach(team.coach?.id ?? ""),
     tactic = team.tactic;
   const teammates = Object.values(team.roster).flatMap((member) => {
     const species = POKEMON_BY_ID.get(member!);
     return species
-      ? [playerProfile(species, team.development?.[member!]).attributes]
+      ? [
+          playerProfile(
+            shinyPokemon(species, team.shinySeed),
+            team.development?.[member!],
+          ).attributes,
+        ]
       : [];
   });
   const average = (key: keyof typeof a) =>
@@ -142,7 +150,11 @@ export function coachMoves(
         : 0;
     return role + style + control;
   };
-  const pool = movePool(id, (team.movesetVersion ?? 0) >= 2 ? 2 : 1);
+  const pool = movePool(
+    id,
+    (team.movesetVersion ?? 0) >= 2 ? 2 : 1,
+    team.shinySeed,
+  );
   const moves = pool
     .filter((move) => !move.signature || xp >= move.signature.minimumMastery)
     .map((move, order) => ({ move, order, value: value(move) }))
@@ -191,7 +203,7 @@ export function moveValue(
 /** Upcoming or equipped signature practice; uses the same finite species pool and coach selection. */
 export function signatureTrainingFocus(team: MoveTeam, id: number) {
   if ((team.movesetVersion ?? 0) < 2 || !movesEnabled(team)) return undefined;
-  const signatures = movePool(id, 2).filter((m) => m.signature);
+  const signatures = movePool(id, 2, team.shinySeed).filter((m) => m.signature);
   const xp = team.abilityMastery?.[id] ?? 0;
   const next = signatures
     .filter((m) => m.signature!.minimumMastery > xp)

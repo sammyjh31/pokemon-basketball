@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { playerProfile, type PlayerProfile } from "./playerProfile";
 import { getCoach } from "./trainerCoaches";
@@ -28,6 +29,7 @@ export interface MoraleFixture {
   away: number[];
 }
 export interface MoraleTeam {
+  shinySeed?: LeagueTeam["shinySeed"];
   roster: LeagueTeam["roster"];
   coach?: LeagueTeam["coach"];
   development?: LeagueTeam["development"];
@@ -170,7 +172,10 @@ function expectations(team: MoraleTeam, id: number): number {
         id: pokemonId,
         value: Math.max(
           ...Object.values(
-            playerProfile(mon, team.development?.[pokemonId]).positions,
+            playerProfile(
+              shinyPokemon(mon, team.shinySeed),
+              team.development?.[pokemonId],
+            ).positions,
           ),
         ),
       };
@@ -186,7 +191,10 @@ function coachFit(team: MoraleTeam, id: number): number {
   const coach = getCoach(team.coach?.id ?? ""),
     mon = POKEMON_BY_ID.get(id);
   if (!coach || !mon) return 50;
-  const a = playerProfile(mon, team.development?.[id]).attributes;
+  const a = playerProfile(
+    shinyPokemon(mon, team.shinySeed),
+    team.development?.[id],
+  ).attributes;
   const offense = {
     balanced: mean([a.passing, a.composure]),
     pace: mean([a.speed, a.stamina, a.ballHandling]),
@@ -222,7 +230,8 @@ export function moraleAssessment(
   const coach = getCoach(team.coach?.id ?? ""),
     mon = POKEMON_BY_ID.get(id);
   const stamina = mon
-    ? playerProfile(mon, team.development?.[id]).attributes.stamina
+    ? playerProfile(shinyPokemon(mon, team.shinySeed), team.development?.[id])
+        .attributes.stamina
     : 60;
   const ratio = state.games ? state.minutes / expected : 1;
   let action: MoraleAction = "steady-role",

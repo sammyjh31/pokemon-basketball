@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { captureCoachBook } from "./coachScoutingArchive";
 import {
   parseCoachBook,
@@ -179,6 +180,7 @@ function reports(
   trades: FranchiseTrade[],
   lastYear: number,
   allowPendingYear = false,
+  shinySeed?: number,
 ): {
   reports: OffseasonReport[];
   cumulative: PlayerDevelopment;
@@ -233,7 +235,10 @@ function reports(
             Math.max(
               ...POSITIONS.map((position) =>
                 positionRating(
-                  POKEMON_BY_ID.get(pokemonId)!,
+                  shinyPokemon(
+                    POKEMON_BY_ID.get(pokemonId)!,
+                    archived.replay?.teams[teamId].shinySeed ?? shinySeed,
+                  ),
                   position,
                   offsets,
                 ),
@@ -345,6 +350,10 @@ export function validateLeagueTeams(
   const coached = rows.filter((v) => object(v).coach !== undefined).length;
   if (coached !== 0 && coached !== rows.length) return fail();
   const coachIds = new Set<string>();
+  const shinySeed =
+    object(rows[0]).shinySeed === undefined
+      ? undefined
+      : integer(object(rows[0]).shinySeed, 0, 0xffffffff);
   const typeVersion = object(rows[0]).typeMatchupsVersion;
   if (typeVersion !== undefined && typeVersion !== 1) return fail();
   const abilityVersion = object(rows[0]).abilityVersion;
@@ -426,6 +435,7 @@ export function validateLeagueTeams(
       !TACTICS.includes(row.tactic as never) ||
       !ROTATIONS.includes(row.rotation as never) ||
       !DEFENSE_SCHEMES.includes(row.defense as never) ||
+      row.shinySeed !== shinySeed ||
       row.simulationVersion !== simulationVersion ||
       row.typeMatchupsVersion !== typeVersion ||
       row.abilityVersion !== abilityVersion ||
@@ -469,6 +479,7 @@ export function validateLeagueTeams(
       ? validateRotationPlan(row.rotationPlan)
       : undefined;
     return {
+      ...(shinySeed !== undefined ? { shinySeed } : {}),
       ...(coach ? { coach } : {}),
       ...(row.scoutingSeed !== undefined
         ? {
@@ -485,7 +496,14 @@ export function validateLeagueTeams(
       tactic,
       rotation,
       defense: row.defense as LeagueTeam["defense"],
-      ratings: teamRatings(roster, tactic, rotation, offsets, rotationPlan),
+      ratings: teamRatings(
+        roster,
+        tactic,
+        rotation,
+        offsets,
+        rotationPlan,
+        shinySeed,
+      ),
       ...(offsets ? { development: offsets } : {}),
       ...(rotationPlan ? { rotationPlan } : {}),
       ...(simulationVersion === 2 ? { simulationVersion } : {}),
@@ -1305,11 +1323,17 @@ export function validateFranchise(
     (row.phase === "season" && year < 2)
   )
     return fail();
+  const shinySeed =
+    row.shinySeed === undefined
+      ? undefined
+      : integer(row.shinySeed, 0, 0xffffffff);
+  if (shinySeed !== run.shinySeed) return fail();
   const teams = validateLeagueTeams(row.teams, run.includeLegends),
     leagueIds = teams.flatMap((team) => Object.values(team.roster) as number[]);
   if (
     teams.some(
       (team) =>
+        team.shinySeed !== shinySeed ||
         team.typeTacticsVersion !== run.typeTacticsVersion ||
         team.abilityVersion !== run.abilityVersion ||
         team.abilityMasteryVersion !== run.abilityMasteryVersion ||
@@ -1354,6 +1378,12 @@ export function validateFranchise(
       certifiedYears?.has(index + 1) ?? false,
     ),
   );
+  if (
+    history.some((season) =>
+      season.replay?.teams.some((team) => team.shinySeed !== shinySeed),
+    )
+  )
+    return fail();
   const coachOffice =
     row.coachOffice === undefined
       ? undefined
@@ -1477,6 +1507,7 @@ export function validateFranchise(
           trades,
           historyCount,
           row.modelVersion === 3 && row.phase === "offseason",
+          shinySeed,
         )
       : undefined;
   if (Object.hasOwn(row, "rookieDrafts") && row.rookieDrafts === undefined)
@@ -1620,6 +1651,7 @@ export function validateFranchise(
         return fail();
   }
   const franchise: Franchise = {
+    ...(shinySeed !== undefined ? { shinySeed } : {}),
     ...(initialDraftPool !== undefined ? { initialDraftPool } : {}),
     ...(pendingCoach ? { pendingCoach } : {}),
     ...(coachOffice ? { coachOffice } : {}),

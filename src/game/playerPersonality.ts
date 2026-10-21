@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { playerProfile } from "./playerProfile";
 import { clamp } from "./ratings";
@@ -175,7 +176,7 @@ export function teamLeadership(
     .map((id) => {
       const p = playerPersonality(id),
         a = playerProfile(
-          POKEMON_BY_ID.get(id)!,
+          shinyPokemon(POKEMON_BY_ID.get(id)!, team.shinySeed),
           team.development?.[id],
         ).attributes;
       const compatibility = personalityReactions(team, id).coachCompatibility;

@@ -1,3 +1,4 @@
+import { shinyPokemon } from "../game/shiny";
 import type { PlayerDevelopment } from "../game/developmentTypes";
 import { draftPokemon, draftPoolLabel } from "../game/draftPool";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -69,7 +70,10 @@ export function Court({
           KANTO <span> BASKETBALL CLUB</span>
         </div>
         {POSITIONS.map((position) => {
-          const mon = POKEMON_BY_ID.get(run.roster[position] ?? -1),
+          const baseMon = POKEMON_BY_ID.get(run.roster[position] ?? -1);
+          const mon = baseMon
+              ? shinyPokemon(baseMon, run.shinySeed)
+              : undefined,
             selectable = !!pending && (!mon || run.mode === "free");
           return (
             <button
@@ -94,7 +98,13 @@ export function Court({
                   </span>
                 )}
               </span>
-              <span className="slot-name">{mon?.name ?? "Empty"}</span>
+              <span
+                className={`slot-name${mon?.shiny ? " is-shiny" : ""}`}
+                title={mon?.shiny ? "Rare shiny · +3 skills" : undefined}
+              >
+                {mon?.shiny ? "Shiny " : ""}
+                {mon?.name ?? "Empty"}
+              </span>
               <span className="slot-rating">
                 {mon
                   ? `${Math.round(positionRating(mon, position, development?.[mon.id]))} POS RATING`

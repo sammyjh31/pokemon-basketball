@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { masteryXp } from "./abilityMastery";
 import { teamLeadership } from "./playerPersonality";
 import { abilityUsefulness as coachAbilityFit } from "./abilityEvaluation";
@@ -44,7 +45,10 @@ function rosterAbilityFits(team: LeagueTeam, coach: TrainerCoach) {
     const mon = POKEMON_BY_ID.get(team.roster[slot]!);
     if (!mon) return [];
     const p = moraleProfile(
-      playerProfile(mon, team.development?.[mon.id]),
+      playerProfile(
+        shinyPokemon(mon, team.shinySeed),
+        team.development?.[mon.id],
+      ),
       team,
       mon.id,
     );
@@ -81,7 +85,10 @@ export function coachGamePlan(
     return mon
       ? [
           moraleProfile(
-            playerProfile(mon, team.development?.[mon.id]),
+            playerProfile(
+              shinyPokemon(mon, team.shinySeed),
+              team.development?.[mon.id],
+            ),
             team,
             mon.id,
           ),
@@ -122,7 +129,14 @@ export function coachGamePlan(
   if (opponent && coach.adaptability >= 0.8) {
     const opponents = Object.values(opponent.roster).flatMap((id) => {
       const m = POKEMON_BY_ID.get(id!);
-      return m ? [playerProfile(m, opponent.development?.[m.id])] : [];
+      return m
+        ? [
+            playerProfile(
+              shinyPokemon(m, opponent.shinySeed),
+              opponent.development?.[m.id],
+            ),
+          ]
+        : [];
     });
     const shooting =
       opponents.reduce((n, p) => n + p.attributes.threePoint, 0) /
@@ -253,7 +267,10 @@ export function coachRotationMinutes(team: LeagueTeam) {
   const candidates = ROSTER_SLOTS.map((slot) => {
     const mon = POKEMON_BY_ID.get(team.roster[slot]!)!;
     const p = moraleProfile(
-      playerProfile(mon, team.development?.[mon.id]),
+      playerProfile(
+        shinyPokemon(mon, team.shinySeed),
+        team.development?.[mon.id],
+      ),
       team,
       mon.id,
     );

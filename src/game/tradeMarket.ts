@@ -1,3 +1,4 @@
+import { shinyPokemon } from "./shiny";
 import { masteryXp } from "./abilityMastery";
 import { createRivalStrategy, type RivalStrategy } from "./rivalRosterStrategy";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -106,7 +107,7 @@ function context(franchise: Franchise): Context {
   if (valid)
     for (const team of franchise.teams) {
       for (const id of rosterIds(team)) {
-        const mon = POKEMON_BY_ID.get(id)!,
+        const mon = shinyPokemon(POKEMON_BY_ID.get(id)!, team.shinySeed),
           development = team.development?.[id];
         const developed = modern ? playerProfile(mon, development) : undefined;
         const fits = POSITIONS.map((position) =>
@@ -138,6 +139,7 @@ function context(franchise: Franchise): Context {
               team.rotation,
               team.development,
               team.rotationPlan,
+              team.shinySeed,
             ),
       );
     }

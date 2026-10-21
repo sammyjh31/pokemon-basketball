@@ -1,3 +1,4 @@
+import { useShinyPokemon, ShinyBadge } from "./ShinyPokemon";
 import { playerPersonality } from "../game/playerPersonality";
 import { PersonalityDetails } from "./PersonalityDetails";
 import "../morale.css";
@@ -90,6 +91,7 @@ export function ScoutReport({
   development?: DevelopmentRatings;
   personalityVersion?: 1;
 }) {
+  mon = useShinyPokemon(mon);
   const a = attributes(mon, development),
     best = bestPosition(mon, development),
     profile = playerProfile(mon, development);
@@ -104,6 +106,7 @@ export function ScoutReport({
       <div className="scout-title">
         <span className="eyebrow">PLAYER SCOUTING</span>
         <strong>{profile.archetype}</strong>
+        <ShinyBadge mon={mon} />
       </div>
       <div className="scout-measurements">
         <TypeBadges types={mon.types} />

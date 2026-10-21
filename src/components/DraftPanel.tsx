@@ -1,3 +1,5 @@
+import { shinyPokemon } from "../game/shiny";
+import { ShinyRules } from "./ShinyPokemon";
 import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
 import { ALL_POKEMON, POKEMON_BY_ID, TYPES } from "../data/pokemon";
 import { draftPokemon } from "../game/draftPool";
@@ -21,19 +23,20 @@ import { PokemonCard } from "./PokemonCard";
 
 type SortKey = "dex" | Position | "threePoint" | "stamina" | "rebounding";
 // Ratings never change for a species, so each sort's scores are computed once.
-const sortScores = new Map<SortKey, Map<number, number>>();
-const scoresFor = (sort: Exclude<SortKey, "dex">) => {
-  let scores = sortScores.get(sort);
+const sortScores = new Map<string, Map<number, number>>();
+const scoresFor = (sort: Exclude<SortKey, "dex">, shinySeed?: number) => {
+  const key = `${sort}:${shinySeed ?? "legacy"}`;
+  let scores = sortScores.get(key);
   if (!scores) {
     scores = new Map(
-      ALL_POKEMON.map((mon) => [
+      ALL_POKEMON.map((mon) => shinyPokemon(mon, shinySeed)).map((mon) => [
         mon.id,
         POSITIONS.includes(sort as Position)
           ? positionRating(mon, sort as Position)
           : attributes(mon)[sort as "threePoint" | "stamina" | "rebounding"],
       ]),
     );
-    sortScores.set(sort, scores);
+    sortScores.set(key, scores);
   }
   return scores;
 };
@@ -70,24 +73,31 @@ export function DraftPanel({
   // Typing stays responsive; the player grid catches up a frame later.
   const deferredSearch = useDeferredValue(search);
   const count = Object.values(run.roster).filter(Boolean).length;
-  const chosen = POKEMON_BY_ID.get(pending ?? -1);
+  const baseChosen = POKEMON_BY_ID.get(pending ?? -1);
+  const chosen = baseChosen
+    ? shinyPokemon(baseChosen, run.shinySeed)
+    : undefined;
   const candidates = useMemo(() => {
     if (run.mode === "spin")
-      return run.offerIds.map((id) => POKEMON_BY_ID.get(id)!);
+      return run.offerIds.map((id) =>
+        shinyPokemon(POKEMON_BY_ID.get(id)!, run.shinySeed),
+      );
     const query = deferredSearch.trim().toLowerCase();
     const number = /^#?\d{1,3}$/.test(query)
       ? Number(query.replace(/^#/, ""))
       : null;
     const taken = new Set(Object.values(run.roster));
-    const list = draftPokemon(run.draftPool).filter(
-      (mon) =>
-        !taken.has(mon.id) &&
-        (run.includeLegends || !mon.legendary) &&
-        (mon.name.toLowerCase().includes(query) || mon.id === number) &&
-        (!type || mon.types.includes(type)),
-    );
+    const list = draftPokemon(run.draftPool)
+      .map((mon) => shinyPokemon(mon, run.shinySeed))
+      .filter(
+        (mon) =>
+          !taken.has(mon.id) &&
+          (run.includeLegends || !mon.legendary) &&
+          (mon.name.toLowerCase().includes(query) || mon.id === number) &&
+          (!type || mon.types.includes(type)),
+      );
     if (sort === "dex") return list;
-    const scores = scoresFor(sort);
+    const scores = scoresFor(sort, run.shinySeed);
     return list.sort(
       (a, b) => scores.get(b.id)! - scores.get(a.id)! || a.id - b.id,
     );
@@ -97,12 +107,14 @@ export function DraftPanel({
     run.roster,
     run.includeLegends,
     run.draftPool,
+    run.shinySeed,
     deferredSearch,
     type,
     sort,
   ]);
   return (
     <section className="draft-panel" aria-label="Draft Pokémon">
+      <ShinyRules seed={run.shinySeed} />
       <div className="draft-title">
         <h1>
           {run.mode === "free" ? (

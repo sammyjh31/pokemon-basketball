@@ -64,6 +64,7 @@ export function updateOffseasonRoster(
       updated.rotation,
       updated.development,
       rotationPlan,
+      updated.shinySeed,
     );
     return {
       ...state,
