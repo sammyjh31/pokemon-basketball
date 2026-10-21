@@ -4,11 +4,6 @@ import App from "./App";
 import { openBrowserSaves } from "./game/saveStorage";
 import "./styles.css";
 import "./onboarding.css";
-import "@fontsource/inter/latin-400.css";
-import "@fontsource/inter/latin-500.css";
-import "@fontsource/inter/latin-600.css";
-import "@fontsource/roboto-condensed/latin-700.css";
-import "@fontsource/roboto-condensed/latin-800.css";
 // Large saves live in IndexedDB; load them before the first synchronous read.
 void openBrowserSaves().then(() =>
   createRoot(document.getElementById("root")!).render(
@@ -34,3 +29,5 @@ import "./retro-arcade.css";
 import "./draftPolish.css";
 
 import "./competitionPolish.css";
+
+import "./retroFinish.css";

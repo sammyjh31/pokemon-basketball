@@ -185,7 +185,7 @@ function label(
   size: number,
   color = CREAM,
 ) {
-  ctx.font = `800 ${size}px "Roboto Condensed", "Arial Narrow", sans-serif`;
+  ctx.font = `400 ${size}px "Jersey 10", "Arial Narrow", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = color;
@@ -200,7 +200,7 @@ function pill(
   fontSize: number,
   color = CREAM,
 ) {
-  ctx.font = `800 ${fontSize}px "Roboto Condensed", "Arial Narrow", sans-serif`;
+  ctx.font = `400 ${fontSize}px "Jersey 10", "Arial Narrow", sans-serif`;
   const width = ctx.measureText(text).width + fontSize * 1.35;
   ctx.fillStyle = INK;
   ctx.beginPath();

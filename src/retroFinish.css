@@ -1,0 +1,258 @@
+/* One typeface across normal screens, lazy panels, portals and native controls.
+   Family alone is intentional: existing sizes still express hierarchy. The
+   important declaration prevents feature font shorthands from restoring Inter. */
+:root {
+  --retro-font: "Jersey 10", "Arial Narrow", sans-serif;
+  --retro-display: var(--retro-font);
+  --retro-numbers: var(--retro-font);
+}
+body,
+body *,
+body::before,
+body::after,
+body *::before,
+body *::after {
+  font-family: var(--retro-font) !important;
+}
+body {
+  font-size: 18px;
+}
+#root .app-shell.kanto-game {
+  --display: var(--retro-font);
+}
+/* The pixel face needs more room than the former small sans-serif copy. */
+body :is(p, li, label, input, select, textarea, td, caption, figcaption) {
+  font-size: 18px;
+}
+#root
+  .app-shell.kanto-game
+  :is(p, label, input, select, textarea, td, caption, figcaption),
+body
+  :is(.box-score-dialog, .franchise-detail-dialog)
+  :is(p, label, input, select, textarea, td) {
+  font-size: 18px !important;
+  line-height: 1.35;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    small,
+    .stat-legend,
+    .stats-scroll-hint,
+    .playoff-scroll-hint,
+    .draft-rating-note,
+    .roster-rating-note,
+    .ability-unavailable
+  ),
+body :is(.box-score-dialog, .franchise-detail-dialog) small {
+  font-size: 16px !important;
+  line-height: 1.3;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .spotlight-player p,
+    .card-archetype,
+    .draft-archetype,
+    .pick-dock-identity p,
+    .league-checkbox,
+    .stat-explorer label,
+    .stat-explorer button,
+    .playoff-format-rules
+  ),
+body
+  :is(.box-score-dialog, .franchise-detail-dialog)
+  :is(.stat-legend, .box-score-note) {
+  font-size: 16px !important;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .spotlight-heading > span:last-child,
+    .spotlight-value span,
+    .stat-player small,
+    .card-skill > span,
+    .draft-tool-label,
+    .playoff-series-label,
+    .playoff-series-footer,
+    .pick-dock-eyebrow,
+    .pick-dock-fit span
+  ) {
+  font-size: 15px !important;
+  line-height: 1.2;
+  letter-spacing: 0.25px;
+}
+#root .app-shell.kanto-game .pick-dock-actions select {
+  font-size: 17px !important;
+}
+#root
+  .app-shell.kanto-game
+  :is(.card-skill b, .playoff-team b, .results-table td) {
+  font-variant-numeric: tabular-nums;
+}
+#root .app-shell.kanto-game .card-stats {
+  gap: 9px;
+}
+#root .app-shell.kanto-game .card-archetype {
+  min-height: 25px;
+}
+#root .app-shell.kanto-game .spotlight-player p {
+  min-height: 0;
+}
+#root .app-shell.kanto-game .spotlight-rank {
+  font-size: 32px;
+}
+#root .app-shell.kanto-game .player-spotlight {
+  min-height: 215px;
+}
+#root .app-shell.kanto-game .pick-dock-actions label {
+  font-size: 16px !important;
+}
+#root .app-shell.kanto-game .pick-dock-identity .types span {
+  font-size: 13px;
+}
+#root .app-shell.kanto-game .playoff-stage-track small,
+#root .app-shell.kanto-game .playoff-round-picker small {
+  font-size: 14px !important;
+}
+#root .app-shell.kanto-game .playoff-series-node {
+  overflow: hidden;
+}
+#root
+  .app-shell.kanto-game
+  .playoff-bracket-scroll:not(.is-round-view)
+  :is(.playoff-series-label, .playoff-series-footer) {
+  font-size: 13px !important;
+}
+#root
+  .app-shell.kanto-game
+  .playoff-bracket-scroll:not(.is-round-view)
+  .playoff-team {
+  font-size: 16px;
+  line-height: 1.1;
+}
+#root
+  .app-shell.kanto-game
+  .playoff-bracket-scroll:not(.is-round-view)
+  .playoff-seed {
+  font-size: 15px;
+}
+#root
+  .app-shell.kanto-game
+  .playoff-bracket-scroll:not(.is-round-view)
+  .playoff-team
+  b {
+  font-size: 18px;
+}
+@media (max-width: 700px) {
+  #root .app-shell.kanto-game :is(p, label, input, select, textarea, td) {
+    font-size: 17px !important;
+  }
+  #root .app-shell.kanto-game .spotlight-player p {
+    font-size: 16px !important;
+  }
+  #root .app-shell.kanto-game .player-spotlight {
+    min-height: 120px;
+  }
+  #root .app-shell.kanto-game .pick-dock-eyebrow {
+    font-size: 12px !important;
+  }
+  #root .app-shell.kanto-game .pick-dock-fit span {
+    font-size: 13px !important;
+  }
+}
+/* Short, one-time feedback on newly shown content. No game clocks or numbers
+   animate, and the court's positioned player transforms remain untouched. */
+@media (prefers-reduced-motion: no-preference) {
+  #root .app-shell.kanto-game .draft-pick-dock,
+  #root .app-shell.kanto-game .league-view > section,
+  #root .app-shell.kanto-game .player-stat-section,
+  body :is(.confirm-dialog, .franchise-detail-dialog, .box-score-dialog) {
+    animation: retro-panel-in 180ms ease-out both;
+  }
+  #root .app-shell.kanto-game .player-spotlight {
+    animation: retro-card-in 220ms ease-out both;
+  }
+  #root .app-shell.kanto-game .player-spotlight:nth-child(2) {
+    animation-delay: 35ms;
+  }
+  #root .app-shell.kanto-game .player-spotlight:nth-child(3) {
+    animation-delay: 70ms;
+  }
+  #root .app-shell.kanto-game .pokemon-card.selected .portrait-stage .portrait {
+    animation: retro-pick-feedback 200ms steps(4, end);
+  }
+  #root .app-shell.kanto-game :is(.playoff-champion, .playoff-mvp) {
+    animation: retro-card-in 280ms ease-out both;
+  }
+  #root .app-shell.kanto-game .playoff-mvp {
+    animation-delay: 70ms;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    #root .app-shell.kanto-game :is(.pokemon-card, .draft-prospect) {
+      transition:
+        translate 120ms ease-out,
+        border-color 120ms ease-out,
+        box-shadow 120ms ease-out;
+    }
+    #root .app-shell.kanto-game :is(.pokemon-card, .draft-prospect):hover {
+      translate: 0 -2px;
+    }
+  }
+}
+@keyframes retro-panel-in {
+  from {
+    opacity: 0;
+    translate: 0 5px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes retro-card-in {
+  from {
+    opacity: 0;
+    translate: 0 7px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes retro-pick-feedback {
+  0% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.06;
+  }
+  100% {
+    scale: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+  body *,
+  body *::before,
+  body *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+body
+  :is([role="dialog"], .arcade-shell)
+  :is(p, label, input, select, textarea, td) {
+  font-size: 18px !important;
+  line-height: 1.35;
+}
+body .play-option > span:not(.play-option-art) {
+  font-size: 17px !important;
+  line-height: 1.35;
+}
+body [role="dialog"] small {
+  font-size: 16px !important;
+}
