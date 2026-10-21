@@ -110,7 +110,7 @@ export function BenchPanel({
               onClick={() => onSlot(slot)}
             >
               <span className="eyebrow">{SLOT_NAMES[slot]}</span>
-              <div className="bench-portrait">
+              <div className="bench-portrait" key={mon?.id ?? "empty"}>
                 {mon ? (
                   <Portrait mon={mon} />
                 ) : (

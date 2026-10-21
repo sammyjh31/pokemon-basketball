@@ -403,7 +403,13 @@ export function LocalLeagueDraft({
             tabIndex={-1}
             aria-describedby="local-turn-detail"
           >
-            On the clock: {turn.manager!.name}
+            On the clock:{" "}
+            <span
+              className="local-turn-name"
+              key={`${turn.pick}:${turn.manager!.name}`}
+            >
+              {turn.manager!.name}
+            </span>
           </h2>
           <p id="local-turn-detail">
             {LOCAL_TEAMS[turn.teamId].name} · {picks.length}/8 players drafted
@@ -892,7 +898,7 @@ export function LocalLeagueDraft({
                 Back to players
               </button>
             </div>
-            <div className="draft-inspector-player">
+            <div className="draft-inspector-player" key={mon.id}>
               <Portrait mon={mon} />
               <div>
                 <ShinyBadge mon={mon} />

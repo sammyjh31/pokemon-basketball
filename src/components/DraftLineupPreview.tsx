@@ -31,7 +31,7 @@ export function DraftLineupPreview({
               }
             >
               <b>{slot}</b>
-              <Portrait mon={POKEMON_BY_ID.get(id)!} />
+              <Portrait key={id} mon={POKEMON_BY_ID.get(id)!} />
               <span>
                 {POKEMON_BY_ID.get(id)!.name}
                 <small>

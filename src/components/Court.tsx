@@ -89,7 +89,7 @@ export function Court({
               onClick={() => onSlot(position)}
             >
               <span className="slot-role">{position}</span>
-              <span className="slot-disc">
+              <span className="slot-disc" key={`disc-${mon?.id ?? "empty"}`}>
                 {mon ? (
                   <Portrait key={mon.id} mon={mon} />
                 ) : (

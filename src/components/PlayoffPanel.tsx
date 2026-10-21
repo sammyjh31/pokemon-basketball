@@ -651,6 +651,7 @@ export function PlayoffPanel({
                 </button>
               </div>
               <SeriesMatchup
+                key={selected.id}
                 winsNeeded={Math.ceil(bestOf / 2)}
                 sides={[
                   {

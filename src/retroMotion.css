@@ -1,0 +1,246 @@
+/* Motion follows roster and matchup changes. Stable buttons/headings keep focus;
+   only their decorative content remounts. All effects finish and then settle. */
+@media (prefers-reduced-motion: no-preference) {
+  #root .app-shell.kanto-game .court-slot.filled .slot-disc {
+    animation: roster-arrive 380ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  }
+  #root .app-shell.kanto-game .bench-portrait:has(.portrait) {
+    animation: reserve-arrive 320ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+  }
+  #root .app-shell.kanto-game .bench-slot:nth-child(2) .bench-portrait {
+    animation-delay: 35ms;
+  }
+  #root .app-shell.kanto-game .bench-slot:nth-child(3) .bench-portrait {
+    animation-delay: 70ms;
+  }
+  #root
+    .app-shell.kanto-game
+    :is(
+      .roster-court-player,
+      .roster-bench > li,
+      .draft-lineup-preview .is-new-pick
+    )
+    .portrait {
+    animation: roster-arrive 340ms ease-out;
+  }
+  #root
+    .app-shell.kanto-game
+    :is(.rating-track > span, .draft-impact-track > i, .draft-tool-bars dd i) {
+    transition: width 260ms ease-out;
+  }
+  #root .app-shell.kanto-game .pokemon-card.selected .card-skill > i > i {
+    transform-origin: left;
+    animation: scouting-bar-in 300ms ease-out;
+  }
+  #root .app-shell.kanto-game .local-turn-name {
+    display: inline-block;
+    animation: turn-handoff 260ms ease-out;
+  }
+  #root .app-shell.kanto-game .draft-round-track .is-filled {
+    animation: win-marker-in 260ms ease-out;
+  }
+  #root .app-shell.kanto-game .draft-inspector-player {
+    animation: scout-identity-in 220ms ease-out;
+  }
+  /* Only the actively inspected Pokémon idles, for three quiet cycles. */
+  #root
+    .app-shell.kanto-game
+    :is(.pick-dock-identity, .draft-inspector-player)
+    > .portrait,
+  #root
+    .app-shell.kanto-game
+    .draft-prospect.is-selected
+    .draft-prospect-portrait
+    .portrait {
+    animation: pokemon-ready 1400ms steps(2, end) 220ms 3;
+  }
+  #root .app-shell.kanto-game .series-matchup .series-contender {
+    animation: contender-left-in 320ms ease-out;
+  }
+  #root .app-shell.kanto-game .series-matchup .series-contender:nth-child(2) {
+    animation-name: contender-right-in;
+  }
+  #root .app-shell.kanto-game .series-matchup .series-versus {
+    animation: versus-in 320ms ease-out;
+  }
+  #root .app-shell.kanto-game .series-win-pips i.is-won {
+    animation: win-marker-in 280ms ease-out;
+  }
+  #root
+    .app-shell.kanto-game
+    .series-contender.is-winner
+    .series-contender-seed,
+  #root .app-shell.kanto-game .playoff-stage-track .is-complete > span {
+    animation: advancement-in 360ms ease-out;
+  }
+  #root .app-shell.kanto-game .is-round-view .playoff-series-node {
+    animation: matchup-card-in 220ms ease-out backwards;
+  }
+  #root .app-shell.kanto-game .is-round-view .playoff-series-node:nth-child(2) {
+    animation-delay: 25ms;
+  }
+  #root
+    .app-shell.kanto-game
+    .is-round-view
+    .playoff-series-node:nth-child(n + 3) {
+    animation-delay: 50ms;
+  }
+  #root .app-shell.kanto-game .playoff-champion .champion-cup {
+    animation: trophy-lift 650ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  }
+}
+@keyframes roster-arrive {
+  0% {
+    opacity: 0;
+    translate: 0 12px;
+    scale: 0.88;
+  }
+  65% {
+    opacity: 1;
+    translate: 0 -3px;
+    scale: 1.04;
+  }
+  100% {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+@keyframes reserve-arrive {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+    scale: 0.94;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+@keyframes scouting-bar-in {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+@keyframes turn-handoff {
+  from {
+    opacity: 0.3;
+    translate: 0 6px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes scout-identity-in {
+  from {
+    opacity: 0;
+    translate: 7px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes pokemon-ready {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -3px;
+  }
+}
+@keyframes contender-left-in {
+  from {
+    opacity: 0;
+    translate: -12px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes contender-right-in {
+  from {
+    opacity: 0;
+    translate: 12px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes versus-in {
+  0% {
+    opacity: 0;
+    scale: 0.75;
+  }
+  70% {
+    opacity: 1;
+    scale: 1.08;
+  }
+  100% {
+    opacity: 1;
+    scale: 1;
+  }
+}
+@keyframes win-marker-in {
+  0% {
+    scale: 0.65;
+  }
+  65% {
+    scale: 1.15;
+  }
+  100% {
+    scale: 1;
+  }
+}
+@keyframes advancement-in {
+  0% {
+    opacity: 0.4;
+    scale: 0.9;
+  }
+  65% {
+    opacity: 1;
+    scale: 1.06;
+  }
+  100% {
+    opacity: 1;
+    scale: 1;
+  }
+}
+@keyframes matchup-card-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes trophy-lift {
+  0% {
+    opacity: 0;
+    translate: 0 10px;
+    rotate: -8deg;
+    scale: 0.75;
+  }
+  65% {
+    opacity: 1;
+    translate: 0 -4px;
+    rotate: 3deg;
+    scale: 1.08;
+  }
+  100% {
+    opacity: 1;
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 1;
+  }
+}

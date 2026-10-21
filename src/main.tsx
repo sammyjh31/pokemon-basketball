@@ -31,3 +31,5 @@ import "./draftPolish.css";
 import "./competitionPolish.css";
 
 import "./retroFinish.css";
+
+import "./retroMotion.css";

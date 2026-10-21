@@ -1,6 +1,6 @@
 # Retro league visual system
 
-The selected Kanto clubhouse direction now extends through the game: indigo title bars, warm dialogue surfaces, double pixel frames, raised controls, gold selections and rating blocks, sprites and segmented skill meters. Jersey 10 supplies display type; longer explanations retain Inter and dense numbers keep tabular alignment. Existing town/arena art, Pokémon sprites, trainer portraits, and pixelarticons are reused.
+The selected Kanto clubhouse direction now extends through the game: indigo title bars, warm dialogue surfaces, double pixel frames, raised controls, gold selections and rating blocks, sprites and segmented skill meters. Jersey 10 supplies all interface type, with readable helper sizes and tabular alignment for dense numbers. Existing town/arena art, Pokémon sprites, trainer portraits, and pixelarticons are reused.
 
 ## Screen coverage
 
@@ -60,3 +60,12 @@ All visible text now uses the same Jersey 10 face as the established draft headi
 Motion is limited to short, finite entrances for panels/dialogs, stat cards and championship honors, a selected-card sprite acknowledgment, and small pointer hover feedback. Animations use individual translate/scale properties on the affected elements; positioned court players and game clocks are unchanged. All added motion is gated by the system motion preference, with a reduced-motion rule disabling transitions and animations across normal screens and portals.
 
 Verification: 66 focused checks passed across stats, playoffs, draft navigation/placement, hosted assets, arcade flow and rendering. Production build and TypeScript passed. Browser checks covered the draft pick panel, mode chooser, statistics, phone playoff cards, live arcade play/pause, and trainer credits. A computed-style check found 439 draft text elements and 31 dialog elements all using the retro family. Independent review found no blocking issue. Proof captures are in `2026/10/20/pokebb-retro-font-motion`. Temporary preview fixtures were removed before publication.
+
+
+## Roster and postseason motion pass
+
+Contextual motion now marks real roster, selection and postseason changes. New starters settle into their court discs and reserves arrive with a small stagger. Team-strength and projected-impact bars ease to their actual values. Selected scouting portraits move in three gentle stepped cycles, then stop. Local draft turn names enter as control passes to the next manager. Changing the selected playoff series reveals its contenders and versus marker; newly earned wins pop into place, completed rounds acknowledge advancement, and the championship trophy lifts once.
+
+`retroMotion.css` is the final style layer. Every new animation and transition is inside the no-preference motion guard; the existing reduced-motion override also covers the entire interface. Decorative children remount when Pokémon or series identity changes, leaving buttons and report headings stable. Motion uses individual translate/scale/rotate properties without replacing the court's positioning transform. No engine, saved-game or probability rules changed.
+
+Verification: 62 focused checks across draft interactions, postseason, league visuals, statistics and hosted asset paths passed, along with TypeScript and the hosted-base production build. Browser QA used independent in-memory fixtures: a real solo pick preserved the court button's exact position and focus; a local pick handed Sam's turn to Alex and focused the existing turn heading; selecting a different playoff series focused its report and triggered the two contender entrances; an actual simulated slate updated the winning team's pip. A 390px playoff layout was inspected. Reduced-motion behavior was checked against the stylesheet guards, without changing the computer's system preference. Independent review caught a missing backwards fill on delayed bench entrances, which was corrected. Captures and a short recorded lineup animation are in `2026/10/20/pokebb-motion-pass`. This pass is local until the next requested publication.

@@ -41,7 +41,7 @@ export function DraftRosterBoard({
                 className={`roster-court-player slot-${slot} ${mon ? "is-filled" : "is-empty"}`}
               >
                 <b>{slot}</b>
-                {mon && <Portrait mon={mon} />}
+                {mon && <Portrait key={mon.id} mon={mon} />}
                 <span>{mon?.name ?? "Open"}</span>
                 {lockedSlots.includes(slot) && <small>Locked</small>}
               </li>
@@ -59,7 +59,7 @@ export function DraftRosterBoard({
           return (
             <li key={slot}>
               <b>{slot}</b>
-              {mon && <Portrait mon={mon} />}
+              {mon && <Portrait key={mon.id} mon={mon} />}
               <span>{mon?.name ?? "Open"}</span>
               {lockedSlots.includes(slot) && <small>Locked</small>}
             </li>
