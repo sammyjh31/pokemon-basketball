@@ -30,7 +30,7 @@ export function PlayerSpotlights({
   return (
     <section className="player-spotlights" aria-label={label}>
       <div className="spotlight-heading">
-        <span className="eyebrow">PLAYER SPOTLIGHT</span>
+        <span className="eyebrow">ON THE LEADERBOARD</span>
         <span>
           {statistic} · {mode} · current sort
         </span>
@@ -58,7 +58,9 @@ export function PlayerSpotlights({
                 <h4>{mon?.name ?? `#${row.pokemonId}`}</h4>
                 <p>{row.subtitle}</p>
               </div>
-              <div className="spotlight-value">
+              <div
+                className={`spotlight-value${row.formatted.length > 5 ? " is-long" : ""}`}
+              >
                 <strong>{row.formatted}</strong>
                 <span>{statistic}</span>
               </div>
@@ -139,5 +141,51 @@ export function SeriesMatchup({
         VS
       </span>
     </section>
+  );
+}
+
+export function StatExplorer({
+  scope,
+  options,
+  sort,
+  onChange,
+}: {
+  scope: string;
+  options: { key: string; label: string }[];
+  sort: { key: string; descending: boolean };
+  onChange: (sort: { key: string; descending: boolean }) => void;
+}) {
+  return (
+    <div
+      className="stat-explorer"
+      role="group"
+      aria-label={`${scope} ranking controls`}
+    >
+      <label>
+        <span>Rank players by</span>
+        <select
+          aria-label={`${scope} ranking statistic`}
+          value={sort.key}
+          onChange={(event) =>
+            onChange({ key: event.target.value, descending: true })
+          }
+        >
+          {options.map((option) => (
+            <option key={option.key} value={option.key}>
+              {option.label.charAt(0).toUpperCase() + option.label.slice(1)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="button"
+        aria-label={
+          sort.descending ? "Show lowest first" : "Show highest first"
+        }
+        onClick={() => onChange({ ...sort, descending: !sort.descending })}
+      >
+        {sort.descending ? "Highest first ↓" : "Lowest first ↑"}
+      </button>
+    </div>
   );
 }

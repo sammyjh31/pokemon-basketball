@@ -32,3 +32,5 @@ import "./retro-draft.css";
 import "./retro-arcade.css";
 
 import "./draftPolish.css";
+
+import "./competitionPolish.css";

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createRun } from "../game/draft";
 import { createLeague } from "../game/league";
 import { simulateMatch } from "../game/match";
@@ -157,6 +157,87 @@ function setup(
 const panel = () => screen.getByRole("region", { name: "Playoffs" });
 
 describe("playoff presentation", () => {
+  it("starts with readable round matchups on a phone", () => {
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: true }));
+    try {
+      render(
+        <PlayoffPanel
+          league={league}
+          seasonSeed={11}
+          playoffs={postseason()}
+          onAdvance={() => {}}
+        />,
+      );
+      expect(
+        screen.getByRole("button", { name: "Round matchups" }),
+      ).toHaveAttribute("aria-pressed", "true");
+      expect(
+        screen.getAllByRole("button", { name: /^View .* series/ }),
+      ).toHaveLength(8);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+  it("lets a round view browse future matchups and return to the full bracket", () => {
+    render(
+      <PlayoffPanel
+        league={league}
+        seasonSeed={11}
+        playoffs={postseason()}
+        onAdvance={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Round matchups" }));
+    expect(
+      screen.getAllByRole("button", { name: /^View .* series/ }),
+    ).toHaveLength(8);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Browse Quarterfinals" }),
+    );
+    expect(
+      screen.getAllByRole("button", { name: /^View .* series/ }),
+    ).toHaveLength(4);
+    fireEvent.click(
+      screen.getByRole("button", { name: /View Quarterfinals series 2:/ }),
+    );
+    expect(
+      screen.getByRole("region", { name: "Selected playoff series" }),
+    ).toHaveTextContent("Awaiting previous round");
+    fireEvent.click(screen.getByRole("button", { name: "Full bracket" }));
+    expect(
+      screen.getAllByRole("button", { name: /^View .* series/ }),
+    ).toHaveLength(15);
+    expect(
+      screen.getByRole("button", { name: /View Quarterfinals series 2:/ }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+  it("can return from a future round to the current round", () => {
+    render(
+      <PlayoffPanel
+        league={league}
+        seasonSeed={11}
+        playoffs={postseason()}
+        onAdvance={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Round matchups" }));
+    fireEvent.click(screen.getByRole("button", { name: "Browse Finals" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /View Finals series 1:/ }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Back to current round" }),
+    );
+    expect(
+      screen.getByRole("button", { name: "Browse First round" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("region", { name: "Selected playoff series" }),
+    ).toHaveTextContent(teams[0].name);
+    expect(
+      screen.getAllByRole("button", { name: /^View .* series/ }),
+    ).toHaveLength(8);
+  });
   it("shows the selected matchup's actual roster and series wins, including shorter local series", () => {
     const playoffs = postseason();
     playoffs.format = {

@@ -40,3 +40,15 @@ The follow-up audit of the live challenge draft found that selecting a Pokémon 
 - The compact phone station uses two rows and reserves page-end space. Existing lineup placement and detailed scouting remain available.
 
 Verification: 28 focused component checks plus 7 draft App checks passed; TypeScript and the hosted-base production build passed. Independent review found no blocking issues. Browser QA covered desktop placement and 390px cancellation/reselection using isolated in-memory saves. Proof captures are in `2026/10/20/pokebb-draft-polish`. This refinement is local until the next requested publication.
+
+## Season statistics and postseason refinement
+
+The next pass keeps the existing retro palette and actual Pokémon artwork while making the competition screens easier to explore. Fresh desktop captures showed tall repeated headers and large spotlight cards pushing the table below the fold; the selected playoff report also preceded the bracket that chose it.
+
+- Team, league and playoff statistics share a ranking picker and highest/lowest order control. They use the table's existing sort state, qualification rules, filters and calculations. Cards and the table stay in sync, and percentage/count/rate labels describe the actual value rather than implying every stat is a per-game average.
+- Compact stat headers and framed player portraits lead into three readable cards. The first visible player has the dark-and-gold treatment. Numeric tables use condensed tabular figures, sticky headings, a persistent player column and a bounded scroll region.
+- Playoffs provide both the complete connected bracket and a round matchup view. Phones initially use round matchups; every round remains browsable, including future matchups. Round cards show actual roster sprites, seeds and series wins. Users can return from a browsed round to the active round.
+- The bracket now precedes the selected-series report. Selecting a series still moves keyboard context to its report, and Back to bracket restores it to the corresponding series. Simulation controls retain their existing busy/completion guards.
+- Arena artwork, trophy icon, champion roster and Finals MVP card extend the same visual system through the championship result. Seeding/home-court rules live in an expandable explanation. Phone round browsing avoids duplicating the stage tracker and keeps simulation buttons usable.
+
+Verification: 52 focused checks passed across season stats, league leaders, playoff presentation, box scores, league visuals and hosted asset paths. TypeScript and the production build with the hosted base passed. Independent code review found no blocking issues. Browser QA used isolated preview data, without changing the player's save, for desktop and 390px layouts, phone stat selection, future rounds and championship honors. Captures are in `2026/10/20/pokebb-competition-polish`. New CSS is in `competitionPolish.css`, imported after the existing theme; simulation and saved-game formats are unchanged. This pass is local until publication is requested.

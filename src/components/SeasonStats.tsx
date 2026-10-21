@@ -3,7 +3,7 @@ import { useState } from "react";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import type { SeasonAward, SeasonPlayer } from "../game/types";
 import { Portrait } from "./Portrait";
-import { PlayerSpotlights } from "./ResultsVisuals";
+import { PlayerSpotlights, StatExplorer } from "./ResultsVisuals";
 
 type StatColumn = {
   key: string;
@@ -158,10 +158,27 @@ export function SeasonStats({
             </button>
           </div>
         </div>
+        <StatExplorer
+          scope="Team"
+          options={columns.map((column) => ({
+            key: column.key,
+            label: column.title,
+          }))}
+          sort={sort}
+          onChange={setSort}
+        />
         <PlayerSpotlights
           label="Team player spotlights"
           statistic={sortColumn.title}
-          mode={mode === "per-game" ? "per game" : "totals"}
+          mode={
+            sortColumn.format === "percentage"
+              ? "shooting percentage"
+              : sortColumn.format === "count"
+                ? "recorded value"
+                : mode === "per-game"
+                  ? "per game"
+                  : "totals"
+          }
           rows={sorted.flatMap((player) => {
             const value = statValue(player, sortColumn);
             return value === null

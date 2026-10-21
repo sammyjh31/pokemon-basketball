@@ -167,6 +167,36 @@ const setup = (animate = false) =>
   );
 
 describe("league results", () => {
+  it("uses the stat picker to update both the ranked cards and table, including sort direction", () => {
+    render(<Leaders league={league} />);
+    fireEvent.change(screen.getByLabelText("League ranking statistic"), {
+      target: { value: "assists" },
+    });
+    const table = screen.getByRole("table", {
+      name: /^League player statistics/,
+    });
+    expect(
+      within(table)
+        .getByRole("button", { name: "Sort league by assists" })
+        .closest("th"),
+    ).toHaveAttribute("aria-sort", "descending");
+    expect(
+      screen.getByRole("region", { name: "League player spotlights" }),
+    ).toHaveTextContent("assists");
+    fireEvent.click(screen.getByRole("button", { name: "Show lowest first" }));
+    expect(
+      within(table)
+        .getByRole("button", { name: "Sort league by assists" })
+        .closest("th"),
+    ).toHaveAttribute("aria-sort", "ascending");
+    fireEvent.click(screen.getByRole("button", { name: /^Defense$/ }));
+    expect(screen.getByLabelText("League ranking statistic")).toHaveValue(
+      "stocks",
+    );
+    expect(
+      screen.queryByRole("option", { name: "Points" }),
+    ).not.toBeInTheDocument();
+  });
   it("keeps visual player spotlights in sync with sorting, filters and totals", () => {
     render(
       <Leaders

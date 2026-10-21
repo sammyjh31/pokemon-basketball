@@ -31,7 +31,7 @@ import { SeasonInsightsPanel } from "./SeasonInsightsPanel";
 import { simulateMatch } from "../game/match";
 import { LeagueAnalytics } from "./LeagueAnalytics";
 import "../league.css";
-import { PlayerSpotlights, TeamArtwork } from "./ResultsVisuals";
+import { PlayerSpotlights, TeamArtwork, StatExplorer } from "./ResultsVisuals";
 
 const name = (id: number) => POKEMON_BY_ID.get(id)?.name ?? `#${id}`;
 const ratio = (a: number, b: number) => (b > 0 ? a / b : null);
@@ -294,7 +294,10 @@ export function Leaders({
     [league, team, query, postseason, qualified, column, totals, sort],
   );
   return (
-    <section aria-label={`${scope} player leaders`}>
+    <section
+      className="leader-statistics"
+      aria-label={`${scope} player leaders`}
+    >
       <div className="results-section-heading">
         <div>
           <h4>
@@ -391,10 +394,29 @@ export function Leaders({
           </label>
         )}
       </div>
+      <StatExplorer
+        scope={scope}
+        options={displayedColumns.map((column) => ({
+          key: column.key,
+          label: column.title,
+        }))}
+        sort={sort}
+        onChange={setSort}
+      />
       <PlayerSpotlights
         label={`${scope} player spotlights`}
         statistic={column.title}
-        mode={totals ? "totals" : "per game"}
+        mode={
+          column.kind === "percentage"
+            ? "shooting percentage"
+            : column.kind === "count"
+              ? "recorded total"
+              : column.kind === "ratio"
+                ? "rate"
+                : totals
+                  ? "totals"
+                  : "per game"
+        }
         rows={players.flatMap((p) => {
           const v = value(p, column);
           return v === null

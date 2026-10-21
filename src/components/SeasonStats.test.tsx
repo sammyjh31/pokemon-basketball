@@ -204,6 +204,30 @@ describe("season player results", () => {
     expect(run.result!.league.standings[0].teamId).toBe(0);
   });
 
+  it("changes the team ranking from the stat picker without scrolling the table", () => {
+    render(
+      <SeasonPanel
+        run={makeRun()}
+        ratings={ratings}
+        animate={false}
+        onSimulate={() => {}}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Team ranking statistic"), {
+      target: { value: "ast" },
+    });
+    const cards = screen.getByRole("region", {
+      name: "Team player spotlights",
+    });
+    expect(within(cards).getAllByRole("article")[0]).toHaveTextContent(
+      "Ivysaur",
+    );
+    expect(within(cards).getAllByRole("article")[0]).toHaveTextContent("5.0");
+    fireEvent.click(screen.getByRole("button", { name: "Show lowest first" }));
+    expect(
+      screen.getByRole("button", { name: "Sort by assists" }).closest("th"),
+    ).toHaveAttribute("aria-sort", "ascending");
+  });
   it("shows the same player and value in the visual spotlight as the selected statistic", () => {
     render(
       <SeasonPanel
