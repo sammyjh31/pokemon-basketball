@@ -1,0 +1,402 @@
+/* Arcade lives outside the league shell; give its whole flow the same cartridge. */
+#root .arcade-shell {
+  --arcade-bg: #172b50;
+  --arcade-panel: #fff8df;
+  --arcade-border: #53677d;
+  --arcade-cream: #fff8df;
+  --arcade-muted: #c3d2d9;
+  --arcade-orange: #efcb69;
+  --arcade-blue: #9bbecb;
+  --display: var(--retro-display);
+  color: #fff8df;
+  background: #172b50;
+  border-top: 6px double #efcb69;
+}
+#root
+  .arcade-shell
+  :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    .arcade-wordmark,
+    .arcade-badge,
+    .arcade-tag,
+    .arcade-eyebrow
+  ) {
+  font-family: var(--retro-display);
+  font-weight: 400;
+  letter-spacing: 0.5px;
+}
+#root .arcade-shell .arcade-wordmark {
+  font-size: 32px;
+}
+#root .arcade-shell .arcade-wordmark b {
+  color: #efcb69;
+}
+#root .arcade-shell .arcade-topline {
+  padding-bottom: 14px;
+  border-bottom: 4px double #839aa9;
+}
+#root .arcade-shell .arcade-hero {
+  padding: 28px;
+  margin-bottom: 24px;
+  border: 4px double #9bb0b6;
+  background:
+    linear-gradient(90deg, #172b50f5, #172b50bf),
+    url("/visual/kanto-arena.png") center/cover;
+  box-shadow: 5px 5px #08182f;
+}
+#root .arcade-shell :is(.arcade-hero, .arcade-final-heading) h1 {
+  font-size: clamp(42px, 6vw, 78px);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+}
+#root .arcade-shell .arcade-hero h1 em {
+  color: #efcb69;
+}
+#root .arcade-shell .arcade-badge {
+  transform: none;
+  border: 4px double #efcb69;
+  border-radius: 0;
+  background: #142849;
+  box-shadow: 4px 4px #08182f;
+}
+#root .arcade-shell .arcade-badge span {
+  font-weight: 400;
+}
+#root .arcade-shell .arcade-eyebrow {
+  font-size: 19px;
+  letter-spacing: 1px;
+}
+#root
+  .arcade-shell
+  :is(.arcade-card, .arcade-modal, .arcade-mvp, .arcade-setup-settings) {
+  border: 5px double #102747;
+  border-radius: 0;
+  background: #fff8df;
+  color: #102747;
+  box-shadow:
+    5px 5px #08182f,
+    inset 0 0 0 2px #e5d5a6;
+}
+#root
+  .arcade-shell
+  :is(.arcade-card, .arcade-modal, .arcade-mvp, .arcade-setup-settings)
+  :is(p, label, li, small, .arcade-muted, .arcade-link, .arcade-session-note) {
+  color: #3d5363;
+}
+#root
+  .arcade-shell
+  :is(.arcade-card, .arcade-modal, .arcade-mvp, .arcade-setup-settings)
+  :is(h1, h2, h3, h4, strong) {
+  color: #102747;
+}
+#root
+  .arcade-shell
+  :is(.arcade-card, .arcade-modal, .arcade-mvp, .arcade-setup-settings)
+  .arcade-eyebrow {
+  color: #9b423b;
+}
+#root .arcade-shell .arcade-section-title {
+  border-bottom: 4px double #607785;
+  padding-bottom: 10px;
+}
+#root .arcade-shell h2 {
+  font-size: 34px;
+}
+#root .arcade-shell .arcade-tag {
+  border: 2px solid #85662e;
+  border-radius: 0;
+  background: #efcb69;
+  color: #102747;
+  font-size: 19px;
+}
+#root .arcade-shell .arcade-button {
+  border: 3px solid #102747;
+  border-radius: 0;
+  background: #dbe3d8;
+  color: #102747;
+  box-shadow:
+    inset 0 0 0 2px #fff8df,
+    3px 3px #08182f;
+  font: 24px/1.1 var(--retro-display);
+  min-height: 44px;
+}
+#root .arcade-shell .arcade-primary {
+  background: #be3945;
+  color: #fff8df;
+  box-shadow:
+    inset 0 0 0 2px #e9988a,
+    3px 3px #08182f;
+}
+#root .arcade-shell .arcade-quiet {
+  background: #2c486b;
+  color: #fff8df;
+  border-color: #94aab3;
+  box-shadow:
+    inset 0 0 0 2px #132b4d,
+    3px 3px #08182f;
+}
+#root .arcade-shell .arcade-link {
+  color: #efcb69;
+  font: 22px var(--retro-display);
+}
+#root
+  .arcade-shell
+  :is(select, input:not([type="checkbox"]):not([type="range"])) {
+  border: 2px solid #425974;
+  border-radius: 0;
+  min-height: 42px;
+  color: #102747;
+  background: #fffdf0;
+  padding: 8px;
+}
+#root .arcade-shell :is(input[type="checkbox"], input[type="range"], meter) {
+  accent-color: #28795b;
+}
+#root
+  .arcade-shell
+  :is(.arcade-lineup li, .arcade-energy-roster li, .arcade-pending li) {
+  border: 2px solid #788b90;
+  border-radius: 0;
+  background: #e7e7d1;
+  color: #102747;
+}
+#root .arcade-shell .arcade-position {
+  color: #fff8df;
+  background: #244e87;
+  border: 2px solid #102747;
+  border-radius: 0;
+  font: 20px var(--retro-display);
+}
+#root .arcade-shell .arcade-lineup .arcade-sprite {
+  background: #cfdece;
+  border: 2px solid #708c86;
+  border-radius: 0;
+}
+#root .arcade-shell .arcade-rules {
+  border: 2px solid #6a7f87;
+  border-radius: 0;
+  background: #e7e7d1;
+  color: #102747;
+}
+#root .arcade-shell .arcade-guide {
+  color: #304e61;
+}
+#root .arcade-shell .arcade-guide kbd {
+  color: #fff8df;
+  background: #244e87;
+  border: 2px solid #102747;
+  border-radius: 0;
+  box-shadow: 2px 2px #7d8d88;
+}
+#root .arcade-shell .arcade-scoreboard {
+  border: 5px double #96aab3;
+  border-radius: 0;
+  background: #0e2343;
+  box-shadow: 4px 4px #07162c;
+}
+#root .arcade-shell .arcade-score-team {
+  background: #203f6a;
+  border-radius: 0;
+}
+#root .arcade-shell .arcade-score-team :is(strong, b),
+#root .arcade-shell .arcade-clock strong {
+  font-family: var(--retro-display);
+  font-weight: 400;
+}
+#root .arcade-shell .arcade-score-team b {
+  color: #efcb69;
+}
+#root .arcade-shell .arcade-clock {
+  background: #fff8df;
+  color: #102747;
+  border: 3px solid #102747;
+  border-radius: 0;
+}
+#root .arcade-shell .arcade-clock strong {
+  color: #102747;
+  font-size: 47px;
+}
+#root .arcade-shell .arcade-clock :is(span, small) {
+  color: #354b60;
+}
+#root .arcade-shell .arcade-clock .urgent {
+  color: #a52d3d;
+}
+#root .arcade-shell .arcade-canvas-frame {
+  border: 5px double #9bafae;
+  border-radius: 0;
+  background: #102747;
+  box-shadow: 5px 5px #07162c;
+}
+#root .arcade-shell .arcade-player-strip {
+  border: 3px double #788e9d;
+  border-radius: 0;
+  background: #fff8df;
+  color: #102747;
+}
+#root .arcade-shell .arcade-player-strip :is(strong, span, p, small) {
+  color: #102747;
+}
+#root .arcade-shell .arcade-controlled > div > strong {
+  font: 25px var(--retro-display);
+}
+#root .arcade-shell .arcade-touch-controls {
+  border: 4px double #7f96a8;
+  border-radius: 0;
+  background: #122847;
+}
+#root .arcade-shell .arcade-action-button {
+  border: 3px solid #839ca9;
+  border-radius: 0;
+  background: #29496f;
+  box-shadow:
+    inset 0 0 0 2px #132b4c,
+    3px 3px #07162c;
+}
+#root .arcade-shell .arcade-action-button > strong {
+  font: 21px var(--retro-display);
+}
+#root .arcade-shell .arcade-action-shoot {
+  border-color: #fff0c0;
+  background: #a93944;
+}
+#root .arcade-shell .arcade-action-turbo {
+  background: #74602e;
+}
+#root .arcade-shell .arcade-action-button.pressed {
+  background: #efcb69;
+  color: #102747;
+  transform: translate(2px, 2px);
+}
+#root .arcade-shell .arcade-modal-shade {
+  background: #091a34df;
+  backdrop-filter: blur(2px);
+}
+#root .arcade-shell .arcade-modal > h2 {
+  font: 42px var(--retro-display);
+}
+#root .arcade-shell .arcade-details {
+  border: 2px solid #6e8289;
+  border-radius: 0;
+  background: #e7e7d1;
+  padding: 10px;
+}
+#root .arcade-shell .arcade-details summary {
+  color: #173e65;
+  font: 23px var(--retro-display);
+}
+#root .arcade-shell .arcade-final-heading {
+  border: 4px double #98adae;
+  background: #203e68;
+  padding: 28px;
+}
+#root .arcade-shell .arcade-final-score > div {
+  border: 4px double #a48c49;
+  border-radius: 0;
+  background: #fff8df;
+  color: #102747;
+  padding: 18px;
+}
+#root .arcade-shell .arcade-final-score strong {
+  font: 76px/1 var(--retro-display);
+  color: #102747;
+}
+#root .arcade-shell .arcade-final-score div > span {
+  color: #4b6171;
+}
+#root .arcade-shell .arcade-mvp {
+  border-color: #957233;
+  background: #f3dfa6;
+}
+#root .arcade-shell table {
+  color: #102747;
+  font-variant-numeric: tabular-nums;
+}
+#root .arcade-shell table :is(th, td) {
+  border-color: #a4b0a7;
+}
+#root .arcade-shell table thead th {
+  color: #fff8df;
+  background: #244e87;
+  font: 20px var(--retro-display);
+}
+#root .arcade-shell table tbody :is(th, td) {
+  color: #102747;
+  background: #fff8df;
+}
+#root .arcade-shell table tbody tr:nth-child(even) :is(th, td) {
+  background: #e9e8d3;
+}
+#root .arcade-shell table tfoot :is(th, td) {
+  color: #102747;
+  background: #e7d39c;
+}
+#root .arcade-shell :is(.arcade-error, .arcade-fatal) {
+  background: #f1dcc1;
+  color: #76392f;
+  border: 4px double #9c5643;
+  border-radius: 0;
+}
+#root .arcade-shell :is(.stat-legend, .ability-unavailable) {
+  color: #425b66;
+}
+@media (max-width: 680px) {
+  #root .arcade-shell {
+    padding: 16px 12px 24px;
+  }
+  #root .arcade-shell :is(.arcade-hero, .arcade-card, .arcade-final-heading) {
+    padding: 16px;
+  }
+  #root .arcade-shell .arcade-clock strong {
+    font-size: 34px;
+  }
+  #root .arcade-shell .arcade-final-score strong {
+    font-size: 54px;
+  }
+  #root .arcade-shell .arcade-button {
+    font-size: 21px;
+  }
+}
+#root .arcade-shell .arcade-lineup strong {
+  font: 20px/1.1 var(--retro-display);
+}
+#root .arcade-shell .arcade-lineup li > span:last-child:not(.arcade-position) {
+  color: #496171;
+}
+#root .arcade-shell .arcade-rules :is(span, b) {
+  color: #354e60;
+}
+#root .arcade-shell .arcade-clock small > b {
+  color: #a33843;
+}
+#root .arcade-shell .arcade-energy-roster li > div > span {
+  color: #496171;
+  font-size: 11px;
+}
+#root .arcade-shell .arcade-energy-roster strong {
+  font: 22px/1.1 var(--retro-display);
+}
+#root .arcade-shell .arcade-sub-form > span {
+  color: #835b29;
+}
+#root .arcade-shell .arcade-energy meter::-webkit-meter-bar {
+  background: #cdd6c5;
+  border: 1px solid #567768;
+  border-radius: 0;
+}
+#root .arcade-shell .arcade-energy meter::-webkit-meter-optimum-value {
+  background: #28795b;
+}
+#root .arcade-shell .arcade-energy meter::-webkit-meter-suboptimum-value {
+  background: #b2833a;
+}
+#root .arcade-shell .arcade-energy meter::-webkit-meter-even-less-good-value {
+  background: #b43d4b;
+}
+#root .arcade-shell .arcade-energy meter::-moz-meter-bar {
+  background: #28795b;
+}

@@ -758,16 +758,6 @@ export default function App({
                     onChoose={(id) => dispatch({ type: "SELECT_COACH", id })}
                   />
                 )}
-                {!coachTeam.coach && <MoralePanel team={coachTeam} />}
-                {coachTeam.abilityMasteryVersion === 1 && (
-                  <MasteryPanel team={coachTeam} />
-                )}
-                {coachTeam.coach && (
-                  <CoachSummary
-                    team={coachTeam}
-                    nextSeason={state.franchise?.phase === "offseason"}
-                  />
-                )}
                 {state.franchise?.phase !== "offseason" && !choosingCoach && (
                   <fieldset
                     className={`draft-layout draft-fieldset${state.franchise ? " franchise-roster-layout" : ""}`}
@@ -885,6 +875,18 @@ export default function App({
                     )}
                   </fieldset>
                 )}
+                <div className="team-hq">
+                  {!coachTeam.coach && <MoralePanel team={coachTeam} />}
+                  {coachTeam.abilityMasteryVersion === 1 && (
+                    <MasteryPanel team={coachTeam} />
+                  )}
+                  {coachTeam.coach && (
+                    <CoachSummary
+                      team={coachTeam}
+                      nextSeason={state.franchise?.phase === "offseason"}
+                    />
+                  )}
+                </div>
                 <p className="sr-only" role="status">
                   {announcement}
                 </p>

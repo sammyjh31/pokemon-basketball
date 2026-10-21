@@ -24,3 +24,9 @@ import "./results.css";
 
 import "@fontsource/jersey-10/latin-400.css";
 import "./kanto.css";
+
+import "./retro-system.css";
+import "./retro-franchise.css";
+import "./retro-competition.css";
+import "./retro-draft.css";
+import "./retro-arcade.css";

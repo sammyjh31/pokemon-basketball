@@ -1,0 +1,1337 @@
+/* Franchise HQ: trainer cards, league paperwork, and a broadcast trade desk. */
+#root .app-shell.kanto-game :is(.franchise-panel, .coach-draft) {
+  color: var(--retro-ink);
+  background: var(--retro-paper);
+  border: 3px solid var(--retro-ink);
+  border-radius: 0;
+  box-shadow:
+    inset 0 0 0 3px var(--retro-paper),
+    inset 0 0 0 5px var(--retro-ink),
+    5px 5px 0 var(--retro-ink);
+  padding: 24px;
+}
+#root .app-shell.kanto-game :is(.franchise-heading, .coach-draft-heading) {
+  margin: -14px -14px 22px;
+  padding: 18px 20px;
+  color: var(--retro-paper);
+  background: var(--retro-navy);
+  border-bottom: 5px solid var(--retro-gold);
+  align-items: center;
+}
+#root
+  .app-shell.kanto-game
+  :is(.franchise-heading, .coach-draft-heading)
+  :is(h2, p, .eyebrow) {
+  color: var(--retro-paper);
+}
+#root .app-shell.kanto-game :is(.franchise-heading, .coach-draft-heading) h2 {
+  font:
+    400 clamp(32px, 4vw, 46px)/0.95 "Jersey 10",
+    monospace;
+  letter-spacing: 0.015em;
+}
+#root
+  .app-shell.kanto-game
+  :is(.franchise-heading, .coach-draft-heading)
+  .eyebrow {
+  color: var(--retro-gold);
+}
+#root
+  .app-shell.kanto-game
+  :is(.franchise-phase, .coach-draft-count, .trade-rule, .free-agent-rule) {
+  color: var(--retro-ink);
+  background: var(--retro-gold);
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  box-shadow: 3px 3px 0 var(--retro-ink);
+  font:
+    400 22px/1.1 "Jersey 10",
+    monospace;
+  padding: 9px 12px;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .franchise-panel,
+    .coach-draft,
+    .coach-office,
+    .local-career,
+    .local-career-history
+  )
+  :where(p, small, label, .stat-legend) {
+  color: var(--retro-ink);
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .franchise-panel,
+    .coach-draft,
+    .coach-office,
+    .local-career,
+    .local-career-history
+  )
+  :is(h3, h4) {
+  color: var(--retro-ink);
+  font-family: "Jersey 10", monospace;
+  font-weight: 400;
+  letter-spacing: 0.015em;
+}
+#root .app-shell.kanto-game .franchise-section-heading h3,
+#root .app-shell.kanto-game .coach-office h3,
+#root .app-shell.kanto-game .trade-center-heading h3,
+#root .app-shell.kanto-game .free-agent-heading h3 {
+  font-size: 34px;
+}
+#root
+  .app-shell.kanto-game
+  :is(.franchise-panel, .coach-office, .coach-draft, .local-career-history)
+  :is(input:not([type="checkbox"]), select) {
+  color: var(--retro-ink);
+  background-color: #fffdf2;
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 #d5d5bc;
+  min-height: 44px;
+}
+#root .app-shell.kanto-game :is(.coach-search, .trade-sort, .league-field) {
+  font-size: 12px;
+  font-weight: 700;
+}
+#root .app-shell.kanto-game :is(.franchise-panel, .coach-office) .eyebrow {
+  color: var(--retro-blue);
+}
+#root
+  .app-shell.kanto-game
+  :is(.franchise-panel, .coach-office)
+  :focus-visible {
+  outline: 3px solid var(--retro-red);
+  outline-offset: 3px;
+}
+
+/* Season actions and the entire offseason progress track. */
+#root .app-shell.kanto-game :is(.franchise-season-status, .development-prompt) {
+  background: #eee8cd;
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  padding: 20px;
+  box-shadow: inset 4px 0 0 var(--retro-gold);
+}
+#root .app-shell.kanto-game .franchise-invitation {
+  border-top: 8px solid var(--retro-red);
+}
+#root .app-shell.kanto-game .offseason-stepper {
+  gap: 12px;
+  margin-block: 22px;
+}
+#root .app-shell.kanto-game .offseason-step {
+  background: var(--retro-soft);
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  padding: 12px;
+  box-shadow: 3px 3px 0 #b9bea9;
+}
+#root .app-shell.kanto-game .offseason-step[aria-current="step"] {
+  background: #fff0bc;
+  border-color: var(--retro-ink);
+  box-shadow: 4px 4px 0 var(--retro-red);
+}
+#root .app-shell.kanto-game .offseason-step-number {
+  flex-basis: 30px;
+  height: 30px;
+  background: var(--retro-navy);
+  color: var(--retro-paper);
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  font:
+    400 24px/1 "Jersey 10",
+    monospace;
+}
+#root .app-shell.kanto-game .offseason-step.is-done .offseason-step-number {
+  color: #fff;
+  background: var(--retro-green);
+  border-color: var(--retro-ink);
+}
+#root .app-shell.kanto-game .offseason-step-body strong {
+  color: var(--retro-ink);
+  font:
+    400 24px/1 "Jersey 10",
+    monospace;
+}
+#root .app-shell.kanto-game .offseason-step-status {
+  color: var(--retro-ink);
+  background: #d4d7c4;
+  border: 1px solid #9da991;
+  padding: 3px 6px;
+}
+#root .app-shell.kanto-game .offseason-step.is-todo .offseason-step-status {
+  color: #fff;
+  background: var(--retro-red);
+  border-color: var(--retro-red);
+}
+#root .app-shell.kanto-game .offseason-step.is-done .offseason-step-status {
+  color: #fff;
+  background: var(--retro-green);
+  border-color: var(--retro-green);
+}
+#root .app-shell.kanto-game .offseason-step-body .button {
+  width: 100%;
+  min-height: 44px;
+  box-shadow: 2px 2px 0 var(--retro-ink);
+}
+#root .app-shell.kanto-game .franchise-navigation {
+  background: var(--retro-soft);
+  padding: 8px;
+  border: 2px solid var(--retro-ink);
+  gap: 6px;
+}
+#root
+  .app-shell.kanto-game
+  .franchise-panel
+  .league-navigation
+  button[aria-pressed="true"] {
+  background: var(--retro-blue);
+  color: #fff;
+  border-color: var(--retro-ink);
+  box-shadow:
+    inset 0 -4px 0 var(--retro-gold),
+    2px 2px 0 var(--retro-ink);
+}
+#root .app-shell.kanto-game :is(.franchise-roster li, .offseason-roster-card) {
+  background: #f2ebd0;
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  box-shadow: 3px 3px 0 #c4c7b4;
+}
+#root .app-shell.kanto-game .franchise-roster li > small {
+  color: var(--retro-ink);
+  background: var(--retro-gold);
+  padding: 4px 6px;
+}
+#root .app-shell.kanto-game .franchise-roster-slot {
+  color: var(--retro-paper);
+  background: var(--retro-blue);
+  padding: 3px 8px;
+  font:
+    400 19px/1 "Jersey 10",
+    monospace;
+}
+#root .app-shell.kanto-game .franchise-scout-button {
+  color: var(--retro-ink);
+  text-decoration-color: var(--retro-blue);
+}
+#root .app-shell.kanto-game .offseason-roster-editor {
+  border-top: 3px solid var(--retro-ink);
+}
+#root .app-shell.kanto-game .offseason-roster-card > span {
+  color: var(--retro-blue);
+  font:
+    400 22px/1 "Jersey 10",
+    monospace;
+}
+#root .app-shell.kanto-game .offseason-roster-card small {
+  justify-self: start;
+  background: var(--retro-gold);
+  border: 1px solid var(--retro-ink);
+  padding: 3px 6px;
+  color: var(--retro-ink);
+  font-variant-numeric: tabular-nums;
+}
+#root .app-shell.kanto-game .offseason-roster-card .portrait {
+  background: #dfe5cb;
+  border-bottom: 3px solid #8eac8c;
+  image-rendering: pixelated;
+}
+
+/* Trainer cards, coach careers, and automatic training details. */
+#root .app-shell.kanto-game .coach-cards {
+  gap: 18px;
+  padding: 4px 7px 7px 3px;
+  scrollbar-color: var(--retro-blue) var(--retro-soft);
+}
+#root .app-shell.kanto-game .coach-card {
+  background: var(--retro-paper);
+  border: 2px solid var(--retro-ink);
+  border-top: 7px solid var(--retro-blue);
+  border-radius: 0;
+  padding: 18px;
+  box-shadow: 4px 4px 0 #b6bea7;
+}
+#root .app-shell.kanto-game .coach-card-top {
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--retro-ink);
+}
+#root .app-shell.kanto-game .coach-portrait,
+#root .app-shell.kanto-game .coach-card .coach-portrait {
+  background: repeating-linear-gradient(0deg, #dce3be 0 8px, #d4deb1 8px 16px);
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  box-shadow:
+    inset 0 0 0 3px var(--retro-paper),
+    3px 3px 0 #afbaa0;
+}
+#root .app-shell.kanto-game .coach-card :is(h3, h4) {
+  color: var(--retro-ink);
+  font:
+    400 34px/1 "Jersey 10",
+    monospace;
+  margin: 0;
+}
+#root .app-shell.kanto-game .coach-card-top .eyebrow {
+  color: var(--retro-blue);
+  line-height: 1.5;
+}
+#root .app-shell.kanto-game :is(.coach-style, .coach-summary small) {
+  color: var(--retro-blue);
+}
+#root .app-shell.kanto-game .coach-card > .coach-style {
+  font-size: 13px;
+}
+#root .app-shell.kanto-game .coach-tags span {
+  color: var(--retro-ink);
+  background: #e1e6cf;
+  border: 1px solid #8da48e;
+  border-radius: 0;
+  box-shadow: inset 0 -2px 0 #bac9ad;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+#root .app-shell.kanto-game .coach-tradeoff {
+  background: #eee6d1;
+  border-top: 2px solid #c1baa2;
+  padding: 10px;
+}
+#root .app-shell.kanto-game .coach-tradeoff b {
+  color: var(--retro-red);
+}
+#root .app-shell.kanto-game .coach-card.coach-taken {
+  opacity: 0.65;
+  border-top-color: #777e79;
+  background: var(--retro-soft);
+}
+#root .app-shell.kanto-game .coach-summary {
+  background: var(--retro-paper);
+  color: var(--retro-ink);
+  border: 2px solid var(--retro-ink);
+  border-left: 7px solid var(--retro-blue);
+  border-radius: 0;
+  box-shadow: 4px 4px 0 #bec5ae;
+}
+#root .app-shell.kanto-game .coach-summary .coach-identity {
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--retro-ink);
+  margin-bottom: 14px;
+}
+#root .app-shell.kanto-game .coach-summary h2 {
+  color: var(--retro-ink);
+  font:
+    400 36px/1.1 "Jersey 10",
+    monospace;
+}
+#root .app-shell.kanto-game .coach-summary :is(p, small, .coach-footnote) {
+  color: var(--retro-ink);
+}
+#root .app-shell.kanto-game .coach-minutes span {
+  color: var(--retro-ink);
+  background: #e4e8d0;
+  border: 1px solid #a8b49b;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .coach-minutes b {
+  background: var(--retro-gold);
+  padding-inline: 4px;
+  font-family: ui-monospace, monospace;
+}
+#root
+  .app-shell.kanto-game
+  :is(.coach-scope, .coach-directory, .coach-news, .coach-summary details) {
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  background: #f1ecd4;
+  margin-top: 18px;
+  padding: 0;
+}
+#root
+  .app-shell.kanto-game
+  :is(.coach-scope, .coach-directory, .coach-news, .coach-summary details)
+  > summary {
+  color: var(--retro-paper);
+  background: var(--retro-navy);
+  padding: 12px 14px;
+  min-height: 44px;
+  font-weight: 700;
+  border-bottom: 2px solid var(--retro-ink);
+}
+#root
+  .app-shell.kanto-game
+  :is(.coach-scope, .coach-directory, .coach-news, .coach-summary details)
+  > :not(summary) {
+  margin: 14px;
+}
+#root .app-shell.kanto-game .coach-market {
+  border-top: 3px solid var(--retro-ink);
+}
+#root .app-shell.kanto-game .coach-market > h3 .coach-style {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 10px;
+  color: var(--retro-ink);
+  background: var(--retro-gold);
+  border: 2px solid var(--retro-ink);
+}
+#root .app-shell.kanto-game .coach-career-detail {
+  color: var(--retro-ink);
+  background: #f0ebd3;
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  box-shadow: 4px 4px 0 #b4bca8;
+}
+#root .app-shell.kanto-game .coach-career-totals span {
+  padding: 12px;
+  background: var(--retro-paper);
+  color: var(--retro-ink);
+  border: 2px solid var(--retro-ink);
+}
+#root .app-shell.kanto-game .coach-career-totals b {
+  color: var(--retro-blue);
+  font:
+    400 36px/1 "Jersey 10",
+    monospace;
+}
+#root .app-shell.kanto-game .coach-season-list details {
+  border-top: 2px solid var(--retro-ink);
+}
+#root .app-shell.kanto-game .coach-season-list summary {
+  color: var(--retro-blue);
+}
+#root .app-shell.kanto-game .coach-news li {
+  border-bottom: 1px solid #b7c0a7;
+  padding-block: 10px;
+}
+#root .app-shell.kanto-game .coach-training-player {
+  color: var(--retro-ink);
+  background: var(--retro-paper);
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  box-shadow: 3px 3px 0 #bac5ab;
+}
+#root .app-shell.kanto-game .coach-training-intensity {
+  align-self: start;
+  color: var(--retro-ink);
+  background: var(--retro-gold);
+  border: 1px solid var(--retro-ink);
+  padding: 4px 8px;
+  font-weight: 700;
+}
+#root .app-shell.kanto-game .coach-training-player details {
+  border-top: 2px solid #bcc5ae;
+}
+#root .app-shell.kanto-game .coach-training-player summary {
+  color: var(--retro-blue);
+  font-weight: 700;
+}
+#root .app-shell.kanto-game .coach-training-reasons {
+  color: var(--retro-ink);
+  background: #f0ebd4;
+  padding: 10px;
+  border-left: 3px solid var(--retro-blue);
+}
+
+/* Development: every row remains a disclosure with a visible rating card. */
+#root .app-shell.kanto-game .development-summary > span {
+  color: var(--retro-paper);
+  background: var(--retro-blue);
+  border: 2px solid var(--retro-ink);
+  box-shadow: 3px 3px 0 #b8c2aa;
+  padding: 14px 16px;
+}
+#root .app-shell.kanto-game .development-summary b {
+  color: var(--retro-gold);
+  font:
+    400 42px/1 "Jersey 10",
+    monospace;
+}
+#root .app-shell.kanto-game .development-controls {
+  background: var(--retro-soft);
+  border: 2px solid #a5b19a;
+  padding: 14px;
+}
+#root .app-shell.kanto-game .development-player {
+  background: var(--retro-paper);
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  margin-block: 10px;
+}
+#root .app-shell.kanto-game .development-player[open] {
+  box-shadow: 3px 3px 0 #aebc9f;
+}
+#root .app-shell.kanto-game .development-identity strong {
+  color: var(--retro-ink);
+  font:
+    400 26px/1 "Jersey 10",
+    monospace;
+}
+#root .app-shell.kanto-game .development-identity .portrait {
+  background: #e1e5cb;
+  border-bottom: 3px solid #9ab18f;
+}
+#root .app-shell.kanto-game .development-rating {
+  color: var(--retro-ink);
+  background: var(--retro-gold);
+  border: 2px solid var(--retro-ink);
+  padding: 8px 10px;
+}
+#root .app-shell.kanto-game .development-rating b {
+  font:
+    400 26px/1 "Jersey 10",
+    monospace;
+}
+#root .app-shell.kanto-game .development-rating small {
+  font-weight: 700;
+}
+#root .app-shell.kanto-game .development-detail-label {
+  color: var(--retro-blue);
+  font-weight: 700;
+}
+#root .app-shell.kanto-game .development-detail {
+  border-top: 2px solid var(--retro-ink);
+  background: #eeead5;
+}
+#root .app-shell.kanto-game .development-skills li {
+  border: 1px solid #8caa93;
+  background: #dfebcf;
+  border-radius: 0;
+  font-weight: 700;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .development-gain,
+    .development-rating .development-gain,
+    .trade-trend.gain
+  ) {
+  color: #18623f;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .development-loss,
+    .development-rating .development-loss,
+    .trade-trend.loss
+  ) {
+  color: #9b2436;
+}
+#root .app-shell.kanto-game .development-skills li.development-loss {
+  background: #f4ded1;
+  border-color: #c59987;
+}
+#root .app-shell.kanto-game .development-reasons {
+  color: var(--retro-ink);
+}
+#root .app-shell.kanto-game .development-transactions {
+  border-top: 3px solid var(--retro-ink);
+}
+#root .app-shell.kanto-game .development-transactions li {
+  color: var(--retro-ink);
+  background: #f0ebd3;
+  border: 2px solid var(--retro-ink);
+  border-left: 7px solid var(--retro-blue);
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .development-transactions li > span {
+  color: var(--retro-ink);
+}
+
+/* Trades and free agency share an exchange-counter visual language. */
+#root
+  .app-shell.kanto-game
+  :is(.trade-center, .free-agent-market, .franchise-trade) {
+  border-top: 3px solid var(--retro-ink);
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .trade-market,
+    .trade-suggestions,
+    .trade-verdict,
+    .free-agent-cpu,
+    .free-agent-preview,
+    .franchise-trade-preview,
+    .franchise-scout
+  ) {
+  color: var(--retro-ink);
+  background: #f0ebd4;
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  box-shadow: 3px 3px 0 #bdc4af;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .trade-market-heading,
+    .trade-builder-heading,
+    .free-agent-cpu > div > h4
+  ) {
+  border-bottom: 2px solid var(--retro-ink);
+  padding-bottom: 12px;
+}
+#root .app-shell.kanto-game .trade-builder {
+  border: 2px solid var(--retro-ink);
+  background: var(--retro-paper);
+  padding: 18px;
+}
+#root
+  .app-shell.kanto-game
+  :is(.trade-market-card, .trade-suggestion-list li, .free-agent-list > li) {
+  color: var(--retro-ink);
+  background: var(--retro-paper);
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  box-shadow: inset 0 4px 0 #dce3c9;
+}
+#root .app-shell.kanto-game .trade-market-list,
+#root .app-shell.kanto-game .free-agent-list {
+  padding: 3px 6px 6px 3px;
+  scrollbar-color: var(--retro-blue) var(--retro-soft);
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .trade-market-identity strong,
+    .free-agent-player strong,
+    .trade-package-identity strong
+  ) {
+  color: var(--retro-ink);
+  font:
+    400 26px/1 "Jersey 10",
+    monospace;
+}
+#root
+  .app-shell.kanto-game
+  :is(.trade-market-identity, .free-agent-player)
+  .portrait {
+  background: #e4e7cf;
+  border-bottom: 3px solid #a5b890;
+}
+#root .app-shell.kanto-game :is(.trade-player-rating, .free-agent-rating) {
+  color: var(--retro-ink);
+  background: var(--retro-gold);
+  border: 2px solid var(--retro-ink);
+  min-width: 50px;
+  padding: 5px;
+  text-align: center;
+  font:
+    400 30px/1 "Jersey 10",
+    monospace;
+}
+#root
+  .app-shell.kanto-game
+  :is(.trade-player-rating small, .free-agent-rating small) {
+  color: var(--retro-ink);
+  font:
+    700 10px/1.4 Inter,
+    sans-serif;
+  letter-spacing: 0.04em;
+}
+#root .app-shell.kanto-game .free-agent-rating > strong {
+  color: var(--retro-ink);
+  font-size: 30px;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .trade-market-meta,
+    .trade-sort,
+    .trade-market-key,
+    .trade-market-heading > span,
+    .trade-package-title > span,
+    .trade-value-summary,
+    .trade-search-context,
+    .trade-suggestion-footer > span,
+    .trade-trend,
+    .trade-package-identity small
+  ) {
+  color: var(--retro-ink);
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .trade-availability,
+    .trade-direction,
+    .free-agent-source,
+    .trade-suggestion-heading > span
+  ) {
+  color: #fff;
+  background: var(--retro-green);
+  border: 1px solid var(--retro-ink);
+  border-radius: 0;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 7px;
+}
+#root .app-shell.kanto-game .trade-availability.listening {
+  background: var(--retro-blue);
+  color: #fff;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .trade-availability.core,
+    .trade-direction,
+    .trade-suggestion-heading > span
+  ) {
+  background: var(--retro-gold);
+  color: var(--retro-ink);
+}
+#root .app-shell.kanto-game .trade-club-profile {
+  background: #dfe8cf;
+  border: 2px solid #809b7e;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .trade-package-title {
+  color: var(--retro-paper);
+  background: var(--retro-blue);
+  padding: 10px 12px;
+  border: 2px solid var(--retro-ink);
+}
+#root .app-shell.kanto-game .trade-package-title :is(h4, span) {
+  color: var(--retro-paper);
+}
+#root .app-shell.kanto-game .trade-package-roster label {
+  color: var(--retro-ink);
+  background: #f0ecd8;
+  border: 2px solid #8fa38a;
+  border-radius: 0;
+}
+#root
+  .app-shell.kanto-game
+  :is(.trade-package-roster label.selected, .free-agent-list > li.selected) {
+  background: #fff0b9;
+  border: 2px solid var(--retro-ink);
+  box-shadow: inset 5px 0 0 var(--retro-red);
+}
+#root .app-shell.kanto-game .trade-package-roster input {
+  accent-color: var(--retro-blue);
+}
+#root
+  .app-shell.kanto-game
+  :is(.trade-verdict.accepted, .franchise-trade-preview.accepted) {
+  background: #e0ebd2;
+  border-color: var(--retro-green);
+  box-shadow: 3px 3px 0 var(--retro-green);
+}
+#root .app-shell.kanto-game .franchise-trade-preview.rejected {
+  background: #f4e4d1;
+  border-color: #9e614a;
+}
+#root
+  .app-shell.kanto-game
+  :is(.trade-verdict h4, .rejected .franchise-trade-verdict > strong) {
+  color: #8d3f2d;
+}
+#root
+  .app-shell.kanto-game
+  :is(.trade-verdict.accepted h4, .franchise-trade-verdict > strong) {
+  color: #1f6245;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .trade-verdict .trade-package-count,
+    .trade-value-summary b,
+    .trade-factors strong,
+    .trade-suggestion-list b,
+    .trade-center .trade-results-count,
+    .trade-center .trade-feedback,
+    .franchise-panel .franchise-trade-status
+  ) {
+  color: var(--retro-ink);
+}
+#root
+  .app-shell.kanto-game
+  :is(.trade-factors summary, .franchise-trade-log summary) {
+  color: var(--retro-blue);
+  font-weight: 700;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .trade-factors li,
+    .trade-verdict .trade-package-count,
+    .franchise-trade-verdict
+  ) {
+  border-color: #9fae92;
+}
+#root .app-shell.kanto-game :is(.trade-lock-message, .free-agent-notice) {
+  color: var(--retro-ink);
+  background: #f6df9d;
+  border: 2px solid var(--retro-ink);
+  border-left: 7px solid var(--retro-red);
+  border-radius: 0;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .trade-center .trade-empty,
+    .franchise-trade-players span,
+    .franchise-trade-players small,
+    .franchise-trade-log li span,
+    .free-agent-player div > span,
+    .free-agent-exchange > span,
+    .free-agent-evaluation strong,
+    .free-agent-evaluation p,
+    .free-agent-transactions p
+  ) {
+  color: var(--retro-ink);
+}
+#root .app-shell.kanto-game .free-agent-preview {
+  border-top: 7px solid var(--retro-blue);
+}
+#root .app-shell.kanto-game .free-agent-exchange small {
+  color: var(--retro-green);
+  font-weight: 700;
+}
+#root .app-shell.kanto-game .free-agent-exchange.outgoing small {
+  color: var(--retro-red);
+}
+#root .app-shell.kanto-game .free-agent-exchange > strong {
+  color: var(--retro-ink);
+  font:
+    400 30px/1 "Jersey 10",
+    monospace;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .free-agent-exchange,
+    .free-agent-evaluation,
+    .free-agent-transactions li
+  ) {
+  border-color: #a8b39b;
+}
+#root .app-shell.kanto-game .free-agent-activity {
+  border-top: 3px solid var(--retro-ink);
+}
+#root .app-shell.kanto-game .free-agent-transactions li {
+  margin-block: 8px;
+  padding: 14px;
+  border: 1px solid #a4b098;
+  background: #eee9d2;
+}
+
+/* Career archive and league newspaper. */
+#root
+  .app-shell.kanto-game
+  :is(
+    .franchise-history-summary article,
+    .franchise-archived-awards > section,
+    .franchise-honors
+  ) {
+  color: var(--retro-ink);
+  background: #eee9d2;
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  box-shadow: 3px 3px 0 #b8c2ac;
+}
+#root .app-shell.kanto-game .franchise-history-summary article:first-child {
+  background: #f6df9e;
+  border-top: 7px solid var(--retro-gold);
+}
+#root .app-shell.kanto-game .franchise-history-summary article h4 {
+  font-size: 30px;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .franchise-honors li span,
+    .franchise-honor-list span,
+    .franchise-honor-list small
+  ) {
+  color: var(--retro-ink);
+}
+#root .app-shell.kanto-game .franchise-honor-list li {
+  border-top: 1px dashed #9da88f;
+}
+#root .app-shell.kanto-game .franchise-player-button {
+  color: var(--retro-ink);
+}
+#root .app-shell.kanto-game .league-news > .franchise-section-heading {
+  color: var(--retro-paper);
+  background: var(--retro-navy);
+  padding: 16px 18px;
+  border: 2px solid var(--retro-ink);
+  border-bottom: 5px solid var(--retro-red);
+}
+#root
+  .app-shell.kanto-game
+  .league-news
+  > .franchise-section-heading
+  :is(h3, p) {
+  color: var(--retro-paper);
+}
+#root .app-shell.kanto-game .league-news > .franchise-section-heading .eyebrow {
+  color: var(--retro-gold);
+}
+#root .app-shell.kanto-game .news-controls {
+  padding: 12px;
+  background: var(--retro-soft);
+  border: 2px solid #a8b098;
+}
+#root .app-shell.kanto-game .news-team-filter input {
+  accent-color: var(--retro-blue);
+}
+#root .app-shell.kanto-game .news-story {
+  color: var(--retro-ink);
+  background: var(--retro-paper);
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  box-shadow: 4px 4px 0 #bcc4ac;
+  padding: 18px;
+}
+#root .app-shell.kanto-game .news-category {
+  display: inline-block;
+  color: var(--retro-paper);
+  background: var(--retro-blue);
+  padding: 5px 8px;
+  border: 1px solid var(--retro-ink);
+  font-size: 10px;
+}
+#root .app-shell.kanto-game .news-honors .news-category {
+  color: var(--retro-ink);
+  background: var(--retro-gold);
+}
+#root .app-shell.kanto-game .news-story h4 {
+  font:
+    400 30px/1 "Jersey 10",
+    monospace;
+  border-bottom: 2px solid var(--retro-ink);
+  padding-bottom: 10px;
+  margin-block: 12px;
+}
+#root .app-shell.kanto-game .news-story .news-source {
+  color: #4f614e;
+  border-top: 1px dashed #a8b29a;
+  padding-top: 9px;
+}
+#root .app-shell.kanto-game .news-story details {
+  padding: 10px;
+  background: #ece8cf;
+  border: 1px solid #a4b096;
+}
+#root .app-shell.kanto-game .news-story summary {
+  color: var(--retro-blue);
+  font-weight: 700;
+  cursor: pointer;
+}
+#root .app-shell.kanto-game .news-links .text-button {
+  border: 1px solid var(--retro-ink);
+  background: #e1e6ce;
+  color: var(--retro-blue);
+  padding: 6px 9px;
+  text-decoration: none;
+}
+#root
+  .app-shell.kanto-game
+  :is(.local-career > .local-panel, .local-career-history) {
+  background: var(--retro-paper);
+  border: 3px solid var(--retro-ink);
+  border-radius: 0;
+  box-shadow: 4px 4px 0 var(--retro-ink);
+}
+#root .app-shell.kanto-game .local-career .local-panel > details {
+  background: #eae6cf;
+  border: 2px solid var(--retro-ink);
+  padding: 12px;
+  margin-block: 14px;
+}
+#root
+  .app-shell.kanto-game
+  .local-career
+  :is(.local-panel > summary, .local-panel > details > summary) {
+  color: var(--retro-blue);
+  font-weight: 700;
+  min-height: 32px;
+}
+#root .app-shell.kanto-game .local-career .local-settings {
+  background: #e5e8d1;
+  padding: 14px;
+  border: 1px solid #a3b095;
+}
+#root .app-shell.kanto-game .local-career .local-legend-option {
+  color: var(--retro-ink);
+  padding: 8px;
+  border: 1px solid #9dab92;
+  background: #fff7da;
+}
+
+/* These dialogs are portaled to body; match the active Kanto shell explicitly. */
+body:has(#root .app-shell.kanto-game) .franchise-detail-overlay {
+  --retro-ink: #102747;
+  --retro-navy: #172b50;
+  --retro-blue: #244e87;
+  --retro-paper: #fff8df;
+  --retro-soft: #e9e4cc;
+  --retro-gold: #efcb69;
+  --retro-red: #be3945;
+  --retro-green: #28795b;
+  --text: #102747;
+  --muted: #4e604f;
+  --line: #a3b099;
+  --gold: #244e87;
+  --bg: #fff8df;
+  --panel: #fff8df;
+  color: var(--retro-ink);
+  background: #102747c9;
+  font:
+    400 13px/1.55 Inter,
+    sans-serif;
+}
+body:has(#root .app-shell.kanto-game) .franchise-detail-dialog {
+  color: var(--retro-ink);
+  background: var(--retro-paper);
+  border: 4px solid var(--retro-ink);
+  border-radius: 0;
+  box-shadow:
+    inset 0 0 0 3px var(--retro-paper),
+    inset 0 0 0 5px var(--retro-ink),
+    8px 8px 0 #071528;
+  padding: 24px;
+  scrollbar-color: var(--retro-blue) var(--retro-soft);
+}
+body:has(#root .app-shell.kanto-game) .franchise-detail-heading {
+  margin: -13px -13px 20px;
+  padding: 16px;
+  color: var(--retro-paper);
+  background: var(--retro-navy);
+  border-bottom: 5px solid var(--retro-gold);
+}
+body:has(#root .app-shell.kanto-game) .franchise-detail-heading h2 {
+  color: var(--retro-paper);
+  font:
+    400 38px/1 "Jersey 10",
+    monospace;
+}
+body:has(#root .app-shell.kanto-game) .franchise-detail-heading .eyebrow {
+  color: var(--retro-gold);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+body:has(#root .app-shell.kanto-game)
+  .franchise-detail-dialog
+  .box-score-close {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  color: var(--retro-ink);
+  background: var(--retro-gold);
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  font:
+    400 32px/1 "Jersey 10",
+    monospace;
+}
+body:has(#root .app-shell.kanto-game) .franchise-detail-dialog h3 {
+  color: var(--retro-ink);
+  font:
+    400 30px/1.1 "Jersey 10",
+    monospace;
+}
+body:has(#root .app-shell.kanto-game)
+  .franchise-detail-dialog
+  :is(
+    .button,
+    .franchise-detail-tabs button,
+    .stat-mode button,
+    .historical-games button
+  ) {
+  color: var(--retro-ink);
+  background: #e7e6cd;
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  min-height: 42px;
+  font:
+    400 21px/1 "Jersey 10",
+    monospace;
+  padding: 8px 12px;
+  box-shadow: 2px 2px 0 #a4b097;
+}
+body:has(#root .app-shell.kanto-game)
+  .franchise-detail-dialog
+  :is(
+    .franchise-detail-tabs button[aria-pressed="true"],
+    .stat-mode button[aria-pressed="true"]
+  ) {
+  color: #fff;
+  background: var(--retro-blue);
+  border-color: var(--retro-ink);
+  box-shadow:
+    inset 0 -3px 0 var(--retro-gold),
+    2px 2px 0 var(--retro-ink);
+}
+body:has(#root .app-shell.kanto-game) .franchise-detail-dialog :focus-visible {
+  outline: 3px solid var(--retro-red);
+  outline-offset: 3px;
+}
+body:has(#root .app-shell.kanto-game)
+  .franchise-detail-dialog
+  :is(input, select) {
+  color: var(--retro-ink);
+  background: #fffdf2;
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  padding: 10px;
+  min-height: 44px;
+}
+body:has(#root .app-shell.kanto-game) .career-profile {
+  color: var(--retro-ink);
+  background: var(--retro-gold);
+  border: 2px solid var(--retro-ink);
+  box-shadow: 3px 3px 0 #b6c1a7;
+}
+body:has(#root .app-shell.kanto-game) .career-profile strong {
+  color: var(--retro-ink);
+  font:
+    400 48px/1 "Jersey 10",
+    monospace;
+}
+body:has(#root .app-shell.kanto-game) .career-profile small {
+  color: var(--retro-ink);
+  font:
+    700 10px/1.5 Inter,
+    sans-serif;
+}
+body:has(#root .app-shell.kanto-game)
+  .franchise-detail-dialog
+  :is(p, small, dt, .career-unavailable) {
+  color: var(--retro-ink);
+}
+body:has(#root .app-shell.kanto-game) .career-skills {
+  gap: 8px;
+}
+body:has(#root .app-shell.kanto-game) .career-skills div {
+  color: var(--retro-ink);
+  background: #e4e8cf;
+  border: 1px solid #94a78d;
+  padding: 8px;
+}
+body:has(#root .app-shell.kanto-game) .career-skills dd {
+  color: var(--retro-blue);
+  font:
+    400 26px/1 "Jersey 10",
+    monospace;
+}
+body:has(#root .app-shell.kanto-game) .career-honors li {
+  color: var(--retro-ink);
+  background: #f6e0a2;
+  border: 2px solid var(--retro-ink);
+  box-shadow: 2px 2px 0 #b8bc9e;
+  border-radius: 0;
+}
+body:has(#root .app-shell.kanto-game) .career-honors span {
+  color: var(--retro-blue);
+  font-weight: 700;
+}
+body:has(#root .app-shell.kanto-game)
+  .franchise-detail-dialog
+  .results-table-wrap {
+  background: var(--retro-paper);
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+}
+body:has(#root .app-shell.kanto-game) .franchise-detail-dialog .results-table {
+  color: var(--retro-ink);
+  background: var(--retro-paper);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 12px;
+}
+body:has(#root .app-shell.kanto-game)
+  .franchise-detail-dialog
+  .results-table
+  :is(th, td) {
+  border-color: #adb79c;
+  color: var(--retro-ink);
+}
+body:has(#root .app-shell.kanto-game)
+  .franchise-detail-dialog
+  .results-table
+  thead
+  th {
+  color: var(--retro-paper);
+  background: var(--retro-blue);
+  border-bottom: 3px solid var(--retro-ink);
+}
+body:has(#root .app-shell.kanto-game)
+  .franchise-detail-dialog
+  .results-table
+  tbody
+  tr:nth-child(even)
+  :is(td, th) {
+  background: #ecebd4;
+}
+body:has(#root .app-shell.kanto-game) .historical-games li {
+  background: #eee9d2;
+  border: 1px solid #a4af95;
+  padding: 12px;
+  margin-top: 8px;
+}
+body:has(#root .app-shell.kanto-game) .historical-games strong {
+  color: var(--retro-ink);
+  font:
+    400 28px/1 "Jersey 10",
+    monospace;
+}
+body:has(#root .app-shell.kanto-game) .historical-game-round {
+  color: var(--retro-blue);
+}
+
+@media (max-width: 700px) {
+  #root .app-shell.kanto-game :is(.franchise-panel, .coach-draft) {
+    padding: 18px 12px;
+  }
+  #root .app-shell.kanto-game :is(.franchise-heading, .coach-draft-heading) {
+    margin: -8px -2px 18px;
+    padding: 14px 12px;
+  }
+  #root
+    .app-shell.kanto-game
+    :is(.franchise-heading h2, .coach-draft-heading h2) {
+    font-size: 34px;
+  }
+  #root .app-shell.kanto-game .coach-card {
+    padding: 14px;
+  }
+  #root .app-shell.kanto-game .franchise-navigation button {
+    min-width: 0;
+  }
+  #root .app-shell.kanto-game .trade-builder {
+    padding: 12px;
+  }
+  #root .app-shell.kanto-game .development-summary > span {
+    padding: 12px;
+  }
+  #root .app-shell.kanto-game .development-rating {
+    padding: 6px;
+  }
+  #root .app-shell.kanto-game .development-rating b {
+    font-size: 22px;
+  }
+  #root .app-shell.kanto-game .coach-career-totals {
+    gap: 8px;
+  }
+  #root .app-shell.kanto-game .coach-career-totals span {
+    padding: 10px;
+  }
+  body:has(#root .app-shell.kanto-game) .franchise-detail-dialog {
+    padding: 18px 12px;
+  }
+  body:has(#root .app-shell.kanto-game) .franchise-detail-heading {
+    margin: -7px -1px 18px;
+    padding: 12px;
+  }
+  body:has(#root .app-shell.kanto-game) .franchise-detail-heading h2 {
+    font-size: 30px;
+  }
+  body:has(#root .app-shell.kanto-game) .career-skills {
+    gap: 6px;
+  }
+  body:has(#root .app-shell.kanto-game) .career-skills div {
+    padding: 6px;
+  }
+}
+
+/* Keep the rating disclosures and compact explanations on a readable paper field. */
+#root .app-shell.kanto-game .development-player > summary,
+#root .app-shell.kanto-game .development-player[open] > summary {
+  color: var(--retro-ink);
+  background: var(--retro-paper);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: 0;
+  font: inherit;
+}
+#root .app-shell.kanto-game .development-player[open] > summary {
+  background: #e5e9d2;
+}
+#root
+  .app-shell.kanto-game
+  .development-player[open]
+  > summary
+  :is(span, strong, small) {
+  color: var(--retro-ink);
+}
+#root
+  .app-shell.kanto-game
+  .development-player[open]
+  > summary
+  .development-gain {
+  color: #18623f;
+}
+#root
+  .app-shell.kanto-game
+  .development-player[open]
+  > summary
+  .development-loss {
+  color: #9b2436;
+}
+#root
+  .app-shell.kanto-game
+  :is(.coach-training-player, .news-story, .trade-factors, .franchise-trade-log)
+  > details
+  > summary,
+#root
+  .app-shell.kanto-game
+  :is(
+    .coach-training-player details,
+    .news-story details,
+    .trade-factors,
+    .franchise-trade-log
+  )
+  > summary {
+  color: var(--retro-blue);
+  background: #e2e8d0;
+  border: 1px solid #96a88e;
+  border-radius: 0;
+  font:
+    700 12px/1.5 Inter,
+    sans-serif;
+  padding: 10px;
+  margin-bottom: 0;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .coach-training-player details[open],
+    .news-story details[open],
+    .trade-factors[open],
+    .franchise-trade-log[open]
+  )
+  > summary {
+  color: var(--retro-paper);
+  background: var(--retro-blue);
+}
+#root .app-shell.kanto-game .coach-summary details > summary {
+  border: 0;
+  border-bottom: 2px solid var(--retro-ink);
+  margin-bottom: 0;
+}
+#root .app-shell.kanto-game .coach-office tr[aria-selected="true"] :is(th, td) {
+  background: #f8e5a4;
+  color: var(--retro-ink);
+}
+#root .app-shell.kanto-game .coach-evaluation thead th {
+  color: var(--retro-paper);
+  background: var(--retro-blue);
+}
+#root .app-shell.kanto-game .coach-evaluation tbody :is(th, td) {
+  color: var(--retro-ink);
+  background: var(--retro-paper);
+}
+#root
+  .app-shell.kanto-game
+  .coach-evaluation
+  tbody
+  tr:nth-child(even)
+  :is(th, td) {
+  background: #e8ead5;
+}

@@ -408,6 +408,14 @@ export function LocalLeagueDraft({
           <p id="local-turn-detail">
             {LOCAL_TEAMS[turn.teamId].name} · {picks.length}/8 players drafted
           </p>
+          <div className="draft-round-track" aria-hidden="true">
+            {Array.from({ length: 8 }, (_, index) => (
+              <span
+                key={index}
+                className={index < picks.length ? "is-filled" : ""}
+              />
+            ))}
+          </div>
         </div>
         <span className="local-direction">
           {turn.round % 2 ? "→" : "←"}{" "}

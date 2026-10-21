@@ -144,7 +144,10 @@ export function OffseasonReport({ franchise }: { franchise: Franchise }) {
   const report = reports.find((item) => item.year === year) ?? reports[0];
   if (!report)
     return (
-      <section aria-label="Offseason development report">
+      <section
+        className="offseason-report offseason-report-empty"
+        aria-label="Offseason development report"
+      >
         <h3>Development is still ahead.</h3>
         <p>
           Run offseason development from the Offseason tab after the Finals.

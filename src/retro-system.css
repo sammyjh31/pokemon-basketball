@@ -1,0 +1,1022 @@
+/* The shared cartridge UI: every feature inherits these controls and surfaces. */
+:root {
+  --retro-ink: #102747;
+  --retro-navy: #172b50;
+  --retro-blue: #244e87;
+  --retro-paper: #fff8df;
+  --retro-soft: #e9e4cc;
+  --retro-red: #be3945;
+  --retro-gold: #efcb69;
+  --retro-green: #28795b;
+  --retro-line: #53677d;
+  --retro-display: "Jersey 10", "Arial Narrow", sans-serif;
+  --retro-numbers: "Roboto Condensed", ui-monospace, monospace;
+  background: var(--retro-navy);
+}
+#root .app-shell.kanto-game {
+  --ink: var(--retro-ink);
+  --cream: var(--retro-paper);
+  --paper: #d8dece;
+  --panel: var(--retro-paper);
+  --bg: #e8e4cf;
+  --line: #7d8c91;
+  --muted: #4b5c69;
+  --gold: #825211;
+  --blue: #244e87;
+  --display: var(--retro-display);
+  color: var(--retro-ink);
+  background: var(--retro-navy);
+  line-height: 1.6;
+}
+#root .app-shell.kanto-game > main {
+  background: #d8dece;
+  padding: 24px 28px 42px;
+  min-height: calc(100vh - 108px);
+}
+#root .app-shell.kanto-game :is(h1, h2, h3, h4) {
+  font-family: var(--retro-display);
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  line-height: 1.08;
+}
+#root .app-shell.kanto-game h1 {
+  font-size: clamp(36px, 4vw, 56px);
+}
+#root .app-shell.kanto-game h2 {
+  font-size: clamp(30px, 3vw, 42px);
+}
+#root .app-shell.kanto-game h3 {
+  font-size: 29px;
+}
+#root .app-shell.kanto-game h4 {
+  font-size: 24px;
+}
+#root .app-shell.kanto-game p {
+  color: #354b5c;
+}
+#root .app-shell.kanto-game .eyebrow {
+  color: #3f5366;
+  font-family: var(--retro-display);
+  font-size: 17px;
+  letter-spacing: 1.3px;
+  line-height: 1.3;
+}
+#root .app-shell.kanto-game :is(.masthead, .kanto-masthead) {
+  background: var(--retro-navy);
+  border-bottom: 6px double var(--retro-gold);
+  box-shadow: 0 4px 0 #091a34;
+  gap: 16px;
+}
+#root .app-shell.kanto-game .brand {
+  color: var(--retro-gold);
+  font-size: 46px;
+  text-shadow: 3px 3px #07172e;
+}
+#root .app-shell.kanto-game .brand small {
+  font-family: var(--retro-display);
+  font-size: 15px;
+  letter-spacing: 6px;
+}
+#root .app-shell.kanto-game .mode-tabs {
+  background: #0b203e;
+  border: 3px solid #7c92aa;
+  box-shadow: inset 0 0 0 2px #0c1b31;
+}
+#root .app-shell.kanto-game .mode-tabs button {
+  font-size: 21px;
+  min-height: 42px;
+}
+#root .app-shell.kanto-game .mode-tabs button[aria-pressed="true"] {
+  color: var(--retro-ink);
+  background: var(--retro-gold);
+  border-bottom-color: var(--retro-red);
+  box-shadow: inset 0 0 0 2px #fff0ba;
+}
+#root .app-shell.kanto-game .kanto-sidebar {
+  background-color: var(--retro-navy);
+  border-right: 6px double #90a3b5;
+  padding-top: 12px;
+}
+#root .app-shell.kanto-game .kanto-menu-label {
+  display: block;
+  padding: 8px 14px 14px;
+  color: var(--retro-gold);
+  font: 19px var(--retro-display);
+  letter-spacing: 2px;
+}
+#root .app-shell.kanto-game .kanto-sidebar button {
+  border: 2px solid #607995;
+  background: #203c67;
+  box-shadow:
+    inset 0 0 0 2px #102445,
+    3px 3px #091a34;
+  color: #f5efd9;
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+#root .app-shell.kanto-game .kanto-sidebar button[aria-current] {
+  background: var(--retro-gold);
+  color: var(--retro-ink);
+  border: 2px solid #fff2b9;
+  box-shadow:
+    inset 0 0 0 2px #b58d3b,
+    3px 3px #091a34;
+}
+#root
+  .app-shell.kanto-game
+  :is(.button, .header-restart, .kanto-exit, .header-play) {
+  border: 3px solid var(--retro-ink);
+  border-radius: 0;
+  background: #d8e2df;
+  color: var(--retro-ink);
+  box-shadow:
+    inset 0 0 0 2px #f8f8df,
+    3px 3px var(--retro-ink);
+  font: 400 22px/1.1 var(--retro-display);
+  min-height: 44px;
+  padding: 11px 17px;
+  white-space: normal;
+}
+#root .app-shell.kanto-game :is(.button.primary, .header-play) {
+  background: var(--retro-red);
+  color: #fff8df;
+  border-color: #672734;
+  box-shadow:
+    inset 0 0 0 2px #e88a82,
+    3px 3px var(--retro-ink);
+}
+#root .app-shell.kanto-game :is(.header-restart, .kanto-exit) {
+  background: #324d70;
+  color: #fff8df;
+  border-color: #a0b0b8;
+  box-shadow:
+    inset 0 0 0 2px #102747,
+    3px 3px #0c1d37;
+}
+#root .app-shell.kanto-game :is(button, .button):active:not(:disabled) {
+  transform: translate(1px, 1px);
+}
+#root .app-shell.kanto-game .text-button {
+  color: #254b7a;
+  font: 21px var(--retro-display);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    select,
+    textarea
+  ) {
+  background: #fffdf0;
+  color: var(--retro-ink);
+  border: 2px solid #425974;
+  border-radius: 0;
+  box-shadow: inset 2px 2px #d0d4c4;
+  min-height: 42px;
+  padding: 8px 10px;
+  max-width: 100%;
+}
+#root
+  .app-shell.kanto-game
+  :is(input[type="checkbox"], input[type="radio"], input[type="range"]) {
+  accent-color: var(--retro-blue);
+}
+#root
+  .app-shell.kanto-game
+  :is(input, select, textarea, button, a, summary):focus-visible {
+  outline: 3px solid #bf3945;
+  outline-offset: 4px;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .season-panel,
+    .league-panel,
+    .playoff-panel,
+    .draft-panel,
+    .bench-panel,
+    .local-panel,
+    .coach-draft,
+    .franchise-panel,
+    .arcade-entry,
+    .lineup-panel,
+    .mastery-panel,
+    .morale-panel,
+    .projected-chemistry,
+    .coaching-editor
+  ) {
+  border: 4px double var(--retro-ink);
+  border-radius: 0;
+  background: var(--retro-paper);
+  color: var(--retro-ink);
+  box-shadow: 4px 4px 0 #72838a;
+  min-width: 0;
+}
+#root
+  .app-shell.kanto-game
+  :is(.mastery-panel, .morale-panel, .projected-chemistry, .coaching-editor) {
+  padding: 20px;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .mastery-heading,
+    .morale-heading,
+    .chemistry-heading,
+    .coaching-heading,
+    .bench-heading,
+    .panel-heading
+  ) {
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border: 2px solid #102747;
+  background: var(--retro-blue);
+  color: #fff8df;
+  box-shadow: inset 0 -3px #152f57;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .mastery-heading,
+    .morale-heading,
+    .chemistry-heading,
+    .coaching-heading,
+    .bench-heading,
+    .panel-heading
+  )
+  :is(h2, h3, h4, p, .eyebrow, .text-button) {
+  color: #fff8df;
+}
+#root
+  .app-shell.kanto-game
+  :is(.mastery-heading, .morale-heading, .chemistry-heading, .coaching-heading)
+  > :is(strong, span) {
+  color: var(--retro-gold);
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .mastery-roster > li,
+    .morale-player,
+    .chemistry-five > li,
+    .rotation-player,
+    .morale-captain
+  ) {
+  border: 2px solid #61717a;
+  border-radius: 0;
+  background: #eae8d3;
+  color: var(--retro-ink);
+  padding: 12px;
+  box-shadow: inset 0 0 0 2px #fffdf0;
+}
+#root .app-shell.kanto-game .mastery-roster > li .mastery-heading {
+  margin: -2px -2px 10px;
+  padding: 8px 10px;
+}
+#root
+  .app-shell.kanto-game
+  :is(.mastery-tier, .coaching-badge, .morale-status, .count-chip) {
+  background: #ead69d;
+  color: #493b18;
+  border: 2px solid #7e6530;
+  border-radius: 0;
+  padding: 4px 8px;
+  font: 19px var(--retro-display);
+}
+#root .app-shell.kanto-game .morale-high {
+  background: #d1e4c4;
+  color: #205339;
+  border-color: #3a7758;
+}
+#root .app-shell.kanto-game .morale-low {
+  background: #f0d5b5;
+  color: #723b2d;
+  border-color: #9f6143;
+}
+#root
+  .app-shell.kanto-game
+  :is(
+    .species-ability,
+    .chemistry-familiarity,
+    .chemistry-morale,
+    .morale-personality-summary
+  ) {
+  background: #dce8ce;
+  border: 2px solid #567957;
+  border-radius: 0;
+  color: #234b38;
+  box-shadow: inset 0 0 0 2px #f4f5d9;
+}
+#root .app-shell.kanto-game .species-ability :is(p, small, .eyebrow) {
+  color: #2c513e;
+}
+#root .app-shell.kanto-game :is(.mastery-roster, .morale-roster) {
+  gap: 14px;
+}
+#root
+  .app-shell.kanto-game
+  :is(.mastery-roster, .morale-panel, .chemistry-details, .coaching-editor)
+  :is(small, dt, .coaching-note, .morale-note) {
+  color: #4a5e65;
+}
+#root .app-shell.kanto-game :is(.mastery-meter, .rating-track) {
+  border: 1px solid #2c4d50;
+  border-radius: 0;
+  background: #c7cec0;
+  min-height: 8px;
+}
+#root .app-shell.kanto-game :is(.mastery-meter, .rating-track) > span {
+  background: var(--retro-green);
+  border-radius: 0;
+}
+#root .app-shell.kanto-game details:not(.save-menu) {
+  border-radius: 0;
+}
+#root .app-shell.kanto-game details > summary {
+  cursor: pointer;
+  color: var(--retro-ink);
+  font: 22px/1.25 var(--retro-display);
+  padding: 11px 12px;
+  border: 2px solid #687c87;
+  border-radius: 0;
+  background: #e2e8dc;
+}
+#root .app-shell.kanto-game details[open] > summary {
+  color: #fff8df;
+  background: #244e87;
+  border-color: #102747;
+  margin-bottom: 12px;
+}
+#root .app-shell.kanto-game details[open] > summary :is(span, strong, small) {
+  color: inherit;
+}
+#root .app-shell.kanto-game .save-menu {
+  color: var(--retro-ink);
+  border: 3px double var(--retro-ink);
+  background: var(--retro-paper);
+  box-shadow: 3px 3px #7a8b8e;
+  border-radius: 0;
+  margin-bottom: 24px;
+}
+#root .app-shell.kanto-game .save-menu > summary {
+  color: var(--retro-ink);
+  background: #e7e6cd;
+  font-size: 20px;
+  padding: 9px 14px;
+  border: 0;
+}
+#root .app-shell.kanto-game .save-menu[open] > summary {
+  background: #244e87;
+  color: #fff8df;
+}
+#root .app-shell.kanto-game :is(.save-note, .save-status, .save-alert) {
+  color: #354b5c;
+}
+#root .app-shell.kanto-game .notice {
+  padding: 14px 16px;
+  border: 3px double #7a5828;
+  border-radius: 0;
+  background: #f6e6b7;
+  color: #493b21;
+  box-shadow: 3px 3px #9c9478;
+}
+#root .app-shell.kanto-game .notice p {
+  color: inherit;
+}
+#root .app-shell.kanto-game progress {
+  accent-color: var(--retro-green);
+  border: 2px solid #355a55;
+  border-radius: 0;
+  height: 16px;
+}
+#root
+  .app-shell.kanto-game
+  :is(.league-navigation, .stat-mode, .sprite-toggle) {
+  border: 3px solid var(--retro-ink);
+  border-radius: 0;
+  background: #233f67;
+  box-shadow: inset 0 0 0 2px #637f97;
+  padding: 4px;
+  gap: 4px;
+}
+#root
+  .app-shell.kanto-game
+  :is(.league-navigation, .stat-mode, .sprite-toggle)
+  button {
+  color: #fff8df;
+  font-size: 21px;
+  border-radius: 0;
+}
+#root
+  .app-shell.kanto-game
+  :is(.league-navigation, .stat-mode, .sprite-toggle)
+  button[aria-pressed="true"] {
+  color: var(--retro-ink);
+  background: var(--retro-gold);
+  border-bottom: 3px solid #af3942;
+  box-shadow: inset 0 0 0 2px #fff1b1;
+}
+#root .app-shell.kanto-game table {
+  color: var(--retro-ink);
+  border-color: #657a82;
+  font-variant-numeric: tabular-nums;
+}
+#root .app-shell.kanto-game table :is(th, td) {
+  border-color: #a5b0a9;
+}
+#root .app-shell.kanto-game table thead th {
+  color: #fff8df;
+  background: #244e87;
+  font-family: var(--retro-display);
+  font-size: 20px;
+  font-weight: 400;
+}
+#root .app-shell.kanto-game table tbody :is(th, td) {
+  background: #fff8df;
+  color: var(--retro-ink);
+}
+#root .app-shell.kanto-game table tbody tr:nth-child(even) :is(th, td) {
+  background: #e9e8d5;
+}
+#root .app-shell.kanto-game table tbody tr:hover :is(th, td) {
+  background: #efe3b1;
+}
+#root .app-shell.kanto-game table :is(.text-button, button) {
+  color: #244e87;
+}
+#root .app-shell.kanto-game .getting-started {
+  background: #fff8df;
+  border: 4px double #102747;
+  border-radius: 0;
+  box-shadow: 4px 4px #73858a;
+}
+#root .app-shell.kanto-game .getting-started ol > li {
+  background: #e8e8d3;
+  border: 2px solid #72858a;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .getting-started ol > li.current {
+  border-color: #b54049;
+  background: #fff0c3;
+  box-shadow: inset 0 0 0 2px #d7b87b;
+}
+#root .app-shell.kanto-game .step-marker {
+  border: 2px solid #516b79;
+  border-radius: 0;
+  color: #fff8df;
+  background: #244e87;
+}
+#root
+  .app-shell.kanto-game
+  :is(.team-ratings, .rating-caption, .court-instruction, .lineup-tools) {
+  background: var(--retro-paper);
+  color: var(--retro-ink);
+}
+#root .app-shell.kanto-game .team-ratings > div {
+  background: #e1e5d6;
+  border: 2px solid #667b84;
+  padding: 10px;
+}
+#root .app-shell.kanto-game .team-ratings .overall {
+  background: #edcf80;
+  border-color: #80682e;
+}
+#root .app-shell.kanto-game .team-ratings strong {
+  color: #102747;
+  font: 46px/1 var(--retro-display);
+}
+#root .app-shell.kanto-game .bench-slot {
+  border: 3px double #244361;
+  background: #e9e7d2;
+  border-radius: 0;
+  box-shadow: 3px 3px #85958e;
+}
+#root .app-shell.kanto-game .bench-portrait {
+  background: #cadbce;
+  border: 2px solid #738d87;
+  border-radius: 0;
+}
+#root .app-shell.kanto-game .bench-slot .portrait {
+  image-rendering: pixelated;
+}
+#root
+  .app-shell.kanto-game
+  :is(.coaching-controls, .rotation-strip, .team-profile) {
+  border: 2px solid #73858a;
+  background: #e4e7d7;
+  color: #102747;
+  padding: 14px;
+}
+#root .app-shell.kanto-game .coaching-controls label {
+  color: #3c5262;
+}
+#root .app-shell.kanto-game .court {
+  border: 5px double #102747;
+  box-shadow: inset 0 0 0 3px #d4e0cc;
+}
+#root .app-shell.kanto-game .slot-role {
+  border: 2px solid #102747;
+  border-radius: 0;
+  background: #244e87;
+  color: #fff8df;
+  font: 23px var(--retro-display);
+}
+#root .app-shell.kanto-game .slot-name {
+  background: #fff8df;
+  color: #102747;
+  border: 2px solid #102747;
+  font: 20px/1.15 var(--retro-display);
+  padding: 4px 7px;
+}
+#root .app-shell.kanto-game .slot-rating {
+  border-radius: 0;
+  background: #efcb69;
+  color: #102747;
+  border: 2px solid #80682e;
+  font: 20px var(--retro-display);
+}
+#root .app-shell.kanto-game .slot-name.is-shiny {
+  background: #f6d777;
+}
+#root .app-shell.kanto-game .shiny-badge {
+  border-radius: 0;
+}
+#root .app-shell.kanto-game footer {
+  margin-top: 30px;
+  padding: 20px 26px;
+  border-top: 6px double #8598a9;
+  color: #e4e6d5;
+  background: #172b50;
+}
+#root .app-shell.kanto-game footer p {
+  color: #c4d3d5;
+}
+/* Dialogs include normal overlays and body portals. Keep their type and controls consistent. */
+body:has(.kanto-game)
+  :is(.dialog-overlay, .box-score-overlay, .franchise-detail-overlay) {
+  background: #091a34d9;
+  backdrop-filter: blur(2px);
+}
+body:has(.kanto-game)
+  :is(
+    .confirm-dialog,
+    .rules-dialog,
+    .franchise-detail-dialog,
+    .box-score-dialog
+  ) {
+  --display: var(--retro-display);
+  --muted: #4b5c69;
+  --line: #7d8c91;
+  --gold: #825211;
+  border: 6px double #102747;
+  border-radius: 0;
+  background: var(--retro-paper);
+  color: #102747;
+  box-shadow:
+    7px 7px #07172e,
+    inset 0 0 0 3px #e6cf8c;
+  font-family: Inter, sans-serif;
+}
+body:has(.kanto-game)
+  :is(
+    .confirm-dialog,
+    .rules-dialog,
+    .franchise-detail-dialog,
+    .box-score-dialog
+  )
+  :is(h2, h3, h4) {
+  color: #102747;
+  font-family: var(--retro-display);
+  font-weight: 400;
+}
+body:has(.kanto-game) :is(.confirm-dialog, .rules-dialog) h2 {
+  font-size: 42px;
+}
+body:has(.kanto-game) :is(.confirm-dialog, .rules-dialog) p {
+  color: #3d5364;
+}
+body:has(.kanto-game) :is(.confirm-dialog, .rules-dialog) .eyebrow {
+  font: 19px var(--retro-display);
+  color: #8d3c35;
+}
+body:has(.kanto-game) .play-option {
+  border: 3px double #102747;
+  border-radius: 0;
+  background: #e9e8d4;
+  color: #102747;
+  box-shadow: 3px 3px #85938b;
+}
+body:has(.kanto-game) .play-option strong {
+  font: 30px var(--retro-display);
+  color: #173e6c;
+}
+body:has(.kanto-game) .play-option span {
+  color: #354e60;
+}
+body:has(.kanto-game) .play-option[aria-current="true"] {
+  background: #f2d994;
+  border-color: #95692f;
+}
+body:has(.kanto-game) .formula-grid > div {
+  border: 2px solid #657b85;
+  border-radius: 0;
+  background: #e5e7d8;
+  color: #102747;
+}
+body:has(.kanto-game) .formula-grid :is(strong, span, p) {
+  color: #244e87;
+}
+@media (max-width: 1100px) {
+  #root .app-shell.kanto-game .kanto-menu-label {
+    display: none;
+  }
+}
+@media (max-width: 680px) {
+  #root .app-shell.kanto-game > main {
+    padding: 16px 12px 30px;
+  }
+  #root
+    .app-shell.kanto-game
+    :is(.mastery-panel, .morale-panel, .projected-chemistry, .coaching-editor) {
+    padding: 12px;
+  }
+  #root
+    .app-shell.kanto-game
+    :is(
+      .mastery-heading,
+      .morale-heading,
+      .chemistry-heading,
+      .coaching-heading,
+      .bench-heading,
+      .panel-heading
+    ) {
+    padding: 10px;
+  }
+  #root .app-shell.kanto-game .kanto-sidebar button {
+    font-size: 21px;
+    min-height: 52px;
+  }
+  #root .app-shell.kanto-game .brand {
+    font-size: 35px;
+  }
+  #root .app-shell.kanto-game table thead th {
+    font-size: 18px;
+  }
+  #root .app-shell.kanto-game .team-ratings > div {
+    padding: 6px;
+  }
+  #root .app-shell.kanto-game .team-ratings strong {
+    font-size: 36px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .app-shell.kanto-game *,
+  #root .arcade-shell * {
+    scroll-behavior: auto;
+    transition: none;
+  }
+}
+body:has(.kanto-game) .play-option {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  column-gap: 14px;
+  align-content: start;
+}
+body:has(.kanto-game) .play-option-art {
+  grid-row: span 2;
+  position: relative;
+  display: block;
+  width: 76px;
+  height: 90px;
+  border: 3px double #526e7d;
+  background: #cbdccc;
+}
+body:has(.kanto-game) .play-option-art img {
+  display: block;
+  width: 72px;
+  height: 72px;
+  image-rendering: pixelated;
+  object-fit: contain;
+  margin-top: 12px;
+}
+body:has(.kanto-game) .play-option-art .play-option-number {
+  position: absolute;
+  top: 0;
+  left: 4px;
+  color: #496778;
+  font: 19px var(--retro-display);
+}
+body:has(.kanto-game)
+  :is(
+    .confirm-dialog,
+    .rules-dialog,
+    .franchise-detail-dialog,
+    .box-score-dialog
+  )
+  :is(.mastery-panel, .morale-panel, .projected-chemistry) {
+  background: #fff8df;
+  color: #102747;
+  border: 4px double #526e7d;
+  border-radius: 0;
+  padding: 16px;
+}
+body:has(.kanto-game)
+  :is(.franchise-detail-dialog, .box-score-dialog)
+  :is(
+    .mastery-roster > li,
+    .morale-player,
+    .chemistry-five > li,
+    .species-ability,
+    .chemistry-familiarity
+  ) {
+  background: #e4e6d3;
+  color: #173e5d;
+  border: 2px solid #6c8187;
+  border-radius: 0;
+}
+body:has(.kanto-game)
+  :is(.franchise-detail-dialog, .box-score-dialog)
+  :is(.mastery-panel, .morale-panel, .projected-chemistry, .species-ability)
+  :is(p, small, dt, dd) {
+  color: #3d5363;
+}
+body:has(.kanto-game)
+  :is(.franchise-detail-dialog, .box-score-dialog)
+  :is(.mastery-heading, .morale-heading, .chemistry-heading) {
+  background: #244e87;
+  color: #fff8df;
+  border: 2px solid #102747;
+  padding: 10px;
+}
+body:has(.kanto-game)
+  :is(.franchise-detail-dialog, .box-score-dialog)
+  :is(.mastery-heading, .morale-heading, .chemistry-heading)
+  :is(h3, h4, strong, span) {
+  color: #fff8df;
+}
+#root .app-shell.kanto-game .mastery-heading :is(small, b) {
+  color: #fff8df;
+}
+#root .app-shell.kanto-game .getting-started li.done strong {
+  color: #496251;
+}
+body:has(.kanto-game) .play-option strong small {
+  color: #fff8df;
+  background: #244e87;
+  border-radius: 0;
+}
+#root
+  .app-shell.kanto-game
+  :is(.rotation-labels, .coaching-totals, .training-player label) {
+  color: #3f5667;
+}
+#root .app-shell.kanto-game .coaching-totals strong {
+  color: #102747;
+}
+#root .app-shell.kanto-game .coaching-editor .coaching-error {
+  color: #9f343e;
+  background: #f3e0c0;
+  border-left: 3px solid #aa454b;
+  padding: 8px 12px;
+}
+#root .app-shell.kanto-game .training-player {
+  color: #102747;
+  background: #e6e8d5;
+  border: 2px solid #73858a;
+  border-radius: 0;
+  box-shadow: inset 0 0 0 2px #fff8df;
+}
+#root .app-shell.kanto-game .training-player strong {
+  color: #102747;
+}
+#root .app-shell.kanto-game .team-hq {
+  display: grid;
+  gap: 20px;
+  margin: 26px 0;
+  min-width: 0;
+}
+#root .app-shell.kanto-game .team-hq:empty {
+  display: none;
+}
+#root .app-shell.kanto-game .builder-actions button {
+  background: #244e87;
+  color: #fff8df;
+  border: 2px solid #102747;
+  border-radius: 0;
+  padding: 9px 12px;
+  font: 21px var(--retro-display);
+  box-shadow: 2px 2px #85948e;
+}
+#root .app-shell.kanto-game .challenge-pool {
+  background: #fff8df;
+  border: 4px double #102747;
+  border-radius: 0;
+  box-shadow: 3px 3px #7e908b;
+}
+#root .app-shell.kanto-game .lineup-panel .panel-heading {
+  color: #fff8df;
+  background: #244e87;
+  border-color: #102747;
+}
+#root
+  .app-shell.kanto-game
+  .lineup-panel
+  .panel-heading
+  :is(h2, .eyebrow, .text-button) {
+  color: #fff8df;
+}
+#root .app-shell.kanto-game .slot-role {
+  top: 0;
+  bottom: auto;
+  left: 4px;
+  right: auto;
+  padding: 2px 5px;
+  font-size: 20px;
+}
+#root .app-shell.kanto-game .slot-disc {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 6px;
+}
+#root .app-shell.kanto-game .court-slot.filled .slot-disc img {
+  width: 120px;
+  height: 120px;
+  bottom: 0;
+}
+#root .app-shell.kanto-game .court-label {
+  bottom: 7px;
+  font-size: 16px;
+}
+#root .app-shell.kanto-game .slot-rating {
+  font-size: 18px;
+  padding: 1px 4px;
+  margin-top: 4px;
+}
+@media (max-width: 680px) {
+  #root .app-shell.kanto-game .slot-disc {
+    width: 64px;
+    height: 64px;
+  }
+  #root .app-shell.kanto-game .court-slot.filled .slot-disc img {
+    width: 88px;
+    height: 88px;
+  }
+  #root .app-shell.kanto-game .slot-role {
+    font-size: 17px;
+    top: 0;
+    left: 0;
+    padding: 1px 3px;
+  }
+  #root .app-shell.kanto-game .slot-name {
+    min-width: 76px;
+    max-width: 106px;
+    font-size: 17px;
+    padding: 3px 5px;
+  }
+  #root .app-shell.kanto-game .slot-rating {
+    font-size: 14px;
+    padding: 0 2px;
+  }
+}
+#root .app-shell.kanto-game .pokemon-card {
+  container-type: inline-size;
+}
+#root .app-shell.kanto-game .pokemon-card .card-name {
+  font-size: clamp(20px, 16cqw, 28px);
+  overflow-wrap: normal;
+  word-break: normal;
+}
+#root .app-shell.kanto-game .bench-heading h2 :is(span, small) {
+  color: #efcb69;
+}
+#root .app-shell.kanto-game .franchise-panel .franchise-heading .eyebrow {
+  color: #efcb69;
+}
+@media (max-width: 680px) {
+  #root .app-shell.kanto-game .league-utilities {
+    display: block;
+  }
+  #root .app-shell.kanto-game .league-utilities .save-menu {
+    width: 100%;
+  }
+  #root .app-shell.kanto-game .league-utilities .matchup-lab {
+    margin-top: 14px;
+  }
+}
+body:has(#root .app-shell.kanto-game)
+  .franchise-detail-dialog
+  .mastery-heading
+  :is(h3, h4, strong, span, b, small) {
+  color: #fff8df;
+}
+body:has(#root .app-shell.kanto-game)
+  .franchise-detail-dialog
+  :is(.morale-heading, .chemistry-heading)
+  :is(h3, h4, strong, span, b, small) {
+  color: #fff8df;
+}
+@media (max-width: 680px) {
+  #root .app-shell.kanto-game :is(.masthead, .kanto-masthead) {
+    gap: 12px;
+    padding: 14px 16px;
+  }
+  #root .app-shell.kanto-game .masthead .brand {
+    flex-basis: 100%;
+  }
+  #root .app-shell.kanto-game .masthead .masthead-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 8px;
+    margin: 0;
+  }
+  #root
+    .app-shell.kanto-game
+    .masthead
+    .masthead-actions
+    :is(.header-restart, .header-play) {
+    margin: 0;
+    min-width: 0;
+    padding: 8px;
+    font-size: 19px;
+    text-align: center;
+  }
+  #root .app-shell.kanto-game .masthead .page-links {
+    display: flex;
+    flex-basis: 100%;
+    justify-content: center;
+    gap: 16px;
+    order: 5;
+  }
+  #root .app-shell.kanto-game .masthead .page-links :is(a, button) {
+    font-size: 18px;
+    padding: 2px;
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+  }
+  #root .app-shell.kanto-game .masthead .mode-tabs {
+    order: 3;
+    margin: 0;
+    width: 100%;
+  }
+}
+body:has(#root .app-shell.kanto-game)
+  .franchise-detail-dialog
+  .mastery-heading
+  .mastery-tier {
+  color: #493b18;
+  background: #efcb69;
+  border: 2px solid #85662e;
+  border-radius: 0;
+  padding: 3px 7px;
+}
+#root .app-shell.kanto-game .count-chip {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+/* App dialogs are siblings of the game shell; scope their controls explicitly. */
+body:has(#root .app-shell.kanto-game)
+  :is(.confirm-dialog, .rules-dialog, .franchise-detail-dialog)
+  .button {
+  color: #102747;
+  background: #d8e2df;
+  border: 3px solid #102747;
+  border-radius: 0;
+  box-shadow:
+    inset 0 0 0 2px #fff8df,
+    3px 3px #102747;
+  font: 22px/1.1 var(--retro-display);
+  min-height: 44px;
+  padding: 10px 16px;
+}
+body:has(#root .app-shell.kanto-game)
+  :is(.confirm-dialog, .rules-dialog, .franchise-detail-dialog)
+  .button.primary {
+  color: #fff8df;
+  background: #be3945;
+  border-color: #672734;
+  box-shadow:
+    inset 0 0 0 2px #e88a82,
+    3px 3px #102747;
+}
+body:has(#root .app-shell.kanto-game)
+  :is(.confirm-dialog, .rules-dialog)
+  .text-button {
+  color: #244e87;
+  font: 22px var(--retro-display);
+}
+body:has(#root .app-shell.kanto-game)
+  :is(.confirm-dialog, .rules-dialog)
+  :is(button, a, summary):focus-visible {
+  outline: 3px solid #be3945;
+  outline-offset: 3px;
+}
+body:has(#root .app-shell.kanto-game) .confirm-dialog.play-chooser {
+  width: min(800px, calc(100vw - 32px));
+  max-width: none;
+  max-height: calc(100dvh - 32px);
+  padding: 24px;
+}

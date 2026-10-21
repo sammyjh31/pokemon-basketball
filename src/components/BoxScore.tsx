@@ -2,6 +2,7 @@ import { AbilityStats } from "./AbilityStats";
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import { POKEMON_BY_ID } from "../data/pokemon";
+import { Portrait } from "./Portrait";
 import type { GameResult, Opponent, PlayerBox } from "../game/types";
 
 const sumFields = [
@@ -176,13 +177,22 @@ export function BoxScore({
               {players.map((player) => (
                 <tr key={player.pokemonId}>
                   <th scope="row">
-                    <span className="box-player-name">
-                      {POKEMON_BY_ID.get(player.pokemonId)?.name ??
-                        `#${player.pokemonId}`}
-                      <small>
-                        {player.slot} ·{" "}
-                        {player.slot.startsWith("B") ? "RESERVE" : "STARTER"}
-                      </small>
+                    <span className="box-player-identity">
+                      <span aria-hidden="true">
+                        {POKEMON_BY_ID.has(player.pokemonId) && (
+                          <Portrait
+                            mon={POKEMON_BY_ID.get(player.pokemonId)!}
+                          />
+                        )}
+                      </span>
+                      <span className="box-player-name">
+                        {POKEMON_BY_ID.get(player.pokemonId)?.name ??
+                          `#${player.pokemonId}`}
+                        <small>
+                          {player.slot} ·{" "}
+                          {player.slot.startsWith("B") ? "RESERVE" : "STARTER"}
+                        </small>
+                      </span>
                     </span>
                   </th>
                   {stats(player).map((value, index) => (

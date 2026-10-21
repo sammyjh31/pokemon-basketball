@@ -77,6 +77,9 @@ export function KantoNavigation({
   useEffect(() => setActive(initial), [initial]);
   return (
     <aside className="kanto-sidebar">
+      <span className="kanto-menu-label" aria-hidden="true">
+        LEAGUE MENU
+      </span>
       <nav aria-label="Game sections">
         {[
           { id: "team", label: "Team", Icon: Users, enabled: team },

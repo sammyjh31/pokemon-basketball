@@ -2,7 +2,7 @@ import { shinyPokemon } from "../game/shiny";
 import { ShinyRules } from "./ShinyPokemon";
 import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
 import { ALL_POKEMON, POKEMON_BY_ID, TYPES } from "../data/pokemon";
-import { draftPokemon } from "../game/draftPool";
+import { draftPokemon, draftPoolLabel } from "../game/draftPool";
 import {
   attributes,
   ATTRIBUTE_KEYS,
@@ -277,7 +277,7 @@ export function DraftPanel({
           <p className="draft-footnote">
             {run.mode === "spin"
               ? "Four choices. One spot on the team. Make it count."
-              : `${candidates.length} available Pokémon · Gen 1 + 2`}
+              : `${candidates.length} available Pokémon · ${draftPoolLabel(run.draftPool)}`}
           </p>
         </>
       )}

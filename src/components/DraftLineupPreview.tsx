@@ -1,5 +1,6 @@
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { ROSTER_SLOTS, type Roster, type RosterSlot } from "../game/types";
+import { Portrait } from "./Portrait";
 
 export function DraftLineupPreview({
   current,
@@ -19,8 +20,18 @@ export function DraftLineupPreview({
           const id = proposed[slot]!;
           const from = ROSTER_SLOTS.find((s) => current[s] === id);
           return (
-            <li key={slot}>
+            <li
+              key={slot}
+              className={
+                id === pokemonId
+                  ? "is-new-pick"
+                  : lockedSlots.includes(slot)
+                    ? "is-locked"
+                    : ""
+              }
+            >
               <b>{slot}</b>
+              <Portrait mon={POKEMON_BY_ID.get(id)!} />
               <span>
                 {POKEMON_BY_ID.get(id)!.name}
                 <small>

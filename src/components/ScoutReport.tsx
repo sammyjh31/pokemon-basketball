@@ -20,7 +20,7 @@ import {
 } from "../game/types";
 import { TypeScouting } from "./TypeScouting";
 import "../typeMatchups.css";
-import { TypeBadges } from "./Portrait";
+import { Portrait, TypeBadges } from "./Portrait";
 import { playerProfile, PROFILE_LABELS } from "../game/playerProfile";
 
 const BASE_LABELS: Record<keyof Pokemon["stats"], string> = {
@@ -103,10 +103,16 @@ export function ScoutReport({
       className="scout-report"
       aria-label={`${mon.name} scouting report`}
     >
-      <div className="scout-title">
-        <span className="eyebrow">PLAYER SCOUTING</span>
-        <strong>{profile.archetype}</strong>
-        <ShinyBadge mon={mon} />
+      <div className="scout-identity">
+        <Portrait mon={mon} />
+        <div className="scout-title">
+          <span className="eyebrow">
+            PLAYER SCOUTING · #{String(mon.id).padStart(3, "0")}
+          </span>
+          <span className="scout-player-name">{mon.name}</span>
+          <strong>{profile.archetype}</strong>
+          <ShinyBadge mon={mon} />
+        </div>
       </div>
       <div className="scout-measurements">
         <TypeBadges types={mon.types} />

@@ -9,6 +9,8 @@ import { createPortal } from "react-dom";
 import { GameInsightsPanel } from "./GameInsightsPanel";
 import { GameAnalytics } from "./LeagueAnalytics";
 import { POKEMON_BY_ID } from "../data/pokemon";
+import { Portrait } from "./Portrait";
+import { TeamArtwork } from "./ResultsVisuals";
 import { simulateMatch } from "../game/match";
 import type {
   LeagueBox,
@@ -122,12 +124,20 @@ function TeamBox({
             {players.map((p) => (
               <tr key={p.playerId}>
                 <th scope="row">
-                  <span className="box-player-name">
-                    {POKEMON_BY_ID.get(p.pokemonId)?.name ?? `#${p.pokemonId}`}
-                    <small>
-                      {p.slot} · {p.started ? "STARTER" : "RESERVE"}
-                      {p.fouls >= 6 ? " · 6+ FOULS" : ""}
-                    </small>
+                  <span className="box-player-identity">
+                    <span aria-hidden="true">
+                      {POKEMON_BY_ID.has(p.pokemonId) && (
+                        <Portrait mon={POKEMON_BY_ID.get(p.pokemonId)!} />
+                      )}
+                    </span>
+                    <span className="box-player-name">
+                      {POKEMON_BY_ID.get(p.pokemonId)?.name ??
+                        `#${p.pokemonId}`}
+                      <small>
+                        {p.slot} · {p.started ? "STARTER" : "RESERVE"}
+                        {p.fouls >= 6 ? " · 6+ FOULS" : ""}
+                      </small>
+                    </span>
                   </span>
                 </th>
                 {stats(p).map((value, i) => (
@@ -270,6 +280,9 @@ export function LeagueBoxScore({
         </div>
         <div className="box-score-matchup">
           <div>
+            <span className="box-score-team-art" aria-hidden="true">
+              <TeamArtwork roster={away.roster} />
+            </span>
             <span>{away.name} · AWAY</span>
             <strong
               className={
@@ -281,6 +294,9 @@ export function LeagueBoxScore({
           </div>
           <span className="box-score-versus">FINAL</span>
           <div>
+            <span className="box-score-team-art" aria-hidden="true">
+              <TeamArtwork roster={home.roster} />
+            </span>
             <span>{home.name} · HOME</span>
             <strong
               className={

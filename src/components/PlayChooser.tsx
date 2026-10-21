@@ -1,3 +1,4 @@
+import { publicAsset } from "../assets";
 import { Dialog } from "./Dialog";
 import type { PlayStyle } from "./onboarding";
 
@@ -15,7 +16,7 @@ const OPTIONS: {
   {
     style: "free",
     title: "Free build",
-    goal: "Choose any eight of 251 Pokémon and see how far your dream lineup goes.",
+    goal: "Choose any eight Pokémon and see how far your dream lineup goes.",
   },
   {
     style: "franchise",
@@ -48,7 +49,7 @@ export function PlayChooser({
       onClose={onClose}
     >
       <ul className="play-options">
-        {OPTIONS.map((option) => (
+        {OPTIONS.map((option, index) => (
           <li key={option.style}>
             <button
               type="button"
@@ -56,6 +57,15 @@ export function PlayChooser({
               aria-current={current === option.style ? "true" : undefined}
               onClick={() => onChoose(option.style)}
             >
+              <span className="play-option-art" aria-hidden="true">
+                <span className="play-option-number">0{index + 1}</span>
+                <img
+                  src={publicAsset(
+                    `/pokemon-pixel/${{ challenge: 25, free: 6, franchise: 150, local: 448 }[option.style]}.png`,
+                  )}
+                  alt=""
+                />
+              </span>
               <strong>
                 {option.title}
                 {option.tag && <small>{option.tag}</small>}

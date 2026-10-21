@@ -5,6 +5,7 @@ import { seasonTeams } from "../game/season";
 import type { LeagueGameSummary, Run } from "../game/types";
 import { LeagueBoxScore } from "./LeagueBoxScore";
 import { LeaguePanel } from "./lazyPanels";
+import { TeamArtwork } from "./ResultsVisuals";
 import "../franchiseGames.css";
 
 export function FranchiseSchedule({
@@ -67,16 +68,21 @@ export function FranchiseSchedule({
       </div>
       {fixture && (
         <div className="franchise-next-game">
-          <span className="eyebrow">
-            GAME {rounds + 1} · {fixture.homeTeamId === 0 ? "HOME" : "AWAY"}
+          <div>
+            <span className="eyebrow">
+              GAME {rounds + 1} · {fixture.homeTeamId === 0 ? "HOME" : "AWAY"}
+            </span>
+            <h3>
+              {fixture.homeTeamId === 0 ? "vs." : "at"} {opponent?.name}
+            </h3>
+            <p>
+              Play four 60-second quarters. Scores and counting stats scale ×12
+              into an official 48-minute game. CPU games advance with yours.
+            </p>
+          </div>
+          <span className="fixture-team-art" aria-hidden="true">
+            <TeamArtwork roster={opponent?.roster} />
           </span>
-          <h3>
-            {fixture.homeTeamId === 0 ? "vs." : "at"} {opponent?.name}
-          </h3>
-          <p>
-            Play four 60-second quarters. Scores and counting stats scale ×12
-            into an official 48-minute game. CPU games advance with yours.
-          </p>
         </div>
       )}
       <div className="franchise-game-actions">
@@ -129,7 +135,10 @@ export function FranchiseSchedule({
             )!;
             return (
               <li key={fixture.id}>
-                <span>
+                <span className="schedule-opponent">
+                  <span aria-hidden="true">
+                    <TeamArtwork roster={opponent.roster} compact />
+                  </span>
                   {index + 1}. {home ? "vs." : "at"} {opponent.name}
                 </span>
                 {result ? (

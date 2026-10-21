@@ -49,7 +49,7 @@ export function CounterLearningResults({
         aria-label={label}
         tabIndex={0}
       >
-        <table>
+        <table className="results-table">
           <thead>
             <tr>
               <th>Response</th>

@@ -359,7 +359,7 @@ function Offseason({
     (step) => step.status === "todo" || step.id === "start",
   )?.id;
   return (
-    <section aria-label="Franchise offseason">
+    <section className="franchise-offseason" aria-label="Franchise offseason">
       <div className="franchise-section-heading">
         <div>
           <h3>Make your next move.</h3>
@@ -957,7 +957,7 @@ function Careers({ franchise, run }: { franchise: Franchise; run: Run }) {
     (honor) => honor.title === "Championship ring",
   ).length;
   return (
-    <section aria-label="Career statistics">
+    <section className="franchise-careers" aria-label="Career statistics">
       {careerId !== null && (
         <CareerDetail
           pokemonId={careerId}
@@ -1290,7 +1290,7 @@ function History({ franchise }: { franchise: Franchise }) {
     (standing) => standing.teamId === 0,
   );
   return (
-    <section aria-label="Season history">
+    <section className="franchise-history" aria-label="Season history">
       {showGames && season && (
         <HistoricalGames season={season} onClose={() => setShowGames(false)} />
       )}
