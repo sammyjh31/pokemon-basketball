@@ -153,7 +153,11 @@
     inset 0 0 0 2px #102747,
     3px 3px #0c1d37;
 }
-#root .app-shell.kanto-game :is(button, .button):active:not(:disabled) {
+#root
+  .app-shell.kanto-game
+  :is(.button, .header-restart, .header-play, .kanto-exit):active:not(
+    :disabled
+  ) {
   transform: translate(1px, 1px);
 }
 #root .app-shell.kanto-game .text-button {
