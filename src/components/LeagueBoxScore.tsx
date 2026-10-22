@@ -1,3 +1,4 @@
+import { useCloseOnGameViewChange } from "./GameNavigation";
 import { GameCounterReport } from "./GameCounterReport";
 import { GameMovesReport, GameComboReport } from "./MovesetPanel";
 import { GameMasteryReport } from "./MasteryPanel";
@@ -208,6 +209,7 @@ export function LeagueBoxScore({
   const dialog = useRef<HTMLDivElement>(null),
     titleId = useId(),
     descriptionId = useId();
+  useCloseOnGameViewChange(onClose);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null,
       overflow = document.body.style.overflow;

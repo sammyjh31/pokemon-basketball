@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, it } from "vitest";
 import App from "../App";
 import { initialState } from "../game/state";
@@ -21,6 +21,7 @@ it("refreshes the coach preview from completed games even when the draft has no 
   state.run.coach = { version: 1, id: "oak" };
   const storage = { getItem: () => null, setItem: () => {} };
   const view = render(<App initial={state} storage={storage} />);
+  fireEvent.click(screen.getByRole("button", { name: "Team" }));
   expect(
     screen.getByRole("region", { name: "Projected five-player chemistry" }),
   ).toHaveTextContent("Earned familiarity 0 / 100");
@@ -61,9 +62,11 @@ it("refreshes the coach preview from completed games even when the draft has no 
     },
   };
   view.rerender(<App key="completed" initial={completed} storage={storage} />);
+  fireEvent.click(screen.getByRole("button", { name: "Team" }));
   expect(
     screen.getByRole("region", { name: "Projected five-player chemistry" }),
   ).toHaveTextContent("Earned familiarity 50 / 100");
+  fireEvent.click(screen.getByRole("button", { name: "Team" }));
   expect(
     screen.getByRole("region", { name: "Projected five-player chemistry" }),
   ).toHaveTextContent("600.0 average retained shared minutes");

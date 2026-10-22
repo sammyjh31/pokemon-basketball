@@ -42,12 +42,11 @@ it("completes the real new-run coach step and removes manual coaching controls",
   fireEvent.click(
     screen.getByRole("button", { name: `Draft ${offered.name}` }),
   );
+  fireEvent.click(screen.getByRole("button", { name: "Team" }));
   expect(
     screen.getByRole("region", { name: `${offered.name} automatic coaching` }),
   ).toBeInTheDocument();
-  expect(
-    screen.getByRole("button", { name: "Simulate season" }),
-  ).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Season" })).toBeDisabled();
   expect(screen.queryByLabelText("Coaching style")).toBeNull();
   expect(screen.queryByLabelText("Defensive scheme")).toBeNull();
 });
@@ -73,6 +72,7 @@ it("gates the franchise overview's simulation shortcut until a coach is chosen",
   fireEvent.click(
     screen.getByRole("button", { name: "Draft Delia Ketchum (Mom)" }),
   );
+  fireEvent.click(screen.getByRole("button", { name: "Franchise" }));
   expect(
     screen.getByRole("button", { name: "Simulate season 2" }),
   ).toBeEnabled();

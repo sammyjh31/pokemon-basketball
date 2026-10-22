@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { navigateGameView } from "./GameNavigation";
 import { toPng } from "html-to-image";
 import { lineupLink } from "../game/lineup";
 import type { Run } from "../game/types";
@@ -36,6 +37,10 @@ export function LineupTools({
     if (!court || exporting) return;
     setExporting(true);
     try {
+      if (navigateGameView("team"))
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        );
       await document.fonts.ready;
       await Promise.all(
         [...court.querySelectorAll("img")].map((img) =>

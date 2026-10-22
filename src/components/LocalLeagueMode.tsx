@@ -1,6 +1,11 @@
 import { shinyPokemon } from "../game/shiny";
 import { ShinyContext } from "./ShinyPokemon";
 import { KantoNavigation, LocalMasthead } from "./KantoShell";
+import {
+  GameNavigation,
+  GameScreen,
+  GameScreenHeading,
+} from "./GameNavigation";
 import { KantoSeasonHub } from "./KantoSeasonHub";
 import { MasteryPanel } from "./MasteryPanel";
 import { LocalNewsPanel } from "./LocalNewsPanel";
@@ -373,417 +378,501 @@ export function LocalLeagueMode({
   );
   return (
     <SpriteContext.Provider value={spriteStyle}>
-      <ShinyContext.Provider value={draft?.shinySeed}>
-        <div
-          className={`app-shell local-league kanto-game${league ? " has-season" : ""}`}
-        >
-          <LocalMasthead
-            onExit={onExit}
-            disabled={busy && !restoration}
-            onRestart={draft ? () => setConfirm(true) : undefined}
-            restartDisabled={busy}
-          />
-          <KantoNavigation
-            team={ready}
-            draft={!league && !ready}
-            season={ready}
-            playoffs={!!league}
-            initial={league ? "season" : ready ? "team" : "draft"}
-          />
-          {!league && leagueControls}
-          <main>
-            {league && rankings.length > 0 && (
-              <KantoSeasonHub
-                id="season"
-                team={league.teams.find(
-                  (team) => team.id === rankings[0].manager.teamId,
-                )!}
-                players={league.players}
-                wins={rankings[0].standing.wins}
-                losses={rankings[0].standing.losses}
-                rank={rankings[0].leagueRank}
-                playoffsAvailable
-              />
-            )}
-            {league && (
-              <details className="kanto-league-options">
-                <summary>League options & save controls</summary>
-                {leagueControls}
-                <SaveMenu {...saveControls} />
-              </details>
-            )}
-            {notice && (
-              <p className="notice" role="status">
-                {notice}
-              </p>
-            )}
-            {error && (
-              <p className="notice" role="alert">
-                {error}
-              </p>
-            )}
-            <div className="league-utilities">
-              {!league && <SaveMenu {...saveControls} />}
-              {!restoration && (!draft || draft.version === 2) && (
-                <MatchupLab />
+      <GameNavigation
+        loading={!!restoration || (!!draft?.completed && !league)}
+        scope="local"
+        initial={
+          offseason
+            ? "franchise"
+            : league || draft?.completed
+              ? "season"
+              : ready
+                ? "team"
+                : "draft"
+        }
+        resetKey={`${draft?.seed ?? "setup"}:${year}:${offseason ? "offseason" : "season"}:${ready ? "ready" : "draft"}`}
+        screens={{
+          draft: !league && !ready,
+          team: ready,
+          season: ready,
+          playoffs: !!league,
+          franchise:
+            !!draft &&
+            (!!draft.career ||
+              !!league ||
+              (ready && draft.coaching.some((c) => c.coach))),
+        }}
+      >
+        <ShinyContext.Provider value={draft?.shinySeed}>
+          <div
+            className={`app-shell local-league kanto-game focused-game${league ? " has-season" : ""}`}
+          >
+            <LocalMasthead
+              onExit={onExit}
+              disabled={busy && !restoration}
+              onRestart={draft ? () => setConfirm(true) : undefined}
+              restartDisabled={busy}
+            />
+            <KantoNavigation
+              team={ready}
+              draft={!league && !ready}
+              season={ready}
+              playoffs={!!league}
+              initial={league ? "season" : ready ? "team" : "draft"}
+              franchise={
+                !!draft &&
+                (!!draft.career ||
+                  !!league ||
+                  (ready && draft.coaching.some((c) => c.coach)))
+              }
+            />
+            <main id="main-content" tabIndex={-1}>
+              <GameScreenHeading />
+              {busy && !restoration && (
+                <p className="screen-job" role="status">
+                  League simulation running · {progress.completed}/
+                  {progress.total} games
+                </p>
               )}
-            </div>
-            {draft &&
-              ready &&
-              !draft.coachDraftRequired &&
-              draft.coaching.some((c) => c.coach) && (
-                <details className="local-panel" open={offseason}>
-                  <summary>Coaches · hiring and career records</summary>
-                  <CoachOfficePanel
-                    teams={localLeagueTeams(draft)}
-                    office={draft.career?.coachOffice}
-                    year={year}
-                    offseason={offseason}
-                    humans={draft.managers}
-                    records={localCoachRecords(
-                      draft.career,
-                      localLeagueTeams(draft),
-                      result,
-                      playoffs,
-                    )}
-                    disabled={busy}
-                    onReview={() => change(reviewLocalCoaches)}
-                    onHire={(teamId, id) =>
-                      change((current) =>
-                        appointLocalCoach(current, teamId, id),
-                      )
-                    }
+              <GameScreen screen="draft">
+                {!league && leagueControls}
+              </GameScreen>
+              <GameScreen screen="season">
+                {league && rankings.length > 0 && (
+                  <KantoSeasonHub
+                    id="season"
+                    team={league.teams.find(
+                      (team) => team.id === rankings[0].manager.teamId,
+                    )!}
+                    players={league.players}
+                    wins={rankings[0].standing.wins}
+                    losses={rankings[0].standing.losses}
+                    rank={rankings[0].leagueRank}
+                    playoffsAvailable
                   />
+                )}
+              </GameScreen>
+              {league && (
+                <details className="kanto-league-options">
+                  <summary>League options & save controls</summary>
+                  {leagueControls}
+                  <SaveMenu {...saveControls} />
                 </details>
               )}
-            {restoration ? (
-              <section
-                className="local-panel"
-                aria-label="Local league restoration"
-              >
-                <h2>
-                  {restoration.status === "loading"
-                    ? "Restoring your local league"
-                    : restoration.status === "cancelled"
-                      ? "Restoration cancelled"
-                      : "Unable to restore your local league"}
-                </h2>
-                <p>
-                  Your saved career and teammate history are being verified
-                  before play resumes. Your original save stays in place until
-                  verification succeeds.
+              {notice && (
+                <p className="notice" role="status">
+                  {notice}
                 </p>
-                {restoration.status === "loading" ? (
-                  <div className="local-progress">
-                    <p role="status">
-                      {restoration.total
-                        ? `Verified ${restoration.completed} of ${restoration.total} archived seasons.`
-                        : "Preparing saved career verification…"}
-                    </p>
-                    <progress
-                      aria-label="Local career verification progress"
-                      {...(restoration.total
-                        ? {
-                            value: restoration.completed,
-                            max: restoration.total,
-                          }
-                        : {})}
-                    />
-                    <button
-                      type="button"
-                      className="button secondary"
-                      onClick={cancelRestore}
-                    >
-                      Cancel restore
-                    </button>
-                  </div>
-                ) : (
-                  <div className="local-header-actions">
-                    <button
-                      type="button"
-                      className="button primary"
-                      onClick={retryRestore}
-                    >
-                      Retry restore
-                    </button>
-                    <button
-                      type="button"
-                      className="button secondary"
-                      onClick={() => setConfirm(true)}
-                    >
-                      Start a new local league
-                    </button>
-                  </div>
-                )}
-              </section>
-            ) : !draft ? (
-              <LocalLeagueSetup onStart={change} />
-            ) : draft.coachDraftRequired ? (
-              <CoachDraft
-                seed={draft.seed}
-                manager={localCoachTurn(draft)?.name}
-                taken={draft.coaching.flatMap((c) =>
-                  c.coach ? [c.coach.id] : [],
-                )}
-                onChoose={(id) =>
-                  change((current) =>
-                    selectLocalCoach(
-                      current,
-                      localCoachTurn(current)!.teamId,
-                      id,
-                    ),
-                  )
-                }
-              />
-            ) : !ready ? (
-              <LocalLeagueDraft
-                key={draft.picks.length}
-                draft={draft}
-                onLocksChange={(slots) =>
-                  change((current) => updateLocalDraftLocks(current, slots))
-                }
-                onPick={(id, slot, lineup) =>
-                  change((current) =>
-                    pickLocalPlayer(current, id, slot, lineup),
-                  )
-                }
-              />
-            ) : !league ? (
-              <>
-                <ReviewTeams
-                  draft={draft}
-                  change={change}
-                  disabled={busy || draft.completed}
-                />
-                <section className="local-simulate local-panel" id="season">
-                  <div>
-                    <h3>
-                      {draft.completed
-                        ? "Restoring your season"
-                        : `${draft.options?.format.gamesPerTeam ?? 82} games for every team`}
-                    </h3>
-                    <p>
-                      One shared schedule, using the basketball simulation with
-                      your league’s rules.
-                    </p>
-                  </div>
-                  {busy ? (
-                    <div className="local-progress" role="status">
-                      <span>
-                        {progress.total > 0
-                          ? `${draft.completed ? "Restoring" : "Simulating"} season · ${progress.completed.toLocaleString()} / ${progress.total.toLocaleString()} games`
-                          : "Opening saved season…"}
-                      </span>
-                      <progress
-                        value={progress.completed}
-                        max={Math.max(1, progress.total)}
-                        aria-label="Local season progress"
+              )}
+              {error && (
+                <p className="notice" role="alert">
+                  {error}
+                </p>
+              )}
+              <div className="league-utilities">
+                {!league && <SaveMenu {...saveControls} />}
+                <GameScreen screen={["draft", "team"]}>
+                  {!restoration && (!draft || draft.version === 2) && (
+                    <MatchupLab />
+                  )}
+                </GameScreen>
+              </div>
+              <GameScreen screen="franchise">
+                {draft &&
+                  ready &&
+                  !draft.coachDraftRequired &&
+                  draft.coaching.some((c) => c.coach) && (
+                    <details className="local-panel" open={offseason}>
+                      <summary>Coaches · hiring and career records</summary>
+                      <CoachOfficePanel
+                        teams={localLeagueTeams(draft)}
+                        office={draft.career?.coachOffice}
+                        year={year}
+                        offseason={offseason}
+                        humans={draft.managers}
+                        records={localCoachRecords(
+                          draft.career,
+                          localLeagueTeams(draft),
+                          result,
+                          playoffs,
+                        )}
+                        disabled={busy}
+                        onReview={() => change(reviewLocalCoaches)}
+                        onHire={(teamId, id) =>
+                          change((current) =>
+                            appointLocalCoach(current, teamId, id),
+                          )
+                        }
                       />
+                    </details>
+                  )}
+              </GameScreen>
+              {restoration ? (
+                <section
+                  className="local-panel"
+                  aria-label="Local league restoration"
+                >
+                  <h2>
+                    {restoration.status === "loading"
+                      ? "Restoring your local league"
+                      : restoration.status === "cancelled"
+                        ? "Restoration cancelled"
+                        : "Unable to restore your local league"}
+                  </h2>
+                  <p>
+                    Your saved career and teammate history are being verified
+                    before play resumes. Your original save stays in place until
+                    verification succeeds.
+                  </p>
+                  {restoration.status === "loading" ? (
+                    <div className="local-progress">
+                      <p role="status">
+                        {restoration.total
+                          ? `Verified ${restoration.completed} of ${restoration.total} archived seasons.`
+                          : "Preparing saved career verification…"}
+                      </p>
+                      <progress
+                        aria-label="Local career verification progress"
+                        {...(restoration.total
+                          ? {
+                              value: restoration.completed,
+                              max: restoration.total,
+                            }
+                          : {})}
+                      />
+                      <button
+                        type="button"
+                        className="button secondary"
+                        onClick={cancelRestore}
+                      >
+                        Cancel restore
+                      </button>
                     </div>
                   ) : (
-                    <button
-                      className="button primary"
-                      onClick={() => void simulate()}
-                    >
-                      {draft.completed
-                        ? "Retry restoring season"
-                        : "Simulate local season"}
-                    </button>
-                  )}
-                </section>
-              </>
-            ) : (
-              <>
-                {!offseason && (
-                  <details className="local-panel">
-                    <summary>Current teams · coaching and familiarity</summary>
-                    <ReviewTeams
-                      draft={draft}
-                      change={change}
-                      disabled
-                      chemistryBonds={
-                        playoffs?.chemistryBonds ?? league.chemistryBonds
-                      }
-                      morale={playoffs?.morale ?? league.morale}
-                      mastery={
-                        playoffs?.abilityMastery ?? league.abilityMastery
-                      }
-                    />
-                  </details>
-                )}
-                {offseason && (
-                  <>
-                    <LocalCareerPanel draft={draft} change={change} />
-                    <ReviewTeams
-                      draft={draft}
-                      change={change}
-                      disabled={busy}
-                    />
-                  </>
-                )}
-                {!offseason &&
-                  draft.options &&
-                  playoffs?.championId != null &&
-                  year < 50 && (
-                    <section className="local-panel">
-                      <h2>Keep the franchise going.</h2>
-                      <p>
-                        The championship is decided. Begin the offseason to
-                        develop players
-                        {draft.options.mode === "generational" && year < 9
-                          ? ` and draft Generation ${year + 1}`
-                          : ""}
-                        .
-                      </p>
+                    <div className="local-header-actions">
                       <button
                         type="button"
                         className="button primary"
-                        disabled={busy}
-                        onClick={() =>
-                          change((current) =>
-                            beginLocalOffseason(current, result!, playoffs),
-                          )
-                        }
+                        onClick={retryRestore}
                       >
-                        Begin offseason
+                        Retry restore
                       </button>
-                    </section>
-                  )}
-                <section
-                  className="local-panel local-results"
-                  aria-label="Friends season results"
-                >
-                  <span className="eyebrow">
-                    REGULAR-SEASON BRAGGING RIGHTS
-                  </span>
-                  <h2>
-                    {rankings[0].manager.name} finishes first among friends.
-                  </h2>
-                  <p>
-                    {rankings[0].standing.wins}–{rankings[0].standing.losses} ·
-                    #{rankings[0].leagueRank} in the full league
-                  </p>
-                  <LeagueFriendCards rankings={rankings} teams={league.teams} />
-                  <details className="clarity-disclosure">
-                    <summary>Full friends leaderboard</summary>
-                    <div
-                      className="results-table-wrap"
-                      tabIndex={0}
-                      role="region"
-                      aria-label="Scrollable friends leaderboard"
-                    >
-                      <table className="results-table">
-                        <caption className="sr-only">
-                          Friends leaderboard
-                        </caption>
-                        <thead>
-                          <tr>
-                            <th scope="col">FRIEND / TEAM</th>
-                            <th scope="col">LEAGUE RANK</th>
-                            <th scope="col">W</th>
-                            <th scope="col">L</th>
-                            <th scope="col">DIFF / GAME</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {rankings.map(
-                            ({ manager, standing, leagueRank }, index) => (
-                              <tr
-                                key={manager.teamId}
-                                className={
-                                  index === 0 ? "league-user-team" : ""
-                                }
-                              >
-                                <th scope="row">
-                                  <strong>{manager.name}</strong>
-                                  <small>
-                                    {league.teams[manager.teamId].name}
-                                  </small>
-                                </th>
-                                <td>#{leagueRank}</td>
-                                <td>{standing.wins}</td>
-                                <td>{standing.losses}</td>
-                                <td>
-                                  {(
-                                    (standing.pointsFor -
-                                      standing.pointsAgainst) /
-                                    (standing.wins + standing.losses || 1)
-                                  ).toFixed(1)}
-                                </td>
-                              </tr>
-                            ),
-                          )}
-                        </tbody>
-                      </table>
+                      <button
+                        type="button"
+                        className="button secondary"
+                        onClick={() => setConfirm(true)}
+                      >
+                        Start a new local league
+                      </button>
                     </div>
-                    <p className="stat-legend">
-                      Ranked by wins, then point differential, then team ID,
-                      matching the league standings. The top{" "}
-                      {draft.options?.format.playoffTeams ?? 16} teams advance
-                      to the playoffs below.
-                    </p>
-                  </details>
+                  )}
                 </section>
-                <PlayoffPanel
-                  league={league}
-                  seasonSeed={localSeasonSeed(draft)}
-                  playoffs={playoffs}
-                  managers={draft.managers}
-                  onAdvance={(mode) => void advancePlayoffs(mode)}
-                  simulating={busy}
-                  progress={progress}
-                />
-                <details className="clarity-disclosure season-explore">
-                  <summary>
-                    Explore league stats
-                    <span>
-                      Standings, player leaders, awards & game reports
-                    </span>
-                  </summary>
-                  <LeaguePanel
-                    yourTeamIds={draft.managers.map(
-                      (manager) => manager.teamId,
+              ) : !draft ? (
+                <GameScreen screen="draft">
+                  <LocalLeagueSetup onStart={change} />
+                </GameScreen>
+              ) : draft.coachDraftRequired ? (
+                <GameScreen screen="draft">
+                  <CoachDraft
+                    seed={draft.seed}
+                    manager={localCoachTurn(draft)?.name}
+                    taken={draft.coaching.flatMap((c) =>
+                      c.coach ? [c.coach.id] : [],
                     )}
-                    year={year}
-                    league={league}
-                    morale={playoffs?.morale ?? league.morale}
-                    mastery={playoffs?.abilityMastery ?? league.abilityMastery}
+                    onChoose={(id) =>
+                      change((current) =>
+                        selectLocalCoach(
+                          current,
+                          localCoachTurn(current)!.teamId,
+                          id,
+                        ),
+                      )
+                    }
                   />
-                </details>
-              </>
+                </GameScreen>
+              ) : !ready ? (
+                <GameScreen screen="draft">
+                  <LocalLeagueDraft
+                    key={draft.picks.length}
+                    draft={draft}
+                    onLocksChange={(slots) =>
+                      change((current) => updateLocalDraftLocks(current, slots))
+                    }
+                    onPick={(id, slot, lineup) =>
+                      change((current) =>
+                        pickLocalPlayer(current, id, slot, lineup),
+                      )
+                    }
+                  />
+                </GameScreen>
+              ) : !league ? (
+                <>
+                  <GameScreen screen="team">
+                    <ReviewTeams
+                      draft={draft}
+                      change={change}
+                      disabled={busy || draft.completed}
+                    />
+                    <div className="game-step-bar">
+                      <a className="button primary" href="#local-league/season">
+                        Go to season
+                      </a>
+                    </div>
+                  </GameScreen>
+                  <GameScreen screen="season">
+                    <section className="local-simulate local-panel" id="season">
+                      <div>
+                        <h3>
+                          {draft.completed
+                            ? "Restoring your season"
+                            : `${draft.options?.format.gamesPerTeam ?? 82} games for every team`}
+                        </h3>
+                        <p>
+                          One shared schedule, using the basketball simulation
+                          with your league’s rules.
+                        </p>
+                      </div>
+                      {busy ? (
+                        <div className="local-progress" role="status">
+                          <span>
+                            {progress.total > 0
+                              ? `${draft.completed ? "Restoring" : "Simulating"} season · ${progress.completed.toLocaleString()} / ${progress.total.toLocaleString()} games`
+                              : "Opening saved season…"}
+                          </span>
+                          <progress
+                            value={progress.completed}
+                            max={Math.max(1, progress.total)}
+                            aria-label="Local season progress"
+                          />
+                        </div>
+                      ) : (
+                        <button
+                          className="button primary"
+                          onClick={() => void simulate()}
+                        >
+                          {draft.completed
+                            ? "Retry restoring season"
+                            : "Simulate local season"}
+                        </button>
+                      )}
+                    </section>
+                  </GameScreen>
+                </>
+              ) : (
+                <>
+                  <GameScreen screen="team">
+                    {!offseason && (
+                      <section className="local-panel">
+                        <h2>Current teams</h2>
+                        <ReviewTeams
+                          draft={draft}
+                          change={change}
+                          disabled
+                          chemistryBonds={
+                            playoffs?.chemistryBonds ?? league.chemistryBonds
+                          }
+                          morale={playoffs?.morale ?? league.morale}
+                          mastery={
+                            playoffs?.abilityMastery ?? league.abilityMastery
+                          }
+                        />
+                      </section>
+                    )}
+                  </GameScreen>
+                  {offseason && (
+                    <>
+                      <GameScreen screen="franchise">
+                        <LocalCareerPanel draft={draft} change={change} />
+                      </GameScreen>
+                      <GameScreen screen="team">
+                        <ReviewTeams
+                          draft={draft}
+                          change={change}
+                          disabled={busy}
+                        />
+                      </GameScreen>
+                    </>
+                  )}
+                  <GameScreen screen="playoffs">
+                    {!offseason &&
+                      draft.options &&
+                      playoffs?.championId != null &&
+                      year < 50 && (
+                        <section className="local-panel">
+                          <h2>Keep the franchise going.</h2>
+                          <p>
+                            The championship is decided. Begin the offseason to
+                            develop players
+                            {draft.options.mode === "generational" && year < 9
+                              ? ` and draft Generation ${year + 1}`
+                              : ""}
+                            .
+                          </p>
+                          <button
+                            type="button"
+                            className="button primary"
+                            disabled={busy}
+                            onClick={() =>
+                              change((current) =>
+                                beginLocalOffseason(current, result!, playoffs),
+                              )
+                            }
+                          >
+                            Begin offseason
+                          </button>
+                        </section>
+                      )}
+                  </GameScreen>
+                  <GameScreen screen="season">
+                    <section
+                      className="local-panel local-results"
+                      aria-label="Friends season results"
+                    >
+                      <span className="eyebrow">
+                        REGULAR-SEASON BRAGGING RIGHTS
+                      </span>
+                      <h2>
+                        {rankings[0].manager.name} finishes first among friends.
+                      </h2>
+                      <p>
+                        {rankings[0].standing.wins}–
+                        {rankings[0].standing.losses} · #
+                        {rankings[0].leagueRank} in the full league
+                      </p>
+                      <LeagueFriendCards
+                        rankings={rankings}
+                        teams={league.teams}
+                      />
+                      <details className="clarity-disclosure">
+                        <summary>Full friends leaderboard</summary>
+                        <div
+                          className="results-table-wrap"
+                          tabIndex={0}
+                          role="region"
+                          aria-label="Scrollable friends leaderboard"
+                        >
+                          <table className="results-table">
+                            <caption className="sr-only">
+                              Friends leaderboard
+                            </caption>
+                            <thead>
+                              <tr>
+                                <th scope="col">FRIEND / TEAM</th>
+                                <th scope="col">LEAGUE RANK</th>
+                                <th scope="col">W</th>
+                                <th scope="col">L</th>
+                                <th scope="col">DIFF / GAME</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rankings.map(
+                                ({ manager, standing, leagueRank }, index) => (
+                                  <tr
+                                    key={manager.teamId}
+                                    className={
+                                      index === 0 ? "league-user-team" : ""
+                                    }
+                                  >
+                                    <th scope="row">
+                                      <strong>{manager.name}</strong>
+                                      <small>
+                                        {league.teams[manager.teamId].name}
+                                      </small>
+                                    </th>
+                                    <td>#{leagueRank}</td>
+                                    <td>{standing.wins}</td>
+                                    <td>{standing.losses}</td>
+                                    <td>
+                                      {(
+                                        (standing.pointsFor -
+                                          standing.pointsAgainst) /
+                                        (standing.wins + standing.losses || 1)
+                                      ).toFixed(1)}
+                                    </td>
+                                  </tr>
+                                ),
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                        <p className="stat-legend">
+                          Ranked by wins, then point differential, then team ID,
+                          matching the league standings. The top{" "}
+                          {draft.options?.format.playoffTeams ?? 16} teams
+                          advance to the playoffs below.
+                        </p>
+                      </details>
+                    </section>
+                  </GameScreen>
+                  <GameScreen screen="playoffs">
+                    <PlayoffPanel
+                      league={league}
+                      seasonSeed={localSeasonSeed(draft)}
+                      playoffs={playoffs}
+                      managers={draft.managers}
+                      onAdvance={(mode) => void advancePlayoffs(mode)}
+                      simulating={busy}
+                      progress={progress}
+                    />
+                  </GameScreen>
+                  <GameScreen screen="season">
+                    <details className="clarity-disclosure season-explore">
+                      <summary>
+                        Explore league stats
+                        <span>
+                          Standings, player leaders, awards & game reports
+                        </span>
+                      </summary>
+                      <LeaguePanel
+                        yourTeamIds={draft.managers.map(
+                          (manager) => manager.teamId,
+                        )}
+                        year={year}
+                        league={league}
+                        morale={playoffs?.morale ?? league.morale}
+                        mastery={
+                          playoffs?.abilityMastery ?? league.abilityMastery
+                        }
+                      />
+                    </details>
+                  </GameScreen>
+                </>
+              )}
+              <GameScreen screen="franchise">
+                {draft && (league || draft.career?.history.length) && (
+                  <details className="local-panel">
+                    <summary>
+                      League news · results, development and club moves
+                    </summary>
+                    <LocalNewsPanel
+                      draft={draft}
+                      league={league}
+                      playoffs={playoffs}
+                    />
+                  </details>
+                )}
+                {draft?.career && <LocalCareerHistory draft={draft} />}
+              </GameScreen>
+            </main>
+            <footer className="local-footer">
+              Saved in this browser separately from your solo game. Share the
+              computer for each friend's turn.
+            </footer>
+            {confirm && (
+              <ConfirmDialog
+                title="Start a new local league?"
+                description="This replaces this local draft, every career season, and playoff history. Your solo game and franchise stay saved."
+                confirmLabel="Replace local league"
+                onCancel={() => setConfirm(false)}
+                onConfirm={() => {
+                  reset();
+                  setConfirm(false);
+                }}
+              />
             )}
-            {draft && (league || draft.career?.history.length) && (
-              <details className="local-panel">
-                <summary>
-                  League news · results, development and club moves
-                </summary>
-                <LocalNewsPanel
-                  draft={draft}
-                  league={league}
-                  playoffs={playoffs}
-                />
-              </details>
-            )}
-            {draft?.career && <LocalCareerHistory draft={draft} />}
-          </main>
-          <footer className="local-footer">
-            Saved in this browser separately from your solo game. Share the
-            computer for each friend's turn.
-          </footer>
-          {confirm && (
-            <ConfirmDialog
-              title="Start a new local league?"
-              description="This replaces this local draft, every career season, and playoff history. Your solo game and franchise stay saved."
-              confirmLabel="Replace local league"
-              onCancel={() => setConfirm(false)}
-              onConfirm={() => {
-                reset();
-                setConfirm(false);
-              }}
-            />
-          )}
-        </div>
-      </ShinyContext.Provider>
+          </div>
+        </ShinyContext.Provider>
+      </GameNavigation>
     </SpriteContext.Provider>
   );
 }

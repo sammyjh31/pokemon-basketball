@@ -1,3 +1,4 @@
+import { useCloseOnGameViewChange } from "./GameNavigation";
 import { AbilityStats } from "./AbilityStats";
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -55,6 +56,7 @@ export function BoxScore({
     ]),
   ) as Totals;
   const overtime = game.overtimePeriods ?? Number(game.overtime);
+  useCloseOnGameViewChange(onClose);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const overflow = document.body.style.overflow;

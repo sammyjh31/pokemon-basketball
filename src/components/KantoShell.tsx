@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { navigateGameView, useGameNavigation } from "./GameNavigation";
+import { BuildingCommunity } from "pixelarticons/react/BuildingCommunity.js";
 import { Users } from "pixelarticons/react/Users.js";
 import { Clipboard } from "pixelarticons/react/Clipboard.js";
 import { ChartBarBig } from "pixelarticons/react/ChartBarBig.js";
@@ -55,6 +57,7 @@ export function LocalMasthead({
   );
 }
 export function scrollToGameSection(id: string) {
+  if (navigateGameView(id)) return;
   const target =
     (id === "draft" ? document.getElementById("draft-board") : null) ??
     document.getElementById(id);
@@ -68,13 +71,16 @@ export function KantoNavigation({
   season = false,
   playoffs = false,
   initial = "draft",
+  franchise = false,
 }: {
   team?: boolean;
   draft?: boolean;
   season?: boolean;
   playoffs?: boolean;
   initial?: string;
+  franchise?: boolean;
 }) {
+  const navigation = useGameNavigation();
   const [active, setActive] = useState(initial);
   useEffect(() => setActive(initial), [initial]);
   return (
@@ -84,8 +90,8 @@ export function KantoNavigation({
       </span>
       <nav aria-label="Game sections">
         {[
-          { id: "team", label: "Team", Icon: Users, enabled: team },
           { id: "draft", label: "Draft", Icon: Clipboard, enabled: draft },
+          { id: "team", label: "Team", Icon: Users, enabled: team },
           { id: "season", label: "Season", Icon: ChartBarBig, enabled: season },
           {
             id: "playoffs",
@@ -93,12 +99,24 @@ export function KantoNavigation({
             Icon: Trophy,
             enabled: playoffs,
           },
+          ...(franchise
+            ? [
+                {
+                  id: "franchise",
+                  label: "Franchise",
+                  Icon: BuildingCommunity,
+                  enabled: true,
+                },
+              ]
+            : []),
         ].map(({ id, label, Icon, enabled }) => (
           <button
             type="button"
             key={id}
             disabled={!enabled}
-            aria-current={active === id ? "location" : undefined}
+            aria-current={
+              (navigation?.active ?? active) === id ? "location" : undefined
+            }
             onClick={() => {
               setActive(id);
               scrollToGameSection(id);

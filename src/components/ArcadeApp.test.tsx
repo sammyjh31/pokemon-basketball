@@ -12,6 +12,7 @@ describe("arcade entry", () => {
         storage={{ getItem: () => null, setItem: () => {} }}
       />,
     );
+    fireEvent.click(screen.getByRole("link", { name: /PLAY ARCADE/ }));
     expect(screen.getByRole("button", { name: "Play arcade" })).toBeDisabled();
   });
   it("opens an exhibition and returns without changing a saved season", async () => {
@@ -41,6 +42,7 @@ describe("arcade entry", () => {
       />,
     );
     const originalSave = saved;
+    fireEvent.click(screen.getByRole("link", { name: /PLAY ARCADE/ }));
     fireEvent.click(screen.getByRole("button", { name: "Play arcade" }));
     await screen.findByRole("button", { name: /Tip off/i });
     fireEvent.click(screen.getByRole("button", { name: /Back to roster/i }));

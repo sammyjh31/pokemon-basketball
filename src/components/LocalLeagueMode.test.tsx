@@ -5,7 +5,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { LocalLeagueMode } from "./LocalLeagueMode";
 import App from "../App";
 import {
@@ -22,6 +22,15 @@ import type { StorageLike } from "../game/persistence";
 import { initialState } from "../game/state";
 import { LOCAL_DEFAULT_OPTIONS } from "../game/localFormat";
 import "../test/preloadPanels";
+
+afterEach(() => window.history.replaceState(null, "", "/"));
+const go = (name: string) =>
+  fireEvent.click(
+    within(screen.getByRole("navigation", { name: "Game sections" })).getByRole(
+      "button",
+      { name },
+    ),
+  );
 
 function memory(seed: Record<string, string> = {}) {
   const data = new Map(Object.entries(seed));
@@ -128,6 +137,9 @@ describe("local league pass-and-play", () => {
     const view = render(
       <LocalLeagueMode onExit={() => {}} storage={storage} />,
     );
+    expect(
+      screen.getByRole("region", { name: "Matchup explorer" }),
+    ).toBeVisible();
     fireEvent.change(screen.getByLabelText("Friend 1 name"), {
       target: { value: "Sam" },
     });
@@ -226,9 +238,16 @@ describe("local league pass-and-play", () => {
     const view = render(
       <LocalLeagueMode onExit={() => {}} storage={storage} />,
     );
+    go("Season");
     fireEvent.click(
       screen.getByRole("button", { name: "Simulate local season" }),
     );
+    await screen.findByRole(
+      "region",
+      { name: "Friends season results" },
+      { timeout: 180000 },
+    );
+    fireEvent.click(screen.getByText("Full friends leaderboard"));
     await waitFor(
       () =>
         expect(
@@ -255,6 +274,7 @@ describe("local league pass-and-play", () => {
     expect(
       parseLocalLeague(storage.data.get(LOCAL_LEAGUE_KEY)!).completed,
     ).toBe(true);
+    go("Playoffs");
     fireEvent.click(screen.getByRole("button", { name: "Play next slate" }));
     expect(
       screen.getByRole("button", { name: "Finish playoffs" }),
@@ -270,9 +290,16 @@ describe("local league pass-and-play", () => {
       { timeout: 30000 },
     );
     view.unmount();
+    window.history.replaceState(null, "", "#local-league/season");
     const restored = render(
       <LocalLeagueMode onExit={() => {}} storage={storage} />,
     );
+    await screen.findByRole(
+      "region",
+      { name: "Friends season results" },
+      { timeout: 180000 },
+    );
+    fireEvent.click(screen.getByText("Full friends leaderboard"));
     await waitFor(
       () =>
         expect(
@@ -280,6 +307,7 @@ describe("local league pass-and-play", () => {
         ).toHaveTextContent(records!),
       { timeout: 180000 },
     );
+    go("Playoffs");
     expect(screen.getByText(/8 playoff games played/)).toBeInTheDocument();
     await waitFor(
       () => {
@@ -327,9 +355,11 @@ describe("local league pass-and-play", () => {
     expect(
       screen.getByRole("button", { name: "Finish playoffs" }),
     ).toBeDisabled();
+    go("Season");
     expect(
       screen.getByRole("table", { name: "Friends leaderboard" }),
     ).toHaveTextContent(records!);
+    go("Playoffs");
     restored.unmount();
     render(<LocalLeagueMode onExit={() => {}} storage={storage} />);
     await waitFor(
@@ -386,6 +416,7 @@ describe("local league pass-and-play", () => {
   });
 
   it("adds playoffs to an older completed save and keeps an interrupted action pending", async () => {
+    window.history.replaceState(null, "", "#local-league/playoffs");
     const storage = memory({
       [LOCAL_LEAGUE_KEY]: JSON.stringify({
         ...completeDraft(1),

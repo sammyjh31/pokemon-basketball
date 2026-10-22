@@ -1,3 +1,4 @@
+import { useCloseOnGameViewChange } from "./GameNavigation";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import "./franchiseDetails.css";
@@ -17,6 +18,7 @@ export function FranchiseDetailDialog({
 }) {
   const titleId = useId(),
     dialog = useRef<HTMLDivElement>(null);
+  useCloseOnGameViewChange(onClose);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null,
       overflow = document.body.style.overflow;

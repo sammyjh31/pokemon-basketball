@@ -45,12 +45,19 @@ import { LineupTools } from "./components/LineupTools";
 import { SpriteContext, type SpriteStyle } from "./components/SpriteControls";
 import "./gameVisual.css";
 import { KantoNavigation } from "./components/KantoShell";
+import {
+  GameNavigation,
+  GameScreen,
+  GameScreenHeading,
+} from "./components/GameNavigation";
+import { ScoutReport } from "./components/ScoutReport";
 import { BenchPanel } from "./components/BenchPanel";
 import { emptyRoster } from "./game/types";
 import { randomLineup } from "./game/lineup";
 import {
   FranchisePanel,
   LocalLeagueMode,
+  PlayoffPanel,
   preloadPanels,
 } from "./components/lazyPanels";
 import { PlayChooser } from "./components/PlayChooser";
@@ -162,9 +169,19 @@ export default function App({
         : run.coach,
   };
   const [arcadeOpen, setArcadeOpen] = useState(false);
-  const [localLeagueOpen, setLocalLeagueOpen] = useState(
-    () => window.location.hash === "#local-league",
+  const [localLeagueOpen, setLocalLeagueOpen] = useState(() =>
+    window.location.hash.startsWith("#local-league"),
   );
+  useEffect(() => {
+    const followMode = () =>
+      setLocalLeagueOpen(window.location.hash.startsWith("#local-league"));
+    window.addEventListener("hashchange", followMode);
+    window.addEventListener("popstate", followMode);
+    return () => {
+      window.removeEventListener("hashchange", followMode);
+      window.removeEventListener("popstate", followMode);
+    };
+  }, []);
   const [officialGame, setOfficialGame] = useState<OfficialArcadeProps | null>(
     null,
   );
@@ -359,7 +376,7 @@ export default function App({
   };
   const openLocalLeague = () => {
     setLocalLeagueOpen(true);
-    window.history.replaceState(
+    window.history.pushState(
       null,
       "",
       `${window.location.pathname}${window.location.search}#local-league`,
@@ -515,7 +532,7 @@ export default function App({
         storage={storage}
         onExit={() => {
           setLocalLeagueOpen(false);
-          window.history.replaceState(
+          window.history.pushState(
             null,
             "",
             `${window.location.pathname}${window.location.search}#draft`,
@@ -642,449 +659,559 @@ export default function App({
   );
   return (
     <SpriteContext.Provider value={spriteStyle}>
-      <ShinyContext.Provider
-        value={state.franchise?.shinySeed ?? run.shinySeed}
+      <GameNavigation
+        loading={restoring}
+        initial={
+          choosingCoach
+            ? "draft"
+            : state.franchise?.phase === "offseason"
+              ? "franchise"
+              : run.result
+                ? "season"
+                : state.franchise
+                  ? "team"
+                  : "draft"
+        }
+        resetKey={`${run.id}:${state.franchise?.phase ?? "solo"}`}
+        screens={{
+          draft: !state.franchise || choosingCoach,
+          team: !choosingCoach && state.franchise?.phase !== "offseason",
+          season: !choosingCoach && (ratings.complete || !!run.result),
+          playoffs: !!run.result?.league,
+          franchise: !!state.franchise,
+          arcade: true,
+        }}
       >
-        <a className="skip-link" href="#main-content">
-          Skip to main content
-        </a>
-        <div
-          className={`app-shell kanto-game${pending !== null ? " has-pending-pick" : ""}`}
+        <ShinyContext.Provider
+          value={state.franchise?.shinySeed ?? run.shinySeed}
         >
-          <Scoreboard
-            mode={run.mode}
-            localLeagueDisabled={busy || importPending}
-            onLocalLeague={openLocalLeague}
-            disabled={busy}
-            franchiseActive={!!state.franchise}
-            onMode={(mode) => {
-              if (mode !== run.mode)
-                requestReset(mode, run.includeLegends, "mode");
-            }}
-            onGuide={() => setGuideOpen(true)}
-            onHowToPlay={() => setChooserOpen(true)}
-            onRestart={() => requestReset(run.mode, run.includeLegends)}
-          />
-          <KantoNavigation
-            team={!choosingCoach && state.franchise?.phase !== "offseason"}
-            draft={
-              state.franchise?.phase !== "offseason" || canSelectTrainer(state)
-            }
-            season={!choosingCoach && ratings.complete}
-            playoffs={!!run.result?.league}
-            initial={run.result ? "season" : "draft"}
-          />
-          <main aria-busy={restoring} id="main-content" tabIndex={-1}>
-            {storageNotice && (
-              <p className="notice" role="status">
-                {storageNotice}{" "}
-                {retrySave && (
-                  <button className="text-button" onClick={retrySave}>
-                    Retry saving
-                  </button>
-                )}
-              </p>
-            )}
-            <SaveMenu {...saveControls} />
-            {restoring ? (
-              <section
-                className="season-panel"
-                id="draft"
-                aria-labelledby="restoration-title"
-              >
-                <span className="eyebrow">WELCOME BACK</span>
-                <h1 id="restoration-title">Restoring your league</h1>
-                <p>
-                  Your saved season is being verified. Your original save stays
-                  in place until it is ready.
-                </p>
-                <RestoreProgress
-                  completed={restorationProgress.completed}
-                  total={restorationProgress.total}
-                  label="Saved league restoration progress"
-                />
-              </section>
-            ) : (
-              <>
-                <div className="mobile-title">
-                  <h1>
-                    {state.franchise
-                      ? `Franchise · Year ${state.franchise.year}`
-                      : run.mode === "free"
-                        ? "Lineup builder"
-                        : "82–0 Challenge"}
-                  </h1>
-                  <p>
-                    {state.franchise
-                      ? "Your eight-player roster carries forward each year."
-                      : "Eight Pokémon. One complete team."}
-                  </p>
-                </div>
-                {!onboarding.checklistDone && !checklistComplete && (
-                  <GettingStarted
-                    steps={checklist}
-                    onHide={() =>
-                      saveOnboarding({ ...onboarding, checklistDone: true })
-                    }
-                  />
-                )}
-                {state.franchise && franchisePanel}
-                {state.franchise && (
-                  <p className="franchise-draft-reset">
-                    <button
-                      className="text-button"
-                      disabled={busy}
-                      onClick={() => requestReset(run.mode, run.includeLegends)}
-                    >
-                      End franchise / new draft
+          <a className="skip-link" href="#main-content">
+            Skip to main content
+          </a>
+          <div
+            className={`app-shell kanto-game focused-game${pending !== null ? " has-pending-pick" : ""}`}
+          >
+            <Scoreboard
+              mode={run.mode}
+              localLeagueDisabled={busy || importPending}
+              onLocalLeague={openLocalLeague}
+              disabled={busy}
+              franchiseActive={!!state.franchise}
+              onMode={(mode) => {
+                if (mode !== run.mode)
+                  requestReset(mode, run.includeLegends, "mode");
+              }}
+              onGuide={() => setGuideOpen(true)}
+              onHowToPlay={() => setChooserOpen(true)}
+              onRestart={() => requestReset(run.mode, run.includeLegends)}
+            />
+            <KantoNavigation
+              team={!choosingCoach && state.franchise?.phase !== "offseason"}
+              draft={!state.franchise || choosingCoach}
+              franchise={!!state.franchise}
+              season={!choosingCoach && (ratings.complete || !!run.result)}
+              playoffs={!!run.result?.league}
+              initial={run.result ? "season" : "draft"}
+            />
+            <main aria-busy={restoring} id="main-content" tabIndex={-1}>
+              {storageNotice && (
+                <p className="notice" role="status">
+                  {storageNotice}{" "}
+                  {retrySave && (
+                    <button className="text-button" onClick={retrySave}>
+                      Retry saving
                     </button>
+                  )}
+                </p>
+              )}
+              <SaveMenu {...saveControls} />
+              {!restoring && <GameScreenHeading />}
+              {(simulating || playoffSimulating || rookieDraftBusy) && (
+                <p className="screen-job" role="status">
+                  {simulating
+                    ? `Season simulation running · ${progress.completed}/${progress.total} games`
+                    : playoffSimulating
+                      ? `Playoffs running · ${playoffProgress.completed} games complete`
+                      : "Rookie draft calculation running…"}
+                </p>
+              )}
+              {restoring ? (
+                <section
+                  className="season-panel"
+                  id="draft"
+                  aria-labelledby="restoration-title"
+                >
+                  <span className="eyebrow">WELCOME BACK</span>
+                  <h1 id="restoration-title">Restoring your league</h1>
+                  <p>
+                    Your saved season is being verified. Your original save
+                    stays in place until it is ready.
                   </p>
-                )}
-                {!state.franchise && choosingCoach && (
-                  <ChallengePoolPicker
-                    mode={run.mode}
-                    pool={run.draftPool}
-                    includeLegends={run.includeLegends}
-                    disabled={busy || !!run.result}
-                    onChange={changeGeneration}
+                  <RestoreProgress
+                    completed={restorationProgress.completed}
+                    total={restorationProgress.total}
+                    label="Saved league restoration progress"
                   />
-                )}
-                {(choosingCoach ||
-                  (state.franchise?.phase === "offseason" &&
-                    canSelectTrainer(state))) && (
-                  <CoachDraft
-                    key={`coach-${run.id}`}
-                    seed={run.seasonSeed}
-                    offered={!state.franchise && run.mode === "spin"}
-                    nextSeason={state.franchise?.phase === "offseason"}
-                    disabled={simulating || playoffSimulating}
-                    onChoose={(id) => dispatch({ type: "SELECT_COACH", id })}
-                  />
-                )}
-                {state.franchise?.phase !== "offseason" && !choosingCoach && (
-                  <fieldset
-                    className={`draft-layout draft-fieldset${state.franchise ? " franchise-roster-layout" : ""}`}
-                    id="draft"
-                    disabled={busy}
-                  >
-                    {!state.franchise && (
-                      <DraftPanel
-                        key={run.id}
-                        run={run}
-                        pending={pending}
-                        inspectId={swap ? run.roster[swap] : null}
-                        onPick={(id) => {
-                          setPending(pending === id ? null : id);
-                          setSwap(null);
-                          setAnnouncement(
-                            `${POKEMON_BY_ID.get(id)!.name} selected. Choose a position.`,
-                          );
-                        }}
-                        onPlace={onSlot}
-                        onReroll={() => {
-                          dispatch({ type: "REROLL" });
-                          setPending(null);
-                          setAnnouncement("Four new draft choices are ready.");
-                        }}
-                        onLegends={changeLegends}
-                        onGuide={() => setGuideOpen(true)}
-                        records={records}
-                        spriteStyle={spriteStyle}
-                        onSpriteStyle={setSpriteStyle}
-                        settings={
-                          <ChallengePoolPicker
-                            mode={run.mode}
-                            pool={run.draftPool}
-                            includeLegends={run.includeLegends}
-                            disabled={busy || !!run.result}
-                            onChange={changeGeneration}
-                          />
-                        }
-                        tools={
-                          <LineupTools
-                            key={run.id}
-                            run={run}
-                            onRandomize={() => {
-                              dispatch({
-                                type: "SET_LINEUP",
-                                roster: randomLineup(
-                                  run.includeLegends,
-                                  newSeed(),
-                                  run.draftPool,
-                                ),
-                              });
-                              setPending(null);
-                              setSwap(null);
-                              setAnnouncement(
-                                "A new eight-player roster is ready.",
-                              );
-                            }}
-                            onClear={() => {
-                              dispatch({
-                                type: "SET_LINEUP",
-                                roster: emptyRoster(),
-                              });
-                              setPending(null);
-                              setSwap(null);
-                              setAnnouncement(
-                                "All eight roster slots are cleared.",
-                              );
-                            }}
-                          />
+                </section>
+              ) : (
+                <>
+                  <GameScreen screen="draft">
+                    {!onboarding.checklistDone && !checklistComplete && (
+                      <GettingStarted
+                        steps={checklist}
+                        onHide={() =>
+                          saveOnboarding({ ...onboarding, checklistDone: true })
                         }
                       />
                     )}
-                    <div className="court-column">
-                      <Court
-                        run={run}
-                        development={development}
-                        ratings={ratings}
-                        pending={pending}
-                        swap={swap}
-                        onSlot={onSlot}
-                        onReset={() =>
-                          requestReset(run.mode, run.includeLegends)
+                  </GameScreen>
+                  <GameScreen screen="franchise">
+                    {state.franchise && franchisePanel}
+                    {state.franchise && (
+                      <p className="franchise-draft-reset">
+                        <button
+                          className="text-button"
+                          disabled={busy}
+                          onClick={() =>
+                            requestReset(run.mode, run.includeLegends)
+                          }
+                        >
+                          End franchise / new draft
+                        </button>
+                      </p>
+                    )}
+                  </GameScreen>
+                  <GameScreen screen="draft">
+                    {!state.franchise && choosingCoach && (
+                      <ChallengePoolPicker
+                        mode={run.mode}
+                        pool={run.draftPool}
+                        includeLegends={run.includeLegends}
+                        disabled={busy || !!run.result}
+                        onChange={changeGeneration}
+                      />
+                    )}
+                  </GameScreen>
+                  <GameScreen
+                    screen={
+                      state.franchise?.phase === "offseason"
+                        ? "franchise"
+                        : "draft"
+                    }
+                  >
+                    {(choosingCoach ||
+                      (state.franchise?.phase === "offseason" &&
+                        canSelectTrainer(state))) && (
+                      <CoachDraft
+                        key={`coach-${run.id}`}
+                        seed={run.seasonSeed}
+                        offered={!state.franchise && run.mode === "spin"}
+                        nextSeason={state.franchise?.phase === "offseason"}
+                        disabled={simulating || playoffSimulating}
+                        onChoose={(id) =>
+                          dispatch({ type: "SELECT_COACH", id })
                         }
                       />
-                      {!archived && (
-                        <BenchPanel
-                          run={run}
-                          development={development}
-                          ratings={ratings}
-                          pending={pending}
-                          swap={swap}
-                          onSlot={onSlot}
-                          onAutoFill={() => {
-                            dispatch({ type: "AUTO_BENCH" });
-                            setPending(null);
-                            setSwap(null);
-                          }}
-                          onDefense={(defense) =>
-                            dispatch({ type: "DEFENSE", defense })
-                          }
-                          onTactic={(tactic) =>
-                            dispatch({ type: "TACTIC", tactic })
-                          }
-                          onRotation={(rotation) =>
-                            dispatch({ type: "ROTATION", rotation })
-                          }
-                        />
+                    )}
+                  </GameScreen>
+                  {state.franchise?.phase !== "offseason" && !choosingCoach && (
+                    <fieldset
+                      className={`draft-layout draft-fieldset${state.franchise ? " franchise-roster-layout" : ""}`}
+                      id="draft"
+                      disabled={busy}
+                    >
+                      <GameScreen screen="draft">
+                        {!state.franchise && (
+                          <DraftPanel
+                            key={run.id}
+                            run={run}
+                            pending={pending}
+                            inspectId={swap ? run.roster[swap] : null}
+                            onPick={(id) => {
+                              setPending(pending === id ? null : id);
+                              setSwap(null);
+                              setAnnouncement(
+                                `${POKEMON_BY_ID.get(id)!.name} selected. Choose a position.`,
+                              );
+                            }}
+                            onPlace={onSlot}
+                            onReroll={() => {
+                              dispatch({ type: "REROLL" });
+                              setPending(null);
+                              setAnnouncement(
+                                "Four new draft choices are ready.",
+                              );
+                            }}
+                            onLegends={changeLegends}
+                            onGuide={() => setGuideOpen(true)}
+                            records={records}
+                            spriteStyle={spriteStyle}
+                            onSpriteStyle={setSpriteStyle}
+                            settings={
+                              <ChallengePoolPicker
+                                mode={run.mode}
+                                pool={run.draftPool}
+                                includeLegends={run.includeLegends}
+                                disabled={busy || !!run.result}
+                                onChange={changeGeneration}
+                              />
+                            }
+                            tools={
+                              <LineupTools
+                                key={run.id}
+                                run={run}
+                                onRandomize={() => {
+                                  dispatch({
+                                    type: "SET_LINEUP",
+                                    roster: randomLineup(
+                                      run.includeLegends,
+                                      newSeed(),
+                                      run.draftPool,
+                                    ),
+                                  });
+                                  setPending(null);
+                                  setSwap(null);
+                                  setAnnouncement(
+                                    "A new eight-player roster is ready.",
+                                  );
+                                }}
+                                onClear={() => {
+                                  dispatch({
+                                    type: "SET_LINEUP",
+                                    roster: emptyRoster(),
+                                  });
+                                  setPending(null);
+                                  setSwap(null);
+                                  setAnnouncement(
+                                    "All eight roster slots are cleared.",
+                                  );
+                                }}
+                              />
+                            }
+                          />
+                        )}
+                        <div className="game-step-bar">
+                          <span>{lineupCount}/8 roster spots filled</span>
+                          <a className="button secondary" href="#team">
+                            Review team
+                          </a>
+                        </div>
+                      </GameScreen>
+                      <GameScreen screen="team">
+                        <div className="court-column">
+                          <Court
+                            run={run}
+                            development={development}
+                            ratings={ratings}
+                            pending={pending}
+                            swap={swap}
+                            onSlot={onSlot}
+                            onReset={() =>
+                              requestReset(run.mode, run.includeLegends)
+                            }
+                          />
+                          {!archived && (
+                            <BenchPanel
+                              run={run}
+                              development={development}
+                              ratings={ratings}
+                              pending={pending}
+                              swap={swap}
+                              onSlot={onSlot}
+                              onAutoFill={() => {
+                                dispatch({ type: "AUTO_BENCH" });
+                                setPending(null);
+                                setSwap(null);
+                              }}
+                              onDefense={(defense) =>
+                                dispatch({ type: "DEFENSE", defense })
+                              }
+                              onTactic={(tactic) =>
+                                dispatch({ type: "TACTIC", tactic })
+                              }
+                              onRotation={(rotation) =>
+                                dispatch({ type: "ROTATION", rotation })
+                              }
+                            />
+                          )}
+                          {state.franchise && !run.coach && (
+                            <RotationEditor
+                              run={run}
+                              disabled={
+                                simulating ||
+                                playoffSimulating ||
+                                !!run.result ||
+                                (run.seasonProgress?.completedRounds ?? 0) > 0
+                              }
+                              onChange={(plan) =>
+                                dispatch({ type: "ROTATION_PLAN", plan })
+                              }
+                            />
+                          )}
+                        </div>
+                        {swap && run.roster[swap] && (
+                          <ScoutReport
+                            mon={POKEMON_BY_ID.get(run.roster[swap]!)!}
+                            development={development?.[run.roster[swap]!]}
+                            personalityVersion={run.personalityVersion}
+                          />
+                        )}
+                      </GameScreen>
+                    </fieldset>
+                  )}
+                  <GameScreen screen="team">
+                    {(coachTeam.coach ||
+                      coachTeam.abilityMasteryVersion === 1 ||
+                      (coachTeam.moraleVersion === 1 &&
+                        Object.values(run.roster).some(
+                          (id) => id !== null,
+                        ))) && (
+                      <details className="team-hq clarity-disclosure">
+                        <summary>
+                          Trainer & player development
+                          <span>Coaching, mastery & movesets</span>
+                        </summary>
+                        {!coachTeam.coach && <MoralePanel team={coachTeam} />}
+                        {coachTeam.abilityMasteryVersion === 1 && (
+                          <MasteryPanel team={coachTeam} />
+                        )}
+                        {coachTeam.coach && (
+                          <CoachSummary
+                            team={coachTeam}
+                            nextSeason={state.franchise?.phase === "offseason"}
+                          />
+                        )}
+                      </details>
+                    )}
+                    <div className="game-step-bar">
+                      {!state.franchise && (
+                        <a className="button secondary" href="#draft">
+                          {ratings.complete
+                            ? "Back to draft"
+                            : "Continue drafting"}
+                        </a>
                       )}
-                      {state.franchise && !run.coach && (
-                        <RotationEditor
-                          run={run}
+                      {ratings.complete && (
+                        <a className="button primary" href="#season">
+                          {run.result ? "View season results" : "Go to season"}
+                        </a>
+                      )}
+                    </div>
+                  </GameScreen>
+                  <p className="sr-only" role="status">
+                    {announcement}
+                  </p>
+                  <GameScreen screen="arcade">
+                    <section
+                      id="arcade"
+                      className="arcade-entry"
+                      aria-label="Arcade basketball"
+                    >
+                      <div>
+                        <span className="eyebrow">TAKE THE COURT</span>
+                        <h2>Five on five. You're in control.</h2>
+                        <p>
+                          Bring your roster to a full-court arcade game. Turbo,
+                          alley-oops, and elemental heat.
+                        </p>
+                      </div>
+                      <div>
+                        <button
+                          className="button primary"
                           disabled={
                             simulating ||
                             playoffSimulating ||
-                            !!run.result ||
-                            (run.seasonProgress?.completedRounds ?? 0) > 0
+                            restoring ||
+                            importPending ||
+                            Object.values(run.roster).some((id) => id === null)
                           }
-                          onChange={(plan) =>
-                            dispatch({ type: "ROTATION_PLAN", plan })
-                          }
+                          onClick={() => {
+                            setOfficialGame(null);
+                            setArcadeOpen(true);
+                          }}
+                        >
+                          Play arcade
+                        </button>
+                        {Object.values(run.roster).some(
+                          (id) => id === null,
+                        ) && (
+                          <p className="arcade-entry-note">
+                            Fill all eight roster slots to tip off.
+                          </p>
+                        )}
+                      </div>
+                    </section>
+                  </GameScreen>
+                  <GameScreen screen="season">
+                    {!choosingCoach &&
+                      (state.franchise?.phase === "season" && !run.result ? (
+                        <FranchiseSchedule
+                          run={run}
+                          year={state.franchise.year}
+                          busy={simulating || playoffSimulating}
+                          progress={progress}
+                          onPlay={openOfficialGame}
+                          onAdvance={(rounds) => void advanceSeason(rounds)}
                         />
-                      )}
-                    </div>
-                  </fieldset>
-                )}
-                {(coachTeam.coach ||
-                  coachTeam.abilityMasteryVersion === 1 ||
-                  (coachTeam.moraleVersion === 1 &&
-                    Object.values(run.roster).some((id) => id !== null))) && (
-                  <details className="team-hq clarity-disclosure">
-                    <summary>
-                      Trainer & player development
-                      <span>Coaching, mastery & movesets</span>
-                    </summary>
-                    {!coachTeam.coach && <MoralePanel team={coachTeam} />}
-                    {coachTeam.abilityMasteryVersion === 1 && (
-                      <MasteryPanel team={coachTeam} />
-                    )}
-                    {coachTeam.coach && (
-                      <CoachSummary
-                        team={coachTeam}
-                        nextSeason={state.franchise?.phase === "offseason"}
+                      ) : (
+                        <SeasonPanel
+                          key={run.id}
+                          standalonePlayoffs
+                          run={run}
+                          ratings={ratings}
+                          animate={animatedRun === run.id}
+                          simulating={simulating}
+                          progress={progress}
+                          onPlayoffs={(mode) => void advancePlayoffs(mode)}
+                          playoffSimulating={playoffSimulating}
+                          playoffProgress={playoffProgress}
+                          onPlayGame={
+                            playoffFixture ? openOfficialGame : undefined
+                          }
+                          franchiseYear={state.franchise?.year}
+                          franchiseEntry={
+                            !state.franchise ? franchisePanel : undefined
+                          }
+                          onSimulate={() => {
+                            setAnimatedRun(run.id);
+                            setPending(null);
+                            setSwap(null);
+                            void simulate();
+                          }}
+                        />
+                      ))}
+                  </GameScreen>
+                  <GameScreen screen="playoffs">
+                    {run.result?.league && (
+                      <PlayoffPanel
+                        key={run.id}
+                        league={run.result.league}
+                        seasonSeed={run.seasonSeed}
+                        playoffs={run.playoffs}
+                        onAdvance={(mode) => void advancePlayoffs(mode)}
+                        onPlayGame={
+                          playoffFixture ? openOfficialGame : undefined
+                        }
+                        simulating={playoffSimulating}
+                        progress={playoffProgress}
                       />
                     )}
-                  </details>
-                )}
-                <p className="sr-only" role="status">
-                  {announcement}
-                </p>
-                <section
-                  id="arcade"
-                  className="arcade-entry"
-                  aria-label="Arcade basketball"
-                >
-                  <div>
-                    <span className="eyebrow">TAKE THE COURT</span>
-                    <h2>Five on five. You're in control.</h2>
-                    <p>
-                      Bring your roster to a full-court arcade game. Turbo,
-                      alley-oops, and elemental heat.
+                  </GameScreen>
+                  {simulationError && (
+                    <p className="notice" role="alert">
+                      {simulationError}
                     </p>
-                  </div>
-                  <div>
-                    <button
-                      className="button primary"
-                      disabled={
-                        simulating ||
-                        playoffSimulating ||
-                        restoring ||
-                        importPending ||
-                        Object.values(run.roster).some((id) => id === null)
-                      }
-                      onClick={() => {
-                        setOfficialGame(null);
-                        setArcadeOpen(true);
-                      }}
-                    >
-                      Play arcade
-                    </button>
-                    {Object.values(run.roster).some((id) => id === null) && (
-                      <p className="arcade-entry-note">
-                        Fill all eight roster slots to tip off.
-                      </p>
-                    )}
-                  </div>
-                </section>
-                {!choosingCoach &&
-                  (state.franchise?.phase === "season" && !run.result ? (
-                    <FranchiseSchedule
-                      run={run}
-                      year={state.franchise.year}
-                      busy={simulating || playoffSimulating}
-                      progress={progress}
-                      onPlay={openOfficialGame}
-                      onAdvance={(rounds) => void advanceSeason(rounds)}
-                    />
-                  ) : (
-                    <SeasonPanel
-                      key={run.id}
-                      run={run}
-                      ratings={ratings}
-                      animate={animatedRun === run.id}
-                      simulating={simulating}
-                      progress={progress}
-                      onPlayoffs={(mode) => void advancePlayoffs(mode)}
-                      playoffSimulating={playoffSimulating}
-                      playoffProgress={playoffProgress}
-                      onPlayGame={playoffFixture ? openOfficialGame : undefined}
-                      franchiseYear={state.franchise?.year}
-                      franchiseEntry={
-                        !state.franchise ? franchisePanel : undefined
-                      }
-                      onSimulate={() => {
-                        setAnimatedRun(run.id);
-                        setPending(null);
-                        setSwap(null);
-                        void simulate();
-                      }}
-                    />
-                  ))}
-                {simulationError && (
-                  <p className="notice" role="alert">
-                    {simulationError}
-                  </p>
+                  )}
+                </>
+              )}
+            </main>
+            <footer>
+              <div className="footer-brand">
+                82–0 <span>BUILT FOR THE LOVE OF THE GAME.</span>
+              </div>
+              <p>
+                Unofficial fan project. Pokémon © Nintendo / Game Freak / The
+                Pokémon Company.
+                <br />
+                Data & artwork:{" "}
+                <a href="https://pokeapi.co/" target="_blank" rel="noreferrer">
+                  PokéAPI
+                </a>{" "}
+                · Inspired by{" "}
+                <a
+                  href="https://all22pokemon.com/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Pokémon All-22
+                </a>
+                .{" "}
+                <a
+                  href={publicAsset("/coaches/credits.html")}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Coach portrait credits
+                </a>
+                .
+              </p>
+            </footer>
+            <GameScreen screen={["draft", "team"]}>
+              {pending !== null &&
+                POKEMON_BY_ID.has(pending) &&
+                !run.result &&
+                !run.seasonProgress?.completedRounds &&
+                !choosingCoach &&
+                !state.franchise && (
+                  <DraftPickDock
+                    key={`${run.id}:${pending}`}
+                    run={run}
+                    pokemonId={pending}
+                    disabled={
+                      busy ||
+                      importPending ||
+                      !!confirm ||
+                      guideOpen ||
+                      showChooser
+                    }
+                    onPlace={onSlot}
+                    onCancel={() => {
+                      setPending(null);
+                      setSwap(null);
+                      setAnnouncement("Selection canceled.");
+                      const card = document.querySelector<HTMLButtonElement>(
+                        `.pokemon-card[aria-pressed="true"]`,
+                      );
+                      if (card?.closest("[hidden]"))
+                        document
+                          .querySelector<HTMLElement>(
+                            "[data-game-view-heading]",
+                          )
+                          ?.focus();
+                      else card?.focus();
+                    }}
+                  />
                 )}
-              </>
-            )}
-          </main>
-          <footer>
-            <div className="footer-brand">
-              82–0 <span>BUILT FOR THE LOVE OF THE GAME.</span>
-            </div>
-            <p>
-              Unofficial fan project. Pokémon © Nintendo / Game Freak / The
-              Pokémon Company.
-              <br />
-              Data & artwork:{" "}
-              <a href="https://pokeapi.co/" target="_blank" rel="noreferrer">
-                PokéAPI
-              </a>{" "}
-              · Inspired by{" "}
-              <a
-                href="https://all22pokemon.com/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Pokémon All-22
-              </a>
-              .{" "}
-              <a
-                href={publicAsset("/coaches/credits.html")}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Coach portrait credits
-              </a>
-              .
-            </p>
-          </footer>
-          {pending !== null &&
-            POKEMON_BY_ID.has(pending) &&
-            !run.result &&
-            !run.seasonProgress?.completedRounds &&
-            !choosingCoach &&
-            !state.franchise && (
-              <DraftPickDock
-                key={`${run.id}:${pending}`}
-                run={run}
-                pokemonId={pending}
-                disabled={
-                  busy || importPending || !!confirm || guideOpen || showChooser
-                }
-                onPlace={onSlot}
-                onCancel={() => {
-                  setPending(null);
-                  setSwap(null);
-                  setAnnouncement("Selection canceled.");
-                  document
-                    .querySelector<HTMLButtonElement>(
-                      `.pokemon-card[aria-pressed="true"]`,
-                    )
-                    ?.focus();
-                }}
-              />
-            )}
-        </div>
-        {confirm && (
-          <ConfirmDialog
-            title={confirm.title}
-            description={confirm.description}
-            confirmLabel={confirm.confirmLabel}
-            onCancel={() => setConfirm(null)}
-            onConfirm={confirm.onConfirm}
-          />
-        )}
-        {guideOpen && <RulesPanel onClose={() => setGuideOpen(false)} />}
-        {showChooser && !confirm && (
-          <PlayChooser
-            current={
-              onboarding.style === "skipped" ? undefined : onboarding.style
-            }
-            onChoose={choosePlayStyle}
-            onClose={() => {
-              setChooserOpen(false);
-              if (!onboarding.style)
-                saveOnboarding({ ...onboarding, style: "skipped" });
-            }}
-          />
-        )}
-        {importPending && !restoring && (
-          <ConfirmDialog
-            title="Load shared lineup?"
-            description={
-              state.franchise
-                ? "Loading this lineup replaces your franchise, including its career stats, trades and championship history. Your challenge records stay saved."
-                : undefined
-            }
-            confirmLabel="Load lineup"
-            onCancel={() => resolveImport(false)}
-            onConfirm={() => resolveImport(true)}
-          />
-        )}
-      </ShinyContext.Provider>
+            </GameScreen>
+          </div>
+          {confirm && (
+            <ConfirmDialog
+              title={confirm.title}
+              description={confirm.description}
+              confirmLabel={confirm.confirmLabel}
+              onCancel={() => setConfirm(null)}
+              onConfirm={confirm.onConfirm}
+            />
+          )}
+          {guideOpen && <RulesPanel onClose={() => setGuideOpen(false)} />}
+          {showChooser && !confirm && (
+            <PlayChooser
+              current={
+                onboarding.style === "skipped" ? undefined : onboarding.style
+              }
+              onChoose={choosePlayStyle}
+              onClose={() => {
+                setChooserOpen(false);
+                if (!onboarding.style)
+                  saveOnboarding({ ...onboarding, style: "skipped" });
+              }}
+            />
+          )}
+          {importPending && !restoring && (
+            <ConfirmDialog
+              title="Load shared lineup?"
+              description={
+                state.franchise
+                  ? "Loading this lineup replaces your franchise, including its career stats, trades and championship history. Your challenge records stay saved."
+                  : undefined
+              }
+              confirmLabel="Load lineup"
+              onCancel={() => resolveImport(false)}
+              onConfirm={() => resolveImport(true)}
+            />
+          )}
+        </ShinyContext.Provider>
+      </GameNavigation>
     </SpriteContext.Provider>
   );
 }

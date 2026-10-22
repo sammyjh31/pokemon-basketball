@@ -34,6 +34,7 @@ export function SeasonPanel({
   franchiseYear,
   franchiseEntry,
   onPlayGame,
+  standalonePlayoffs = false,
 }: {
   run: Run;
   ratings: TeamRatings;
@@ -47,6 +48,7 @@ export function SeasonPanel({
   franchiseYear?: number;
   franchiseEntry?: ReactNode;
   onPlayGame?: () => void;
+  standalonePlayoffs?: boolean;
 }) {
   const result = run.result;
   const skippedResult = useRef<typeof result>(null);
@@ -379,7 +381,7 @@ export function SeasonPanel({
               )}
             </details>
           )}
-          {done && league && onPlayoffs && (
+          {done && league && onPlayoffs && !standalonePlayoffs && (
             <PlayoffPanel
               key={run.id}
               league={league}

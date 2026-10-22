@@ -1,0 +1,96 @@
+/* Screen boundaries stay mounted, but inactive screens cannot display or take focus. */
+#root .game-screen[hidden] {
+  display: none !important;
+}
+#root .app-shell.focused-game .game-view-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 0 0 14px;
+  margin: 0 0 22px;
+  border-bottom: 2px solid #9da99f;
+}
+#root .app-shell.focused-game .game-view-heading h1 {
+  font-size: 36px;
+  line-height: 1.1;
+  margin: 0;
+  color: #172b50;
+}
+#root .app-shell.focused-game .game-view-heading p {
+  margin: 0;
+  font-size: 18px;
+  color: #4b605c;
+}
+#root .app-shell.focused-game .game-view-heading h1:focus {
+  outline: none;
+}
+#root .app-shell.focused-game .draft-layout {
+  display: block !important;
+}
+#root .app-shell.focused-game .draft-panel {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+#root .app-shell.focused-game .court-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 1fr);
+  align-items: start;
+  gap: 24px;
+  grid-column: auto;
+  grid-row: auto;
+}
+#root .app-shell.focused-game .game-step-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 20px 0;
+  padding: 14px 16px;
+  background: #eeeeda;
+  border: 2px solid #9da99f;
+}
+#root .app-shell.focused-game .game-step-bar .button {
+  margin: 0;
+  min-height: 44px;
+}
+#root .app-shell.focused-game .screen-job {
+  padding: 10px 14px;
+  border-left: 4px solid #244e87;
+  background: #eeeeda;
+}
+#root
+  .game-navigation-root:not([data-game-view="draft"]):not(
+    [data-game-view="team"]
+  )
+  .app-shell.has-pending-pick {
+  padding-bottom: 24px;
+}
+@media (max-width: 900px) {
+  #root .app-shell.focused-game .court-column {
+    display: block;
+  }
+  #root .app-shell.focused-game .court-column > * + * {
+    margin-top: 20px;
+  }
+  #root .app-shell.focused-game .game-view-heading {
+    gap: 5px;
+    margin-bottom: 16px;
+  }
+  #root .app-shell.focused-game .game-view-heading p {
+    flex-basis: 100%;
+  }
+  #root .app-shell.focused-game .kanto-sidebar nav {
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  #root .app-shell.focused-game .kanto-sidebar button {
+    flex-direction: column;
+    gap: 3px;
+    padding: 7px 3px;
+    font-size: 18px;
+  }
+}

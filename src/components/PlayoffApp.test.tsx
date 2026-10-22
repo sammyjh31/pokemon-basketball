@@ -27,23 +27,29 @@ beforeAll(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
+  window.history.replaceState(null, "", "/");
 });
 
 it("saves one complete playoff slate, blocks duplicate work and resets, then resumes the same bracket after refresh", async () => {
   vi.useFakeTimers();
   const storage = memory();
   const mounted = render(<App initial={finished} storage={storage} />);
+  fireEvent.click(screen.getByRole("button", { name: "Playoffs" }));
   const playoffs = within(screen.getByRole("region", { name: "Playoffs" }));
   const advance = playoffs.getByRole("button", { name: "Play next slate" });
   fireEvent.click(advance);
   fireEvent.click(advance);
   expect(advance).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Team" }));
   expect(screen.getByRole("button", { name: "New run" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Playoffs" }));
   expect(
     screen.getByRole("button", { name: "New game / Restart" }),
   ).toBeDisabled();
   expect(screen.getByRole("button", { name: "Lineup builder" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("link", { name: /Play arcade/i }));
   expect(screen.getByRole("button", { name: "Play arcade" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Playoffs" }));
   expect(
     JSON.parse(storage.getItem(STORAGE_KEY)!).run.playoffs,
   ).toBeUndefined();
@@ -60,7 +66,9 @@ it("saves one complete playoff slate, blocks duplicate work and resets, then res
   expect(saved.run.result).toEqual(finished.run.result);
   expect(saved.records).toEqual(finished.records);
   expect(advance).toBeEnabled();
+  fireEvent.click(screen.getByRole("link", { name: /Play arcade/i }));
   expect(screen.getByRole("button", { name: "Play arcade" })).toBeEnabled();
+  fireEvent.click(screen.getByRole("button", { name: "Playoffs" }));
   mounted.unmount();
 
   render(
@@ -109,6 +117,7 @@ it("keeps damaged playoff save bytes through recovery and replaces them only aft
     `${finished.run.result!.wins}–${finished.run.result!.losses}`,
   );
   expect(storage.getItem(STORAGE_KEY)).toBe(source);
+  fireEvent.click(screen.getByRole("button", { name: "Playoffs" }));
   fireEvent.click(screen.getByRole("button", { name: "Play next slate" }));
   expect(storage.getItem(STORAGE_KEY)).toBe(source);
   await act(async () => {
@@ -132,6 +141,7 @@ it("cancels unfinished postseason work on unmount without saving a partial actio
   const storage = memory();
   const mounted = render(<App initial={finished} storage={storage} />);
   const source = storage.getItem(STORAGE_KEY);
+  fireEvent.click(screen.getByRole("button", { name: "Playoffs" }));
   fireEvent.click(screen.getByRole("button", { name: "Finish playoffs" }));
   mounted.unmount();
   await act(async () => {

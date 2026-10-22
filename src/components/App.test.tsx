@@ -41,16 +41,27 @@ const fill = () => {
     });
   return state;
 };
-const pick = () =>
+const go = (name: string) =>
+  fireEvent.click(
+    within(screen.getByRole("navigation", { name: "Game sections" })).getByRole(
+      "button",
+      { name },
+    ),
+  );
+const pick = () => {
+  go("Draft");
   fireEvent.click(screen.getAllByRole("button", { name: /^Draft / })[0]);
+};
 const chooseTrainer = () => {
   const draft = screen.getByRole("region", {
     name: "Your team. Their game plan.",
   });
   fireEvent.click(within(draft).getAllByRole("button", { name: /^Draft / })[0]);
 };
-const slot = (position: string) =>
-  screen.getByRole("button", { name: new RegExp(`^${position} slot:`) });
+const slot = (position: string) => {
+  go("Team");
+  return screen.getByRole("button", { name: new RegExp(`^${position} slot:`) });
+};
 beforeEach(() => {
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
@@ -88,7 +99,7 @@ describe("playable draft room", () => {
     expect(screen.getByTestId("season-record")).toHaveTextContent(
       `${state.run.result.wins}–${state.run.result.losses}`,
     );
-    fireEvent.click(screen.getByRole("button", { name: "New run" }));
+    fireEvent.click(screen.getByRole("button", { name: "New game / Restart" }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
@@ -100,9 +111,10 @@ describe("playable draft room", () => {
       seed: 17,
     });
     render(<App initial={state} storage={memory()} />);
+    go("Team");
     fireEvent.click(screen.getByRole("button", { name: "Auto-fill bench" }));
     const before = slot("B1").getAttribute("aria-label");
-    fireEvent.click(screen.getByRole("button", { name: "New run" }));
+    fireEvent.click(screen.getByRole("button", { name: "New game / Restart" }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Keep playing" }));
     expect(slot("B1")).toHaveAccessibleName(before!);
@@ -119,7 +131,9 @@ describe("playable draft room", () => {
     render(<App initial={state} storage={storage} />);
     fireEvent.click(screen.getByRole("button", { name: "Randomize" }));
     expect(
-      screen.getByRole("button", { name: "Simulate season" }),
+      within(
+        screen.getByRole("navigation", { name: "Game sections" }),
+      ).getByRole("button", { name: "Season" }),
     ).toBeEnabled();
     const saved = JSON.parse(storage.getItem(STORAGE_KEY)!);
     expect(new Set(Object.values(saved.run.roster)).size).toBe(8);
@@ -266,12 +280,15 @@ describe("playable draft room", () => {
   it("drafts eight players and simulates exactly one season", async () => {
     render(<App initial={initialState(17)} storage={memory()} />);
     expect(
-      screen.getByRole("button", { name: "Simulate season" }),
+      within(
+        screen.getByRole("navigation", { name: "Game sections" }),
+      ).getByRole("button", { name: "Season" }),
     ).toBeDisabled();
     for (const p of ROSTER_SLOTS) {
       pick();
       fireEvent.click(slot(p));
     }
+    go("Season");
     fireEvent.click(screen.getByRole("button", { name: "Simulate season" }));
     fireEvent.click(
       await screen.findByRole(
@@ -325,21 +342,25 @@ describe("playable draft room", () => {
     });
     render(<App initial={state} storage={memory()} />);
     const search = screen.getByRole("searchbox", { name: "Search Pokémon" });
+    go("Draft");
     fireEvent.change(search, { target: { value: "Pikachu" } });
     expect(screen.getAllByRole("button", { name: /^Draft / })).toHaveLength(1);
     pick();
     fireEvent.click(slot("PG"));
     expect(slot("PG")).toHaveAccessibleName("PG slot: Pikachu");
+    go("Draft");
     fireEvent.change(search, { target: { value: "Snorlax" } });
     pick();
     fireEvent.click(slot("C"));
     fireEvent.click(slot("PG"));
     fireEvent.click(slot("C"));
     expect(slot("PG")).toHaveAccessibleName("PG slot: Snorlax");
+    go("Draft");
     fireEvent.change(search, { target: { value: "Alakazam" } });
     pick();
     fireEvent.click(slot("PG"));
     expect(slot("PG")).toHaveAccessibleName("PG slot: Alakazam");
+    go("Draft");
     fireEvent.change(search, { target: { value: "" } });
     fireEvent.change(screen.getByLabelText("Filter by type"), {
       target: { value: "fire" },
@@ -370,11 +391,12 @@ describe("playable draft room", () => {
   it("old result timers cannot update a new run", async () => {
     vi.useFakeTimers();
     render(<App initial={fill()} storage={memory()} />);
+    go("Season");
     fireEvent.click(screen.getByRole("button", { name: "Simulate season" }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(200);
     });
-    fireEvent.click(screen.getByRole("button", { name: "New run" }));
+    fireEvent.click(screen.getByRole("button", { name: "New game / Restart" }));
     fireEvent.click(screen.getByRole("button", { name: "Start new run" }));
     chooseTrainer();
     act(() => vi.advanceTimersByTime(20000));
@@ -386,6 +408,7 @@ describe("playable draft room", () => {
       matches: true,
     } as MediaQueryList);
     render(<App initial={fill()} storage={memory()} />);
+    go("Season");
     fireEvent.click(screen.getByRole("button", { name: "Simulate season" }));
     await waitFor(
       () => expect(screen.getAllByTestId("game-result")).toHaveLength(82),
@@ -579,6 +602,7 @@ it("persists a shared lineup replacing malformed storage through simulation and 
   expect(
     screen.queryByText(/The original save is kept until you make a change/),
   ).not.toBeInTheDocument();
+  go("Season");
   fireEvent.click(screen.getByRole("button", { name: "Simulate season" }));
   await act(async () => {
     await vi.runAllTimersAsync();
@@ -592,6 +616,7 @@ it("persists a shared lineup replacing malformed storage through simulation and 
     await vi.runAllTimersAsync();
   });
   expect(slot("PG")).toHaveAccessibleName("PG slot: Alakazam");
+  go("Season");
   expect(screen.getByTestId("season-record")).toHaveTextContent(
     `${saved.run.result.wins}–${saved.run.result.losses}`,
   );

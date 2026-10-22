@@ -1,3 +1,4 @@
+import { useCloseOnGameViewChange } from "./GameNavigation";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 
 const FOCUSABLE =
@@ -21,6 +22,7 @@ export function Dialog({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const id = useId();
+  useCloseOnGameViewChange(onClose);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     ref.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
