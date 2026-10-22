@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { POKEMON_BY_ID } from "../data/pokemon";
 import { playerProfile } from "./playerProfile";
 import {
@@ -114,4 +114,16 @@ it("uses one strongest donor per recipient effect and recognizes Plus with Minus
     ).length,
   ).toBe(2);
   expect(two.effects[63].passing).toBeGreaterThan(one.effects[12].passing);
+});
+
+it("finds the same best triangle with one cube root per five-player evaluation", () => {
+  const floor = roster();
+  const expected = evaluateLineupChemistry(floor, context);
+  const roots = vi.spyOn(Math, "cbrt");
+  try {
+    expect(evaluateLineupChemistry(floor, context)).toEqual(expected);
+    expect(roots).toHaveBeenCalledTimes(1);
+  } finally {
+    roots.mockRestore();
+  }
 });

@@ -9,11 +9,11 @@ const options = new Map();
 for (const arg of process.argv.slice(2)) {
   if (arg === "--help") {
     console.log(
-      "node scripts/performance-audit.mjs --phase=season|save|cached-save|local-save [--save=export.json] [--output=metrics.json] [--baseline=metrics.json] [--profile=cpu.cpuprofile]",
+      "node scripts/performance-audit.mjs --phase=season|save|cached-save|local-save [--rules=legacy|current] [--save=export.json] [--output=metrics.json] [--baseline=metrics.json] [--profile=cpu.cpuprofile]",
     );
     process.exit(0);
   }
-  const match = /^--(phase|save|output|baseline|profile)=(.+)$/.exec(arg);
+  const match = /^--(phase|rules|save|output|baseline|profile)=(.+)$/.exec(arg);
   if (!match) throw Error(`Unknown option: ${arg}`);
   options.set(match[1], match[2]);
 }
@@ -22,6 +22,11 @@ if (!["season", "save", "cached-save", "local-save"].includes(phase))
   throw Error("Phase must be season, save, cached-save or local-save.");
 if (["save", "cached-save"].includes(phase) && !options.has("save"))
   throw Error("Save phase needs --save=path-to-export.json.");
+const rules = options.get("rules") ?? "legacy";
+if (!["legacy", "current"].includes(rules))
+  throw Error("Rules must be legacy or current.");
+if (rules === "current" && phase !== "season")
+  throw Error("Current rules applies only to a season audit.");
 const hash = (text) => createHash("sha256").update(text).digest("hex");
 const source = ["save", "cached-save"].includes(phase)
   ? await readFile(options.get("save"), "utf8")
@@ -39,7 +44,7 @@ const post = (method) =>
     ),
   );
 try {
-  const { performanceRun } = await server.ssrLoadModule(
+  const { performanceRun, currentPerformanceRun } = await server.ssrLoadModule(
     "/src/game/seasonPerformance.testUtils.ts",
   );
   const { simulateSeason } = await server.ssrLoadModule("/src/game/season.ts");
@@ -48,7 +53,7 @@ try {
   const { prepareGameLoad, STORAGE_KEY } = await server.ssrLoadModule(
     "/src/game/persistence.ts",
   );
-  const run = performanceRun(),
+  const run = rules === "current" ? currentPerformanceRun() : performanceRun(),
     teams = createLeague(run);
   for (let i = 0; i < 8; i++) simulateMatch(teams[i], teams[i + 1], i);
   if (options.has("profile") && ["cached-save", "local-save"].includes(phase))
@@ -205,6 +210,7 @@ try {
     const serialized = JSON.stringify(result);
     const report = {
       phase,
+      rules,
       ms,
       hash: hash(serialized),
       serializedCharacters: serialized.length,
@@ -218,7 +224,11 @@ try {
       const baseline = JSON.parse(
         await readFile(options.get("baseline"), "utf8"),
       );
-      if (baseline.phase !== phase || baseline.sourceHash !== report.sourceHash)
+      if (
+        baseline.phase !== phase ||
+        (baseline.rules ?? "legacy") !== rules ||
+        baseline.sourceHash !== report.sourceHash
+      )
         throw Error(
           "Baseline must use the same phase and unchanged save input.",
         );

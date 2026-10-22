@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-21",
+  "baselineRevision": "ce005f9783f586be84ba523c0f082eebbe113d61",
+  "scope": "Vite SSR engine, pinned all-generation shiny moveset-v4 fixture, eight warmup games from the season builder; output serialized in full for fingerprints. Browser overhead is excluded.",
+  "fullSeason": {
+    "before": {
+      "count": 1230,
+      "ms": 91078.721125,
+      "hash": "8d5825ff20de1b60b6a2e23afac6f02b43fbb33877523a78b38224841f393d36",
+      "chars": 8067397
+    },
+    "afterBeforeUnusedPlanRemoval": {
+      "count": 1230,
+      "ms": 127993.819583,
+      "hash": "8d5825ff20de1b60b6a2e23afac6f02b43fbb33877523a78b38224841f393d36",
+      "chars": 8067397
+    },
+    "sameFullOutput": true,
+    "timingComparable": false,
+    "reason": "Multiple unrelated CPU-heavy simulation jobs started or increased during measurements. Raw wall times are retained for transparency, not used as a speedup claim."
+  },
+  "alternating90GameSamples": [
+    {
+      "version": "before",
+      "count": 90,
+      "ms": 9789.863374999999,
+      "cpuMs": 9983.107,
+      "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+    },
+    {
+      "version": "after",
+      "count": 90,
+      "ms": 8825.783042,
+      "cpuMs": 9148.221,
+      "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+    },
+    {
+      "version": "after",
+      "count": 90,
+      "ms": 7320.519291999997,
+      "cpuMs": 7837.545,
+      "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+    },
+    {
+      "version": "before",
+      "count": 90,
+      "ms": 8634.403707999998,
+      "cpuMs": 8846.715,
+      "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+    },
+    {
+      "version": "before",
+      "count": 90,
+      "ms": 8324.156416999998,
+      "cpuMs": 8539.877,
+      "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+    },
+    {
+      "version": "after",
+      "count": 90,
+      "ms": 7588.800792000002,
+      "cpuMs": 7804.736,
+      "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+    }
+  ],
+  "sampleMethod": "Two Vite SSR engines loaded from baseline Git source and modified source in one process; 15-game warmups each, then B/A/A/B/B/A runs. Other CPU-heavy jobs remained running; timings are local samples only. All six complete result fingerprints match. Final production change includes unused fallback-plan removal.",
+  "sampleSummary": {
+    "beforeMedianMs": 8634.403707999998,
+    "afterMedianMs": 7588.800792000002,
+    "medianTimeSavedPercent": 12.10972930338221,
+    "notAFullSeasonSpeedupEstimate": true
+  },
+  "verification": {
+    "focusedTests": 48,
+    "focusedFiles": 8,
+    "completeSeasonFingerprintTests": 2,
+    "completeSeasonFingerprintFiles": 1,
+    "fullGameCountAcrossFingerprints": 2460,
+    "typecheckAndPagesBuild": "passed",
+    "independentReadOnlyReview": "No material issues in initial review or unused-plan follow-up.",
+    "fullProjectSuite": "Not run; verification focused on scoring, chemistry, coaching, match behavior and full-season current/historical fingerprints.",
+    "deployment": "Local only; not published in this task."
+  }
+}

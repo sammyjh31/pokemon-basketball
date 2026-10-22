@@ -4,7 +4,7 @@ import { teamLeadership } from "./playerPersonality";
 import { abilityUsefulness as coachAbilityFit } from "./abilityEvaluation";
 import {
   createEvaluationContext,
-  evaluatePlayer,
+  evaluatePlayerScore,
   evaluationGamePlan,
 } from "./teamEvaluation";
 import { POKEMON_BY_ID } from "../data/pokemon";
@@ -259,11 +259,11 @@ export function coachRotationMinutes(team: LeagueTeam) {
       : team.rotation === "starters"
         ? 0.2
         : 0.5);
-  const abilityTactic = abilitiesEnabled(team)
-    ? coachGamePlan(team).tactic
-    : undefined;
   const shared =
     team.evaluationVersion === 1 ? createEvaluationContext(team) : undefined;
+  // The shared score already includes ability fit; the fallback plan is unused.
+  const abilityTactic =
+    !shared && abilitiesEnabled(team) ? coachGamePlan(team).tactic : undefined;
   const candidates = ROSTER_SLOTS.map((slot) => {
     const mon = POKEMON_BY_ID.get(team.roster[slot]!)!;
     const p = moraleProfile(
@@ -278,7 +278,7 @@ export function coachRotationMinutes(team: LeagueTeam) {
       slot,
       score:
         (shared
-          ? evaluatePlayer(shared, mon.id).score
+          ? evaluatePlayerScore(shared, mon.id)
           : Math.max(...Object.values(p.positions)) +
             (coach ? coachPlayerPreference(coach, p) : 0)) +
         p.attributes.stamina * 0.08 +

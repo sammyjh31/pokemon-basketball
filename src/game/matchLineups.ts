@@ -1,4 +1,7 @@
-import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
+import {
+  createEvaluationContext,
+  evaluatePlayerScores,
+} from "./teamEvaluation";
 import { getCoach } from "./trainerCoaches";
 import { coachPlayerPreference } from "./coachPolicy";
 import { matchupPreference, type BodyProfile } from "./bodyMatchups";
@@ -63,10 +66,7 @@ function roleValue(team: Team, player: Player, role: number): number {
       scores: new Map(
         team.players.map((p) => [
           p.box.pokemonId,
-          POSITIONS.map(
-            (position) =>
-              evaluatePlayer(context, p.box.pokemonId, position).score,
-          ),
+          evaluatePlayerScores(context, p.box.pokemonId),
         ]),
       ),
     };

@@ -1,4 +1,5 @@
-import { expect, it } from "vitest";
+import * as sharedEvaluation from "./teamEvaluation";
+import { expect, it, vi } from "vitest";
 import { coachGamePlan, coachRotationMinutes } from "./coachPolicy";
 import { coachTrainingPlans } from "./coachTraining";
 import {
@@ -152,4 +153,15 @@ it("assesses coaching hires using the same roster value", () => {
         10,
     ) / 10,
   );
+});
+
+it("skips the unused fallback coaching plan when shared rotation scoring is active", () => {
+  const plan = vi.spyOn(sharedEvaluation, "evaluationGamePlan");
+  try {
+    const minutes = coachRotationMinutes(team());
+    expect(Object.values(minutes).reduce((sum, n) => sum + n, 0)).toBe(240);
+    expect(plan).not.toHaveBeenCalled();
+  } finally {
+    plan.mockRestore();
+  }
 });

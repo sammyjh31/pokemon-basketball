@@ -41,3 +41,14 @@ export function performanceRun(): Run {
     coach: { version: 1, id: "misty" },
   };
 }
+
+/** Pinned all-generation, shiny and learned-counter rules used in the 2026-10-21 audit. */
+export function currentPerformanceRun(): Run {
+  return {
+    ...performanceRun(),
+    draftPool: "all",
+    shinySeed: 1369956885,
+    movesetVersion: 4,
+    mode: "spin",
+  };
+}

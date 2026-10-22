@@ -105,35 +105,34 @@ export function evaluateLineupChemistry(
       links: [],
       effects,
     };
-  let triangle = 0,
-    defensePair = 0;
-  for (const creator of players)
-    for (const spacer of players) {
+  // Roots are monotonic: compare the same products first, then take each root once.
+  // Keep multiplication order unchanged so seeded game outcomes remain identical.
+  const skills = players.map(({ profile: { attributes: a } }) => ({
+    creation: quality((a.passing + a.ballHandling) / 2),
+    threePoint: quality(a.threePoint),
+    finishing: quality(a.finishing),
+    perimeterDefense: quality(a.perimeterDefense),
+    interiorDefense: quality(a.interiorDefense),
+  }));
+  let triangleProduct = 0,
+    defenseProduct = 0;
+  for (const creator of skills)
+    for (const spacer of skills) {
       if (creator === spacer) continue;
-      defensePair = Math.max(
-        defensePair,
-        Math.sqrt(
-          quality(creator.profile.attributes.perimeterDefense) *
-            quality(spacer.profile.attributes.interiorDefense),
-        ),
+      defenseProduct = Math.max(
+        defenseProduct,
+        creator.perimeterDefense * spacer.interiorDefense,
       );
-      for (const finisher of players) {
+      for (const finisher of skills) {
         if (finisher === creator || finisher === spacer) continue;
-        const creation = quality(
-          (creator.profile.attributes.passing +
-            creator.profile.attributes.ballHandling) /
-            2,
-        );
-        triangle = Math.max(
-          triangle,
-          Math.cbrt(
-            creation *
-              quality(spacer.profile.attributes.threePoint) *
-              quality(finisher.profile.attributes.finishing),
-          ),
+        triangleProduct = Math.max(
+          triangleProduct,
+          creator.creation * spacer.threePoint * finisher.finishing,
         );
       }
     }
+  const triangle = Math.cbrt(triangleProduct),
+    defensePair = Math.sqrt(defenseProduct);
   const spacing = topTwo(
       players.map((p) => quality(p.profile.attributes.threePoint)),
     ),

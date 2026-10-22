@@ -394,12 +394,15 @@ export function createEvaluationContext(
     ) as EvaluationContext["needs"],
   };
 }
-function scoreProfile(
+function evaluationValues(
   context: EvaluationContext,
   pokemonId: number,
   p: PlayerProfile,
   role?: Position,
-): PlayerEvaluation {
+  moves = context.moves
+    ? moveValue(context.moves, pokemonId, p, context.mastery?.[pokemonId])
+    : undefined,
+) {
   const best = POSITIONS.reduce((a, b) =>
     p.positions[b] > p.positions[a] ? b : a,
   );
@@ -423,6 +426,56 @@ function scoreProfile(
     ? abilityUsefulness(pokemonId, p, context.mastery?.[pokemonId]) *
       (speciesAbility(pokemonId).tactics.includes(context.tactic) ? 1 : 0.5)
     : 0;
+  const physical = context.physicalAbilities
+    ? physicalAbilityValue(
+        pokemonId,
+        p,
+        context.tactic,
+        context.defense,
+        actualRole,
+        context.needs,
+        context.mastery?.[pokemonId],
+      )
+    : 0;
+  // Preserve the report's addition order exactly, including optional factors.
+  const contributions = [
+    talent * 0.25,
+    roleFit * 0.45,
+    scheme * 0.25,
+    needs * 0.05,
+    ability * 4,
+  ];
+  if (moves !== undefined) contributions.push(moves);
+  if (context.physicalAbilities) contributions.push(physical);
+  return {
+    actualRole,
+    talent,
+    roleFit,
+    scheme,
+    needs,
+    ability,
+    physical,
+    moves,
+    score: contributions.reduce((sum, value) => sum + value, 0),
+  };
+}
+function scoreProfile(
+  context: EvaluationContext,
+  pokemonId: number,
+  p: PlayerProfile,
+  role?: Position,
+): PlayerEvaluation {
+  const {
+    actualRole,
+    talent,
+    roleFit,
+    scheme,
+    needs,
+    ability,
+    physical,
+    moves,
+    score,
+  } = evaluationValues(context, pokemonId, p, role);
   const factors: EvaluationFactor[] = [
     {
       key: "talent",
@@ -455,33 +508,12 @@ function scoreProfile(
       contribution: ability * 4,
     },
   ];
-  const physical = context.physicalAbilities
-    ? physicalAbilityValue(
-        pokemonId,
-        p,
-        context.tactic,
-        context.defense,
-        actualRole,
-        context.needs,
-        context.mastery?.[pokemonId],
-      )
-    : 0;
-  if (context.moves)
+  if (moves !== undefined)
     factors.push({
       key: "moves",
       label: "Coached basketball moves",
-      value: moveValue(
-        context.moves,
-        pokemonId,
-        p,
-        context.mastery?.[pokemonId],
-      ),
-      contribution: moveValue(
-        context.moves,
-        pokemonId,
-        p,
-        context.mastery?.[pokemonId],
-      ),
+      value: moves,
+      contribution: moves,
     });
   if (context.physicalAbilities)
     factors.push({
@@ -495,7 +527,7 @@ function scoreProfile(
     role: actualRole,
     talent,
     roleFit,
-    score: factors.reduce((n, f) => n + f.contribution, 0),
+    score,
     factors,
     reasons: [
       `${actualRole} role: ${roleFit.toFixed(1)}; basketball talent: ${talent.toFixed(1)}.`,
@@ -511,6 +543,49 @@ function scoreProfile(
         : []),
     ],
   };
+}
+/** The simulation needs the same final score, without allocating UI explanations. */
+export function evaluatePlayerScore(
+  context: EvaluationContext,
+  pokemonId: number,
+  role?: Position,
+  offsets?: DevelopmentRatings,
+): number {
+  const mon = POKEMON_BY_ID.get(pokemonId);
+  if (!mon) throw new Error("Cannot evaluate an unknown Pokémon.");
+  const raw = playerProfile(
+    shinyPokemon(mon, context.shinySeed),
+    offsets ?? context.development[pokemonId],
+  );
+  const profile = context.morale
+    ? moraleProfile(raw, context.morale, pokemonId)
+    : raw;
+  // The report selects the role from base talent before morale is applied.
+  const actualRole =
+    role ??
+    POSITIONS.reduce((a, b) => (raw.positions[b] > raw.positions[a] ? b : a));
+  return evaluationValues(context, pokemonId, profile, actualRole).score;
+}
+/** All positions share coached moves; role fit and physical effects still vary. */
+export function evaluatePlayerScores(
+  context: EvaluationContext,
+  pokemonId: number,
+): number[] {
+  const mon = POKEMON_BY_ID.get(pokemonId);
+  if (!mon) throw new Error("Cannot evaluate an unknown Pokémon.");
+  const raw = playerProfile(
+    shinyPokemon(mon, context.shinySeed),
+    context.development[pokemonId],
+  );
+  const profile = context.morale
+    ? moraleProfile(raw, context.morale, pokemonId)
+    : raw;
+  const moves = context.moves
+    ? moveValue(context.moves, pokemonId, profile, context.mastery?.[pokemonId])
+    : undefined;
+  return POSITIONS.map(
+    (role) => evaluationValues(context, pokemonId, profile, role, moves).score,
+  );
 }
 export function evaluatePlayer(
   context: EvaluationContext,

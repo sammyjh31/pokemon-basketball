@@ -63,3 +63,19 @@ One cold/warm sample on the same Apple Silicon machine (Node 24.19.0, unprofiled
 | Ten-year four-team local career described above | 13.55 s | 0.031 s | 0 years |
 
 Both complete restored outputs matched between cold and warm openings. The two-year output also retains the exact hash and length recorded before this cache existed. All ten local years remain present. These are single-run engine measurements, not projected browser timings or extrapolations to other league sizes. Exact values, hashes and scope are in [performance-audit.json](performance-audit.json).
+
+## Whole-season scoring pass (2026-10-21)
+
+Simulated rotations now request numeric player scores without constructing scouting explanations. Five position evaluations share the same coached move value; base-role selection, morale, development, abilities and contribution addition order remain the same. Shared rotations also skip computing a fallback coaching plan whose result was unused. Chemistry compares the original ordered skill products before taking a single cube root and square root per unit.
+
+A pinned current-rules full-season regression covers all seven generations, shiny attributes, signatures, move counters and learned counter outcomes. Its complete 1,230-game output retains SHA-256 `8d5825ff20de1b60b6a2e23afac6f02b43fbb33877523a78b38224841f393d36` (8,067,397 serialized characters). The older court-v4 fingerprint above remains a separate regression. Seed order, score arithmetic, game rules and saved formats are unchanged.
+
+For a repeatable current-rules audit, use:
+
+```sh
+npm run performance:audit -- --phase=season --rules=current --output=/tmp/current-season.json
+```
+
+Use the same rules on a later `--baseline` comparison. The default remains the original legacy fixture. Benchmark reports reject mixed rule sets.
+
+Six alternating 90-game samples on the same machine had median times of 8.63s before and 7.59s after (about 12% less time). Every complete sample output matched. This is a short-sample measurement, not a full-season speedup estimate or browser guarantee. Unrelated CPU-heavy simulation jobs overlapped the separate full-season runs, so their raw wall times cannot establish a speedup. Exact samples, raw full-season results and limitations are recorded in [performance-2026-10-21.json](performance-2026-10-21.json). Warmup and sample work remained outside user saves; no existing leagues were read or changed.
