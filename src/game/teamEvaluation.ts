@@ -37,7 +37,11 @@ import {
 import { abilityUsefulness } from "./abilityEvaluation";
 import { physicalAbilitiesEnabled } from "./physicalAbilities";
 import { physicalAbilityValue } from "./physicalAbilityEvaluation";
-import { chemistryEnabled, evaluateLineupChemistry } from "./lineupChemistry";
+import {
+  chemistryEnabled,
+  evaluateLineupChemistry,
+  type ChemistryContext,
+} from "./lineupChemistry";
 import type { RotationPlan } from "./franchiseFeatures";
 import type { PairBonds } from "./teammateChemistry";
 export { abilityUsefulness } from "./abilityEvaluation";
@@ -160,6 +164,23 @@ function rosterProfiles(
   });
 }
 
+/** One immutable pregame snapshot serves every hypothetical unit and scheme. */
+function projectedChemistryContext(
+  team: EvaluationTeam,
+): Omit<ChemistryContext, "tactic" | "defense"> | undefined {
+  if (!chemistryEnabled(team)) return undefined;
+  const leadership = teamLeadership(team);
+  return {
+    abilities: abilitiesEnabled(team),
+    familiarity: team.engineRules?.familiarity,
+    ...(leadership ? { leadership } : {}),
+    ...(team.moraleVersion === 1 ? { morale: moraleScores(team) } : {}),
+    ...(team.chemistryGrowthVersion === 1
+      ? { bonds: team.chemistryBonds ?? {} }
+      : {}),
+  };
+}
+
 /** Four meaningful projected units at most; safe to reuse in market evaluations.
  * The expensive in-game subset search is deliberately confined to matchLineups.
  */
@@ -168,8 +189,9 @@ function projectedUnit(
   players: ReturnType<typeof rosterProfiles>,
   tactic: Tactic,
   defense: DefenseScheme,
+  sharedContext = projectedChemistryContext(team),
 ) {
-  if (!chemistryEnabled(team)) return undefined;
+  if (!sharedContext) return undefined;
   const active = team.rotationPlan
     ? players.filter(({ slot }) => team.rotationPlan!.minutes[slot] > 0)
     : players;
@@ -222,32 +244,11 @@ function projectedUnit(
         );
       }),
   ];
-  const leadership = teamLeadership(team);
   return candidates
     .map((unit) => {
       const chemistry = evaluateLineupChemistry(
         unit.map(({ mon, p }) => ({ pokemonId: mon.id, profile: p })),
-        {
-          tactic,
-          defense,
-          abilities: abilitiesEnabled(team),
-
-          ...(team.abilityMasteryVersion === 1
-            ? {
-                mastery: Object.fromEntries(
-                  Object.values(team.roster).flatMap((id) =>
-                    id == null ? [] : [[id, masteryXp(team, id)]],
-                  ),
-                ),
-              }
-            : {}),
-          familiarity: team.engineRules?.familiarity,
-          ...(leadership ? { leadership } : {}),
-          ...(team.moraleVersion === 1 ? { morale: moraleScores(team) } : {}),
-          ...(team.chemistryGrowthVersion === 1
-            ? { bonds: team.chemistryBonds ?? {} }
-            : {}),
-        },
+        { ...sharedContext, tactic, defense },
       );
       return {
         players: unit.map(({ mon }, role) => ({
@@ -286,7 +287,8 @@ export function evaluationGamePlan(team: EvaluationTeam) {
     };
   const players = rosterProfiles(team),
     enabled = abilitiesEnabled(team),
-    physical = physicalAbilitiesEnabled(team);
+    physical = physicalAbilitiesEnabled(team),
+    sharedContext = projectedChemistryContext(team);
   const tactic = TACTICS.map((tactic) => ({
     tactic,
     score:
@@ -313,8 +315,13 @@ export function evaluationGamePlan(team: EvaluationTeam) {
         ),
       ) +
       (tactic === coach.tactic ? 18 - 10 * coach.adaptability : 0) +
-      (projectedUnit(team, players, tactic, team.defense ?? "man")?.chemistry
-        .value ?? 0),
+      (projectedUnit(
+        team,
+        players,
+        tactic,
+        team.defense ?? "man",
+        sharedContext,
+      )?.chemistry.value ?? 0),
   })).sort((a, b) => b.score - a.score)[0].tactic;
   const defense = DEFENSE_SCHEMES.map((defense) => ({
     defense,
@@ -337,7 +344,8 @@ export function evaluationGamePlan(team: EvaluationTeam) {
         ),
       ) +
       (defense === coach.defense ? 18 - 10 * coach.adaptability : 0) +
-      (projectedUnit(team, players, tactic, defense)?.chemistry.value ?? 0),
+      (projectedUnit(team, players, tactic, defense, sharedContext)?.chemistry
+        .value ?? 0),
   })).sort((a, b) => b.score - a.score)[0].defense;
   return {
     tactic,

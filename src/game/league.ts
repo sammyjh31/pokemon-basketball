@@ -2,7 +2,7 @@ import { shinyPokemon } from "./shiny";
 import { isMovesetVersion } from "./basketballMoves";
 import { retainMastery } from "./abilityMastery";
 import { retainMorale } from "./playerMorale";
-import { createEvaluationContext, evaluatePlayer } from "./teamEvaluation";
+import { createEvaluationContext, evaluatePlayerScore } from "./teamEvaluation";
 import { assignLeagueCoaches } from "./trainerCoaches";
 import { POKEMON } from "../data/pokemon";
 import { draftPokemon, inDraftPool } from "./draftPool";
@@ -159,7 +159,7 @@ export function createLeague(run: Run): LeagueTeam[] {
             return {
               mon,
               pos,
-              value: evaluatePlayer(context, mon.id, pos).score,
+              value: evaluatePlayerScore(context, mon.id, pos),
             };
           const style =
             team.tactic === "pace"

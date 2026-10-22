@@ -78,7 +78,6 @@ const topTwo = (xs: number[]) =>
   average([...xs].sort((a, b) => b - a).slice(0, 2));
 interface Candidate {
   link: ChemistryLink;
-  bonuses: Record<number, Partial<ChemistryEffects>>;
 }
 
 /** Only the active five contribute. Ability adaptations are basketball mechanics, not Pokémon battle rules. */
@@ -221,6 +220,26 @@ export function evaluateLineupChemistry(
   ] as const)
     (value >= 0.65 ? strengths : value < 0.55 ? weaknesses : []).push(label);
   const candidates: Candidate[] = [];
+  // Record each recipient's strongest offer as it arrives, preserving first-source ties.
+  const winners: Record<
+    number,
+    Partial<
+      Record<keyof ChemistryEffects, { source: Candidate; delta: number }>
+    >
+  > = {};
+  const offer = (
+    pokemonId: number,
+    delta: Partial<ChemistryEffects>,
+    scale: number,
+    source: Candidate,
+  ) => {
+    const recipient = (winners[pokemonId] ??= {});
+    for (const key of Object.keys(delta) as (keyof ChemistryEffects)[]) {
+      const value = scale === 1 ? delta[key]! : delta[key]! * scale;
+      if (Math.abs(value) > Math.abs(recipient[key]?.delta ?? 0))
+        recipient[key] = { source, delta: value };
+    }
+  };
   if (context.abilities) {
     const entries = players.map((p) => ({
       ...p,
@@ -241,24 +260,17 @@ export function evaluateLineupChemistry(
           : 1 +
             0.25 *
               pairBond(context.bonds[pairKey(a.pokemonId, b.pokemonId)] ?? 0);
-      const scale = (delta: Partial<ChemistryEffects>) =>
-        learned === 1
-          ? delta
-          : Object.fromEntries(
-              Object.entries(delta).map(([k, v]) => [k, v * learned]),
-            );
-      candidates.push({
+      const candidate: Candidate = {
         link: {
           id: `${kind}:${a.pokemonId}:${b.pokemonId}`,
           label,
           pokemonIds: [a.pokemonId, b.pokemonId],
           description,
         },
-        bonuses: {
-          [a.pokemonId]: scale(da),
-          [b.pokemonId]: scale(db),
-        },
-      });
+      };
+      candidates.push(candidate);
+      offer(a.pokemonId, da, learned, candidate);
+      offer(b.pokemonId, db, learned, candidate);
     };
     const inGroup = (mechanic: AbilityMechanic, group: AbilityMechanic[]) =>
       group.includes(mechanic);
@@ -384,19 +396,11 @@ export function evaluateLineupChemistry(
   const active = new Set<Candidate>();
   for (const player of players)
     for (const key of fields) {
-      let best: Candidate | undefined,
-        delta = 0;
-      for (const candidate of candidates) {
-        const offered = candidate.bonuses[player.pokemonId]?.[key] ?? 0;
-        if (Math.abs(offered) > Math.abs(delta)) {
-          best = candidate;
-          delta = offered;
-        }
-      }
-      if (best && delta !== 0) {
-        active.add(best);
+      const best = winners[player.pokemonId]?.[key];
+      if (best && best.delta !== 0) {
+        active.add(best.source);
         effects[player.pokemonId][key] = clamp(
-          base[key] + delta,
+          base[key] + best.delta,
           key === "drain" ? 0.94 : 0.96,
           key === "drain" ? 1 : 1.08,
         );

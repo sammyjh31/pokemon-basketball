@@ -4,9 +4,10 @@ import {
   chemistryEnabled,
   evaluateLineupChemistry,
   type LineupChemistry,
+  type ChemistryContext,
 } from "./lineupChemistry";
 import type { Player, Team } from "./matchLineups";
-import { teamLeadership, type TeamLeadership } from "./playerPersonality";
+import { teamLeadership } from "./playerPersonality";
 interface Cache {
   tactic: Team["config"]["tactic"];
   defense: Team["config"]["defense"];
@@ -17,7 +18,7 @@ interface Cache {
   bonds?: import("./teammateChemistry").PairBonds;
   lineups: Map<number | string, LineupChemistry>;
   morale?: MoraleRoster;
-  leadership?: TeamLeadership;
+  context: ChemistryContext;
 }
 // Profiles are immutable for a match. Coaching can change the scheme, so that
 // context is invalidated independently of the active-five cache.
@@ -51,6 +52,7 @@ export function getMatchChemistry(
     stored.bonds !== bonds ||
     stored.morale !== morale
   ) {
+    const leadership = teamLeadership(team.config);
     stored = {
       tactic,
       defense,
@@ -60,7 +62,17 @@ export function getMatchChemistry(
       playerBits: new Map(team.players.slice(0, 30).map((p, i) => [p, 1 << i])),
       bonds,
       morale,
-      leadership: teamLeadership(team.config),
+      context: {
+        tactic,
+        defense,
+        abilities,
+        familiarity,
+        ...(leadership ? { leadership } : {}),
+        ...(bonds ? { bonds } : {}),
+        ...(team.config.moraleVersion === 1
+          ? { morale: moraleScores(team.config) }
+          : {}),
+      },
       lineups: new Map(),
     };
     cache.set(team, stored);
@@ -88,17 +100,7 @@ export function getMatchChemistry(
   if (!result) {
     result = evaluateLineupChemistry(
       floor.map((p) => ({ pokemonId: p.box.pokemonId, profile: p.profile })),
-      {
-        tactic: team.config.tactic,
-        defense: team.config.defense,
-        abilities,
-        familiarity,
-        ...(stored.leadership ? { leadership: stored.leadership } : {}),
-        ...(bonds ? { bonds } : {}),
-        ...(team.config.moraleVersion === 1
-          ? { morale: moraleScores(team.config) }
-          : {}),
-      },
+      stored.context,
     );
     stored.lineups.set(key, result);
   }

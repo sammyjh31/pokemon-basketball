@@ -1,0 +1,144 @@
+{
+  "date": "2026-10-21",
+  "scope": "Second bounded season speed pass. Engine timings through Vite SSR, including league construction and 90 actual fixture games with final reports. No browser startup or storage I/O; no user saves read.",
+  "method": {
+    "warmupGamesPerEngine": 15,
+    "order": [
+      "before",
+      "after",
+      "after",
+      "before",
+      "before",
+      "after"
+    ],
+    "samplesPerVersion": 3,
+    "unrelatedCpuHeavyJobsRunning": true,
+    "notAFullSeasonTimingEstimate": true,
+    "sameProcessSeparateModuleGraphs": true
+  },
+  "incremental": {
+    "baselineRevision": "4bff80ad81ccb143cca27009b0497a6962da2022",
+    "samples": [
+      {
+        "version": "before",
+        "count": 90,
+        "ms": 7652.8865000000005,
+        "cpuMs": 8451.901,
+        "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+      },
+      {
+        "version": "after",
+        "count": 90,
+        "ms": 7419.980667,
+        "cpuMs": 8052.451,
+        "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+      },
+      {
+        "version": "after",
+        "count": 90,
+        "ms": 6831.589499999998,
+        "cpuMs": 7291.159,
+        "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+      },
+      {
+        "version": "before",
+        "count": 90,
+        "ms": 7899.771124999996,
+        "cpuMs": 8250.763,
+        "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+      },
+      {
+        "version": "before",
+        "count": 90,
+        "ms": 7748.700375,
+        "cpuMs": 7647.283,
+        "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+      },
+      {
+        "version": "after",
+        "count": 90,
+        "ms": 6668.1156249999985,
+        "cpuMs": 7018.682,
+        "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+      }
+    ],
+    "summary": {
+      "beforeMedianMs": 7748.700375,
+      "afterMedianMs": 6831.589499999998,
+      "medianTimeSavedPercent": 11.835673475760144,
+      "allOutputHashesEqual": true
+    }
+  },
+  "combined": {
+    "baselineRevision": "ce005f9783f586be84ba523c0f082eebbe113d61",
+    "samples": [
+      {
+        "version": "before",
+        "count": 90,
+        "ms": 9921.399208,
+        "cpuMs": 10237.741,
+        "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+      },
+      {
+        "version": "after",
+        "count": 90,
+        "ms": 6862.651583000003,
+        "cpuMs": 8047.553,
+        "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+      },
+      {
+        "version": "after",
+        "count": 90,
+        "ms": 6301.498,
+        "cpuMs": 6835.471,
+        "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+      },
+      {
+        "version": "before",
+        "count": 90,
+        "ms": 8361.680540999998,
+        "cpuMs": 8827.222,
+        "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+      },
+      {
+        "version": "before",
+        "count": 90,
+        "ms": 8275.408959,
+        "cpuMs": 8691.312,
+        "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+      },
+      {
+        "version": "after",
+        "count": 90,
+        "ms": 6581.106291000004,
+        "cpuMs": 6911.998,
+        "hash": "bd48a472dc84a7f1166ba35bb89111302e50b8aa3e156e8f4d87509f31f46bf2"
+      }
+    ],
+    "summary": {
+      "beforeMedianMs": 8361.680540999998,
+      "afterMedianMs": 6581.106291000004,
+      "medianTimeSavedPercent": 21.294454401471906,
+      "allOutputHashesEqual": true
+    }
+  },
+  "compatibility": {
+    "cpuLeagueSha256": "0292c31c06a13cf77a9ab97bb4c98a8e4fff6c49fe1713d8bbf4dd4b726c0db7",
+    "fullChemistryCorpusSha256": "6747f64fe64067b42f0d6789def3a972fff4e0d1b4a60f13dcf8078079e16cb0",
+    "chemistryReports": 320,
+    "reverseOrderAlsoChecked": true
+  },
+  "review": "Initial pass and match-context follow-up independently reviewed; no material findings.",
+  "verification": {
+    "focusedTests": 51,
+    "focusedFiles": 9,
+    "fullSeasonFingerprintTests": 2,
+    "fullSeasonFingerprintFiles": 1,
+    "totalFixtureGamesInFullRegression": 2460,
+    "typecheckAndPagesBuild": "passed",
+    "whitespaceCheck": "passed",
+    "independentReview": "No material findings in second pass or prepared-match-context follow-up.",
+    "fullProjectSuite": "Not run; focused game/coaching/chemistry checks and current/historical full-season output fingerprints were used.",
+    "deployment": "Local only; not published during this task."
+  }
+}
