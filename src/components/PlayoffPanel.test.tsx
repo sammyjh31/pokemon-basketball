@@ -264,6 +264,9 @@ describe("playoff presentation", () => {
       within(matchup()).getByLabelText(`${teams[0].name}: 1 of 2 wins needed`),
     ).toHaveTextContent("1");
     fireEvent.click(
+      screen.getByRole("button", { name: "Browse Quarterfinals" }),
+    );
+    fireEvent.click(
       screen.getByRole("button", { name: /View Quarterfinals series 1:/ }),
     );
     expect(within(matchup()).queryByRole("img")).not.toBeInTheDocument();
@@ -333,6 +336,9 @@ describe("playoff presentation", () => {
     ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Skip reveal" }));
     const playoff = panel();
+    fireEvent.click(
+      within(playoff).getByRole("button", { name: "Full bracket" }),
+    );
     expect(
       within(playoff).getAllByRole("button", { name: /^View .* series \d/ }),
     ).toHaveLength(15);
@@ -496,6 +502,9 @@ describe("playoff presentation", () => {
 
   it("moves keyboard context to the selected future series and back to its bracket position", () => {
     setup();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Browse Quarterfinals" }),
+    );
     const series = within(panel()).getByRole("button", {
       name: /View Quarterfinals series 2:/,
     });

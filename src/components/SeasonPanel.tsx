@@ -356,20 +356,28 @@ export function SeasonPanel({
               </p>
             </div>
           )}
-          {done && !archived && result?.playerStats && (
-            <SeasonStats
-              players={result.playerStats}
-              awards={league ? [] : result.awards}
-            />
-          )}
-          {done && league && (
-            <LeaguePanel
-              year={franchiseYear}
-              league={league}
-              morale={currentMoraleBanks(run)}
-              mastery={currentMasteryBanks(run)}
-              playedGames={run.seasonProgress?.playedGames}
-            />
+          {done && !archived && (
+            <details className="clarity-disclosure season-explore">
+              <summary>
+                Explore season stats
+                <span>Player ratings, standings, awards & league reports</span>
+              </summary>
+              {done && !archived && result?.playerStats && (
+                <SeasonStats
+                  players={result.playerStats}
+                  awards={league ? [] : result.awards}
+                />
+              )}
+              {done && league && (
+                <LeaguePanel
+                  year={franchiseYear}
+                  league={league}
+                  morale={currentMoraleBanks(run)}
+                  mastery={currentMasteryBanks(run)}
+                  playedGames={run.seasonProgress?.playedGames}
+                />
+              )}
+            </details>
           )}
           {done && league && onPlayoffs && (
             <PlayoffPanel
@@ -383,130 +391,133 @@ export function SeasonPanel({
               progress={playoffProgress}
             />
           )}
-          {done && !archived && (
-            <p className="schedule-hint">
-              Select a game score to open the full box score.
-            </p>
-          )}
-          {!archived && (
-            <p className="schedule-hint">
-              Rating edge compares your team’s overall rating with the
-              opponent’s. It is not a win probability; possessions decide the
-              result.
-            </p>
-          )}
           {done && franchiseEntry}
-          <div className="schedule-wrap">
-            <table className="schedule-table">
-              <caption className="sr-only">
-                82-game season schedule and results
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">GAME</th>
-                  <th scope="col">OPPONENT</th>
-                  <th scope="col">{archived ? "WIN ODDS" : "RATING EDGE"}</th>
-                  <th scope="col">{result ? "RESULT" : "VENUE"}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {schedule.map((match, index) => {
-                  const team = leagueTeams.find(
-                    (team) => team.id === match.opponentId,
-                  );
-                  const opponent = team
-                    ? {
-                        id: team.id,
-                        name: team.name,
-                        offense: team.ratings.offense,
-                        defense: team.ratings.defense,
-                        style: TACTIC_LABELS[team.tactic],
-                      }
-                    : OPPONENTS[match.opponentId - 1];
-                  const game = showing[index];
-                  return (
-                    <tr
-                      key={index}
-                      data-testid={game ? "game-result" : undefined}
-                      className={
-                        game ? (game.won ? "game-win" : "game-loss") : ""
-                      }
-                    >
-                      <td className="game-number">
-                        {String(index + 1).padStart(2, "0")}
-                      </td>
-                      <td>
-                        <span className="opponent-mark" aria-hidden="true">
-                          {opponent.name
-                            .split(" ")
-                            .map((w) => w[0])
-                            .join("")}
-                        </span>
-                        <span className="opponent-name">
-                          {opponent.name}
-                          <small>
-                            {match.home ? "HOME" : "AWAY"} · {opponent.style}
-                          </small>
-                        </span>
-                      </td>
-                      <td className="odds">
-                        {archived && game
-                          ? `${Math.round(game.winProbability * 100)}%`
-                          : `${ratings.overall >= (opponent.offense + opponent.defense) / 2 ? "+" : ""}${(ratings.overall - (opponent.offense + opponent.defense) / 2).toFixed(1)}`}
-                      </td>
-                      <td>
-                        {game ? (
-                          done &&
-                          !archived &&
-                          (game.boxScore || game.leagueGameId) ? (
-                            <button
-                              type="button"
-                              className="game-score game-score-button"
-                              aria-label={`View box score for game ${index + 1} against ${opponent.name}, ${game.won ? "win" : "loss"} ${game.teamScore} to ${game.opponentScore}`}
-                              onClick={() => setSelectedGame(game)}
-                            >
-                              <b>{game.won ? "W" : "L"}</b> {game.teamScore}–
-                              {game.opponentScore}
-                              {game.overtime && (
-                                <small>
-                                  {" "}
-                                  {game.overtimePeriods &&
-                                  game.overtimePeriods > 1
-                                    ? game.overtimePeriods
-                                    : ""}
-                                  OT
-                                </small>
-                              )}
-                              <span
-                                className="box-score-link-icon"
-                                aria-hidden="true"
-                              >
-                                ↗
-                              </span>
-                            </button>
-                          ) : (
-                            <span className="game-score">
-                              <b>{game.won ? "W" : "L"}</b> {game.teamScore}–
-                              {game.opponentScore}
-                              {game.overtime && <small> OT</small>}
-                            </span>
-                          )
-                        ) : (
-                          <span className="pending-game">
-                            {result
-                              ? "—"
-                              : match.home
-                                ? "Home court"
-                                : "On the road"}
+          <details className="clarity-disclosure season-schedule" open={!done}>
+            <summary>82-game schedule & box scores</summary>
+            {done && !archived && (
+              <p className="schedule-hint">
+                Select a game score to open the full box score.
+              </p>
+            )}
+            {!archived && (
+              <p className="schedule-hint">
+                Rating edge compares your team’s overall rating with the
+                opponent’s. It is not a win probability; possessions decide the
+                result.
+              </p>
+            )}
+            <div className="schedule-wrap">
+              <table className="schedule-table">
+                <caption className="sr-only">
+                  82-game season schedule and results
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">GAME</th>
+                    <th scope="col">OPPONENT</th>
+                    <th scope="col">{archived ? "WIN ODDS" : "RATING EDGE"}</th>
+                    <th scope="col">{result ? "RESULT" : "VENUE"}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {schedule.map((match, index) => {
+                    const team = leagueTeams.find(
+                      (team) => team.id === match.opponentId,
+                    );
+                    const opponent = team
+                      ? {
+                          id: team.id,
+                          name: team.name,
+                          offense: team.ratings.offense,
+                          defense: team.ratings.defense,
+                          style: TACTIC_LABELS[team.tactic],
+                        }
+                      : OPPONENTS[match.opponentId - 1];
+                    const game = showing[index];
+                    return (
+                      <tr
+                        key={index}
+                        data-testid={game ? "game-result" : undefined}
+                        className={
+                          game ? (game.won ? "game-win" : "game-loss") : ""
+                        }
+                      >
+                        <td className="game-number">
+                          {String(index + 1).padStart(2, "0")}
+                        </td>
+                        <td>
+                          <span className="opponent-mark" aria-hidden="true">
+                            {opponent.name
+                              .split(" ")
+                              .map((w) => w[0])
+                              .join("")}
                           </span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                          <span className="opponent-name">
+                            {opponent.name}
+                            <small>
+                              {match.home ? "HOME" : "AWAY"} · {opponent.style}
+                            </small>
+                          </span>
+                        </td>
+                        <td className="odds">
+                          {archived && game
+                            ? `${Math.round(game.winProbability * 100)}%`
+                            : `${ratings.overall >= (opponent.offense + opponent.defense) / 2 ? "+" : ""}${(ratings.overall - (opponent.offense + opponent.defense) / 2).toFixed(1)}`}
+                        </td>
+                        <td>
+                          {game ? (
+                            done &&
+                            !archived &&
+                            (game.boxScore || game.leagueGameId) ? (
+                              <button
+                                type="button"
+                                className="game-score game-score-button"
+                                aria-label={`View box score for game ${index + 1} against ${opponent.name}, ${game.won ? "win" : "loss"} ${game.teamScore} to ${game.opponentScore}`}
+                                onClick={() => setSelectedGame(game)}
+                              >
+                                <b>{game.won ? "W" : "L"}</b> {game.teamScore}–
+                                {game.opponentScore}
+                                {game.overtime && (
+                                  <small>
+                                    {" "}
+                                    {game.overtimePeriods &&
+                                    game.overtimePeriods > 1
+                                      ? game.overtimePeriods
+                                      : ""}
+                                    OT
+                                  </small>
+                                )}
+                                <span
+                                  className="box-score-link-icon"
+                                  aria-hidden="true"
+                                >
+                                  ↗
+                                </span>
+                              </button>
+                            ) : (
+                              <span className="game-score">
+                                <b>{game.won ? "W" : "L"}</b> {game.teamScore}–
+                                {game.opponentScore}
+                                {game.overtime && <small> OT</small>}
+                              </span>
+                            )
+                          ) : (
+                            <span className="pending-game">
+                              {result
+                                ? "—"
+                                : match.home
+                                  ? "Home court"
+                                  : "On the road"}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </details>
         </>
       )}
       {done && (

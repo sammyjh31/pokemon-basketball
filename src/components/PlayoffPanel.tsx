@@ -57,12 +57,7 @@ export function PlayoffPanel({
           ? "1, 2 and 5"
           : "1, 2, 5 and 7";
   const [view, setView] = useState<"bracket" | "players">("bracket");
-  const [bracketView, setBracketView] = useState<"tree" | "round">(() =>
-    typeof window !== "undefined" &&
-    window.matchMedia?.("(max-width: 700px)").matches
-      ? "round"
-      : "tree",
-  );
+  const [bracketView, setBracketView] = useState<"tree" | "round">("round");
   const [browseRound, setBrowseRound] = useState<number | null>(null);
   const [selection, setSelection] = useState<{ id: string } | null>(null);
   const detailHeading = useRef<HTMLHeadingElement>(null);
@@ -347,9 +342,8 @@ export function PlayoffPanel({
       </div>
       {!completed && (
         <p className="stat-legend">
-          Next slate plays one game in each unfinished series of the current
-          round. You can follow every round even after{" "}
-          {managers ? "your teams are" : "your team is"} eliminated.
+          One game per active series. Keep following the championship after
+          elimination.
         </p>
       )}
       {simulating && (

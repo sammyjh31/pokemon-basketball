@@ -433,7 +433,6 @@ export function LocalLeagueDraft({
           className="local-panel local-pool"
           aria-label="Available Pokémon"
         >
-          <ShinyRules seed={draft.shinySeed} />
           <div className="draft-board-heading">
             <div>
               <span className="eyebrow">YOUR SCOUTING DESK</span>
@@ -446,45 +445,6 @@ export function LocalLeagueDraft({
           <p className="draft-board-intro">
             Scout your next star. The top three show who helps your lineup most.
           </p>
-          <div className="draft-open-roles" aria-label="Open roster positions">
-            <span>Lineup / open roles</span>
-            <button
-              aria-label="Rank with lineup moves"
-              aria-pressed={sort === "impact" && impactSlot === "best-lineup"}
-              onClick={() => {
-                setSort("impact");
-                setRankingSlot("best-lineup");
-                setLimit(24);
-              }}
-            >
-              Lineup moves
-            </button>
-            <button
-              aria-label="Rank for best open position"
-              aria-pressed={sort === "impact" && impactSlot === "best-open"}
-              onClick={() => {
-                setSort("impact");
-                setRankingSlot("best-open");
-                setLimit(24);
-              }}
-            >
-              Best open
-            </button>
-            {vacancies.map((s) => (
-              <button
-                key={s}
-                aria-label={`Rank for ${s}`}
-                aria-pressed={sort === "impact" ? impactSlot === s : sort === s}
-                onClick={() => {
-                  setSort("impact");
-                  setRankingSlot(s);
-                  setLimit(24);
-                }}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
           {sort === "impact" && (
             <p className="draft-impact-leaders-label">
               {impactPriority.label} at {impactSlotLabel} · top choices from all{" "}
@@ -543,14 +503,6 @@ export function LocalLeagueDraft({
                   </button>
                 ))}
           </div>
-          <p className="draft-term-glossary">
-            <span>What these mean:</span>
-            <DraftTerm term="fit">Fit</DraftTerm>
-            <DraftTerm term="impact">Impact</DraftTerm>
-            {impactSlot === "best-lineup" && (
-              <DraftTerm term="baseline">vs rearranged baseline</DraftTerm>
-            )}
-          </p>
           <div className="local-pool-controls">
             <label>
               Search available Pokémon
@@ -615,6 +567,59 @@ export function LocalLeagueDraft({
                 </small>
               </span>
             </summary>
+            <ShinyRules seed={draft.shinySeed} />
+            <div
+              className="draft-open-roles"
+              aria-label="Open roster positions"
+            >
+              <span>Lineup / open roles</span>
+              <button
+                aria-label="Rank with lineup moves"
+                aria-pressed={sort === "impact" && impactSlot === "best-lineup"}
+                onClick={() => {
+                  setSort("impact");
+                  setRankingSlot("best-lineup");
+                  setLimit(24);
+                }}
+              >
+                Lineup moves
+              </button>
+              <button
+                aria-label="Rank for best open position"
+                aria-pressed={sort === "impact" && impactSlot === "best-open"}
+                onClick={() => {
+                  setSort("impact");
+                  setRankingSlot("best-open");
+                  setLimit(24);
+                }}
+              >
+                Best open
+              </button>
+              {vacancies.map((s) => (
+                <button
+                  key={s}
+                  aria-label={`Rank for ${s}`}
+                  aria-pressed={
+                    sort === "impact" ? impactSlot === s : sort === s
+                  }
+                  onClick={() => {
+                    setSort("impact");
+                    setRankingSlot(s);
+                    setLimit(24);
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            <p className="draft-term-glossary">
+              <span>What these mean:</span>
+              <DraftTerm term="fit">Fit</DraftTerm>
+              <DraftTerm term="impact">Impact</DraftTerm>
+              {impactSlot === "best-lineup" && (
+                <DraftTerm term="baseline">vs rearranged baseline</DraftTerm>
+              )}
+            </p>
             <DraftPositionLocks
               roster={roster}
               lockedSlots={lockedSlots}
@@ -952,6 +957,36 @@ export function LocalLeagueDraft({
                   ))}
                 </select>
               </label>
+              {impact && (
+                <DraftTeamImpact
+                  impact={impact}
+                  name={mon.name}
+                  slot={slot}
+                  optimized={!!proposed?.lineup}
+                />
+              )}
+              {proposed?.lineup && (
+                <p className="draft-lineup-confirm-note">
+                  This pick includes the suggested position changes shown below.
+                </p>
+              )}
+              <button
+                className="button primary"
+                disabled={
+                  !impact ||
+                  (useLineup && impactSlot === "best-lineup" && !proposed)
+                }
+                onClick={() =>
+                  proposed?.lineup
+                    ? onPick(mon.id, slot, proposed.lineup.after)
+                    : onPick(mon.id, slot)
+                }
+              >
+                {proposed?.lineup
+                  ? "Confirm pick & lineup: "
+                  : "Confirm pick: "}
+                {mon.name}
+              </button>
               {proposed?.lineup && (
                 <section
                   className="draft-lineup-plan"
@@ -979,31 +1014,6 @@ export function LocalLeagueDraft({
                   </details>
                 </section>
               )}
-              {impact && (
-                <DraftTeamImpact
-                  impact={impact}
-                  name={mon.name}
-                  slot={slot}
-                  optimized={!!proposed?.lineup}
-                />
-              )}
-              <button
-                className="button primary"
-                disabled={
-                  !impact ||
-                  (useLineup && impactSlot === "best-lineup" && !proposed)
-                }
-                onClick={() =>
-                  proposed?.lineup
-                    ? onPick(mon.id, slot, proposed.lineup.after)
-                    : onPick(mon.id, slot)
-                }
-              >
-                {proposed?.lineup
-                  ? "Confirm pick & lineup: "
-                  : "Confirm pick: "}
-                {mon.name}
-              </button>
             </div>
             <div className="draft-verdict">
               <p>

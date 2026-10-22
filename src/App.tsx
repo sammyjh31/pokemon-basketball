@@ -740,7 +740,7 @@ export default function App({
                     </button>
                   </p>
                 )}
-                {!state.franchise && (
+                {!state.franchise && choosingCoach && (
                   <ChallengePoolPicker
                     mode={run.mode}
                     pool={run.draftPool}
@@ -767,6 +767,73 @@ export default function App({
                     id="draft"
                     disabled={busy}
                   >
+                    {!state.franchise && (
+                      <DraftPanel
+                        key={run.id}
+                        run={run}
+                        pending={pending}
+                        inspectId={swap ? run.roster[swap] : null}
+                        onPick={(id) => {
+                          setPending(pending === id ? null : id);
+                          setSwap(null);
+                          setAnnouncement(
+                            `${POKEMON_BY_ID.get(id)!.name} selected. Choose a position.`,
+                          );
+                        }}
+                        onPlace={onSlot}
+                        onReroll={() => {
+                          dispatch({ type: "REROLL" });
+                          setPending(null);
+                          setAnnouncement("Four new draft choices are ready.");
+                        }}
+                        onLegends={changeLegends}
+                        onGuide={() => setGuideOpen(true)}
+                        records={records}
+                        spriteStyle={spriteStyle}
+                        onSpriteStyle={setSpriteStyle}
+                        settings={
+                          <ChallengePoolPicker
+                            mode={run.mode}
+                            pool={run.draftPool}
+                            includeLegends={run.includeLegends}
+                            disabled={busy || !!run.result}
+                            onChange={changeGeneration}
+                          />
+                        }
+                        tools={
+                          <LineupTools
+                            key={run.id}
+                            run={run}
+                            onRandomize={() => {
+                              dispatch({
+                                type: "SET_LINEUP",
+                                roster: randomLineup(
+                                  run.includeLegends,
+                                  newSeed(),
+                                  run.draftPool,
+                                ),
+                              });
+                              setPending(null);
+                              setSwap(null);
+                              setAnnouncement(
+                                "A new eight-player roster is ready.",
+                              );
+                            }}
+                            onClear={() => {
+                              dispatch({
+                                type: "SET_LINEUP",
+                                roster: emptyRoster(),
+                              });
+                              setPending(null);
+                              setSwap(null);
+                              setAnnouncement(
+                                "All eight roster slots are cleared.",
+                              );
+                            }}
+                          />
+                        }
+                      />
+                    )}
                     <div className="court-column">
                       <Court
                         run={run}
@@ -818,78 +885,29 @@ export default function App({
                         />
                       )}
                     </div>
-                    {!state.franchise && (
-                      <DraftPanel
-                        key={run.id}
-                        run={run}
-                        pending={pending}
-                        inspectId={swap ? run.roster[swap] : null}
-                        onPick={(id) => {
-                          setPending(pending === id ? null : id);
-                          setSwap(null);
-                          setAnnouncement(
-                            `${POKEMON_BY_ID.get(id)!.name} selected. Choose a position.`,
-                          );
-                        }}
-                        onPlace={onSlot}
-                        onReroll={() => {
-                          dispatch({ type: "REROLL" });
-                          setPending(null);
-                          setAnnouncement("Four new draft choices are ready.");
-                        }}
-                        onLegends={changeLegends}
-                        onGuide={() => setGuideOpen(true)}
-                        records={records}
-                        spriteStyle={spriteStyle}
-                        onSpriteStyle={setSpriteStyle}
-                        tools={
-                          <LineupTools
-                            key={run.id}
-                            run={run}
-                            onRandomize={() => {
-                              dispatch({
-                                type: "SET_LINEUP",
-                                roster: randomLineup(
-                                  run.includeLegends,
-                                  newSeed(),
-                                  run.draftPool,
-                                ),
-                              });
-                              setPending(null);
-                              setSwap(null);
-                              setAnnouncement(
-                                "A new eight-player roster is ready.",
-                              );
-                            }}
-                            onClear={() => {
-                              dispatch({
-                                type: "SET_LINEUP",
-                                roster: emptyRoster(),
-                              });
-                              setPending(null);
-                              setSwap(null);
-                              setAnnouncement(
-                                "All eight roster slots are cleared.",
-                              );
-                            }}
-                          />
-                        }
-                      />
-                    )}
                   </fieldset>
                 )}
-                <div className="team-hq">
-                  {!coachTeam.coach && <MoralePanel team={coachTeam} />}
-                  {coachTeam.abilityMasteryVersion === 1 && (
-                    <MasteryPanel team={coachTeam} />
-                  )}
-                  {coachTeam.coach && (
-                    <CoachSummary
-                      team={coachTeam}
-                      nextSeason={state.franchise?.phase === "offseason"}
-                    />
-                  )}
-                </div>
+                {(coachTeam.coach ||
+                  coachTeam.abilityMasteryVersion === 1 ||
+                  (coachTeam.moraleVersion === 1 &&
+                    Object.values(run.roster).some((id) => id !== null))) && (
+                  <details className="team-hq clarity-disclosure">
+                    <summary>
+                      Trainer & player development
+                      <span>Coaching, mastery & movesets</span>
+                    </summary>
+                    {!coachTeam.coach && <MoralePanel team={coachTeam} />}
+                    {coachTeam.abilityMasteryVersion === 1 && (
+                      <MasteryPanel team={coachTeam} />
+                    )}
+                    {coachTeam.coach && (
+                      <CoachSummary
+                        team={coachTeam}
+                        nextSeason={state.franchise?.phase === "offseason"}
+                      />
+                    )}
+                  </details>
+                )}
                 <p className="sr-only" role="status">
                   {announcement}
                 </p>

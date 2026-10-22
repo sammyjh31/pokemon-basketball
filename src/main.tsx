@@ -33,3 +33,5 @@ import "./competitionPolish.css";
 import "./retroFinish.css";
 
 import "./retroMotion.css";
+
+import "./clarity.css";

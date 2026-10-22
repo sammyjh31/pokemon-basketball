@@ -72,7 +72,6 @@ export function Scoreboard({
         </nav>
       )}
       <nav className="page-links" aria-label="On this page">
-        <a href="#season">Season</a>
         {onGuide && (
           <button type="button" onClick={onGuide}>
             Scouting guide

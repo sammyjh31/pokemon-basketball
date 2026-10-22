@@ -149,22 +149,23 @@ export function ScoutReport({
           .join(" · ")}
       </p>
       <p className="scout-summary">{profile.scouting}</p>
-      <SpeciesAbility pokemonId={mon.id} />
-      {personalityVersion === 1 && (
-        <section
-          className="scout-personality"
-          aria-label="Basketball personality"
-        >
-          <h4>Basketball personality</h4>
-          <PersonalityDetails personality={playerPersonality(mon.id)} />
-        </section>
-      )}
       <details className="scout-details">
         <summary>
           Full scouting report{" "}
-          <span>20 skills + 9 advanced tools + source stats</span>
+          <span>Skills, abilities, personality & source stats</span>
         </summary>
         <div className="scout-details-content">
+          <SpeciesAbility pokemonId={mon.id} />
+          {personalityVersion === 1 && (
+            <section
+              className="scout-personality"
+              aria-label="Basketball personality"
+            >
+              <h4>Basketball personality</h4>
+              <PersonalityDetails personality={playerPersonality(mon.id)} />
+            </section>
+          )}
+
           <TypeScouting types={mon.types} />
           <h4>Overall skills</h4>
           <SkillRows keys={ATTRIBUTE_KEYS} a={a} />

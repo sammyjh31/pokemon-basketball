@@ -188,30 +188,33 @@ export function BenchPanel({
           ? "Projected minutes guide substitutions; fatigue, matchups and foul trouble change the rotation."
           : "Fill all eight slots to complete your rotation."}
       </p>
-      <div className="rotation-strip" aria-label="Projected minutes">
-        {Object.entries(minutes).map(([slot, min]) => (
-          <span key={slot}>
-            <b>{slot}</b>
-            {min}
-            <small>MIN</small>
-          </span>
-        ))}
-      </div>
-      <div className="team-profile">
-        {(
-          [
-            ["Spacing", ratings.spacing],
-            ["Creation", ratings.creation],
-            ["Rim protection", ratings.rimProtection],
-            ["Bench", ratings.bench],
-          ] as const
-        ).map(([label, val]) => (
-          <span key={label}>
-            {label}
-            <b>{Math.round(val ?? 0)}</b>
-          </span>
-        ))}
-      </div>
+      <details className="clarity-disclosure bench-details">
+        <summary>Rotation & team strengths</summary>
+        <div className="rotation-strip" aria-label="Projected minutes">
+          {Object.entries(minutes).map(([slot, min]) => (
+            <span key={slot}>
+              <b>{slot}</b>
+              {min}
+              <small>MIN</small>
+            </span>
+          ))}
+        </div>
+        <div className="team-profile">
+          {(
+            [
+              ["Spacing", ratings.spacing],
+              ["Creation", ratings.creation],
+              ["Rim protection", ratings.rimProtection],
+              ["Bench", ratings.bench],
+            ] as const
+          ).map(([label, val]) => (
+            <span key={label}>
+              {label}
+              <b>{Math.round(val ?? 0)}</b>
+            </span>
+          ))}
+        </div>
+      </details>
     </section>
   );
 }

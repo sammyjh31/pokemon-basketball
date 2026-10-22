@@ -27,32 +27,44 @@ export function GettingStarted({
           Hide checklist
         </button>
       </div>
-      <ol>
-        {steps.map((step, i) => (
-          <li
-            key={step.label}
-            className={step.done ? "done" : i === next ? "current" : ""}
-            aria-current={i === next ? "step" : undefined}
-          >
-            <span className="step-marker" aria-hidden="true">
-              {step.done ? "✓" : i + 1}
-            </span>
-            <span>
-              <strong>
-                {step.href && !step.done ? (
-                  <a href={step.href}>{step.label}</a>
-                ) : (
-                  step.label
-                )}
-                <span className="sr-only">
-                  {step.done ? " (done)" : " (to do)"}
-                </span>
-              </strong>
-              <small>{step.detail}</small>
-            </span>
-          </li>
-        ))}
-      </ol>
+      {next >= 0 && (
+        <div className="next-step">
+          <span className="eyebrow">UP NEXT</span>
+          <strong>
+            {steps[next].href ? (
+              <a href={steps[next].href}>{steps[next].label}</a>
+            ) : (
+              steps[next].label
+            )}
+          </strong>
+          <span>{steps[next].detail}</span>
+        </div>
+      )}
+      <details className="clarity-disclosure">
+        <summary>All steps</summary>
+        <ol>
+          {steps.map((step, i) => (
+            <li
+              key={step.label}
+              className={step.done ? "done" : i === next ? "current" : ""}
+              aria-current={i === next ? "step" : undefined}
+            >
+              <span className="step-marker" aria-hidden="true">
+                {step.done ? "✓" : i + 1}
+              </span>
+              <span>
+                <strong>
+                  {step.label}
+                  <span className="sr-only">
+                    {step.done ? " (done)" : " (to do)"}
+                  </span>
+                </strong>
+                <small>{step.detail}</small>
+              </span>
+            </li>
+          ))}
+        </ol>
+      </details>
     </section>
   );
 }

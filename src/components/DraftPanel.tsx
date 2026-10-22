@@ -3,12 +3,7 @@ import { ShinyRules } from "./ShinyPokemon";
 import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
 import { ALL_POKEMON, POKEMON_BY_ID, TYPES } from "../data/pokemon";
 import { draftPokemon, draftPoolLabel } from "../game/draftPool";
-import {
-  attributes,
-  ATTRIBUTE_KEYS,
-  ATTRIBUTE_LABELS,
-  positionRating,
-} from "../game/ratings";
+import { attributes, positionRating } from "../game/ratings";
 import {
   POSITIONS,
   ROSTER_SLOTS,
@@ -53,6 +48,7 @@ export function DraftPanel({
   onSpriteStyle,
   tools,
   onGuide,
+  settings,
 }: {
   run: Run;
   pending: number | null;
@@ -65,6 +61,7 @@ export function DraftPanel({
   spriteStyle: SpriteStyle;
   onSpriteStyle: (style: SpriteStyle) => void;
   tools: ReactNode;
+  settings?: ReactNode;
   onGuide?: () => void;
 }) {
   const [search, setSearch] = useState(""),
@@ -118,7 +115,6 @@ export function DraftPanel({
       className="draft-panel"
       aria-label="Draft Pokémon"
     >
-      <ShinyRules seed={run.shinySeed} />
       <div className="draft-title">
         <h1>
           {run.mode === "free" ? (
@@ -135,7 +131,6 @@ export function DraftPanel({
             : "Eight picks. Two re-rolls. Draft your team and chase the perfect 82-game season."}
         </p>
       </div>
-      {tools}
       <div className="draft-heading">
         <div>
           <span className="eyebrow">
@@ -166,26 +161,37 @@ export function DraftPanel({
           </button>
         )}
       </div>
-      {!run.result && (
-        <label className="legend-toggle">
-          <input
-            type="checkbox"
-            checked={run.includeLegends}
-            aria-label="Include legendary Pokémon"
-            aria-describedby="legend-note"
-            onChange={(e) => onLegends(e.target.checked)}
-          />
-          <span>Include legendary Pokémon</span>
-          <span className="legend-star" aria-hidden="true">
-            ✦
+      <details className="clarity-disclosure draft-options">
+        <summary>
+          Draft rules{" "}
+          <span>
+            {draftPoolLabel(run.draftPool)}
+            {run.includeLegends ? " · Legends on" : " · No legends"}
           </span>
-          <small className="legend-note" id="legend-note">
-            {run.mode === "free"
-              ? "Changes the pool. Your other picks stay."
-              : "Changing the pool restarts this draft."}
-          </small>
-        </label>
-      )}
+        </summary>
+        {settings}
+        {!run.result && (
+          <label className="legend-toggle">
+            <input
+              type="checkbox"
+              checked={run.includeLegends}
+              aria-label="Include legendary Pokémon"
+              aria-describedby="legend-note"
+              onChange={(e) => onLegends(e.target.checked)}
+            />
+            <span>Include legendary Pokémon</span>
+            <span className="legend-star" aria-hidden="true">
+              ✦
+            </span>
+            <small className="legend-note" id="legend-note">
+              {run.mode === "free"
+                ? "Changes the pool. Your other picks stay."
+                : "Changing the pool restarts this draft."}
+            </small>
+          </label>
+        )}
+        <ShinyRules seed={run.shinySeed} />
+      </details>
       {!run.result && run.mode === "free" && (
         <div className="search-controls">
           <input
@@ -314,18 +320,16 @@ export function DraftPanel({
               </button>
             ))}
           </div>
-          <ScoutReport
-            mon={chosen}
-            personalityVersion={run.personalityVersion}
-          />
-          <div className="attribute-list">
-            {ATTRIBUTE_KEYS.map((key) => (
-              <span key={key}>
-                {ATTRIBUTE_LABELS[key]}{" "}
-                <b>{Math.round(attributes(chosen)[key])}</b>
-              </span>
-            ))}
-          </div>
+          <details className="clarity-disclosure" key={chosen.id}>
+            <summary>
+              Scout {chosen.name}
+              <span>Strengths, abilities & detailed ratings</span>
+            </summary>
+            <ScoutReport
+              mon={chosen}
+              personalityVersion={run.personalityVersion}
+            />
+          </details>
         </div>
       )}
       {!pending && inspectId && POKEMON_BY_ID.has(inspectId) && (
@@ -334,42 +338,52 @@ export function DraftPanel({
           personalityVersion={run.personalityVersion}
         />
       )}
-      <SpriteControls value={spriteStyle} onChange={onSpriteStyle} />
-      <dl className="personal-records">
-        <div>
-          <dt>Best record</dt>
-          <dd>
-            {records[run.mode].runs
-              ? `${records[run.mode].bestWins}–${82 - records[run.mode].bestWins}`
-              : "—"}
-          </dd>
-        </div>
-        <div>
-          <dt>Runs</dt>
-          <dd>{records[run.mode].runs}</dd>
-        </div>
-        <div>
-          <dt>Perfect</dt>
-          <dd>{records[run.mode].perfectSeasons}</dd>
-        </div>
-      </dl>
-      <div className="how-it-works">
-        <h3>
-          How it works{" "}
-          {onGuide && (
-            <button type="button" className="text-button" onClick={onGuide}>
-              Scouting guide →
-            </button>
-          )}
-        </h3>
-        <p>
-          {run.mode === "spin"
-            ? "Choose one of four Pokémon each round. Place it in an open position. Each pick locks in, so make it count."
-            : `Choose from ${draftPokemon(run.draftPool).length} Pokémon. Swap positions by selecting two players on the court. Randomize for a fresh team.`}{" "}
-          Fill five starting positions and three bench slots, then play your
-          season.
-        </p>
-      </div>
+      <details
+        className="clarity-disclosure draft-extras"
+        open={run.mode === "free" || !!run.result}
+      >
+        <summary>
+          Share & customize<span>Lineup tools, sprites & your records</span>
+        </summary>
+        {tools}
+        <SpriteControls value={spriteStyle} onChange={onSpriteStyle} />
+        <dl className="personal-records">
+          <div>
+            <dt>Best record</dt>
+            <dd>
+              {records[run.mode].runs
+                ? `${records[run.mode].bestWins}–${82 - records[run.mode].bestWins}`
+                : "—"}
+            </dd>
+          </div>
+          <div>
+            <dt>Runs</dt>
+            <dd>{records[run.mode].runs}</dd>
+          </div>
+          <div>
+            <dt>Perfect</dt>
+            <dd>{records[run.mode].perfectSeasons}</dd>
+          </div>
+        </dl>
+        <details className="how-it-works">
+          <summary>How to draft</summary>
+          <h3>
+            How it works{" "}
+            {onGuide && (
+              <button type="button" className="text-button" onClick={onGuide}>
+                Scouting guide →
+              </button>
+            )}
+          </h3>
+          <p>
+            {run.mode === "spin"
+              ? "Choose one of four Pokémon each round. Place it in an open position. Each pick locks in, so make it count."
+              : `Choose from ${draftPokemon(run.draftPool).length} Pokémon. Swap positions by selecting two players on the court. Randomize for a fresh team.`}{" "}
+            Fill five starting positions and three bench slots, then play your
+            season.
+          </p>
+        </details>
+      </details>
     </section>
   );
 }

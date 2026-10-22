@@ -664,58 +664,65 @@ export function LocalLeagueMode({
                     #{rankings[0].leagueRank} in the full league
                   </p>
                   <LeagueFriendCards rankings={rankings} teams={league.teams} />
-                  <div
-                    className="results-table-wrap"
-                    tabIndex={0}
-                    role="region"
-                    aria-label="Scrollable friends leaderboard"
-                  >
-                    <table className="results-table">
-                      <caption className="sr-only">Friends leaderboard</caption>
-                      <thead>
-                        <tr>
-                          <th scope="col">FRIEND / TEAM</th>
-                          <th scope="col">LEAGUE RANK</th>
-                          <th scope="col">W</th>
-                          <th scope="col">L</th>
-                          <th scope="col">DIFF / GAME</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rankings.map(
-                          ({ manager, standing, leagueRank }, index) => (
-                            <tr
-                              key={manager.teamId}
-                              className={index === 0 ? "league-user-team" : ""}
-                            >
-                              <th scope="row">
-                                <strong>{manager.name}</strong>
-                                <small>
-                                  {league.teams[manager.teamId].name}
-                                </small>
-                              </th>
-                              <td>#{leagueRank}</td>
-                              <td>{standing.wins}</td>
-                              <td>{standing.losses}</td>
-                              <td>
-                                {(
-                                  (standing.pointsFor -
-                                    standing.pointsAgainst) /
-                                  (standing.wins + standing.losses || 1)
-                                ).toFixed(1)}
-                              </td>
-                            </tr>
-                          ),
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                  <p className="stat-legend">
-                    Ranked by wins, then point differential, then team ID,
-                    matching the league standings. The top{" "}
-                    {draft.options?.format.playoffTeams ?? 16} teams advance to
-                    the playoffs below.
-                  </p>
+                  <details className="clarity-disclosure">
+                    <summary>Full friends leaderboard</summary>
+                    <div
+                      className="results-table-wrap"
+                      tabIndex={0}
+                      role="region"
+                      aria-label="Scrollable friends leaderboard"
+                    >
+                      <table className="results-table">
+                        <caption className="sr-only">
+                          Friends leaderboard
+                        </caption>
+                        <thead>
+                          <tr>
+                            <th scope="col">FRIEND / TEAM</th>
+                            <th scope="col">LEAGUE RANK</th>
+                            <th scope="col">W</th>
+                            <th scope="col">L</th>
+                            <th scope="col">DIFF / GAME</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rankings.map(
+                            ({ manager, standing, leagueRank }, index) => (
+                              <tr
+                                key={manager.teamId}
+                                className={
+                                  index === 0 ? "league-user-team" : ""
+                                }
+                              >
+                                <th scope="row">
+                                  <strong>{manager.name}</strong>
+                                  <small>
+                                    {league.teams[manager.teamId].name}
+                                  </small>
+                                </th>
+                                <td>#{leagueRank}</td>
+                                <td>{standing.wins}</td>
+                                <td>{standing.losses}</td>
+                                <td>
+                                  {(
+                                    (standing.pointsFor -
+                                      standing.pointsAgainst) /
+                                    (standing.wins + standing.losses || 1)
+                                  ).toFixed(1)}
+                                </td>
+                              </tr>
+                            ),
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="stat-legend">
+                      Ranked by wins, then point differential, then team ID,
+                      matching the league standings. The top{" "}
+                      {draft.options?.format.playoffTeams ?? 16} teams advance
+                      to the playoffs below.
+                    </p>
+                  </details>
                 </section>
                 <PlayoffPanel
                   league={league}
@@ -726,13 +733,23 @@ export function LocalLeagueMode({
                   simulating={busy}
                   progress={progress}
                 />
-                <LeaguePanel
-                  yourTeamIds={draft.managers.map((manager) => manager.teamId)}
-                  year={year}
-                  league={league}
-                  morale={playoffs?.morale ?? league.morale}
-                  mastery={playoffs?.abilityMastery ?? league.abilityMastery}
-                />
+                <details className="clarity-disclosure season-explore">
+                  <summary>
+                    Explore league stats
+                    <span>
+                      Standings, player leaders, awards & game reports
+                    </span>
+                  </summary>
+                  <LeaguePanel
+                    yourTeamIds={draft.managers.map(
+                      (manager) => manager.teamId,
+                    )}
+                    year={year}
+                    league={league}
+                    morale={playoffs?.morale ?? league.morale}
+                    mastery={playoffs?.abilityMastery ?? league.abilityMastery}
+                  />
+                </details>
               </>
             )}
             {draft && (league || draft.career?.history.length) && (
